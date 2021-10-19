@@ -1,0 +1,52 @@
+{
+  "name": "@anon-farm/perpswap",
+  "version": "0.0.1",
+  "repository": "https://github.com/Anon-Farm/perpswap.git",
+  "license": "MIT",
+  "scripts": {
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "typechain": "hardhat typechain",
+    "test": "hardhat test",
+    "format": "prettier --check contracts test",
+    "format:fix": "prettier --write contracts test",
+    "deploy": "hardhat deploy",
+    "etherscan": "hardhat etherscan-verify",
+    "deploy:goerli": "hardhat deploy --network goerli && yarn etherscan --network goerli",
+    "deploy:rinkeby": "hardhat deploy --network rinkeby && yarn etherscan --network rinkeby",
+    "deploy:localhost": "hardhat --network localhost deploy"
+  },
+  "peerDependencies": {
+    "ethers": "5.x",
+    "typescript": "4.x"
+  },
+  "devDependencies": {
+    "@ethersproject/experimental": "^5.4.0",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@typechain/ethers-v5": "^7.0.0",
+    "@typechain/hardhat": "^2.0.0",
+    "@types/chai": "^4.2.15",
+    "@types/mocha": "^8.2.1",
+    "@types/node": "^14.14.31",
+    "chai": "^4.3.0",
+    "copyfiles": "^2.4.1",
+    "dotenv": "^10.0.0",
+    "ethereum-waffle": "^3.3.0",
+    "hardhat": "^2.2.1",
+    "hardhat-deploy": "^0.9.3",
+    "hardhat-gas-reporter": "^1.0.4",
+    "hardhat-tracer": "^1.0.0-alpha.6",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.10",
+    "ts-node": "^9.1.1",
+    "typechain": "^5.0.0",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.0.0",
+    "@openzeppelin/contracts-upgradeable": "^4.1.0",
+    "ethers": "^5.4.6"
+  }
+}
