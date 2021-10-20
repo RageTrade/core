@@ -1,0 +1,61 @@
+//SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.9;
+
+import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
+
+import { console } from 'hardhat/console.sol';
+
+contract Uint32L8ArrayTest {
+    using Uint32L8ArrayLib for uint32[8];
+
+    uint32[8] array;
+
+    // EXPOSING LIBRARY METHODS
+
+    function include(uint32 element) external {
+        array.include(element);
+    }
+
+    function exclude(uint32 element) external {
+        array.exclude(element);
+    }
+
+    // DEBUG METHODS
+
+    function getter(uint8 index) public view returns (uint32) {
+        return array[index];
+    }
+
+    function getterAll() public view returns (uint32[8] memory) {
+        return array;
+    }
+
+    function length() public view returns (uint8 len) {
+        for (uint256 i = 0; i < 8; i++) {
+            if (array[i] != 0) {
+                len++;
+            }
+            if (array[i] == 0) {
+                break;
+            }
+        }
+    }
+
+    function setter(uint8 index, uint32 element) public {
+        array[index] = element;
+    }
+
+    function indexOf(uint32 element) public view returns (uint8) {
+        for (uint8 i; i < 8; i++) {
+            if (array[i] == element) {
+                return i;
+            }
+        }
+        return 255;
+    }
+
+    function exists(uint32 element) public view returns (bool) {
+        return indexOf(element) != 255;
+    }
+}
