@@ -13,11 +13,11 @@ describe('Uint48L5Array Library', () => {
 
   describe('#include', () => {
     it('single element', async () => {
-      expect(await array.length()).to.eq(0, 'length should be 0 initially');
+      expect(await array.length()).to.eq(0, 'should be 0 initially');
 
       await array.include(1);
 
-      expect(await array.exists(1)).to.eq(true, '1 should be added');
+      expect(await array.exists(1)).to.be.true;
       expect(await array.length()).to.eq(1, 'should increase length');
     });
 
@@ -29,15 +29,15 @@ describe('Uint48L5Array Library', () => {
       await array.include(2);
       const lenPrev = await array.length();
       await array.include(2);
-      expect(await array.exists(2)).to.eq(true, '2 should be added');
+      expect(await array.exists(2)).to.be.true;
       expect(await array.length()).to.eq(lenPrev, 'length should not increase when inserting same element');
     });
 
     it('multiple', async () => {
       await array.include(1);
       await array.include(2);
-      expect(await array.exists(1)).to.eq(true, '1 should be added');
-      expect(await array.exists(2)).to.eq(true, '2 should be added');
+      expect(await array.exists(1)).to.be.true;
+      expect(await array.exists(2)).to.be.true;
       expect(await array.length()).to.eq(2);
     });
 
@@ -47,7 +47,7 @@ describe('Uint48L5Array Library', () => {
       }
       expect(await array.length()).to.eq(5);
       for (let i = 1; i <= 5; i++) {
-        expect(await array.exists(i)).to.eq(true, `${i} should be added to the array`);
+        expect(await array.exists(i)).to.be.true;
       }
 
       expect(array.include(9)).revertedWith('Uint48L5ArrayLib:include:B');
@@ -76,9 +76,16 @@ describe('Uint48L5Array Library', () => {
     });
 
     it('non existant element', async () => {
-      await array.include(1);
       await array.exclude(10);
-      expect(await array.length()).to.eq(1);
+      expect(await array.length()).to.eq(0);
+    });
+
+    it('middle element', async () => {
+      await array.include(1);
+      await array.include(2);
+      await array.include(3);
+      await array.exclude(2);
+      expect(await array.length()).to.eq(2);
     });
   });
 });
