@@ -1,0 +1,84 @@
+import { expect } from 'chai';
+import hre from 'hardhat';
+
+import { Uint48L5ArrayTest } from '../typechain';
+
+describe('Uint48L5Array Library', () => {
+  let array: Uint48L5ArrayTest;
+
+  beforeEach(async () => {
+    const factory = await hre.ethers.getContractFactory('Uint48L5ArrayTest');
+    array = await factory.deploy();
+  });
+
+  describe('#include', () => {
+    it('single element', async () => {
+      expect(await array.length()).to.eq(0, 'length should be 0 initially');
+
+      await array.include(1);
+
+      expect(await array.exists(1)).to.eq(true, '1 should be added');
+      expect(await array.length()).to.eq(1, 'should increase length');
+    });
+
+    it('prevents 0', async () => {
+      expect(array.include(0)).revertedWith('Uint48L5ArrayLib:include:A');
+    });
+
+    it('repeated', async () => {
+      await array.include(2);
+      const lenPrev = await array.length();
+      await array.include(2);
+      expect(await array.exists(2)).to.eq(true, '2 should be added');
+      expect(await array.length()).to.eq(lenPrev, 'length should not increase when inserting same element');
+    });
+
+    it('multiple', async () => {
+      await array.include(1);
+      await array.include(2);
+      expect(await array.exists(1)).to.eq(true, '1 should be added');
+      expect(await array.exists(2)).to.eq(true, '2 should be added');
+      expect(await array.length()).to.eq(2);
+    });
+
+    it('limits to 5 includes', async () => {
+      for (let i = 1; i <= 5; i++) {
+        await array.include(i);
+      }
+      expect(await array.length()).to.eq(5);
+      for (let i = 1; i <= 5; i++) {
+        expect(await array.exists(i)).to.eq(true, `${i} should be added to the array`);
+      }
+
+      expect(array.include(9)).revertedWith('Uint48L5ArrayLib:include:B');
+    });
+  });
+
+  describe('#exclude', () => {
+    it('single element', async () => {
+      await array.include(1);
+      await array.exclude(1);
+      expect(await array.length()).to.eq(0);
+    });
+
+    it('multiple elements', async () => {
+      await array.include(1);
+      await array.include(2);
+      await array.include(3);
+
+      await array.exclude(1);
+      expect(await array.length()).to.eq(2);
+
+      await array.exclude(3);
+      expect(await array.length()).to.eq(1);
+
+      expect(await array.exists(2)).to.be.true;
+    });
+
+    it('non existant element', async () => {
+      await array.include(1);
+      await array.exclude(10);
+      expect(await array.length()).to.eq(1);
+    });
+  });
+});
