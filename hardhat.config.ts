@@ -22,8 +22,8 @@ task('accounts', 'Prints the list of accounts', async (args, hre) => {
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
-if (!process.env.ALCHEMY_API_KEY) {
-  console.warn('PLEASE NOTE: The env var ALCHEMY_API_KEY is not set');
+if (!process.env.ALCHEMY_KEY) {
+  console.warn('PLEASE NOTE: The env var ALCHEMY_KEY is not set');
 }
 
 const pk = process.env.PRIVATE_KEY || ethers.utils.hexlify(ethers.utils.randomBytes(32));
