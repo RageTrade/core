@@ -24,9 +24,26 @@ library Uint32L8ArrayLib {
 
     function exclude(uint32[8] storage array, uint32 element) internal {
         require(element != 0, 'Uint32L8ArrayLib:exclude');
-        for (uint256 i; i < 8; i++) {
+
+        uint256 elementIndex = 8;
+        uint256 i;
+
+        for (; i < 8; i++) {
             if (array[i] == element) {
-                array[i] = 0;
+                elementIndex = i;
+            }
+            if (array[i] == 0) {
+                i = i > 0 ? i - 1 : 0; // last non-zero element
+                break;
+            }
+        }
+
+        if (elementIndex != 8) {
+            if (i == elementIndex) {
+                array[elementIndex] = 0;
+            } else {
+                // move last to element's place and empty lastIndex slot
+                (array[elementIndex], array[i]) = (array[i], 0);
             }
         }
     }
