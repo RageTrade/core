@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { Uint32L8ArrayTest } from '../typechain';
+import { Uint48L5ArrayTest } from '../typechain';
 
-describe('Uint32L8Set Library', () => {
-  let array: Uint32L8ArrayTest;
+describe('Uint48L5Array Library', () => {
+  let array: Uint48L5ArrayTest;
 
   beforeEach(async () => {
-    const factory = await hre.ethers.getContractFactory('Uint32L8ArrayTest');
+    const factory = await hre.ethers.getContractFactory('Uint48L5ArrayTest');
     array = await factory.deploy();
   });
 
@@ -22,7 +22,7 @@ describe('Uint32L8Set Library', () => {
     });
 
     it('prevents 0', async () => {
-      expect(array.include(0)).revertedWith('Uint32L8ArrayLib:include:A');
+      expect(array.include(0)).revertedWith('Uint48L5ArrayLib:include:A');
     });
 
     it('repeated', async () => {
@@ -41,16 +41,16 @@ describe('Uint32L8Set Library', () => {
       expect(await array.length()).to.eq(2);
     });
 
-    it('limits to 8 includes', async () => {
-      for (let i = 1; i <= 8; i++) {
+    it('limits to 5 includes', async () => {
+      for (let i = 1; i <= 5; i++) {
         await array.include(i);
       }
-      expect(await array.length()).to.eq(8);
-      for (let i = 1; i <= 8; i++) {
+      expect(await array.length()).to.eq(5);
+      for (let i = 1; i <= 5; i++) {
         expect(await array.exists(i)).to.be.true;
       }
 
-      expect(array.include(9)).revertedWith('Uint32L8ArrayLib:include:B');
+      expect(array.include(9)).revertedWith('Uint48L5ArrayLib:include:B');
     });
   });
 

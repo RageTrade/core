@@ -2,33 +2,33 @@
 
 pragma solidity ^0.8.9;
 
-library Uint32L8ArrayLib {
-    using Uint32L8ArrayLib for uint32[8];
+library Uint48L5ArrayLib {
+    using Uint48L5ArrayLib for uint48[5];
 
-    function include(uint32[8] storage array, uint32 element) internal {
-        require(element != 0, 'Uint32L8ArrayLib:include:A');
-        uint256 emptyIndex = 8; // max index is 7
-        for (uint256 i; i < 8; i++) {
+    function include(uint48[5] storage array, uint48 element) internal {
+        require(element != 0, 'Uint48L5ArrayLib:include:A');
+        uint256 emptyIndex = 5; // max index is 4
+        for (uint256 i; i < 5; i++) {
             if (array[i] == element) {
                 return;
             }
-            if (emptyIndex == 8 && array[i] == uint32(0)) {
+            if (emptyIndex == 5 && array[i] == uint48(0)) {
                 emptyIndex = i;
             }
         }
 
-        require(emptyIndex != 8, 'Uint32L8ArrayLib:include:B');
+        require(emptyIndex != 5, 'Uint48L5ArrayLib:include:B');
 
         array[emptyIndex] = element;
     }
 
-    function exclude(uint32[8] storage array, uint32 element) internal {
-        require(element != 0, 'Uint32L8ArrayLib:exclude');
+    function exclude(uint48[5] storage array, uint48 element) internal {
+        require(element != 0, 'Uint48L5ArrayLib:exclude');
 
-        uint256 elementIndex = 8;
+        uint256 elementIndex = 5;
         uint256 i;
 
-        for (; i < 8; i++) {
+        for (; i < 5; i++) {
             if (array[i] == element) {
                 elementIndex = i;
             }
@@ -38,7 +38,7 @@ library Uint32L8ArrayLib {
             }
         }
 
-        if (elementIndex != 8) {
+        if (elementIndex != 5) {
             if (i == elementIndex) {
                 array[elementIndex] = 0;
             } else {
