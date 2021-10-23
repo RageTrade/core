@@ -34,14 +34,6 @@ library LiquidityPosition {
         uint256 sumFpInsideChkpt;
     }
 
-    // TODO should this be moved somewhere?
-    function _concat(int24 val1, int24 val2) internal pure returns (uint48 val3) {
-        assembly {
-            // val3 := add(shl(24, val1), shr(232, shl(232, val2)))
-            val3 := add(shl(24, val1), and(val2, 0x000000ffffff))
-        }
-    }
-
     function getActivatedPosition(
         Set storage set,
         int24 tickLower,
@@ -51,7 +43,7 @@ library LiquidityPosition {
             revert IllegalTicks(tickLower, tickUpper);
         }
 
-        uint48 positionId = _concat(tickLower, tickUpper);
+        uint48 positionId = set.active.include(tickLower, tickUpper);
         info = set.infos[positionId];
 
         if (info.tickLower != tickLower) {
@@ -60,7 +52,20 @@ library LiquidityPosition {
         if (set.infos[positionId].tickUpper != tickUpper) {
             set.infos[positionId].tickUpper = tickUpper;
         }
-
-        set.active.include(positionId);
     }
+
+    // function getMaxTokenPosition(info) {}
+
+    // function getLiquidityPositionValue(info, sqrtPriceCurrent) returns (int96) {}
+
+    // function netPosition(Info info) {}
+
+    // function realizeFundingPayment(Set storage set, account) internal {}
+
+    // function liquidityChange(
+    //     Set storage set,
+    //     int24 tickLower,
+    //     int24 tickUpper,
+    //     uint128 liquidity
+    // ) internal returns (uint256 vBaseBalanceChange, uint256 vTokenBalanceChange) {}
 }

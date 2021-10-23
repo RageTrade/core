@@ -8,6 +8,29 @@ library Uint48L5ArrayLib {
     error IllegalElement(uint48 element);
     error NoSpaceLeftToInsert(uint48 element);
 
+    function include(
+        uint48[5] storage array,
+        int24 val1,
+        int24 val2
+    ) internal returns (uint48 index) {
+        array.include(index = concat(val1, val2));
+    }
+
+    function exclude(
+        uint48[5] storage array,
+        int24 val1,
+        int24 val2
+    ) internal returns (uint48 index) {
+        array.exclude(index = concat(val1, val2));
+    }
+
+    function concat(int24 val1, int24 val2) internal pure returns (uint48 val3) {
+        assembly {
+            // val3 := add(shl(24, val1), shr(232, shl(232, val2)))
+            val3 := add(shl(24, val1), and(val2, 0x000000ffffff))
+        }
+    }
+
     function include(uint48[5] storage array, uint48 element) internal {
         if (element == 0) {
             revert IllegalElement(0);
