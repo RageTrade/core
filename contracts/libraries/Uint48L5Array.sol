@@ -47,4 +47,17 @@ library Uint48L5ArrayLib {
             }
         }
     }
+
+    function indexOf(uint48[5] storage array, uint48 element) internal view returns (uint8) {
+        for (uint8 i; i < 5; i++) {
+            if (array[i] == element) {
+                return i;
+            }
+        }
+        return 255;
+    }
+
+    function exists(uint48[5] storage array, uint48 element) internal view returns (bool) {
+        return array.indexOf(element) != 255;
+    }
 }

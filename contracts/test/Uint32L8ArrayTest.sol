@@ -46,16 +46,7 @@ contract Uint32L8ArrayTest {
         array[index] = element;
     }
 
-    function indexOf(uint32 element) public view returns (uint8) {
-        for (uint8 i; i < 8; i++) {
-            if (array[i] == element) {
-                return i;
-            }
-        }
-        return 255;
-    }
-
     function exists(uint32 element) public view returns (bool) {
-        return indexOf(element) != 255;
+        return array.exists(element);
     }
 }
