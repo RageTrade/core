@@ -6,19 +6,22 @@ import { LiquidityPosition } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
 
+// import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
 import { console } from 'hardhat/console.sol';
 
 library LiquidityPositionSet {
-    using LiquidityPositionSet for uint48[5];
+    using LiquidityPosition for LiquidityPosition.Info;
+    using LiquidityPositionSet for Info;
     using Uint48L5ArrayLib for uint48[5];
 
     error IllegalTicks(int24 tickLower, int24 tickUpper);
+    error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
 
     struct Info {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
         uint48[5] active;
-        // TODO: consider instead of lpNonce, to use concat(int24,int24) then 5 positions can be stored
-        // concat(tickLow,TickHigh)
+        // concat(tickLow,tickHigh)
         mapping(uint48 => LiquidityPosition.Info) positions;
     }
 
@@ -30,24 +33,29 @@ library LiquidityPositionSet {
         return _exists(set.active, tickLower, tickUpper);
     }
 
-    function getActivatedPosition(
+    function activate(
         Info storage set,
         int24 tickLower,
         int24 tickUpper
-    ) internal returns (LiquidityPosition.Info storage info) {
+    ) internal returns (LiquidityPosition.Info storage position) {
         if (tickLower > tickUpper) {
             revert IllegalTicks(tickLower, tickUpper);
         }
 
         uint48 positionId = _include(set.active, tickLower, tickUpper);
-        info = set.positions[positionId];
+        position = set.positions[positionId];
 
-        if (info.tickLower != tickLower) {
-            set.positions[positionId].tickLower = tickLower;
+        if (!position.isInitialized()) {
+            position.initialize(tickLower, tickUpper);
         }
-        if (set.positions[positionId].tickUpper != tickUpper) {
-            set.positions[positionId].tickUpper = tickUpper;
+    }
+
+    function deactivate(Info storage set, LiquidityPosition.Info storage position) internal {
+        if (position.liquidity != 0) {
+            revert DeactivationFailed(position.tickLower, position.tickUpper, position.liquidity);
         }
+
+        _exclude(set.active, position.tickLower, position.tickUpper);
     }
 
     function _include(
