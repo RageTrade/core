@@ -46,16 +46,7 @@ contract Uint48L5ArrayTest {
         array[index] = element;
     }
 
-    function indexOf(uint48 element) public view returns (uint8) {
-        for (uint8 i; i < 5; i++) {
-            if (array[i] == element) {
-                return i;
-            }
-        }
-        return 255;
-    }
-
     function exists(uint48 element) public view returns (bool) {
-        return indexOf(element) != 255;
+        return array.exists(element);
     }
 }

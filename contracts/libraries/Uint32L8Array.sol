@@ -47,4 +47,17 @@ library Uint32L8ArrayLib {
             }
         }
     }
+
+    function indexOf(uint32[8] storage array, uint32 element) internal view returns (uint8) {
+        for (uint8 i; i < 8; i++) {
+            if (array[i] == element) {
+                return i;
+            }
+        }
+        return 255;
+    }
+
+    function exists(uint32[8] storage array, uint32 element) internal view returns (bool) {
+        return array.indexOf(element) != 255;
+    }
 }
