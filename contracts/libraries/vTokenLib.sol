@@ -37,10 +37,8 @@ library VTokenLib {
         return Create2.computeAddress(keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)) ,POOL_BYTE_CODE_HASH, DEPLOYER);
     }
     
-    // TODO implement after vPoolWrapper
     function vPoolWrapper(VToken vToken) internal pure returns (address) {
-        // return getCREATE2Address(vBase, vToken.wrap(), vPoolWrapperInitHash)
-        return address(0); 
+        return Create2.computeAddress(keccak256(abi.encodePacked(VToken.unwrap(vToken), VBASE_ADDRESS)),WRAPPER_BYTE_CODE_HASH, DEPLOYER);
     }
     
     function realToken(VToken vToken) internal view returns (address) {

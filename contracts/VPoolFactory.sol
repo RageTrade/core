@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/utils/Create2.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import './vToken.sol';
+import './VPoolWrapper.sol';
 import './Constants.sol';
 
 abstract contract VPoolFactory {
@@ -27,9 +28,9 @@ abstract contract VPoolFactory {
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration
-    ) external isAllowed {
+    ) external isAllowed returns (address vTokenAddress, address vPoolWrapper) {
         address realToken = _getTokenOtherThanRealBase(realPool);
-        address vTokenAddress = _deployVToken(realToken);
+        vTokenAddress = _deployVToken(realToken);
 
         address vPool = IUniswapV3Factory(UNISWAP_FACTORY_ADDRESS).createPool(
             VBASE_ADDRESS,
@@ -37,8 +38,7 @@ abstract contract VPoolFactory {
             DEFAULT_FEE_TIER
         );
         IUniswapV3Pool(vPool).initialize(UniswapTwapSqrtPrice.get(realPool, twapDuration));
-
-        // wrapper = WrapperDeployer.deploy(vPool.address); TODO
+        vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
     }
 
     function _getTokenOtherThanRealBase(address realPoolAddress) internal view returns (address realToken) {
@@ -73,6 +73,19 @@ abstract contract VPoolFactory {
         // test here if it matches vTokenAddress
         vTokenAddresses[key] = deployedAddress;
         realTokenInitilized[realToken] == true;
+        return deployedAddress;
+    }
+
+    function _deployVPoolWrapper(
+        address vTokenAddress,
+        uint16 initialMargin,
+        uint16 maintainanceMargin,
+        uint32 twapDuration
+    ) internal returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(vTokenAddress, VBASE_ADDRESS));
+        bytes memory bytecode = type(VPoolWrapper).creationCode;
+        bytecode = abi.encodePacked(bytecode, abi.encode(twapDuration, initialMargin, maintainanceMargin));
+        address deployedAddress = Create2.deploy(0, keccak256(abi.encodePacked(salt)), bytecode);
         return deployedAddress;
     }
 
