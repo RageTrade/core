@@ -22,7 +22,7 @@ describe('Uint32L8Set Library', () => {
     });
 
     it('prevents 0', async () => {
-      expect(array.include(0)).revertedWith('Uint32L8ArrayLib:include:A');
+      expect(array.include(0)).revertedWith('IllegalElement(0)');
     });
 
     it('repeated', async () => {
@@ -50,7 +50,7 @@ describe('Uint32L8Set Library', () => {
         expect(await array.exists(i)).to.be.true;
       }
 
-      expect(array.include(9)).revertedWith('Uint32L8ArrayLib:include:B');
+      expect(array.include(9)).revertedWith('NoSpaceLeftToInsert(9)');
     });
   });
 

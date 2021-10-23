@@ -5,8 +5,13 @@ pragma solidity ^0.8.9;
 library Uint48L5ArrayLib {
     using Uint48L5ArrayLib for uint48[5];
 
+    error IllegalElement(uint48 element);
+    error NoSpaceLeftToInsert(uint48 element);
+
     function include(uint48[5] storage array, uint48 element) internal {
-        require(element != 0, 'Uint48L5ArrayLib:include:A');
+        if (element == 0) {
+            revert IllegalElement(0);
+        }
         uint256 emptyIndex = 5; // max index is 4
         for (uint256 i; i < 5; i++) {
             if (array[i] == element) {
@@ -17,13 +22,17 @@ library Uint48L5ArrayLib {
             }
         }
 
-        require(emptyIndex != 5, 'Uint48L5ArrayLib:include:B');
+        if (emptyIndex == 5) {
+            revert NoSpaceLeftToInsert(element);
+        }
 
         array[emptyIndex] = element;
     }
 
     function exclude(uint48[5] storage array, uint48 element) internal {
-        require(element != 0, 'Uint48L5ArrayLib:exclude');
+        if (element == 0) {
+            revert IllegalElement(0);
+        }
 
         uint256 elementIndex = 5;
         uint256 i;

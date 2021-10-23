@@ -67,7 +67,7 @@ describe('Liquidity Position Library', () => {
     });
 
     it('invalid', async () => {
-      expect(test.createEmptyPosition(1, -1)).to.be.revertedWith('InvalidTicks(1, -1)');
+      expect(test.createEmptyPosition(1, -1)).to.be.revertedWith('IllegalTicks(1, -1)');
     });
   });
 });
