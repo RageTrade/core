@@ -21,7 +21,7 @@ contract LiquidityPositionTest {
     }
 
     function concat(int24 val1, int24 val2) public pure returns (uint48 concatenated) {
-        concatenated = LiquidityPosition._concat(val1, val2);
+        concatenated = Uint48L5ArrayLib.concat(val1, val2);
     }
 
     function unconcat(uint48 concatenated) public pure returns (int24 val1, int24 val2) {
