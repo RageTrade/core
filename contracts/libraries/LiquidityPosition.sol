@@ -9,6 +9,8 @@ import { console } from 'hardhat/console.sol';
 library LiquidityPosition {
     using Uint48L5ArrayLib for uint48[5];
 
+    error InvalidTicks(int24 tickLower, int24 tickUpper);
+
     struct Set {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
         uint48[5] active;
@@ -38,5 +40,27 @@ library LiquidityPosition {
             // val3 := add(shl(24, val1), shr(232, shl(232, val2)))
             val3 := add(shl(24, val1), and(val2, 0x000000ffffff))
         }
+    }
+
+    function getActivatedPosition(
+        Set storage set,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal returns (Info storage info) {
+        if (tickLower > tickUpper) {
+            revert InvalidTicks(tickLower, tickUpper);
+        }
+
+        uint48 positionId = _concat(tickLower, tickUpper);
+        info = set.infos[positionId];
+
+        if (info.tickLower != tickLower) {
+            set.infos[positionId].tickLower = tickLower;
+        }
+        if (set.infos[positionId].tickUpper != tickUpper) {
+            set.infos[positionId].tickUpper = tickUpper;
+        }
+
+        set.active.include(positionId);
     }
 }
