@@ -62,7 +62,7 @@ library GlobalUtilLib {
         global.feeGrowthGlobalShortsX128 += feePerLiquidity;
     }
 
-    function getPricePosition(uint256 currentPrice, uint256 tickLowerPrice, uint256 tickHigherPrice) public
+    function getPricePosition(uint256 currentPrice, uint256 tickLowerPrice, uint256 tickHigherPrice) pure public
     returns(uint8){
         if(currentPrice<tickLowerPrice) return 0;
         else if(currentPrice<tickHigherPrice) return 1;
@@ -77,30 +77,34 @@ library GlobalUtilLib {
         // uint256 tickHigherPrice = 1500;
         uint8 pricePosition = 0;//getPricePosition(currentPrice, tickLowerPrice, tickHigherPrice);
 
-        int256 sumANew = getExtrapolatedSumA(global,currentTS);
+        // int256 sumANew = getExtrapolatedSumA(global,currentTS);
 
-        int256 exTickLowerFPOutside = getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS);
-        int256 exTickHigherFPOutside = getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS);
-
-        int256 sumBInsideNew; int256 sumFPInsideNew; uint256 shortsFeeInside;
+        // int256 exTickLowerFPOutside = getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS);
+        // int256 exTickHigherFPOutside = getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS);
 
         if(pricePosition==0){
-            sumBInsideNew = tickLower.sumBOutside - tickHigher.sumBOutside;
-            sumFPInsideNew = sumFPInsideCkpt + exTickLowerFPOutside - exTickHigherFPOutside;
-            shortsFeeInside = tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128;
+            return
+            (getExtrapolatedSumA(global,currentTS),
+            tickLower.sumBOutside - tickHigher.sumBOutside,
+            sumFPInsideCkpt + getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS) - getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS),
+            tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128);
         }
         else if(pricePosition==1){
-            sumBInsideNew = global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside;
-            sumFPInsideNew = sumFPInsideCkpt + global.sumFP - exTickLowerFPOutside - exTickHigherFPOutside;
-            shortsFeeInside = tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128;
+            return(
+                getExtrapolatedSumA(global,currentTS),
+                global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside,
+                sumFPInsideCkpt + global.sumFP - getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS) - getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS),
+                tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128
+                );
         }
         else if(pricePosition==2){
-            sumBInsideNew = global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside;
-            sumFPInsideNew = global.sumFP - exTickHigherFPOutside - exTickLowerFPOutside;
-            shortsFeeInside = global.feeGrowthGlobalShortsX128 - tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128;
+            return(
+            getExtrapolatedSumA(global,currentTS),
+            global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside,
+            global.sumFP - getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS) - getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS),
+            global.feeGrowthGlobalShortsX128 - tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128);
         }
 
-        return (sumANew, sumBInsideNew, sumFPInsideNew, shortsFeeInside);
     }
 
 }
