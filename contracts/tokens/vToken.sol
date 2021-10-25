@@ -9,10 +9,16 @@ import '../interfaces/IvToken.sol';
 
 contract vToken is ERC20, IvToken {
     address public immutable override realToken;
+    address public immutable override oracle;
     address public immutable perpState;
 
-    constructor(address _realToken, address _perpState) ERC20('vToken', 'vToken') {
+    constructor(
+        address _realToken,
+        address _oracle,
+        address _perpState
+    ) ERC20('vToken', 'vToken') {
         realToken = _realToken;
+        oracle = _oracle;
         perpState = _perpState;
     }
 }

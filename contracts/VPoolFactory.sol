@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/utils/Create2.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import './interfaces/IvPoolFactory.sol';
+import './interfaces/IOracleContract.sol';
 import './tokens/vToken.sol';
 import './VPoolWrapper.sol';
 import './Constants.sol';
@@ -30,46 +31,33 @@ abstract contract VPoolFactory is IvPoolFactory {
         owner = msg.sender;
     }
 
-    event poolInitlized(address realPool, address vPool, address vTokenAddress, address vPoolWrapper);
+    event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
 
-    // Dependancy : Real Pool has to be of DEFAULT_FEE_TIER
     function initializePool(
-        address realPool,
-        // real token
-        // oracle
+        address realToken,
+        address oracleAddress,
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration
     ) external isAllowed {
-        address realToken = _getTokenOtherThanRealBase(realPool);
-        address vTokenAddress = _deployVToken(realToken);
+        address vTokenAddress = _deployVToken(realToken, oracleAddress);
         address vPool = IUniswapV3Factory(UNISWAP_FACTORY_ADDRESS).createPool(
             VBASE_ADDRESS,
             vTokenAddress,
             DEFAULT_FEE_TIER
         );
-        IUniswapV3Pool(vPool).initialize(UniswapTwapSqrtPrice.get(realPool, twapDuration));
+        IUniswapV3Pool(vPool).initialize(IOracleContract(oracleAddress).getSqrtPrice(twapDuration));
         address vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
-        emit poolInitlized(realPool, vPool, vTokenAddress, vPoolWrapper);
+        emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
 
-    function _getTokenOtherThanRealBase(address realPoolAddress) internal view returns (address realToken) {
-        IUniswapV3Pool realPool = IUniswapV3Pool(realPoolAddress);
-        require(realPool.fee() == DEFAULT_FEE_TIER, 'Fee Tier MisMatch');
-        address token0 = realPool.token0();
-        address token1 = realPool.token1();
-        if (token0 == REAL_BASE_ADDRESS) realToken = token1;
-        else if (token1 == REAL_BASE_ADDRESS) realToken = token0;
-        else revert('Real Base Not Found');
-    }
-
-    function _deployVToken(address realToken) internal returns (address) {
+    function _deployVToken(address realToken, address oracleAddress) internal returns (address) {
         // Pool for this token must not be already created
         require(realTokenInitilized[realToken] == false, 'Duplicate Pool');
 
         uint160 salt = uint160(realToken);
         bytes memory bytecode = type(vToken).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(realToken, address(this)));
+        bytecode = abi.encodePacked(bytecode, abi.encode(realToken, oracleAddress, address(this)));
         bytes32 byteCodeHash = keccak256(bytecode);
         bytes4 key;
         address vTokenAddress;

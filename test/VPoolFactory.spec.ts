@@ -7,20 +7,19 @@ import { utils } from 'ethers';
 
 const UNISWAP_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 const POOL_BYTE_CODE_HASH = '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54';
-const realPool = '0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640'; // USDC-ETH, 0.05
 const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 describe('VPoolFactory', () => {
+  let oracleContract: string;
   let VPoolFactory: ClearingHouse;
   let UtilsTestContract: UtilsTest;
   let vTokenByteCode: string;
   let VPoolWrapperByteCode: string;
 
   beforeEach(async () => {
-    const factory = await hre.ethers.getContractFactory('ClearingHouse');
-    VPoolFactory = await factory.deploy();
-    const factory1 = await hre.ethers.getContractFactory('UtilsTest');
-    UtilsTestContract = await factory1.deploy();
+    oracleContract = (await (await hre.ethers.getContractFactory('OracleContract')).deploy()).address;
+    VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
+    UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
     vTokenByteCode = (await hre.ethers.getContractFactory('vToken')).bytecode;
@@ -28,19 +27,25 @@ describe('VPoolFactory', () => {
 
   describe('Initilize', () => {
     it('Deployments', async () => {
-      await VPoolFactory.initializePool(realPool, 2, 3, 60);
+      await VPoolFactory.initializePool(realToken, oracleContract, 2, 3, 60);
       const eventFilter = VPoolFactory.filters.poolInitlized();
       const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
-      const vPool = events[0].args[1];
-      const vTokenAddress = events[0].args[2];
-      const vPoolWrapper = events[0].args[3];
+      const vPool = events[0].args[0];
+      const vTokenAddress = events[0].args[1];
+      const vPoolWrapper = events[0].args[2];
 
       // VToken : Create2
       const saltInUint160 = await UtilsTestContract.convertAddressToUint160(realToken);
       let salt = utils.defaultAbiCoder.encode(['uint160'], [saltInUint160]);
       let bytecode = utils.solidityPack(
         ['bytes', 'bytes'],
-        [vTokenByteCode, utils.defaultAbiCoder.encode(['address', 'address'], [realToken, VPoolFactory.address])],
+        [
+          vTokenByteCode,
+          utils.defaultAbiCoder.encode(
+            ['address', 'address', 'address'],
+            [realToken, oracleContract, VPoolFactory.address],
+          ),
+        ],
       );
       const vTokenComputedAddress = getCreate2Address(VPoolFactory.address, salt, bytecode);
       expect(vTokenAddress).to.eq(vTokenComputedAddress);
@@ -48,8 +53,10 @@ describe('VPoolFactory', () => {
       // VToken : Cons Params
       const vToken = await hre.ethers.getContractAt('vToken', vTokenAddress);
       const vToken_state_realToken = await vToken.realToken();
+      const vToken_state_oracle = await vToken.oracle();
       const vToken_state_perpState = await vToken.perpState();
       expect(vToken_state_realToken.toLowerCase()).to.eq(realToken);
+      expect(vToken_state_oracle).to.eq(oracleContract);
       expect(vToken_state_perpState.toLowerCase()).to.eq(VPoolFactory.address.toLowerCase());
 
       // VPool : Create2
