@@ -65,7 +65,7 @@ library LiquidityPosition {
         info.shortsFeeGrowthInsideLast = shortsFeeGrowthInsideLast;
     }
 
-    function netPosition(Info storage info, IVPoolWrapper wrapper) internal returns (uint256) {
+    function netPosition(Info storage info, IVPoolWrapper wrapper) internal view returns (uint256) {
         (, uint256 sumBInside, , , ) = wrapper.getValuesInside(info.tickLower, info.tickUpper);
         return (sumBInside - info.sumBInsideLast) * info.liquidity;
     }

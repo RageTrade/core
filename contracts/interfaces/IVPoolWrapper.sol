@@ -11,6 +11,7 @@ interface IVPoolWrapper {
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
         external
+        view
         returns (
             uint256 sumA,
             uint256 sumBInside,
