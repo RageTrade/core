@@ -34,7 +34,7 @@ library VTokenLib {
             token0 = VBASE_ADDRESS;
             token1 = vTokenAddress;
         }
-        return Create2.computeAddress(keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)) ,POOL_BYTE_CODE_HASH, DEPLOYER);
+        return Create2.computeAddress(keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)) ,POOL_BYTE_CODE_HASH, UNISWAP_FACTORY_ADDRESS);
     }
     
     function vPoolWrapper(VToken vToken) internal pure returns (address) {
@@ -61,7 +61,7 @@ library VTokenLib {
             token1 = realTokenAddress;
         }
         // Dependancy : Real Pool has to be of DEFAULT_FEE_TIER
-        return Create2.computeAddress(keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)) ,POOL_BYTE_CODE_HASH, DEPLOYER);
+        return Create2.computeAddress(keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)) ,POOL_BYTE_CODE_HASH, UNISWAP_FACTORY_ADDRESS);
     }
 
     function getVirtualTwapSqrtPrice(VToken vToken) internal view returns (uint160) {

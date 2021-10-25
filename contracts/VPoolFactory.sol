@@ -6,11 +6,19 @@ import './libraries/uniswapTwapSqrtPrice.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
-import './vToken.sol';
+import './interfaces/IvPoolFactory.sol';
+import './tokens/vToken.sol';
 import './VPoolWrapper.sol';
 import './Constants.sol';
 
-abstract contract VPoolFactory {
+abstract contract VPoolFactory is IvPoolFactory {
+    struct Parameters {
+        uint16 initialMargin;
+        uint16 maintainanceMargin;
+        uint32 twapDuration;
+    }
+    Parameters public override parameters;
+
     address public immutable owner;
     bool public isRestricted;
 
@@ -22,23 +30,27 @@ abstract contract VPoolFactory {
         owner = msg.sender;
     }
 
+    event poolInitlized(address realPool, address vPool, address vTokenAddress, address vPoolWrapper);
+
     // Dependancy : Real Pool has to be of DEFAULT_FEE_TIER
     function initializePool(
         address realPool,
+        // real token
+        // oracle
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration
-    ) external isAllowed returns (address vTokenAddress, address vPoolWrapper) {
+    ) external isAllowed {
         address realToken = _getTokenOtherThanRealBase(realPool);
-        vTokenAddress = _deployVToken(realToken);
-
+        address vTokenAddress = _deployVToken(realToken);
         address vPool = IUniswapV3Factory(UNISWAP_FACTORY_ADDRESS).createPool(
             VBASE_ADDRESS,
             vTokenAddress,
             DEFAULT_FEE_TIER
         );
         IUniswapV3Pool(vPool).initialize(UniswapTwapSqrtPrice.get(realPool, twapDuration));
-        vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
+        address vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
+        emit poolInitlized(realPool, vPool, vTokenAddress, vPoolWrapper);
     }
 
     function _getTokenOtherThanRealBase(address realPoolAddress) internal view returns (address realToken) {
@@ -55,22 +67,22 @@ abstract contract VPoolFactory {
         // Pool for this token must not be already created
         require(realTokenInitilized[realToken] == false, 'Duplicate Pool');
 
-        uint256 salt = uint160(realToken);
+        uint160 salt = uint160(realToken);
         bytes memory bytecode = type(vToken).creationCode;
         bytecode = abi.encodePacked(bytecode, abi.encode(realToken, address(this)));
         bytes32 byteCodeHash = keccak256(bytecode);
         bytes4 key;
-
+        address vTokenAddress;
         while (true) {
-            address vTokenAddress = Create2.computeAddress(keccak256(abi.encodePacked(salt)), byteCodeHash);
-            key = bytes4(abi.encodePacked(vTokenAddress));
+            vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
+            key = bytes4(abi.encode(vTokenAddress));
             if (vTokenAddresses[key] == address(0)) {
                 break;
             }
             salt++; // using a different salt
         }
-        address deployedAddress = Create2.deploy(0, keccak256(abi.encodePacked(salt)), bytecode);
-        // test here if it matches vTokenAddress
+        address deployedAddress = Create2.deploy(0, keccak256(abi.encode(salt)), bytecode);
+        require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
         vTokenAddresses[key] = deployedAddress;
         realTokenInitilized[realToken] == true;
         return deployedAddress;
@@ -82,10 +94,15 @@ abstract contract VPoolFactory {
         uint16 maintainanceMargin,
         uint32 twapDuration
     ) internal returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(vTokenAddress, VBASE_ADDRESS));
+        bytes32 salt = keccak256(abi.encode(vTokenAddress, VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(twapDuration, initialMargin, maintainanceMargin));
-        address deployedAddress = Create2.deploy(0, keccak256(abi.encodePacked(salt)), bytecode);
+        parameters = Parameters({
+            initialMargin: initialMargin,
+            maintainanceMargin: maintainanceMargin,
+            twapDuration: twapDuration
+        });
+        address deployedAddress = Create2.deploy(0, salt, bytecode);
+        delete parameters;
         return deployedAddress;
     }
 

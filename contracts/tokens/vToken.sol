@@ -5,7 +5,7 @@
 // if importing uniswap v3 libraries this might not work
 pragma solidity ^0.8.9;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import './interfaces/IvToken.sol';
+import '../interfaces/IvToken.sol';
 
 contract vToken is ERC20, IvToken {
     address public immutable override realToken;
