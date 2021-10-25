@@ -69,27 +69,44 @@ describe('LiquidityPosition Library', () => {
   });
 
   describe('#netPosition', () => {
-    it('empty');
+    it('zero', async () => {
+      await test.initialize(-1, 1);
+
+      expect(await test.netPosition()).to.eq(0);
+    });
+
+    it('b increase and no liquidity', async () => {
+      await test.initialize(-1, 1);
+
+      await setWrapperValueInside({
+        tickLower: -1,
+        tickUpper: 1,
+        sumBInside: 1,
+      });
+
+      expect(await test.netPosition()).to.eq(0, 'should still be 0 as no liquidity');
+    });
   });
 
   async function setWrapperValueInside(val: {
     tickLower: number;
     tickUpper: number;
-    sumA: number;
-    sumBInside: number;
-    sumFpInside: number;
-    longsFeeGrowthInside: number;
-    shortsFeeGrowthInside: number;
+    sumA?: number;
+    sumBInside?: number;
+    sumFpInside?: number;
+    longsFeeGrowthInside?: number;
+    shortsFeeGrowthInside?: number;
   }) {
     const wrapper = await hre.ethers.getContractAt('VPoolWrapperMock', await test.wrapper());
+    const existingValues = await wrapper.getValuesInside(val.tickLower, val.tickUpper);
     await wrapper.setValuesInside(
       val.tickLower,
       val.tickUpper,
-      val.sumA,
-      val.sumBInside,
-      val.sumFpInside,
-      val.longsFeeGrowthInside,
-      val.shortsFeeGrowthInside,
+      val.sumA ?? existingValues.sumA,
+      val.sumBInside ?? existingValues.sumBInside,
+      val.sumFpInside ?? existingValues.sumFpInside,
+      val.longsFeeGrowthInside ?? existingValues.longsFeeGrowthInside,
+      val.shortsFeeGrowthInside ?? existingValues.shortsFeeGrowthInside,
     );
   }
 });
