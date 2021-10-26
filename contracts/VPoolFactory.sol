@@ -8,7 +8,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import './interfaces/IVPoolFactory.sol';
 import './interfaces/IOracleContract.sol';
-import './tokens/vToken.sol';
+import './tokens/VToken.sol';
 import './VPoolWrapper.sol';
 import './Constants.sol';
 
@@ -34,13 +34,15 @@ abstract contract VPoolFactory is IVPoolFactory {
     event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
 
     function initializePool(
+        string calldata vTokenName,
+        string calldata vTokenSymbol,
         address realToken,
         address oracleAddress,
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration
     ) external isAllowed {
-        address vTokenAddress = _deployVToken(realToken, oracleAddress);
+        address vTokenAddress = _deployVToken(vTokenName, vTokenSymbol, realToken, oracleAddress);
         address vPool = IUniswapV3Factory(UNISWAP_FACTORY_ADDRESS).createPool(
             VBASE_ADDRESS,
             vTokenAddress,
@@ -51,13 +53,21 @@ abstract contract VPoolFactory is IVPoolFactory {
         emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
 
-    function _deployVToken(address realToken, address oracleAddress) internal returns (address) {
+    function _deployVToken(
+        string calldata vTokenName,
+        string calldata vTokenSymbol,
+        address realToken,
+        address oracleAddress
+    ) internal returns (address) {
         // Pool for this token must not be already created
         require(realTokenInitilized[realToken] == false, 'Duplicate Pool');
 
         uint160 salt = uint160(realToken);
-        bytes memory bytecode = type(vToken).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(realToken, oracleAddress, address(this)));
+        bytes memory bytecode = type(VToken).creationCode;
+        bytecode = abi.encodePacked(
+            bytecode,
+            abi.encode(vTokenName, vTokenSymbol, realToken, oracleAddress, address(this))
+        );
         bytes32 byteCodeHash = keccak256(bytecode);
         bytes4 key;
         address vTokenAddress;

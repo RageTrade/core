@@ -7,22 +7,22 @@ const vPoolAddress = '0x039944268d8218c20c3e42eb9712ea0ac4ce589c';
 const vPoolWrapper = '0x5685089f7c6bf4cb3e0645f4972cba6d6b142cdc';
 const vBaseAddress = '0xcd8a1c3ba11cf5ecfa6267617243239504a98d90';
 
-describe('vTokenLib Library', () => {
+describe('VTokenLib Library', () => {
   let vTokenLib: VTokenLibTest;
   before(async () => {
-    const factory = await hre.ethers.getContractFactory('vTokenLibTest');
+    const factory = await hre.ethers.getContractFactory('VTokenLibTest');
     vTokenLib = (await factory.deploy()) as unknown as VTokenLibTest;
   });
 
   describe('Functions', () => {
     it('isToken0', async () => {
       const result = await vTokenLib.isToken0(vTokenAdddres);
-      expect(result).to.eq(true);
+      expect(result).to.be.true;
     });
 
     it('isToken1', async () => {
       const result = await vTokenLib.isToken1(vTokenAdddres);
-      expect(result).to.eq(false);
+      expect(result).to.be.false;
     });
 
     it('vPool', async () => {

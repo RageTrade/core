@@ -10,7 +10,7 @@ contract UtilsTest {
         return (uint160(_add));
     }
 
-    function getVbase() external pure returns (address) {
+    function getVBase() external pure returns (address) {
         return VBASE_ADDRESS;
     }
 }

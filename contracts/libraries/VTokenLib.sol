@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 import '../Constants.sol';
-import '../interfaces/IvToken.sol';
+import '../interfaces/IVToken.sol';
 import '../interfaces/IVPoolWrapper.sol';
 import '../interfaces/IOracleContract.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
@@ -10,7 +10,7 @@ import '../libraries/uniswapTwapSqrtPrice.sol';
 
 type VToken is address;
 
-library vTokenLib {
+library VTokenLib {
     
     function isToken0(VToken vToken) internal pure returns (bool) {
         return VToken.unwrap(vToken) < VBASE_ADDRESS;
@@ -43,7 +43,7 @@ library vTokenLib {
     }
     
     function realToken(VToken vToken) internal view returns (address) {
-        return IvToken(VToken.unwrap(vToken)).realToken(); 
+        return IVToken(VToken.unwrap(vToken)).realToken(); 
     }
 
     function getVirtualTwapSqrtPrice(VToken vToken) internal view returns (uint160) {
@@ -61,7 +61,7 @@ library vTokenLib {
     }
 
     function getRealTwapSqrtPrice(VToken vToken, uint32 twapDuration) internal view returns (uint160) {
-        address oracle = IvToken(VToken.unwrap(vToken)).oracle(); 
+        address oracle = IVToken(VToken.unwrap(vToken)).oracle(); 
         return IOracleContract(oracle).getSqrtPrice(twapDuration);
     }
 

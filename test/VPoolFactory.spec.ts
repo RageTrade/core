@@ -17,18 +17,18 @@ describe('VPoolFactory', () => {
   let VPoolWrapperByteCode: string;
 
   beforeEach(async () => {
-    await (await hre.ethers.getContractFactory('vBase')).deploy();
+    await (await hre.ethers.getContractFactory('VBase')).deploy();
     oracleContract = (await (await hre.ethers.getContractFactory('OracleContract')).deploy()).address;
     VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
-    vTokenByteCode = (await hre.ethers.getContractFactory('vToken')).bytecode;
+    vTokenByteCode = (await hre.ethers.getContractFactory('VToken')).bytecode;
   });
 
   describe('Initilize', () => {
     it('Deployments', async () => {
-      await VPoolFactory.initializePool(realToken, oracleContract, 2, 3, 60);
+      await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracleContract, 2, 3, 60);
       const eventFilter = VPoolFactory.filters.poolInitlized();
       const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
       const vPool = events[0].args[0];
@@ -44,8 +44,8 @@ describe('VPoolFactory', () => {
         [
           vTokenByteCode,
           utils.defaultAbiCoder.encode(
-            ['address', 'address', 'address'],
-            [realToken, oracleContract, VPoolFactory.address],
+            ['string', 'string', 'address', 'address', 'address'],
+            ['vWETH', 'vWETH', realToken, oracleContract, VPoolFactory.address],
           ),
         ],
       );
@@ -53,16 +53,21 @@ describe('VPoolFactory', () => {
       expect(vTokenAddress).to.eq(vTokenComputedAddress);
 
       // VToken : Cons Params
-      const vToken = await hre.ethers.getContractAt('vToken', vTokenAddress);
+      const vToken = await hre.ethers.getContractAt('VToken', vTokenAddress);
+      const vToken_state_name = await vToken.name();
+      const vToken_state_symbol = await vToken.symbol();
       const vToken_state_realToken = await vToken.realToken();
       const vToken_state_oracle = await vToken.oracle();
       const vToken_state_perpState = await vToken.perpState();
+
+      expect(vToken_state_name).to.eq('vWETH');
+      expect(vToken_state_symbol).to.eq('vWETH');
       expect(vToken_state_realToken.toLowerCase()).to.eq(realToken);
       expect(vToken_state_oracle).to.eq(oracleContract);
       expect(vToken_state_perpState.toLowerCase()).to.eq(VPoolFactory.address.toLowerCase());
 
       // VPool : Create2
-      const vBase = await UtilsTestContract.getVbase();
+      const vBase = await UtilsTestContract.getVBase();
       salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, vBase, 500]);
       const vPoolCalculated = getCreate2Address2(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
       expect(vPool).to.eq(vPoolCalculated);
