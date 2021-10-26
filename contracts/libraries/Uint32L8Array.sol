@@ -5,8 +5,14 @@ pragma solidity ^0.8.9;
 library Uint32L8ArrayLib {
     using Uint32L8ArrayLib for uint32[8];
 
+    error IllegalElement(uint32 element);
+    error NoSpaceLeftToInsert(uint32 element);
+
     function include(uint32[8] storage array, uint32 element) internal {
-        require(element != 0, 'Uint32L8ArrayLib:include:A');
+        if (element == 0) {
+            revert IllegalElement(0);
+        }
+
         uint256 emptyIndex = 8; // max index is 7
         for (uint256 i; i < 8; i++) {
             if (array[i] == element) {
@@ -17,13 +23,17 @@ library Uint32L8ArrayLib {
             }
         }
 
-        require(emptyIndex != 8, 'Uint32L8ArrayLib:include:B');
+        if (emptyIndex == 8) {
+            revert NoSpaceLeftToInsert(element);
+        }
 
         array[emptyIndex] = element;
     }
 
     function exclude(uint32[8] storage array, uint32 element) internal {
-        require(element != 0, 'Uint32L8ArrayLib:exclude');
+        if (element == 0) {
+            revert IllegalElement(0);
+        }
 
         uint256 elementIndex = 8;
         uint256 i;
@@ -46,5 +56,18 @@ library Uint32L8ArrayLib {
                 (array[elementIndex], array[i]) = (array[i], 0);
             }
         }
+    }
+
+    function indexOf(uint32[8] storage array, uint32 element) internal view returns (uint8) {
+        for (uint8 i; i < 8; i++) {
+            if (array[i] == element) {
+                return i;
+            }
+        }
+        return 255;
+    }
+
+    function exists(uint32[8] storage array, uint32 element) internal view returns (bool) {
+        return array.indexOf(element) != 255;
     }
 }
