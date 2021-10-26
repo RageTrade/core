@@ -6,13 +6,13 @@ import './libraries/uniswapTwapSqrtPrice.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
-import './interfaces/IvPoolFactory.sol';
+import './interfaces/IVPoolFactory.sol';
 import './interfaces/IOracleContract.sol';
 import './tokens/vToken.sol';
 import './VPoolWrapper.sol';
 import './Constants.sol';
 
-abstract contract VPoolFactory is IvPoolFactory {
+abstract contract VPoolFactory is IVPoolFactory {
     struct Parameters {
         uint16 initialMargin;
         uint16 maintainanceMargin;

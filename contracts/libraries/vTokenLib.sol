@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 import '../Constants.sol';
 import '../interfaces/IvToken.sol';
-import '../interfaces/IvPoolWrapper.sol';
+import '../interfaces/IVPoolWrapper.sol';
 import '../interfaces/IOracleContract.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
 import '../libraries/uniswapTwapSqrtPrice.sol';
@@ -47,12 +47,12 @@ library vTokenLib {
     }
 
     function getVirtualTwapSqrtPrice(VToken vToken) internal view returns (uint160) {
-        IvPoolWrapper poolWrapper = IvPoolWrapper(vPoolWrapper(vToken));
+        IVPoolWrapper poolWrapper = IVPoolWrapper(vPoolWrapper(vToken));
         return getVirtualTwapSqrtPrice(vToken, poolWrapper.timeHorizon());
     }
 
     function getRealTwapSqrtPrice(VToken vToken) internal view returns (uint160) {
-        IvPoolWrapper poolWrapper = IvPoolWrapper(vPoolWrapper(vToken));
+        IVPoolWrapper poolWrapper = IVPoolWrapper(vPoolWrapper(vToken));
         return getRealTwapSqrtPrice(vToken, poolWrapper.timeHorizon());
     }
 
@@ -66,7 +66,7 @@ library vTokenLib {
     }
 
     function getMarginRatio(VToken vToken, bool isInitialMargin) internal view returns (uint16){
-        IvPoolWrapper poolWrapper = IvPoolWrapper(vPoolWrapper(vToken));
+        IVPoolWrapper poolWrapper = IVPoolWrapper(vPoolWrapper(vToken));
         if(isInitialMargin){
             return poolWrapper.initialMarginRatio();
         } else {
