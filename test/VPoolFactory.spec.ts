@@ -17,6 +17,7 @@ describe('VPoolFactory', () => {
   let VPoolWrapperByteCode: string;
 
   beforeEach(async () => {
+    await (await hre.ethers.getContractFactory('vBase')).deploy();
     oracleContract = (await (await hre.ethers.getContractFactory('OracleContract')).deploy()).address;
     VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
@@ -34,6 +35,7 @@ describe('VPoolFactory', () => {
       const vTokenAddress = events[0].args[1];
       const vPoolWrapper = events[0].args[2];
 
+      // console.log(vTokenAddress, vPool, vPoolWrapper);
       // VToken : Create2
       const saltInUint160 = await UtilsTestContract.convertAddressToUint160(realToken);
       let salt = utils.defaultAbiCoder.encode(['uint160'], [saltInUint160]);

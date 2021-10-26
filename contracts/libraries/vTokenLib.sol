@@ -4,18 +4,19 @@ pragma solidity ^0.8.9;
 import '../Constants.sol';
 import '../interfaces/IvToken.sol';
 import '../interfaces/IvPoolWrapper.sol';
+import '../interfaces/IOracleContract.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
 import '../libraries/uniswapTwapSqrtPrice.sol';
 
 type VToken is address;
 
-library VTokenLib {
+library vTokenLib {
     
-    function isToken0(address vToken) internal pure returns (bool) {
-        return uint160(vToken) < uint160(VBASE_ADDRESS);
+    function isToken0(VToken vToken) internal pure returns (bool) {
+        return VToken.unwrap(vToken) < VBASE_ADDRESS;
     }
 
-    function isToken1(address vToken) internal pure returns (bool){
+    function isToken1(VToken vToken) internal pure returns (bool){
         return !isToken0(vToken);
     }
 
@@ -24,7 +25,7 @@ library VTokenLib {
         address token1;
         address vTokenAddress = VToken.unwrap(vToken);
 
-        if(isToken0(vTokenAddress))
+        if(isToken0(vToken))
         {
             token0 = vTokenAddress;
             token1 = VBASE_ADDRESS;
@@ -38,30 +39,11 @@ library VTokenLib {
     }
     
     function vPoolWrapper(VToken vToken) internal pure returns (address) {
-        return Create2.computeAddress(keccak256(abi.encodePacked(VToken.unwrap(vToken), VBASE_ADDRESS)),WRAPPER_BYTE_CODE_HASH, DEPLOYER);
+        return Create2.computeAddress(keccak256(abi.encode(VToken.unwrap(vToken), VBASE_ADDRESS)),WRAPPER_BYTE_CODE_HASH, VPOOL_FACTORY);
     }
     
     function realToken(VToken vToken) internal view returns (address) {
-        return IvToken(VToken.unwrap(vToken)).realToken(); // TODO implement
-    }
-
-    function realPool(VToken vToken) internal view returns (address) {
-        address token0;
-        address token1;
-        address realTokenAddress = realToken(vToken);
-
-        if(isToken0(realTokenAddress))
-        {
-            token0 = realTokenAddress;
-            token1 = REAL_BASE_ADDRESS;
-        }
-        else
-        {
-            token0 = REAL_BASE_ADDRESS;
-            token1 = realTokenAddress;
-        }
-        // Dependancy : Real Pool has to be of DEFAULT_FEE_TIER
-        return Create2.computeAddress(keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)) ,POOL_BYTE_CODE_HASH, UNISWAP_FACTORY_ADDRESS);
+        return IvToken(VToken.unwrap(vToken)).realToken(); 
     }
 
     function getVirtualTwapSqrtPrice(VToken vToken) internal view returns (uint160) {
@@ -79,7 +61,8 @@ library VTokenLib {
     }
 
     function getRealTwapSqrtPrice(VToken vToken, uint32 twapDuration) internal view returns (uint160) {
-        return UniswapTwapSqrtPrice.get(realPool(vToken), twapDuration);
+        address oracle = IvToken(VToken.unwrap(vToken)).oracle(); 
+        return IOracleContract(oracle).getSqrtPrice(twapDuration);
     }
 
     function getMarginRatio(VToken vToken, bool isInitialMargin) internal view returns (uint16){
