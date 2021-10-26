@@ -18,9 +18,9 @@ library LiquidityPosition {
         // the liquidity of the position
         uint128 liquidity;
         // funding payment checkpoints
-        uint256 sumALast;
-        uint256 sumBInsideLast;
-        uint256 sumFpInsideLast;
+        int256 sumALast;
+        int256 sumBInsideLast;
+        int256 sumFpInsideLast;
         // the fee growth of the aggregate position as of the last action on the individual position
         // TODO since both of them are in vBase denomination, is a single fee var enough?
         // uint256 feeGrowthInsideLongsLastX128; // in uniswap's tick state
@@ -34,40 +34,92 @@ library LiquidityPosition {
     }
 
     function initialize(
-        Info storage info,
+        Info storage position,
         int24 tickLower,
         int24 tickUpper
     ) internal {
-        if (info.isInitialized()) {
+        if (position.isInitialized()) {
             revert AlreadyInitialized();
         }
 
-        info.tickLower = tickLower;
-        info.tickUpper = tickUpper;
+        position.tickLower = tickLower;
+        position.tickUpper = tickUpper;
     }
 
-    function updateCheckpoints(
-        Info storage info,
+    function liquidityChange(
+        Info storage position,
+        int128 liquidity,
+        IVPoolWrapper wrapper
+    )
+        internal
+        returns (
+            int256 vBaseIncrease,
+            int256 vTokenIncrease,
+            int256 traderPositionIncrease
+        )
+    {
+        (vBaseIncrease, vTokenIncrease) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
+
+        (int256 b, int256 tp) = position.update(wrapper);
+        vBaseIncrease += b;
+        traderPositionIncrease += tp;
+
+        if (liquidity >= 0) {
+            position.liquidity += uint128(liquidity);
+        } else {
+            position.liquidity -= uint128(liquidity);
+        }
+    }
+
+    function update(
+        Info storage position,
         IVPoolWrapper wrapper // TODO use vTokenLib
-    ) internal {
+    ) internal returns (int256 vBaseIncrease, int256 traderPositionIncrease) {
         (
-            uint256 sumALast,
-            uint256 sumBInsideLast,
-            uint256 sumFpInsideLast,
-            uint256 longsFeeGrowthInsideLast,
-            uint256 shortsFeeGrowthInsideLast
-        ) = wrapper.getValuesInside(info.tickLower, info.tickUpper);
+            int256 sumA,
+            int256 sumBInside,
+            int256 sumFpInside,
+            uint256 longsFeeGrowthInside,
+            uint256 shortsFeeGrowthInside
+        ) = wrapper.getValuesInside(position.tickLower, position.tickUpper);
 
-        info.sumALast = sumALast;
-        info.sumBInsideLast = sumBInsideLast;
-        info.sumFpInsideLast = sumFpInsideLast;
-        info.longsFeeGrowthInsideLast = longsFeeGrowthInsideLast;
-        info.shortsFeeGrowthInsideLast = shortsFeeGrowthInsideLast;
+        vBaseIncrease = position.unrealizedFundingPayment(sumA, sumFpInside);
+        traderPositionIncrease = position.netPosition(sumBInside);
+
+        vBaseIncrease += int256(position.unrealizedFees(longsFeeGrowthInside, shortsFeeGrowthInside));
+
+        // updating checkpoints
+        position.sumALast = sumA;
+        position.sumBInsideLast = sumBInside;
+        position.sumFpInsideLast = sumFpInside;
+        position.longsFeeGrowthInsideLast = longsFeeGrowthInside;
+        position.shortsFeeGrowthInsideLast = shortsFeeGrowthInside;
     }
 
-    function netPosition(Info storage info, IVPoolWrapper wrapper) internal view returns (uint256) {
-        (, uint256 sumBInside, , , ) = wrapper.getValuesInside(info.tickLower, info.tickUpper);
-        return (sumBInside - info.sumBInsideLast) * info.liquidity;
+    function netPosition(Info storage position, IVPoolWrapper wrapper) internal view returns (int256) {
+        (, int256 sumBInside, , , ) = wrapper.getValuesInside(position.tickLower, position.tickUpper);
+        return position.netPosition(sumBInside);
+    }
+
+    function netPosition(Info storage position, int256 sumBInside) internal view returns (int256) {
+        return (sumBInside - position.sumBInsideLast) * int128(position.liquidity);
+    }
+
+    function unrealizedFundingPayment(
+        Info storage position,
+        int256 sumA,
+        int256 sumFpInside
+    ) internal view returns (int256 vBaseIncrease) {
+        vBaseIncrease = sumFpInside - (position.sumFpInsideLast + position.sumBInsideLast * (sumA - position.sumALast));
+    }
+
+    function unrealizedFees(
+        Info storage position,
+        uint256 longsFeeGrowthInside,
+        uint256 shortsFeeGrowthInside
+    ) internal view returns (uint256 vBaseIncrease) {
+        vBaseIncrease = (longsFeeGrowthInside - position.longsFeeGrowthInsideLast) * position.liquidity;
+        vBaseIncrease += (shortsFeeGrowthInside - position.shortsFeeGrowthInsideLast) * position.liquidity;
     }
 
     // function getMaxTokenPosition(info) {}

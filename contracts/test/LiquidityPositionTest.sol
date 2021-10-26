@@ -23,10 +23,10 @@ contract LiquidityPositionTest {
     }
 
     function updateCheckpoints() external {
-        lp.updateCheckpoints(wrapper);
+        lp.update(wrapper);
     }
 
-    function netPosition() public view returns (uint256) {
+    function netPosition() public view returns (int256) {
         return lp.netPosition(wrapper);
     }
 }
