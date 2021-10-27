@@ -29,19 +29,19 @@ describe('Tick Util Library', () => {
         const startTS = BigNumber.from(5000);
         const endTS = BigNumber.from(10000); 
 
-        const price = BigNumber.from(4000);
+        const price = BigNumber.from('4000000000000000000000');
 
-        const tickSumA = BigNumber.from(20);
-        const tickSumBOutside = BigNumber.from(1);
-        const tickSumFPOutside = BigNumber.from(50);
-        const tickFeeGrowthOutsideShortsX128 = BigNumber.from(10);
+        const tickSumA = BigNumber.from('20000000000000000000');
+        const tickSumBOutside = BigNumber.from('1000000000000000000');
+        const tickSumFPOutside = BigNumber.from('50000000000000000000');
+        const tickFeeGrowthOutsideShortsX128 = BigNumber.from('10000000000000000000');
         
-        const globalSumA = BigNumber.from(30);
-        const globalSumB = BigNumber.from(150);
-        const globalSumFP = BigNumber.from(100);
+        const globalSumA = BigNumber.from('30000000000000000000');
+        const globalSumB = BigNumber.from('150000000000000000000');
+        const globalSumFP = BigNumber.from('100000000000000000000');
         const globalLastTradeTS = startTS;
         const globalFundingRate = BigNumber.from(5000);
-        const globalFeeGrowthGlobalShortsX128 = BigNumber.from(50);
+        const globalFeeGrowthGlobalShortsX128 = BigNumber.from('50000000000000000000');
         
         await test.initializeTickState(tickSumA,tickSumBOutside,tickSumFPOutside,
             tickFeeGrowthOutsideShortsX128);
