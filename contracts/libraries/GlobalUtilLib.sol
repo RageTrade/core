@@ -35,15 +35,13 @@ library GlobalUtilLib {
         return sumFPCkpt + sumBCkpt *  (global.getExtrapolatedSumA(blockTimestamp) - sumACkpt);
     }
 
-    //TODO:use vToken
+    function calculateFundingRate(GlobalState storage global) internal view
+    returns(int16) {
+        int160 vPrice = int160(global.vToken.getVirtualTwapPrice());
+        int160 rPrice = int160(global.vToken.getRealTwapPrice());
 
-    // function calculateFundingRate(VToken vToken) internal
-    // returns(uint256) {
-    //     uint64 vPrice = vToken.getVirtualTwapPrice();
-    //     uint64 rPrice = vToken.getRealTwapPrice();
-
-    //     return (vPrice/rPrice)-1;
-    // }
+        return int16((vPrice-rPrice)*(10**6)/rPrice);
+    }
 
     function updateOnTrade(GlobalState storage global, int256 tokenAmount, uint256 fees, uint256 liquidity,  uint48 blockTimestamp) internal{
     //sumFP should be updated before updating sumB and lastTradeTS

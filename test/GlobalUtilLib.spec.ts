@@ -243,4 +243,18 @@ describe('Tick Util Library', () => {
     });
 
   });
+
+  describe('#Funding Rate', () => {
+    it('All Positions', async () => {
+        
+        const virtualPrice = BigNumber.from('4000000000000000000000');
+        const realPrice = BigNumber.from('4100000000000000000000');
+
+        const fundingRate = await test.calculateFundingRate();
+
+        expect(fundingRate).to.eq((virtualPrice.sub(realPrice).mul(10**6)).div(realPrice));
+
+    });
+
+  });
 });
