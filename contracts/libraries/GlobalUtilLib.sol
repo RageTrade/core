@@ -22,7 +22,7 @@ library GlobalUtilLib {
     function getVirtualTwapPrice(uint256 diffTS) pure internal 
     returns(uint256){
         //TODO: Use vTokenLib
-        return 4000;
+        return 4000000000000000000000;
     }
 
     function getExtrapolatedSumA(GlobalState storage global, uint48 blockTimestamp) view internal
