@@ -29,4 +29,14 @@ contract LiquidityPositionTest {
     function netPosition() public view returns (int256) {
         return lp.netPosition(wrapper);
     }
+
+    event LiquidityChangeReturn(int256 vBaseIncrease, int256 vTokenIncrease, int256 traderPositionIncrease);
+
+    function liquidityChange(int128 liquidity) public {
+        (int256 vBaseIncrease, int256 vTokenIncrease, int256 traderPositionIncrease) = lp.liquidityChange(
+            liquidity,
+            wrapper
+        );
+        emit LiquidityChangeReturn(vBaseIncrease, vTokenIncrease, traderPositionIncrease);
+    }
 }

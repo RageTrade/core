@@ -45,7 +45,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
         getValuesInside[tickLower][tickUpper].shortsFeeGrowthInside = shortsFeeGrowthInside;
     }
 
-    uint256 _liquidity;
+    int256 _liquidity;
 
     function liquidityChange(
         int24 tickLower,
@@ -53,9 +53,9 @@ contract VPoolWrapperMock is IVPoolWrapper {
         int256 liquidity
     ) external returns (int256 vBaseAmount, int256 vTokenAmount) {
         if (liquidity > 0) {
-            _liquidity += uint256(liquidity);
+            _liquidity += liquidity;
         } else {
-            _liquidity -= uint256(liquidity);
+            _liquidity -= liquidity;
         }
 
         vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity;

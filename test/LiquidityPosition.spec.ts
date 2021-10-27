@@ -68,14 +68,34 @@ describe('LiquidityPosition Library', () => {
     });
   });
 
+  describe('#liquidityChange', () => {
+    it('increase', async () => {
+      await test.initialize(-1, 1);
+      await test.liquidityChange(1);
+      expect((await test.lp()).liquidity.toNumber()).to.eq(1, '1*1');
+    });
+
+    it('decrease', async () => {
+      await test.initialize(-1, 1);
+      await test.liquidityChange(1);
+      await test.liquidityChange(-1);
+      expect((await test.lp()).liquidity.toNumber()).to.eq(0);
+    });
+
+    it('overflow', async () => {
+      await test.initialize(-1, 1);
+      expect(test.liquidityChange(-1)).to.be.revertedWith('panic code 0x11');
+    });
+  });
+
   describe('#netPosition', () => {
-    it('zero', async () => {
+    it('sumB=0', async () => {
       await test.initialize(-1, 1);
 
       expect(await test.netPosition()).to.eq(0);
     });
 
-    it('b increase and no liquidity', async () => {
+    it('sumB=1 and liquidity=0', async () => {
       await test.initialize(-1, 1);
 
       await setWrapperValueInside({
@@ -85,6 +105,32 @@ describe('LiquidityPosition Library', () => {
       });
 
       expect(await test.netPosition()).to.eq(0, 'should still be 0 as no liquidity');
+    });
+
+    it('sumB=1 and liquidity=1', async () => {
+      await test.initialize(-1, 1);
+      await test.liquidityChange(1);
+
+      await setWrapperValueInside({
+        tickLower: -1,
+        tickUpper: 1,
+        sumBInside: 1,
+      });
+
+      expect(await test.netPosition()).to.eq(1, '1*1');
+    });
+
+    it('sumB=-1 and liquidity=1', async () => {
+      await test.initialize(-1, 1);
+      await test.liquidityChange(1);
+
+      await setWrapperValueInside({
+        tickLower: -1,
+        tickUpper: 1,
+        sumBInside: -1,
+      });
+
+      expect(await test.netPosition()).to.eq(-1, '1*-1');
     });
   });
 
