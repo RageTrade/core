@@ -114,8 +114,9 @@ describe('Tick Util Library', () => {
         const globalFundingRate = BigNumber.from(10);
         const globalFeeGrowthGlobalShortsX128 = BigNumber.from('50000000000000000000');
         
-        const tradeB = BigNumber.from('1000000000000000000');
-        const feePerLiquidity = BigNumber.from('1000000000000000000');
+        const tradeAmount = BigNumber.from('1000000000000000000');
+        const fees = BigNumber.from('1000000000000000000');
+        const liquidity = BigNumber.from('2000000000000000000000')
 
         const price = BigNumber.from('4000000000000000000000');
 
@@ -123,16 +124,16 @@ describe('Tick Util Library', () => {
             globalLastTradeTS,globalFundingRate,globalFeeGrowthGlobalShortsX128);
 
         await test.setBlockTimestamp(endTS)
-        await test.simulateUpdateOnTrade(tradeB,feePerLiquidity);
+        await test.simulateUpdateOnTrade(tradeAmount,fees,liquidity);
 
         const global = await test.global();
 
         const a = price.mul(endTS.sub(globalLastTradeTS));
 
         expect(global.sumA).to.eq(globalSumA.add(a));
-        expect(global.sumB).to.eq(globalSumB.add(tradeB));
+        expect(global.sumB).to.eq(globalSumB.add(tradeAmount.mul('1000000000000000000').div(liquidity)));
         expect(global.sumFP).to.eq(globalSumFP.add((globalFundingRate.mul(a).mul(globalSumB)).div(fundingRateNormalizer)));
-        expect(global.feeGrowthGlobalShortsX128).to.eq(globalFeeGrowthGlobalShortsX128.add(feePerLiquidity));
+        expect(global.feeGrowthGlobalShortsX128).to.eq(globalFeeGrowthGlobalShortsX128.add(fees.mul('1000000000000000000').div(liquidity)));
 
     });
 

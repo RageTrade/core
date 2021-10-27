@@ -71,8 +71,8 @@ contract GlobalUtilLibTest {
         return (global.getExtrapolatedSumFP(sumACkpt,sumBCkpt,sumFPCkpt,blockTimestamp));
     }
 
-    function simulateUpdateOnTrade(int256 b, uint256 feePerLiquidity) external {
-        global.updateOnTrade(b, feePerLiquidity, blockTimestamp);
+    function simulateUpdateOnTrade(int256 tokenAmount, uint256 fees, uint256 liquidity) external {
+        global.updateOnTrade(tokenAmount, fees, liquidity, blockTimestamp);
     }
 
     function getUpdatedLPState() external view returns(int256,int256,int256,uint256){
