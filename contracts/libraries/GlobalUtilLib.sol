@@ -5,13 +5,16 @@ import {TickUtilLib} from './TickUtilLib.sol';
 
 
 library GlobalUtilLib {
+    using GlobalUtilLib for GlobalState;
+    int256 constant fundingRateNormalizer = 10000*100*3600; 
+
     struct GlobalState {
         int256 sumB;
         int256 sumFP;
-        uint256 lastTradeTS;
+        uint48 lastTradeTS;
         int256 sumA;
 
-        int16 fundingRate;
+        int16 fundingRate; // (funding rate/hr in %) * 10000
 
         uint256 feeGrowthGlobalShortsX128; // see if Binary Fixed point is needed or not
     }
@@ -19,18 +22,19 @@ library GlobalUtilLib {
     function getVirtualTwapPrice(uint256 diffTS) pure internal 
     returns(uint256){
         //TODO: Use vTokenLib
-        return diffTS*1000;
+        return 4000;
     }
 
-    function getExtrapolatedSumA(GlobalState storage global, uint256 currentTS) view public
+    function getExtrapolatedSumA(GlobalState storage global) view internal
     returns(int256) {
-        uint256 diffTS = currentTS-global.lastTradeTS;
-        return global.sumA + global.fundingRate*int(getVirtualTwapPrice(diffTS)*(diffTS));
+        uint48 curTS = uint48(block.timestamp);
+        uint48 diffTS = curTS-global.lastTradeTS;
+        return global.sumA + (global.fundingRate*int(getVirtualTwapPrice(diffTS)*(diffTS)))/fundingRateNormalizer;
     }
 
-    function getExtrapolatedSumFP(GlobalState storage global, int256 sumACkpt, int256 sumBCkpt, int256 sumFPCkpt, uint256 currentTS) view public 
+    function getExtrapolatedSumFP(GlobalState storage global, int256 sumACkpt, int256 sumBCkpt, int256 sumFPCkpt) view internal 
     returns (int256) {
-        return sumFPCkpt + sumBCkpt *  getExtrapolatedSumA(global, currentTS) - sumACkpt;
+        return sumFPCkpt + sumBCkpt *  (global.getExtrapolatedSumA() - sumACkpt);
     }
 
     //TODO:use vToken
@@ -47,64 +51,106 @@ library GlobalUtilLib {
     //sumFP should be updated before updating sumB and lastTradeTS
 
         //TODO: block.timestamp is uint256 check
-        uint256 curTS = block.timestamp;
-        uint256 diffTS = curTS - global.lastTradeTS;
+        uint48 curTS = uint48(block.timestamp);
+        uint48 diffTS = curTS - global.lastTradeTS;
 
         //TODO: check if the conversion needs to be removed
         global.lastTradeTS = curTS;
 
         //TODO: Use vToken
-        int256 a = 1000 ;//vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
-        global.sumFP = global.sumFP + global.fundingRate *a* global.sumB; 
+        int256 a = int256(getVirtualTwapPrice(diffTS))*int48(diffTS);//vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
+        global.sumFP = global.sumFP + (global.fundingRate *a* global.sumB)/fundingRateNormalizer; 
         global.sumA = global.sumA + a;
         global.sumB = global.sumB + b;
 
         global.feeGrowthGlobalShortsX128 += feePerLiquidity;
     }
 
-    function getPricePosition(uint256 currentPrice, uint256 tickLowerPrice, uint256 tickHigherPrice) pure public
+    function getPricePosition(int24 curPriceIndex, int24 tickLowerIndex, int24 tickHigherIndex) pure internal
     returns(uint8){
-        if(currentPrice<tickLowerPrice) return 0;
-        else if(currentPrice<tickHigherPrice) return 1;
+        if(curPriceIndex<tickLowerIndex) return 0;
+        else if(curPriceIndex<tickHigherIndex) return 1;
         else return 2;
     }
 
-    function getUpdatedLPState(GlobalState storage global, TickUtilLib.TickState storage tickLower, TickUtilLib.TickState storage tickHigher, int256 sumFPInsideCkpt, uint256 currentTS) external view
+    // function getSumBInside(GlobalState storage global, TickUtilLib.TickState storage tickLower, TickUtilLib.TickState storage tickHigher, uint8 pricePosition) internal view
+    // returns (int256){
+    //     if(pricePosition==0){
+    //         return tickLower.sumBOutside - tickHigher.sumBOutside;
+    //     } else if( pricePosition==1){
+    //         return global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside;
+    //     } else {
+    //         return tickHigher.sumBOutside - tickLower.sumBOutside;
+    //     }
+    // }
+
+    // function getSumFPInside(GlobalState storage global, TickUtilLib.TickState storage tickLower, TickUtilLib.TickState storage tickHigher, uint8 pricePosition) internal view
+    // returns (int256){
+    //     if(pricePosition==0){
+    //         return global.getExtrapolatedSumFP(tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside) - global.getExtrapolatedSumFP(tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside);
+    //     } else if( pricePosition==1){
+    //         return global.sumFP - global.getExtrapolatedSumFP(tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside) - global.getExtrapolatedSumFP(tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside);
+    //     } else {
+    //         return global.getExtrapolatedSumFP(tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside) - global.getExtrapolatedSumFP(tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside);
+    //     }
+    // }
+
+    // function getFeesShortsInside(GlobalState storage global, TickUtilLib.TickState storage tickLower, TickUtilLib.TickState storage tickHigher, uint8 pricePosition) internal view
+    // returns (uint256){
+    //     if(pricePosition==0){
+    //         return tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128;
+    //     } else if( pricePosition==1){
+    //         return global.feeGrowthGlobalShortsX128 - tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128;
+    //     } else {
+    //         return tickHigher.feeGrowthOutsideShortsX128 - tickLower.feeGrowthOutsideShortsX128;
+    //     }
+    // }
+
+    function getUpdatedLPStateInternal(GlobalState storage global, TickUtilLib.TickState storage tickLower, TickUtilLib.TickState storage tickHigher, uint8 pricePosition) internal view
     returns (int256,int256,int256,uint256){
-        //TODO: Correct current price code
-        // uint256 currentPrice = 1000;//getVirtualTwapPrice(timeHorizon);
-        // uint256 tickLowerPrice =500;
-        // uint256 tickHigherPrice = 1500;
-        uint8 pricePosition = 0;//getPricePosition(currentPrice, tickLowerPrice, tickHigherPrice);
-
-        // int256 sumANew = getExtrapolatedSumA(global,currentTS);
-
-        // int256 exTickLowerFPOutside = getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS);
-        // int256 exTickHigherFPOutside = getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS);
+        // return( 
+        //     global.getExtrapolatedSumA(),
+        //     global.getSumBInside(tickLower,tickHigher,pricePosition),
+        //     global.getSumFPInside(tickLower, tickHigher,pricePosition),
+        //     global.getFeesShortsInside(tickLower,tickHigher,pricePosition)
+        //     );  
 
         if(pricePosition==0){
-            return
-            (getExtrapolatedSumA(global,currentTS),
-            tickLower.sumBOutside - tickHigher.sumBOutside,
-            sumFPInsideCkpt + getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS) - getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS),
-            tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128);
-        }
-        else if(pricePosition==1){
             return(
-                getExtrapolatedSumA(global,currentTS),
-                global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside,
-                sumFPInsideCkpt + global.sumFP - getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS) - getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS),
+                global.getExtrapolatedSumA(),
+                tickLower.sumBOutside - tickHigher.sumBOutside,
+                global.getExtrapolatedSumFP(tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside) - global.getExtrapolatedSumFP(tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside),
                 tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128
                 );
         }
-        else if(pricePosition==2){
+        else if(pricePosition==1){
             return(
-            getExtrapolatedSumA(global,currentTS),
-            global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside,
-            global.sumFP - getExtrapolatedSumFP(global,tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside,currentTS) - getExtrapolatedSumFP(global,tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside,currentTS),
-            global.feeGrowthGlobalShortsX128 - tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128);
+                global.getExtrapolatedSumA(),
+                global.sumB - tickHigher.sumBOutside - tickLower.sumBOutside,
+                global.sumFP - global.getExtrapolatedSumFP(tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside) - global.getExtrapolatedSumFP(tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside),
+                global.feeGrowthGlobalShortsX128 - tickLower.feeGrowthOutsideShortsX128 - tickHigher.feeGrowthOutsideShortsX128
+                );
+        }
+        else {
+            return(
+                global.getExtrapolatedSumA(),
+                tickHigher.sumBOutside - tickLower.sumBOutside,
+                global.getExtrapolatedSumFP(tickHigher.sumA,tickHigher.sumBOutside,tickHigher.sumFPOutside) - global.getExtrapolatedSumFP(tickLower.sumA,tickLower.sumBOutside,tickLower.sumFPOutside),
+                tickHigher.feeGrowthOutsideShortsX128 - tickLower.feeGrowthOutsideShortsX128
+                );
+
         }
 
+    }
+
+    //SumFP Ckpt removed because of stack too deep. Can be added outside.
+    function getUpdatedLPState(GlobalState storage global, TickUtilLib.TickState storage tickLower, TickUtilLib.TickState storage tickHigher, int24 tickLowerIndex, int24 tickHigherIndex) internal view
+    returns (int256,int256,int256,uint256){
+        //TODO: Correct current price code
+        int24 curPriceIndex = 1000;//getVirtualTwapPrice(timeHorizon);
+        uint8 pricePosition = getPricePosition(curPriceIndex,tickLowerIndex,tickHigherIndex);
+        
+        return global.getUpdatedLPStateInternal(tickLower,tickHigher,pricePosition);
     }
 
 }
