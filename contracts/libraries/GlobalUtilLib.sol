@@ -2,10 +2,11 @@
 
 pragma solidity ^0.8.9;
 import {TickUtilLib} from './TickUtilLib.sol';
-
+import {VTokenLib,VToken} from './vTokenLib.sol';
 
 library GlobalUtilLib {
     using GlobalUtilLib for GlobalState;
+    using VTokenLib for VToken;
     int256 constant fundingRateNormalizer = 10000*100*3600; 
     uint256 constant amountNormalizer = 10**18; 
 
@@ -17,20 +18,16 @@ library GlobalUtilLib {
 
         int16 fundingRate; // (funding rate/hr in %) * 10000
 
-        uint256 feeGrowthGlobalShortsX128; // see if Binary Fixed point is needed or not
-    }
+        VToken vToken;
 
-    function getVirtualTwapPrice(uint256 diffTS) pure internal 
-    returns(uint256){
-        //TODO: Use vTokenLib
-        return 4000000000000000000000;
+        uint256 feeGrowthGlobalShortsX128; // see if Binary Fixed point is needed or not
     }
 
     function getExtrapolatedSumA(GlobalState storage global, uint48 blockTimestamp) view internal
     returns(int256) {
         // uint48 blockTimestamp = uint48(block.timestamp);
         uint48 diffTS = blockTimestamp-global.lastTradeTS;
-        return global.sumA + (global.fundingRate*int(getVirtualTwapPrice(diffTS)*(diffTS)))/fundingRateNormalizer;
+        return global.sumA + (global.fundingRate*int(uint(global.vToken.getVirtualTwapPrice()*(diffTS))))/fundingRateNormalizer;
     }
 
     function getExtrapolatedSumFP(GlobalState storage global, int256 sumACkpt, int256 sumBCkpt, int256 sumFPCkpt, uint48 blockTimestamp) view internal 
@@ -59,7 +56,7 @@ library GlobalUtilLib {
         global.lastTradeTS = blockTimestamp;
 
         //TODO: Use vToken
-        int256 a = int256(getVirtualTwapPrice(diffTS))*int48(diffTS);//vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
+        int256 a = int256(uint256(global.vToken.getVirtualTwapPrice()))*int48(diffTS);//vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
         global.sumFP = global.sumFP + (global.fundingRate *a* global.sumB)/fundingRateNormalizer; 
         global.sumA = global.sumA + a;
         global.sumB = global.sumB + tokenAmount*int(amountNormalizer)/int(liquidity);
@@ -148,7 +145,7 @@ library GlobalUtilLib {
     function getUpdatedLPState(GlobalState storage global, TickUtilLib.TickLowerHigher storage tickLowerHigher, int24 tickLowerIndex, int24 tickHigherIndex, uint48 blockTimestamp) internal view
     returns (int256,int256,int256,uint256){
         //TODO: Correct current price code
-        int24 curPriceIndex = 1000;//getVirtualTwapPrice(timeHorizon);
+        int24 curPriceIndex = global.vToken.getVirtualTwapTickIndex();//getVirtualTwapPrice(timeHorizon);
         // uint8 pricePosition = ;
         return global.getUpdatedLPStateInternal(tickLowerHigher,getPricePosition(curPriceIndex,tickLowerIndex,tickHigherIndex),blockTimestamp);
     }
