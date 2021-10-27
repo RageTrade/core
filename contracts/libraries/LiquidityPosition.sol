@@ -64,10 +64,10 @@ library LiquidityPosition {
         vBaseIncrease += b;
         traderPositionIncrease += tp;
 
-        if (liquidity >= 0) {
+        if (liquidity > 0) {
             position.liquidity += uint128(liquidity);
-        } else {
-            position.liquidity -= uint128(liquidity);
+        } else if (liquidity < 0) {
+            position.liquidity -= uint128(liquidity * -1);
         }
     }
 
