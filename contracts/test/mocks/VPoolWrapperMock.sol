@@ -15,6 +15,14 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
     mapping(int24 => mapping(int24 => ValuesInside)) public getValuesInside;
 
+    uint16 public immutable override initialMarginRatio;
+    uint16 public immutable override maintainanceMarginRatio;
+    uint32 public immutable override timeHorizon;
+
+    constructor() {
+        (initialMarginRatio, maintainanceMarginRatio, timeHorizon) = (0, 0, 0);
+    }
+
     function setValuesInside(
         int24 tickLower,
         int24 tickUpper,
