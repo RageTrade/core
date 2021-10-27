@@ -7,6 +7,7 @@ import {TickUtilLib} from './TickUtilLib.sol';
 library GlobalUtilLib {
     using GlobalUtilLib for GlobalState;
     int256 constant fundingRateNormalizer = 10000*100*3600; 
+    uint256 constant amountNormalizer = 10**18; 
 
     struct GlobalState {
         int256 sumB;
@@ -47,7 +48,7 @@ library GlobalUtilLib {
     //     return (vPrice/rPrice)-1;
     // }
 
-    function updateOnTrade(GlobalState storage global, int256 b, uint256 feePerLiquidity, uint48 blockTimestamp) internal{
+    function updateOnTrade(GlobalState storage global, int256 tokenAmount, uint256 fees, uint256 liquidity,  uint48 blockTimestamp) internal{
     //sumFP should be updated before updating sumB and lastTradeTS
 
         //TODO: block.timestamp is uint256 check
@@ -61,9 +62,9 @@ library GlobalUtilLib {
         int256 a = int256(getVirtualTwapPrice(diffTS))*int48(diffTS);//vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
         global.sumFP = global.sumFP + (global.fundingRate *a* global.sumB)/fundingRateNormalizer; 
         global.sumA = global.sumA + a;
-        global.sumB = global.sumB + b;
+        global.sumB = global.sumB + tokenAmount*int(amountNormalizer)/int(liquidity);
 
-        global.feeGrowthGlobalShortsX128 += feePerLiquidity;
+        global.feeGrowthGlobalShortsX128 += fees*amountNormalizer/liquidity;
     }
 
     function getPricePosition(int24 curPriceIndex, int24 tickLowerIndex, int24 tickHigherIndex) pure internal
