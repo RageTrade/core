@@ -16,6 +16,9 @@ contract TickUtilLibTest {
     TickUtilLib.TickState public tick;
     GlobalUtilLib.GlobalState public global;
 
+    uint48 public blockTimestamp;
+
+
     function initializeTickState(int256 sumA, int256 sumBOutside, int256 sumFPOutside, uint256 feeGrowthOutsideShortsX128) external {
         tick.sumA = sumA;
         tick.sumBOutside = sumBOutside;
@@ -32,12 +35,16 @@ contract TickUtilLibTest {
         global.feeGrowthGlobalShortsX128 = feeGrowthGlobalShortsX128;
     }
 
-    function simulateCross() external {
-        tick.cross(global);
+    function setBlockTimestamp(uint48 _blockTimestamp) external {
+        blockTimestamp = _blockTimestamp;
     }
 
     function getBlockTimestamp() external view returns(uint48){
-        return uint48(block.timestamp);
+        return blockTimestamp;
+    }
+
+    function simulateCross() external {
+        tick.cross(global,blockTimestamp);
     }
 
 }
