@@ -23,27 +23,11 @@ describe('Tick Util Library', () => {
     test = await factory.deploy();
   });
 
-  describe('#TimeDelay', () => {
-    it('Increase Time', async () => {
-
-        const diffTS = 3000;
-        const startTS = await test.getBlockTimestamp();
-        hre.ethers.provider.send('evm_increaseTime', [diffTS]);
-        await test.simulateCross();
-        const endTS = await test.getBlockTimestamp();
-
-        const finalDiffTS = endTS-startTS;
-
-        expect(finalDiffTS).to.eq(diffTS);
-
-    });
-  });
-
-
   describe('#TickCross', () => {
     it('TickCross #1', async () => {
 
-        var diffTS = BigNumber.from(5000);
+        const startTS = BigNumber.from(5000);
+        const endTS = BigNumber.from(10000); 
 
         const price = BigNumber.from(4000);
 
@@ -55,7 +39,7 @@ describe('Tick Util Library', () => {
         const globalSumA = BigNumber.from(30);
         const globalSumB = BigNumber.from(150);
         const globalSumFP = BigNumber.from(100);
-        const globalLastTradeTS = BigNumber.from(await test.getBlockTimestamp());
+        const globalLastTradeTS = startTS;
         const globalFundingRate = BigNumber.from(5000);
         const globalFeeGrowthGlobalShortsX128 = BigNumber.from(50);
         
@@ -64,19 +48,13 @@ describe('Tick Util Library', () => {
         await test.initializeGlobalState(globalSumA,globalSumB,globalSumFP,
             globalLastTradeTS,globalFundingRate,globalFeeGrowthGlobalShortsX128);
         
-        //Subtracting 2 to adjust for extra delay coming in the test
-        hre.ethers.provider.send('evm_increaseTime', [diffTS.toNumber()-2]);
+        await test.setBlockTimestamp(endTS);
         await test.simulateCross();
-
-
-        const simulationTS = BigNumber.from(await test.getBlockTimestamp());
 
         const tick = await test.tick();
 
-        const updatedSumFPOutside = globalSumFP.sub(getExtrapolatedSumFP(tickSumA,tickSumBOutside,tickSumFPOutside,globalSumA,globalFundingRate,simulationTS,globalLastTradeTS,price));
-        console.log("updatedSumFPOutside: ",updatedSumFPOutside.toNumber());
+        const updatedSumFPOutside = globalSumFP.sub(getExtrapolatedSumFP(tickSumA,tickSumBOutside,tickSumFPOutside,globalSumA,globalFundingRate,endTS,globalLastTradeTS,price));
 
-        expect(simulationTS.sub(globalLastTradeTS)).to.eq(diffTS);
         expect(tick.sumA).to.eq(globalSumA);
         expect(tick.sumBOutside).to.eq(globalSumB.sub(tickSumBOutside));
         expect(tick.sumFPOutside).to.eq(updatedSumFPOutside);
