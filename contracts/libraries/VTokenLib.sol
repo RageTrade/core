@@ -6,7 +6,7 @@ import '../interfaces/IVToken.sol';
 import '../interfaces/IVPoolWrapper.sol';
 import '../interfaces/IOracleContract.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
-import '../libraries/uniswapTwapSqrtPrice.sol';
+import '../libraries/UniswapTwap.sol';
 
 type VToken is address;
 
@@ -57,7 +57,7 @@ library VTokenLib {
     }
 
     function getVirtualTwapSqrtPrice(VToken vToken, uint32 twapDuration) internal view returns (uint160) {
-        return UniswapTwapSqrtPrice.get(vPool(vToken), twapDuration);
+        return UniswapTwap.getSqrtPrice(vPool(vToken), twapDuration);
     }
 
     function getRealTwapSqrtPrice(VToken vToken, uint32 twapDuration) internal view returns (uint160) {
