@@ -67,6 +67,10 @@ contract GlobalUtilLibTest {
         return GlobalUtilLib.getPricePosition(curPriceIndex,tickLowerIndex,tickHigherIndex);
     }
 
+    function calculateFundingRate() external view returns(int16) {
+        return global.calculateFundingRate();
+    }
+
     function getExtrapolatedSumFP(int256 sumACkpt, int256 sumBCkpt, int256 sumFPCkpt) external view returns(int256) {
         return (global.getExtrapolatedSumFP(sumACkpt,sumBCkpt,sumFPCkpt,blockTimestamp));
     }
