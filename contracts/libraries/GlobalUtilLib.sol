@@ -40,10 +40,10 @@ library GlobalUtilLib {
     }
 
     function calculateFundingRate(GlobalState storage global) internal view returns (int16) {
-        int160 vPrice = int160(global.vToken.getVirtualTwapPrice());
-        int160 rPrice = int160(global.vToken.getRealTwapPrice());
+        int256 realPrice = int256(global.vToken.getRealTwapPrice());
+        int256 virtualPrice = int256(global.vToken.getVirtualTwapPrice());
 
-        return int16(((vPrice - rPrice) * (10**6)) / rPrice);
+        return int16(((virtualPrice - realPrice) * (10**6)) / realPrice);
     }
 
     function updateOnTrade(
@@ -216,7 +216,7 @@ library GlobalUtilLib {
         )
     {
         //TODO: Correct current price code
-        int24 curPriceIndex = global.vToken.getVirtualTwapTickIndex(); //getVirtualTwapPrice(timeHorizon);
+        int24 curPriceIndex = global.vToken.getVirtualTwapTick();
         // uint8 pricePosition = ;
         return
             global.getUpdatedLPStateInternal(
