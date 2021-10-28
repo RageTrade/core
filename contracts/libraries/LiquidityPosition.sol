@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { Account } from './Account.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -49,20 +50,18 @@ library LiquidityPosition {
     function liquidityChange(
         Info storage position,
         int128 liquidity,
-        IVPoolWrapper wrapper
-    )
-        internal
-        returns (
-            int256 vBaseIncrease,
-            int256 vTokenIncrease,
-            int256 traderPositionIncrease
-        )
-    {
-        (vBaseIncrease, vTokenIncrease) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        (int256 vBaseIncrease, int256 vTokenIncrease) = wrapper.liquidityChange(
+            position.tickLower,
+            position.tickUpper,
+            liquidity
+        );
+        balanceAdjustments.vBaseIncrease += vBaseIncrease;
+        balanceAdjustments.vTokenIncrease += vTokenIncrease;
 
-        (int256 b, int256 tp) = position.update(wrapper);
-        vBaseIncrease += b;
-        traderPositionIncrease += tp;
+        position.update(wrapper, balanceAdjustments);
 
         if (liquidity > 0) {
             position.liquidity += uint128(liquidity);
@@ -73,8 +72,9 @@ library LiquidityPosition {
 
     function update(
         Info storage position,
-        IVPoolWrapper wrapper // TODO use vTokenLib
-    ) internal returns (int256 vBaseIncrease, int256 traderPositionIncrease) {
+        IVPoolWrapper wrapper, // TODO use vTokenLib
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
         (
             int256 sumA,
             int256 sumBInside,
@@ -83,10 +83,12 @@ library LiquidityPosition {
             uint256 shortsFeeGrowthInside
         ) = wrapper.getValuesInside(position.tickLower, position.tickUpper);
 
-        vBaseIncrease = position.unrealizedFundingPayment(sumA, sumFpInside);
-        traderPositionIncrease = position.netPosition(sumBInside);
+        balanceAdjustments.vBaseIncrease += position.unrealizedFundingPayment(sumA, sumFpInside);
+        balanceAdjustments.traderPositionIncrease += position.netPosition(sumBInside);
 
-        vBaseIncrease += int256(position.unrealizedFees(longsFeeGrowthInside, shortsFeeGrowthInside));
+        balanceAdjustments.vBaseIncrease += int256(
+            position.unrealizedFees(longsFeeGrowthInside, shortsFeeGrowthInside)
+        );
 
         // updating checkpoints
         position.sumALast = sumA;

@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
+import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -11,6 +12,7 @@ contract LiquidityPositionTest {
     using LiquidityPosition for LiquidityPosition.Info;
     // using Uint48L5ArrayLib for uint48[5];
 
+    Account.BalanceAdjustments public balanceAdjustments;
     LiquidityPosition.Info public lp;
     VPoolWrapperMock public wrapper;
 
@@ -23,20 +25,14 @@ contract LiquidityPositionTest {
     }
 
     function updateCheckpoints() external {
-        lp.update(wrapper);
+        lp.update(wrapper, balanceAdjustments);
     }
 
     function netPosition() public view returns (int256) {
         return lp.netPosition(wrapper);
     }
 
-    event LiquidityChangeReturn(int256 vBaseIncrease, int256 vTokenIncrease, int256 traderPositionIncrease);
-
     function liquidityChange(int128 liquidity) public {
-        (int256 vBaseIncrease, int256 vTokenIncrease, int256 traderPositionIncrease) = lp.liquidityChange(
-            liquidity,
-            wrapper
-        );
-        emit LiquidityChangeReturn(vBaseIncrease, vTokenIncrease, traderPositionIncrease);
+        lp.liquidityChange(liquidity, wrapper, balanceAdjustments);
     }
 }
