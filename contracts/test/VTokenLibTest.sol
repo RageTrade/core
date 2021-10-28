@@ -35,14 +35,6 @@ contract VTokenLibTest {
         return vToken.getRealTwapSqrtPrice();
     }
 
-    function getVirtualTwapSqrtPrice(VToken vToken, uint32 twapDuration) external view returns (uint160) {
-        return vToken.getVirtualTwapSqrtPrice(twapDuration);
-    }
-
-    function getRealTwapSqrtPrice(VToken vToken, uint32 twapDuration) external view returns (uint160) {
-        return vToken.getRealTwapSqrtPrice(twapDuration);
-    }
-
     function getMarginRatio(VToken vToken, bool isInitialMargin) external view returns (uint16) {
         return vToken.getMarginRatio(isInitialMargin);
     }

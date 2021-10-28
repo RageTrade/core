@@ -21,10 +21,10 @@ library Uint32L8SetLib {
         require(element != 0, 'does not support zero elements');
         console.log('hello', element);
 
-        uint accumulatedValue = set.reduce(_includeReducer, uint256(255 << 32) | uint256(element));
-        
+        uint256 accumulatedValue = set.reduce(_includeReducer, uint256(255 << 32) | uint256(element));
+
         // if element is zeroed, then element already exists
-        if(accumulatedValue == 255 << 32) {
+        if (accumulatedValue == 255 << 32) {
             console.log('Uint32L8SetLib:include already exists');
             return set;
         }
@@ -65,7 +65,8 @@ library Uint32L8SetLib {
      */
 
     function reduce(Uint32L8Set set, function(uint256, uint32, uint8) view returns (uint256, bool) fn)
-        internal view
+        internal
+        view
         returns (uint256 accumulatedValue)
     {
         return reduce(set, fn, 0);
@@ -87,7 +88,7 @@ library Uint32L8SetLib {
                 console.log('reduce-for-inp', accumulatedValue, val, i);
                 (accumulatedValue, stop) = fn(accumulatedValue, val, i);
                 console.log('reduce-for-res', accumulatedValue, stop);
-                if(stop) break;
+                if (stop) break;
                 unwrapped >>= 8;
             }
         }
@@ -97,39 +98,51 @@ library Uint32L8SetLib {
      *  Reducers
      */
 
-    function _existsReducer(uint256 accumulatedValue, uint32 currentElement, uint8) internal pure returns (uint256, bool stop) {
+    function _existsReducer(
+        uint256 accumulatedValue,
+        uint32 currentElement,
+        uint8
+    ) internal pure returns (uint256, bool stop) {
         if (currentElement != 0 && currentElement == accumulatedValue) {
             return (0, true);
         }
         return (accumulatedValue, false);
     }
-    
+
     // uint256 accumulator is split into uint224 emptyIndex and uint32 element
-    // element is initialized to current element val. 
+    // element is initialized to current element val.
     //     If element is changed to null, then it means element is already present in the set
     // emptyIndex is initialized to 255 (where max index is 7).
     //     If emptyIndex is changed to some value (between 0 and 7), then we have to write to it.
-    function _includeReducer(uint256 accumulatedValue, uint32 currentElement, uint8 index) internal view returns (uint256, bool) {
+    function _includeReducer(
+        uint256 accumulatedValue,
+        uint32 currentElement,
+        uint8 index
+    ) internal view returns (uint256, bool) {
         console.log('_includeReducer', accumulatedValue);
         unchecked {
             // if element is found on this iteration, stop the loop
-            if(currentElement == uint32(accumulatedValue)) {
+            if (currentElement == uint32(accumulatedValue)) {
                 return (uint256(255 << 32), true);
             }
             uint256 emptyIndex = accumulatedValue >> 32;
-            if(currentElement == 0 && emptyIndex == 255) {
+            if (currentElement == 0 && emptyIndex == 255) {
                 emptyIndex = index;
                 console.log('_includeReducer2', uint256(emptyIndex << 32) + uint256((accumulatedValue << 224) >> 224));
-                return (uint256(emptyIndex << 32)+ uint256((accumulatedValue << 224) >> 224), true);
+                return (uint256(emptyIndex << 32) + uint256((accumulatedValue << 224) >> 224), true);
             }
             return (accumulatedValue, false);
         }
     }
 
-    function _indexOfReducer(uint256 accumulatedValue, uint32 currentElement, uint8 index) internal view returns (uint256, bool) {
+    function _indexOfReducer(
+        uint256 accumulatedValue,
+        uint32 currentElement,
+        uint8 index
+    ) internal view returns (uint256, bool) {
         console.log('_indexOfReducer', accumulatedValue);
         uint32 searchElement = uint32((accumulatedValue << 224) >> 224);
-        if(searchElement == currentElement) {
+        if (searchElement == currentElement) {
             return (index << 32, true);
         }
 
@@ -137,5 +150,4 @@ library Uint32L8SetLib {
         // return (accumulatedValue, stopValue);
         return (accumulatedValue, false);
     }
-
 }

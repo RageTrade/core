@@ -7,7 +7,7 @@ pragma solidity ^0.8.9;
 import './interfaces/IOracleContract.sol';
 
 contract OracleContract is IOracleContract {
-    function getSqrtPrice(uint32 twapDuration) external pure returns (uint160) {
+    function getTwapSqrtPrice(uint32 twapDuration) external pure returns (uint160) {
         return 4000000000000000000000000;
     }
 }

@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import { DEFAULT_FEE_TIER, VBASE_ADDRESS, UNISWAP_FACTORY_ADDRESS, VPOOL_FACTORY, POOL_BYTE_CODE_HASH, WRAPPER_BYTE_CODE_HASH } from '../Constants.sol';
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { Oracle } from '../libraries/Oracle.sol';
+import { FullMath } from './FullMath.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -16,6 +17,15 @@ type VToken is address;
 
 library VTokenLib {
     using VTokenLib for VToken;
+    using FullMath for uint256;
+
+    function iface(VToken vToken) internal pure returns (IVToken) {
+        return IVToken(VToken.unwrap(vToken));
+    }
+
+    function realToken(VToken vToken) internal view returns (IERC20) {
+        return IERC20(vToken.iface().realToken());
+    }
 
     function isToken0(VToken vToken) internal pure returns (bool) {
         return VToken.unwrap(vToken) < VBASE_ADDRESS;
@@ -58,28 +68,26 @@ library VTokenLib {
             );
     }
 
-    function iface(VToken vToken) internal pure returns (IVToken) {
-        return IVToken(VToken.unwrap(vToken));
-    }
-
-    function realToken(VToken vToken) internal view returns (IERC20) {
-        return IERC20(vToken.iface().realToken());
-    }
-
     function getVirtualTwapSqrtPrice(VToken vToken) internal view returns (uint160 sqrtPriceX96) {
-        return getVirtualTwapSqrtPrice(vToken, vToken.vPoolWrapper().timeHorizon());
+        return Oracle.getTwapSqrtPrice(vToken.vPool(), vToken.vPoolWrapper().timeHorizon());
     }
 
     function getRealTwapSqrtPrice(VToken vToken) internal view returns (uint160 sqrtPriceX96) {
-        return getRealTwapSqrtPrice(vToken, vToken.vPoolWrapper().timeHorizon());
+        return IOracleContract(vToken.iface().oracle()).getTwapSqrtPrice(vToken.vPoolWrapper().timeHorizon());
     }
 
-    function getVirtualTwapSqrtPrice(VToken vToken, uint32 twapDuration) internal view returns (uint160 sqrtPriceX96) {
-        return Oracle.getTwapSqrtPrice(vToken.vPool(), twapDuration);
+    function getVirtualTwapTick(VToken vToken) internal view returns (int24 tick) {
+        return Oracle.getTwapTick(vToken.vPool(), vToken.vPoolWrapper().timeHorizon());
     }
 
-    function getRealTwapSqrtPrice(VToken vToken, uint32 twapDuration) internal view returns (uint160 sqrtPriceX96) {
-        return IOracleContract(vToken.iface().oracle()).getSqrtPrice(twapDuration);
+    function getVirtualTwapPrice(VToken vToken) internal view returns (uint256 price) {
+        uint256 sqrtPriceX96 = vToken.getVirtualTwapSqrtPrice();
+        return sqrtPriceX96.mulDiv(sqrtPriceX96, 1 << 96).mulDiv(10**18, 1 << 96); // TODO refactor this
+    }
+
+    function getRealTwapPrice(VToken vToken) internal view returns (uint256 price) {
+        uint256 sqrtPriceX96 = vToken.getRealTwapSqrtPrice();
+        return sqrtPriceX96.mulDiv(sqrtPriceX96, 1 << 96).mulDiv(10**18, 1 << 96); // TODO refactor this
     }
 
     function getMarginRatio(VToken vToken, bool isInitialMargin) internal view returns (uint16) {
