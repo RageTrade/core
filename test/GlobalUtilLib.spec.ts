@@ -140,6 +140,67 @@ describe('Tick Util Library', () => {
   });
 
   describe('#LP State Update', () => {
+    it('Position 0', async () => {
+        
+      const startTS = BigNumber.from(100);
+      const endTS = BigNumber.from(150);
+      
+      const tickLowerSumA = BigNumber.from('20000000000000000000');
+      const tickLowerSumBOutside = BigNumber.from('30000000000000000000');
+      const tickLowerSumFPOutside = BigNumber.from('500000000000000000000');
+      const tickLowerFeeGrowthOutsideShortsX128 = BigNumber.from('30000000000000000000');
+      const tickLowerIndex = BigNumber.from(1100);
+      
+      const tickHigherSumA = BigNumber.from('30000000000000000000');
+      const tickHigherSumBOutside = BigNumber.from('40000000000000000000');
+      const tickHigherSumFPOutside = BigNumber.from('600000000000000000000');
+      const tickHigherFeeGrowthOutsideShortsX128 = BigNumber.from('20000000000000000000');
+      const tickHigherIndex = BigNumber.from(1500);
+      
+      const globalSumA = BigNumber.from('30000000000000000000');
+      const globalSumB = BigNumber.from('150000000000000000000');
+      const globalSumFP = BigNumber.from('1000000000000000000000');
+      const globalLastTradeTS = startTS;
+      const globalFundingRate = BigNumber.from(10);
+      const globalFeeGrowthGlobalShortsX128 = BigNumber.from('50000000000000000000');
+
+      const price = BigNumber.from('4000000000000000000000');
+
+      await test.initializeTickState(
+        tickLowerSumA,
+        tickLowerSumBOutside,
+        tickLowerSumFPOutside,
+        tickLowerFeeGrowthOutsideShortsX128,
+        tickLowerIndex,
+        tickHigherSumA,
+        tickHigherSumBOutside,
+        tickHigherSumFPOutside,
+        tickHigherFeeGrowthOutsideShortsX128,
+        tickHigherIndex);
+
+      await test.initializeGlobalState(globalSumA,globalSumB,globalSumFP,
+          globalLastTradeTS,globalFundingRate,globalFeeGrowthGlobalShortsX128);
+      
+      test.setBlockTimestamp(endTS);
+      const lpState = await test.getUpdatedLPState();
+
+      // console.log("PRICE POSITION", await test.getPricePosition(1000));
+
+      const lpStateSumA = lpState[0];
+      const lpStateSumB = lpState[1];
+      const lpStateSumFP = lpState[2];
+      const lpStateFees = lpState[3];
+
+      const tickLowerExtrapolatedSumFP = getExtrapolatedSumFP(tickLowerSumA,tickLowerSumBOutside,tickLowerSumFPOutside,globalSumA,globalFundingRate,endTS,globalLastTradeTS,price);
+      const tickHigherExtrapolatedSumFP = getExtrapolatedSumFP(tickHigherSumA,tickHigherSumBOutside,tickHigherSumFPOutside,globalSumA,globalFundingRate,endTS,globalLastTradeTS,price);
+
+      expect(lpStateSumA).to.eq(getExtrapolatedSumA(globalSumA,globalFundingRate,endTS,globalLastTradeTS,price));
+      expect(lpStateSumB).to.eq(tickLowerSumBOutside.sub(tickHigherSumBOutside));
+      expect(lpStateSumFP).to.eq(tickLowerExtrapolatedSumFP.sub(tickHigherExtrapolatedSumFP));
+      expect(lpStateFees).to.eq(tickLowerFeeGrowthOutsideShortsX128.sub(tickHigherFeeGrowthOutsideShortsX128));
+
+
+  });
     it('Position 1', async () => {
         
         const startTS = BigNumber.from(100);
@@ -202,6 +263,68 @@ describe('Tick Util Library', () => {
 
     });
 
+    it('Position 2', async () => {
+        
+      const startTS = BigNumber.from(100);
+      const endTS = BigNumber.from(150);
+      
+      const tickLowerSumA = BigNumber.from('20000000000000000000');
+      const tickLowerSumBOutside = BigNumber.from('30000000000000000000');
+      const tickLowerSumFPOutside = BigNumber.from('500000000000000000000');
+      const tickLowerFeeGrowthOutsideShortsX128 = BigNumber.from('20000000000000000000');
+      const tickLowerIndex = BigNumber.from(500);
+      
+      const tickHigherSumA = BigNumber.from('30000000000000000000');
+      const tickHigherSumBOutside = BigNumber.from('40000000000000000000');
+      const tickHigherSumFPOutside = BigNumber.from('600000000000000000000');
+      const tickHigherFeeGrowthOutsideShortsX128 = BigNumber.from('40000000000000000000');
+      const tickHigherIndex = BigNumber.from(800);
+      
+      const globalSumA = BigNumber.from('30000000000000000000');
+      const globalSumB = BigNumber.from('150000000000000000000');
+      const globalSumFP = BigNumber.from('1000000000000000000000');
+      const globalLastTradeTS = startTS;
+      const globalFundingRate = BigNumber.from(10);
+      const globalFeeGrowthGlobalShortsX128 = BigNumber.from('50000000000000000000');
+
+      const price = BigNumber.from('4000000000000000000000');
+
+      await test.initializeTickState(
+        tickLowerSumA,
+        tickLowerSumBOutside,
+        tickLowerSumFPOutside,
+        tickLowerFeeGrowthOutsideShortsX128,
+        tickLowerIndex,
+        tickHigherSumA,
+        tickHigherSumBOutside,
+        tickHigherSumFPOutside,
+        tickHigherFeeGrowthOutsideShortsX128,
+        tickHigherIndex);
+
+      await test.initializeGlobalState(globalSumA,globalSumB,globalSumFP,
+          globalLastTradeTS,globalFundingRate,globalFeeGrowthGlobalShortsX128);
+      
+      test.setBlockTimestamp(endTS);
+      const lpState = await test.getUpdatedLPState();
+
+      // console.log("PRICE POSITION", await test.getPricePosition(1000));
+
+      const lpStateSumA = lpState[0];
+      const lpStateSumB = lpState[1];
+      const lpStateSumFP = lpState[2];
+      const lpStateFees = lpState[3];
+
+      const tickLowerExtrapolatedSumFP = getExtrapolatedSumFP(tickLowerSumA,tickLowerSumBOutside,tickLowerSumFPOutside,globalSumA,globalFundingRate,endTS,globalLastTradeTS,price);
+      const tickHigherExtrapolatedSumFP = getExtrapolatedSumFP(tickHigherSumA,tickHigherSumBOutside,tickHigherSumFPOutside,globalSumA,globalFundingRate,endTS,globalLastTradeTS,price);
+
+      expect(lpStateSumA).to.eq(getExtrapolatedSumA(globalSumA,globalFundingRate,endTS,globalLastTradeTS,price));
+      expect(lpStateSumB).to.eq(tickHigherSumBOutside.sub(tickLowerSumBOutside));
+      expect(lpStateSumFP).to.eq(tickHigherExtrapolatedSumFP.sub(tickLowerExtrapolatedSumFP));
+      expect(lpStateFees).to.eq(tickHigherFeeGrowthOutsideShortsX128.sub(tickLowerFeeGrowthOutsideShortsX128));
+
+
+  });
+
   });
 
   describe('#Price Position', () => {
@@ -245,7 +368,7 @@ describe('Tick Util Library', () => {
   });
 
   describe('#Funding Rate', () => {
-    it('All Positions', async () => {
+    it('Check 1', async () => {
         
         const virtualPrice = BigNumber.from('4000000000000000000000');
         const realPrice = BigNumber.from('4100000000000000000000');
