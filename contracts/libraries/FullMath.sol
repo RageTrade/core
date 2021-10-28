@@ -107,6 +107,39 @@ library FullMath {
         }
     }
 
+    function mulDiv(
+        int256 a,
+        int256 b,
+        int256 denominator
+    ) internal pure returns (int256 result) {
+        bool resultPositive = true;
+        uint256 _a;
+        uint256 _b;
+        uint256 _denominator;
+        if (a < 0) {
+            resultPositive = !resultPositive;
+            _a = uint256(-1 * a);
+        } else {
+            _a = uint256(a);
+        }
+        if (b < 0) {
+            resultPositive = !resultPositive;
+            _b = uint256(-1 * b);
+        } else {
+            _b = uint256(b);
+        }
+        if (denominator < 0) {
+            resultPositive = !resultPositive;
+            _denominator = uint256(-1 * denominator);
+        } else {
+            _denominator = uint256(denominator);
+        }
+        result = int256(mulDiv(_a, _b, _denominator));
+        if (!resultPositive) {
+            result *= -1;
+        }
+    }
+
     /// @notice Calculates ceil(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier
