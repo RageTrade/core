@@ -6,14 +6,20 @@ import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 
 contract VPoolWrapperMock is IVPoolWrapper {
     struct ValuesInside {
-        uint256 sumA;
-        uint256 sumBInside;
-        uint256 sumFpInside;
+        int256 sumA;
+        int256 sumBInside;
+        int256 sumFpInside;
         uint256 longsFeeGrowthInside;
         uint256 shortsFeeGrowthInside;
     }
 
-    mapping(int24 => mapping(int24 => ValuesInside)) public getValuesInside;
+    mapping(int24 => mapping(int24 => ValuesInside)) public override getValuesInside;
+
+    struct LiquidityRate {
+        uint256 vBasePerLiquidity;
+        uint256 vTokenPerLiquidity;
+    }
+    mapping(int24 => mapping(int24 => LiquidityRate)) internal _liquidityRates;
 
     uint16 public immutable override initialMarginRatio;
     uint16 public immutable override maintainanceMarginRatio;
@@ -26,9 +32,9 @@ contract VPoolWrapperMock is IVPoolWrapper {
     function setValuesInside(
         int24 tickLower,
         int24 tickUpper,
-        uint256 sumA,
-        uint256 sumBInside,
-        uint256 sumFpInside,
+        int256 sumA,
+        int256 sumBInside,
+        int256 sumFpInside,
         uint256 longsFeeGrowthInside,
         uint256 shortsFeeGrowthInside
     ) external {
@@ -37,5 +43,22 @@ contract VPoolWrapperMock is IVPoolWrapper {
         getValuesInside[tickLower][tickUpper].sumFpInside = sumFpInside;
         getValuesInside[tickLower][tickUpper].longsFeeGrowthInside = longsFeeGrowthInside;
         getValuesInside[tickLower][tickUpper].shortsFeeGrowthInside = shortsFeeGrowthInside;
+    }
+
+    int256 _liquidity;
+
+    function liquidityChange(
+        int24 tickLower,
+        int24 tickUpper,
+        int256 liquidity
+    ) external returns (int256 vBaseAmount, int256 vTokenAmount) {
+        if (liquidity > 0) {
+            _liquidity += liquidity;
+        } else {
+            _liquidity -= liquidity;
+        }
+
+        vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity;
+        vTokenAmount = int256(_liquidityRates[tickLower][tickUpper].vTokenPerLiquidity) * liquidity;
     }
 }

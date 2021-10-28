@@ -5,43 +5,45 @@ pragma solidity ^0.8.9;
 import { VToken, VTokenLib } from '../libraries/VTokenLib.sol';
 
 contract VTokenLibTest {
-    function isToken0(address vToken) external pure returns (bool) {
-        return VTokenLib.isToken0(VToken.wrap(vToken));
+    using VTokenLib for VToken;
+
+    function isToken0(VToken vToken) external pure returns (bool) {
+        return vToken.isToken0();
     }
 
-    function isToken1(address vToken) external pure returns (bool) {
-        return VTokenLib.isToken1(VToken.wrap(vToken));
+    function isToken1(VToken vToken) external pure returns (bool) {
+        return vToken.isToken1();
     }
 
-    function vPool(address vToken) external pure returns (address) {
-        return VTokenLib.vPool(VToken.wrap(vToken));
+    function vPool(VToken vToken) external pure returns (address) {
+        return address(vToken.vPool());
     }
 
-    function vPoolWrapper(address vToken) external pure returns (address) {
-        return VTokenLib.vPoolWrapper(VToken.wrap(vToken));
+    function vPoolWrapper(VToken vToken) external pure returns (address) {
+        return address(vToken.vPoolWrapper());
     }
 
-    function realToken(address vToken) external view returns (address) {
-        return VTokenLib.realToken(VToken.wrap(vToken));
+    function realToken(VToken vToken) external view returns (address) {
+        return address(vToken.realToken());
     }
 
-    function getVirtualTwapSqrtPrice(address vToken) external view returns (uint160) {
-        return VTokenLib.getVirtualTwapSqrtPrice(VToken.wrap(vToken));
+    function getVirtualTwapSqrtPrice(VToken vToken) external view returns (uint160) {
+        return vToken.getVirtualTwapSqrtPrice();
     }
 
-    function getRealTwapSqrtPrice(address vToken) external view returns (uint160) {
-        return VTokenLib.getRealTwapSqrtPrice(VToken.wrap(vToken));
+    function getRealTwapSqrtPrice(VToken vToken) external view returns (uint160) {
+        return vToken.getRealTwapSqrtPrice();
     }
 
-    function getVirtualTwapSqrtPrice(address vToken, uint32 twapDuration) external view returns (uint160) {
-        return VTokenLib.getVirtualTwapSqrtPrice(VToken.wrap(vToken), twapDuration);
+    function getVirtualTwapSqrtPrice(VToken vToken, uint32 twapDuration) external view returns (uint160) {
+        return vToken.getVirtualTwapSqrtPrice(twapDuration);
     }
 
-    function getRealTwapSqrtPrice(address vToken, uint32 twapDuration) external view returns (uint160) {
-        return VTokenLib.getRealTwapSqrtPrice(VToken.wrap(vToken), twapDuration);
+    function getRealTwapSqrtPrice(VToken vToken, uint32 twapDuration) external view returns (uint160) {
+        return vToken.getRealTwapSqrtPrice(twapDuration);
     }
 
-    function getMarginRatio(address vToken, bool isInitialMargin) external view returns (uint16) {
-        return VTokenLib.getMarginRatio(VToken.wrap(vToken), isInitialMargin);
+    function getMarginRatio(VToken vToken, bool isInitialMargin) external view returns (uint16) {
+        return vToken.getMarginRatio(isInitialMargin);
     }
 }
