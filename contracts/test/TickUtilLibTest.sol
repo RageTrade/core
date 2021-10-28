@@ -18,15 +18,26 @@ contract TickUtilLibTest {
 
     uint48 public blockTimestamp;
 
-
-    function initializeTickState(int256 sumA, int256 sumBOutside, int256 sumFPOutside, uint256 feeGrowthOutsideShortsX128) external {
+    function initializeTickState(
+        int256 sumA,
+        int256 sumBOutside,
+        int256 sumFPOutside,
+        uint256 feeGrowthOutsideShortsX128
+    ) external {
         tick.sumA = sumA;
         tick.sumBOutside = sumBOutside;
-        tick.sumFPOutside  = sumFPOutside;
-        tick.feeGrowthOutsideShortsX128 = feeGrowthOutsideShortsX128; 
+        tick.sumFPOutside = sumFPOutside;
+        tick.feeGrowthOutsideShortsX128 = feeGrowthOutsideShortsX128;
     }
 
-    function initializeGlobalState(int256 sumA, int256 sumB, int256 sumFP, uint48 lastTradeTS, int16 fundingRate, uint256 feeGrowthGlobalShortsX128) external {
+    function initializeGlobalState(
+        int256 sumA,
+        int256 sumB,
+        int256 sumFP,
+        uint48 lastTradeTS,
+        int16 fundingRate,
+        uint256 feeGrowthGlobalShortsX128
+    ) external {
         global.sumB = sumB;
         global.sumFP = sumFP;
         global.lastTradeTS = lastTradeTS;
@@ -39,12 +50,11 @@ contract TickUtilLibTest {
         blockTimestamp = _blockTimestamp;
     }
 
-    function getBlockTimestamp() external view returns(uint48){
+    function getBlockTimestamp() external view returns (uint48) {
         return blockTimestamp;
     }
 
     function simulateCross() external {
-        tick.cross(global,blockTimestamp);
+        tick.cross(global, blockTimestamp);
     }
-
 }
