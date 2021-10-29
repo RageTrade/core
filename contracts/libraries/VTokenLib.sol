@@ -12,7 +12,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { IOracleContract } from '../interfaces/IOracleContract.sol';
+import { IOracle } from '../interfaces/IOracle.sol';
 
 type VTokenAddress is address;
 
@@ -92,7 +92,7 @@ library VTokenLib {
     }
 
     function getRealTwapSqrtPrice(VTokenAddress vToken) internal view returns (uint160 sqrtPriceX96) {
-        return IOracleContract(vToken.iface().oracle()).getTwapSqrtPrice(vToken.vPoolWrapper().timeHorizon());
+        return IOracle(vToken.iface().oracle()).getTwapSqrtPrice(vToken.vPoolWrapper().timeHorizon());
     }
 
     function getVirtualTwapTick(VTokenAddress vToken) internal view returns (int24 tick) {

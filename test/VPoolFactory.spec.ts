@@ -13,7 +13,7 @@ const POOL_BYTE_CODE_HASH = '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89
 const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 describe('VPoolFactory', () => {
-  let oracleContract: string;
+  let oracle: string;
   let VPoolFactory: ClearingHouse;
   let UtilsTestContract: UtilsTest;
   let vTokenByteCode: string;
@@ -35,7 +35,7 @@ describe('VPoolFactory', () => {
     await (
       await (await hre.ethers.getContractFactory('VBase')).deploy()
     ).address;
-    oracleContract = (await (await hre.ethers.getContractFactory('OracleContract')).deploy()).address;
+    oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
     VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
@@ -46,7 +46,7 @@ describe('VPoolFactory', () => {
 
   describe('Initilize', () => {
     it('Deployments', async () => {
-      await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracleContract, 2, 3, 60);
+      await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 2, 3, 60);
       const eventFilter = VPoolFactory.filters.poolInitlized();
       const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
       const vPool = events[0].args[0];
@@ -63,7 +63,7 @@ describe('VPoolFactory', () => {
           vTokenByteCode,
           utils.defaultAbiCoder.encode(
             ['string', 'string', 'address', 'address', 'address'],
-            ['vWETH', 'vWETH', realToken, oracleContract, VPoolFactory.address],
+            ['vWETH', 'vWETH', realToken, oracle, VPoolFactory.address],
           ),
         ],
       );
@@ -81,7 +81,7 @@ describe('VPoolFactory', () => {
       expect(vToken_state_name).to.eq('vWETH');
       expect(vToken_state_symbol).to.eq('vWETH');
       expect(vToken_state_realToken.toLowerCase()).to.eq(realToken);
-      expect(vToken_state_oracle).to.eq(oracleContract);
+      expect(vToken_state_oracle).to.eq(oracle);
       expect(vToken_state_perpState.toLowerCase()).to.eq(VPoolFactory.address.toLowerCase());
 
       // VPool : Create2
