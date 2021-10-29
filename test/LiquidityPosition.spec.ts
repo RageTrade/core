@@ -1,5 +1,8 @@
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
+import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { SqrtPriceMath, TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_ } from '@uniswap/v3-sdk';
 
 import { LiquidityPositionTest } from '../typechain';
 
@@ -134,6 +137,119 @@ describe('LiquidityPosition Library', () => {
     });
   });
 
+  const vTokenAddress = {
+    suchThatVTokenIsToken0: ethers.utils.hexZeroPad(BigNumber.from(1).toHexString(), 20),
+    suchThatVTokenIsToken1: BigNumber.from(1).shl(160).sub(1).toHexString(),
+  };
+  const oneSqrtPrice = BigNumber.from(1).shl(96);
+
+  interface TestCase {
+    baseAmount: BigNumberish;
+    vTokenAmount: BigNumberish;
+    tickLower: number;
+    tickUpper: number;
+    currentTick: number;
+  }
+
+  const testCases: Array<TestCase> = [
+    {
+      baseAmount: 100,
+      vTokenAmount: 100,
+      tickLower: -1,
+      tickUpper: 1,
+      currentTick: 0,
+    },
+    {
+      baseAmount: 100,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: 99,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: 100,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: 101,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: -100,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: -99,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: -101,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: 9001,
+    },
+    {
+      baseAmount: 200,
+      vTokenAmount: 100,
+      tickLower: -100,
+      tickUpper: 100,
+      currentTick: -9001,
+    },
+  ];
+
+  describe('#baseValue', () => {
+    it('zero', async () => {
+      await test.initialize(-1, 1);
+      expect(await test.baseValue(oneSqrtPrice, vTokenAddress.suchThatVTokenIsToken1)).to.eq(0);
+    });
+
+    testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
+      for (const vToken of [vTokenAddress.suchThatVTokenIsToken0, vTokenAddress.suchThatVTokenIsToken1]) {
+        const isToken0 = vToken == vTokenAddress.suchThatVTokenIsToken0;
+        it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount} | vToken is token${
+          isToken0 ? 0 : 1
+        }`, async () => {
+          const { liquidity, baseActual, vTokenActual, sqrtPriceCurrent } = await calculateAddLiquidityValues({
+            baseAmount,
+            vTokenAmount,
+            tickLower,
+            tickUpper,
+            currentTick,
+            vToken,
+            roundUp: false,
+          });
+
+          await test.initialize(tickLower, tickUpper);
+          await test.liquidityChange(liquidity);
+
+          expect(await test.baseValue(sqrtPriceCurrent, vToken)).to.eq(
+            baseActual.add(mulPrice(vTokenActual, isToken0 ? inversex96(sqrtPriceCurrent) : sqrtPriceCurrent)),
+          );
+        });
+      }
+    });
+  });
+
   async function setWrapperValueInside(val: {
     tickLower: number;
     tickUpper: number;
@@ -154,5 +270,65 @@ describe('LiquidityPosition Library', () => {
       val.longsFeeGrowthInside ?? existingValues.longsFeeGrowthInside,
       val.shortsFeeGrowthInside ?? existingValues.shortsFeeGrowthInside,
     );
+  }
+
+  function mulPrice(amount: BigNumber, sqrtPrice: BigNumber) {
+    return amount.mul(sqrtPrice).div(ethers.constants.One.shl(96)).mul(sqrtPrice).div(ethers.constants.One.shl(96));
+  }
+
+  function inversex96(sqrtPrice: BigNumber): BigNumber {
+    return ethers.constants.One.shl(96).mul(ethers.constants.One.shl(96)).div(sqrtPrice);
+  }
+
+  interface CalculateAddLiquidityValuesArgs extends TestCase {
+    vToken: string;
+    roundUp: boolean;
+  }
+
+  async function calculateAddLiquidityValues({
+    baseAmount,
+    vTokenAmount,
+    tickLower,
+    tickUpper,
+    currentTick,
+    vToken,
+    roundUp,
+  }: CalculateAddLiquidityValuesArgs) {
+    const isToken1 = vToken === vTokenAddress.suchThatVTokenIsToken1;
+    const sqrtPriceCurrent = TickMath.getSqrtRatioAtTick(currentTick);
+    const sqrtPriceLower = TickMath.getSqrtRatioAtTick(tickLower);
+    const sqrtPriceUpper = TickMath.getSqrtRatioAtTick(tickUpper);
+    const amount0 = vToken === vTokenAddress.suchThatVTokenIsToken0 ? vTokenAmount : baseAmount;
+    const amount1 = vToken === vTokenAddress.suchThatVTokenIsToken1 ? vTokenAmount : baseAmount;
+
+    const liquidity = maxLiquidityForAmounts_(
+      sqrtPriceCurrent,
+      sqrtPriceLower,
+      sqrtPriceUpper,
+      BigNumber.from(amount0).toString(),
+      BigNumber.from(amount1).toString(),
+      true,
+    );
+
+    let sqrtPriceMiddle = sqrtPriceCurrent;
+    if (toBigNumber(sqrtPriceCurrent).lt(toBigNumber(sqrtPriceLower))) {
+      sqrtPriceMiddle = sqrtPriceLower;
+    } else if (toBigNumber(sqrtPriceCurrent).gt(toBigNumber(sqrtPriceUpper))) {
+      sqrtPriceMiddle = sqrtPriceUpper;
+    }
+
+    const amount0Actual = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
+    const amount1Actual = SqrtPriceMath.getAmount1Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
+
+    return {
+      liquidity: BigNumber.from(liquidity.toString()),
+      baseActual: BigNumber.from((isToken1 ? amount0Actual : amount1Actual).toString()),
+      vTokenActual: BigNumber.from((isToken1 ? amount1Actual : amount0Actual).toString()),
+      sqrtPriceCurrent: BigNumber.from(sqrtPriceCurrent.toString()),
+    };
+  }
+
+  function toBigNumber(a: any): BigNumber {
+    return BigNumber.from(a.toString());
   }
 });
