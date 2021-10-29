@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
+import { VToken } from './VTokenLib.sol';
 
 // import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -31,6 +32,17 @@ library LiquidityPositionSet {
         int24 tickUpper
     ) internal view returns (bool) {
         return _exists(set.active, tickLower, tickUpper);
+    }
+
+    function baseValueOfAllPositions(
+        Info storage set,
+        uint160 sqrtPriceCurrent,
+        VToken vToken
+    ) internal view returns (uint256 baseValue) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            baseValue += set.positions[id].baseValue(sqrtPriceCurrent, vToken);
+        }
     }
 
     function activate(
