@@ -7,6 +7,8 @@ import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { VToken } from '../libraries/VTokenLib.sol';
 
+import { VPoolFactory } from '../VPoolFactory.sol';
+
 import { console } from 'hardhat/console.sol';
 
 contract LiquidityPositionTest {

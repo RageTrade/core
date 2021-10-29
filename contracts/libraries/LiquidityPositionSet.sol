@@ -7,7 +7,7 @@ import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
 import { VToken } from './VTokenLib.sol';
 
-// import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -37,11 +37,12 @@ library LiquidityPositionSet {
     function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
-        VToken vToken
+        VToken vToken,
+        IVPoolWrapper wrapper // TODO refactor this
     ) internal view returns (uint256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken);
+            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper);
         }
     }
 

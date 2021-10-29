@@ -146,8 +146,9 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VToken vToken
-    ) internal view returns (uint256) {
+        VToken vToken,
+        IVPoolWrapper wrapper
+    ) internal view returns (uint256 baseAmount) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -160,14 +161,25 @@ library LiquidityPosition {
             sqrtPriceMiddle = priceUpper;
         }
 
-        uint256 baseAmount = SqrtPriceMath.getAmount0Delta(priceLower, sqrtPriceMiddle, position.liquidity, false);
+        // adding base token value
+        baseAmount = SqrtPriceMath.getAmount0Delta(priceLower, sqrtPriceMiddle, position.liquidity, false);
+
+        // adding vToken value
         uint256 vTokenAmount = SqrtPriceMath.getAmount1Delta(sqrtPriceMiddle, priceUpper, position.liquidity, false);
         if (vToken.isToken0()) {
             (baseAmount, vTokenAmount) = (vTokenAmount, baseAmount);
             sqrtPriceCurrent = uint160(FixedPoint96.Q96.mulDiv(FixedPoint96.Q96, sqrtPriceCurrent)); // TODO safe reprocate the price
         }
+        baseAmount += vTokenAmount.mulDiv(sqrtPriceCurrent, FixedPoint96.Q96).mulDiv(
+            sqrtPriceCurrent,
+            FixedPoint96.Q96
+        );
 
-        return (baseAmount +
-            vTokenAmount.mulDiv(sqrtPriceCurrent, FixedPoint96.Q96).mulDiv(sqrtPriceCurrent, FixedPoint96.Q96));
+        // adding fees
+        (, , , uint256 longsFeeGrowthInside, uint256 shortsFeeGrowthInside) = wrapper.getValuesInside(
+            position.tickLower,
+            position.tickUpper
+        );
+        baseAmount += position.unrealizedFees(longsFeeGrowthInside, shortsFeeGrowthInside);
     }
 }
