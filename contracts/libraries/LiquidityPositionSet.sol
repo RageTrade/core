@@ -34,14 +34,21 @@ library LiquidityPositionSet {
         return _exists(set.active, tickLower, tickUpper);
     }
 
-    function baseValueOfAllPositions(
+    function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
         VToken vToken
-    ) internal view returns (uint256 baseValue) {
+    ) internal view returns (uint256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            baseValue += set.positions[id].baseValue(sqrtPriceCurrent, vToken);
+            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken);
+        }
+    }
+
+    function maxNetPosition(Info storage set, VToken vToken) internal view returns (uint256 risk) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            risk += set.positions[id].maxNetPosition(vToken);
         }
     }
 
