@@ -44,6 +44,6 @@ contract LiquidityPositionTest {
     }
 
     function baseValue(uint160 sqrtPriceCurrent, VToken vToken) public view returns (uint256) {
-        return lp.baseValue(sqrtPriceCurrent, vToken);
+        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper);
     }
 }

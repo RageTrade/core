@@ -146,9 +146,17 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
+        VToken vToken
+    ) internal view returns (uint256 baseValue_) {
+        return position.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper());
+    }
+
+    function baseValue(
+        Info storage position,
+        uint160 sqrtPriceCurrent,
         VToken vToken,
         IVPoolWrapper wrapper
-    ) internal view returns (uint256 baseAmount) {
+    ) internal view returns (uint256 baseValue_) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -162,15 +170,15 @@ library LiquidityPosition {
         }
 
         // adding base token value
-        baseAmount = SqrtPriceMath.getAmount0Delta(priceLower, sqrtPriceMiddle, position.liquidity, false);
+        baseValue_ = SqrtPriceMath.getAmount0Delta(priceLower, sqrtPriceMiddle, position.liquidity, false);
 
         // adding vToken value
         uint256 vTokenAmount = SqrtPriceMath.getAmount1Delta(sqrtPriceMiddle, priceUpper, position.liquidity, false);
         if (vToken.isToken0()) {
-            (baseAmount, vTokenAmount) = (vTokenAmount, baseAmount);
+            (baseValue_, vTokenAmount) = (vTokenAmount, baseValue_);
             sqrtPriceCurrent = uint160(FixedPoint96.Q96.mulDiv(FixedPoint96.Q96, sqrtPriceCurrent)); // TODO safe reprocate the price
         }
-        baseAmount += vTokenAmount.mulDiv(sqrtPriceCurrent, FixedPoint96.Q96).mulDiv(
+        baseValue_ += vTokenAmount.mulDiv(sqrtPriceCurrent, FixedPoint96.Q96).mulDiv(
             sqrtPriceCurrent,
             FixedPoint96.Q96
         );
@@ -180,6 +188,6 @@ library LiquidityPosition {
             position.tickLower,
             position.tickUpper
         );
-        baseAmount += position.unrealizedFees(longsFeeGrowthInside, shortsFeeGrowthInside);
+        baseValue_ += position.unrealizedFees(longsFeeGrowthInside, shortsFeeGrowthInside);
     }
 }
