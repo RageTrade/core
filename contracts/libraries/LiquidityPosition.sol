@@ -2,13 +2,21 @@
 
 pragma solidity ^0.8.9;
 
-import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { SqrtPriceMath } from './uniswap/SqrtPriceMath.sol';
+import { TickMath } from './uniswap/TickMath.sol';
+import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { Account } from './Account.sol';
+import { FullMath } from './FullMath.sol';
+import { VToken, VTokenLib } from './VTokenLib.sol';
+
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library LiquidityPosition {
+    using FullMath for uint256;
     using LiquidityPosition for Info;
+    using VTokenLib for VToken;
 
     error AlreadyInitialized();
 
@@ -124,16 +132,42 @@ library LiquidityPosition {
         vBaseIncrease += (shortsFeeGrowthInside - position.shortsFeeGrowthInsideLast) * position.liquidity;
     }
 
-    // function getMaxTokenPosition(info) {}
+    function maxNetPosition(Info storage position, VToken vToken) internal view returns (uint256) {
+        uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
+        uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
-    // function getLiquidityPositionValue(info, sqrtPriceCurrent) returns (int96) {}
+        if (vToken.isToken0()) {
+            return SqrtPriceMath.getAmount0Delta(priceLower, priceUpper, position.liquidity, true);
+        } else {
+            return SqrtPriceMath.getAmount1Delta(priceLower, priceUpper, position.liquidity, true);
+        }
+    }
 
-    // function realizeFundingPayment(Set storage set, account) internal {}
+    function baseValue(
+        Info storage position,
+        uint160 sqrtPriceCurrent,
+        VToken vToken
+    ) internal view returns (uint256) {
+        uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
+        uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
-    // function liquidityChange(
-    //     Set storage set,
-    //     int24 tickLower,
-    //     int24 tickUpper,
-    //     uint128 liquidity
-    // ) internal returns (uint256 vBaseBalanceChange, uint256 vTokenBalanceChange) {}
+        // If price is outside the range, then consider it at the ends
+        // for calculation of amounts
+        uint160 sqrtPriceMiddle = sqrtPriceCurrent;
+        if (sqrtPriceCurrent < priceLower) {
+            sqrtPriceMiddle = priceLower;
+        } else if (sqrtPriceCurrent > priceUpper) {
+            sqrtPriceMiddle = priceUpper;
+        }
+
+        uint256 baseAmount = SqrtPriceMath.getAmount0Delta(priceLower, sqrtPriceMiddle, position.liquidity, false);
+        uint256 vTokenAmount = SqrtPriceMath.getAmount1Delta(sqrtPriceMiddle, priceUpper, position.liquidity, false);
+        if (vToken.isToken0()) {
+            (baseAmount, vTokenAmount) = (vTokenAmount, baseAmount);
+            sqrtPriceCurrent = uint160(FixedPoint96.Q96.mulDiv(FixedPoint96.Q96, sqrtPriceCurrent)); // TODO safe reprocate the price
+        }
+
+        return (baseAmount +
+            vTokenAmount.mulDiv(sqrtPriceCurrent, FixedPoint96.Q96).mulDiv(sqrtPriceCurrent, FixedPoint96.Q96));
+    }
 }
