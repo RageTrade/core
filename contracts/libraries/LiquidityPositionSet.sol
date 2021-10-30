@@ -5,8 +5,9 @@ pragma solidity ^0.8.9;
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
+import { VToken, VTokenLib } from './VTokenLib.sol';
 
-// import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -14,6 +15,7 @@ library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for Info;
     using Uint48L5ArrayLib for uint48[5];
+    using VTokenLib for VToken;
 
     error IllegalTicks(int24 tickLower, int24 tickUpper);
     error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
@@ -31,6 +33,33 @@ library LiquidityPositionSet {
         int24 tickUpper
     ) internal view returns (bool) {
         return _exists(set.active, tickLower, tickUpper);
+    }
+
+    function baseValue(
+        Info storage set,
+        uint160 sqrtPriceCurrent,
+        VToken vToken
+    ) internal view returns (uint256 baseValue_) {
+        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper());
+    }
+
+    function baseValue(
+        Info storage set,
+        uint160 sqrtPriceCurrent,
+        VToken vToken,
+        IVPoolWrapper wrapper // TODO refactor this
+    ) internal view returns (uint256 baseValue_) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper);
+        }
+    }
+
+    function maxNetPosition(Info storage set, VToken vToken) internal view returns (uint256 risk) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            risk += set.positions[id].maxNetPosition(vToken);
+        }
     }
 
     function activate(

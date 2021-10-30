@@ -35,7 +35,11 @@ library VTokenLib {
         return !isToken0(vToken);
     }
 
-    function vPool(VToken vToken) internal pure returns (IUniswapV3Pool) {
+    function vPool(
+        VToken vToken,
+        bytes32 POOL_BYTE_CODE_HASH_,
+        address UNISWAP_FACTORY_ADDRESS_
+    ) internal pure returns (IUniswapV3Pool) {
         address token0;
         address token1;
         address vTokenAddress = VToken.unwrap(vToken);
@@ -51,21 +55,35 @@ library VTokenLib {
             IUniswapV3Pool(
                 Create2.computeAddress(
                     keccak256(abi.encode(token0, token1, DEFAULT_FEE_TIER)),
-                    POOL_BYTE_CODE_HASH,
-                    UNISWAP_FACTORY_ADDRESS
+                    POOL_BYTE_CODE_HASH_,
+                    UNISWAP_FACTORY_ADDRESS_
                 )
             );
     }
 
-    function vPoolWrapper(VToken vToken) internal pure returns (IVPoolWrapper) {
+    // overload
+    function vPool(VToken vToken) internal pure returns (IUniswapV3Pool) {
+        return vToken.vPool(POOL_BYTE_CODE_HASH, UNISWAP_FACTORY_ADDRESS);
+    }
+
+    function vPoolWrapper(
+        VToken vToken,
+        bytes32 WRAPPER_BYTE_CODE_HASH_,
+        address VPOOL_FACTORY_
+    ) internal pure returns (IVPoolWrapper) {
         return
             IVPoolWrapper(
                 Create2.computeAddress(
                     keccak256(abi.encode(VToken.unwrap(vToken), VBASE_ADDRESS)),
-                    WRAPPER_BYTE_CODE_HASH,
-                    VPOOL_FACTORY
+                    WRAPPER_BYTE_CODE_HASH_,
+                    VPOOL_FACTORY_
                 )
             );
+    }
+
+    // overload
+    function vPoolWrapper(VToken vToken) internal pure returns (IVPoolWrapper) {
+        return vToken.vPoolWrapper(WRAPPER_BYTE_CODE_HASH, VPOOL_FACTORY);
     }
 
     function getVirtualTwapSqrtPrice(VToken vToken) internal view returns (uint160 sqrtPriceX96) {
