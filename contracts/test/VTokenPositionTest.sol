@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-
-import { console } from 'hardhat/console.sol';
 import { VTokenType, VTokenPosition } from '../libraries/VTokenPosition.sol';
 
 contract VTokenPositionTest {
@@ -24,7 +22,6 @@ contract VTokenPositionTest {
     }
 
     function getTokenPositionValue(uint256 price) external view returns (int256 value) {
-        console.log(uint256(int256(price)));
         return dummys[0].getTokenPositionValue(price);
     }
 
@@ -32,7 +29,7 @@ contract VTokenPositionTest {
         return uint8(dummys[0].riskSide());
     }
 
-    // function unrealizedFundingPayment() internal returns (int96) {}
-
-    // function realizeFundingPaymentToAccount(VTokenPosition.Info storage info) internal {}
+    function isInitilized() external view returns (bool) {
+        return (dummys[0].isInitialized());
+    }
 }

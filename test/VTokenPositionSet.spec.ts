@@ -81,5 +81,10 @@ describe('VTokenPosition Library', () => {
       expect(resultVToken[1]).to.eq(0); //sumAChk
       expect(resultVBase[0]).to.eq(10); // Update this after compl getExtraPolatedSumA
     });
+
+    it('abs', async () => {
+      expect(await VTokenPositionSet.abs(-10)).to.eq(10);
+      expect(await VTokenPositionSet.abs(10)).to.eq(10);
+    });
   });
 });

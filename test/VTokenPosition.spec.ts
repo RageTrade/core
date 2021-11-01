@@ -50,11 +50,14 @@ describe('VTokenPosition Library', () => {
 
     priceX96 = BigNumber.from('242445728302062693925');
     balance = BigNumber.from('10').pow(18);
-
-    await VTokenPosition.init(vTokenAddress, balance, -10, 0);
   });
 
   describe('Functions', () => {
+    it('isInitilized', async () => {
+      expect(await VTokenPosition.isInitilized()).to.be.false;
+      await VTokenPosition.init(vTokenAddress, balance, -10, 0);
+      expect(await VTokenPosition.isInitilized()).to.be.true;
+    });
     it('getTokenPositionValue', async () => {
       const result = await VTokenPosition.getTokenPositionValue(priceX96);
       expect(result).to.eq(balance.mul(priceX96).div(Q96));
