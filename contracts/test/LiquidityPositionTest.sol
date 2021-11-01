@@ -5,7 +5,7 @@ pragma solidity ^0.8.9;
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { VToken } from '../libraries/VTokenLib.sol';
+import { VTokenType } from '../libraries/VTokenLib.sol';
 
 import { VPoolFactory } from '../VPoolFactory.sol';
 
@@ -39,11 +39,11 @@ contract LiquidityPositionTest {
         lp.liquidityChange(liquidity, wrapper, balanceAdjustments);
     }
 
-    function maxNetPosition(VToken vToken) public view returns (uint256) {
+    function maxNetPosition(VTokenType vToken) public view returns (uint256) {
         return lp.maxNetPosition(vToken);
     }
 
-    function baseValue(uint160 sqrtPriceCurrent, VToken vToken) public view returns (uint256) {
+    function baseValue(uint160 sqrtPriceCurrent, VTokenType vToken) public view returns (uint256) {
         return lp.baseValue(sqrtPriceCurrent, vToken, wrapper);
     }
 }

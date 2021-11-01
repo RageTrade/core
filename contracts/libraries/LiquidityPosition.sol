@@ -7,7 +7,7 @@ import { TickMath } from './uniswap/TickMath.sol';
 import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { Account } from './Account.sol';
 import { FullMath } from './FullMath.sol';
-import { VToken, VTokenLib } from './VTokenLib.sol';
+import { VTokenType, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -16,7 +16,7 @@ import { console } from 'hardhat/console.sol';
 library LiquidityPosition {
     using FullMath for uint256;
     using LiquidityPosition for Info;
-    using VTokenLib for VToken;
+    using VTokenLib for VTokenType;
 
     error AlreadyInitialized();
 
@@ -132,7 +132,7 @@ library LiquidityPosition {
         vBaseIncrease += (shortsFeeGrowthInside - position.shortsFeeGrowthInsideLast) * position.liquidity;
     }
 
-    function maxNetPosition(Info storage position, VToken vToken) internal view returns (uint256) {
+    function maxNetPosition(Info storage position, VTokenType vToken) internal view returns (uint256) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -146,7 +146,7 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VToken vToken
+        VTokenType vToken
     ) internal view returns (uint256 baseValue_) {
         return position.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper());
     }
@@ -154,7 +154,7 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VToken vToken,
+        VTokenType vToken,
         IVPoolWrapper wrapper
     ) internal view returns (uint256 baseValue_) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);

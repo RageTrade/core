@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { console } from 'hardhat/console.sol';
 import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
-import { VTokenPosition, VToken } from '../libraries/VTokenPosition.sol';
+import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VBASE_ADDRESS } from '../Constants.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account } from '../libraries/Account.sol';

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { console } from 'hardhat/console.sol';
-import { VToken, VTokenPosition } from '../libraries/VTokenPosition.sol';
+import { VTokenType, VTokenPosition } from '../libraries/VTokenPosition.sol';
 
 contract VTokenPositionTest {
     using VTokenPosition for VTokenPosition.Position;
@@ -17,7 +17,7 @@ contract VTokenPositionTest {
         int256 _sumAChkpt
     ) external {
         VTokenPosition.Position storage dummy = dummys[num++];
-        dummy.vToken = VToken.wrap(_vTokenAddress);
+        dummy.vToken = VTokenType.wrap(_vTokenAddress);
         dummy.balance = _balance;
         dummy.netTraderPosition = _netTraderPosition;
         dummy.sumAChkpt = _sumAChkpt;

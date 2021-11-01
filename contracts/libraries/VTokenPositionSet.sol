@@ -9,11 +9,11 @@ import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { VToken, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenType, VTokenLib } from '../libraries/VTokenLib.sol';
 
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
-    using VTokenLib for VToken;
+    using VTokenLib for VTokenType;
 
     error IncorrectUpdate();
 
@@ -67,7 +67,7 @@ library VTokenPositionSet {
     function activate(Set storage set, address vTokenAddress) internal {
         set.active.include(truncate(vTokenAddress));
         VTokenPosition.Position storage position = set.positions[truncate(vTokenAddress)];
-        VTokenPosition.initialize(position, VToken.wrap(vTokenAddress));
+        VTokenPosition.initialize(position, VTokenType.wrap(vTokenAddress));
     }
 
     function update(

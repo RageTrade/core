@@ -7,13 +7,13 @@ import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
-import { VToken, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenType, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 library VTokenPosition {
     error AlreadyInitialized();
-    using VTokenLib for VToken;
+    using VTokenLib for VTokenType;
     using FullMath for uint256;
     using LiquidityPosition for LiquidityPosition.Info;
 
@@ -24,7 +24,7 @@ library VTokenPosition {
 
     struct Position {
         // SLOT 1
-        VToken vToken;
+        VTokenType vToken;
         int256 balance; // vTokenLong - vTokenShort
         // SLOT 2
         int256 netTraderPosition;
@@ -34,7 +34,7 @@ library VTokenPosition {
         LiquidityPositionSet.Info liquidityPositions;
     }
 
-    function initialize(Position storage position, VToken _vToken) internal {
+    function initialize(Position storage position, VTokenType _vToken) internal {
         if (isInitialized(position)) {
             revert AlreadyInitialized();
         }
@@ -42,7 +42,7 @@ library VTokenPosition {
     }
 
     function isInitialized(Position storage position) internal view returns (bool) {
-        return VToken.unwrap(position.vToken) != address(0);
+        return VTokenType.unwrap(position.vToken) != address(0);
     }
 
     function getTokenPositionValue(Position storage position, uint256 price) internal view returns (int256 value) {
