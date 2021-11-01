@@ -6,6 +6,7 @@ import { DEFAULT_FEE_TIER, VBASE_ADDRESS, UNISWAP_FACTORY_ADDRESS, VPOOL_FACTORY
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { Oracle } from '../libraries/Oracle.sol';
 import { FullMath } from './FullMath.sol';
+import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -100,12 +101,12 @@ library VTokenLib {
 
     function getVirtualTwapPrice(VToken vToken) internal view returns (uint256 price) {
         uint256 sqrtPriceX96 = vToken.getVirtualTwapSqrtPrice();
-        return sqrtPriceX96.mulDiv(sqrtPriceX96, 1 << 96).mulDiv(10**18, 1 << 96); // TODO refactor this
+        return sqrtPriceX96.mulDiv(sqrtPriceX96, FixedPoint96.Q96); // TODO refactor this
     }
 
     function getRealTwapPrice(VToken vToken) internal view returns (uint256 price) {
         uint256 sqrtPriceX96 = vToken.getRealTwapSqrtPrice();
-        return sqrtPriceX96.mulDiv(sqrtPriceX96, 1 << 96).mulDiv(10**18, 1 << 96); // TODO refactor this
+        return sqrtPriceX96.mulDiv(sqrtPriceX96, FixedPoint96.Q96); // TODO refactor this
     }
 
     function getMarginRatio(VToken vToken, bool isInitialMargin) internal view returns (uint16) {

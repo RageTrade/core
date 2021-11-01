@@ -25,4 +25,6 @@ interface IVPoolWrapper {
         int24 tickUpper,
         int256 liquidity
     ) external returns (int256 vBaseAmount, int256 vTokenAmount);
+
+    function getExtrapolatedSumA() external pure returns (uint256);
 }
