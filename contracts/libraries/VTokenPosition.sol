@@ -7,13 +7,13 @@ import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
-import { VTokenType, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 library VTokenPosition {
     error AlreadyInitialized();
-    using VTokenLib for VTokenType;
+    using VTokenLib for VTokenAddress;
     using FullMath for uint256;
     using LiquidityPosition for LiquidityPosition.Info;
 
@@ -24,7 +24,7 @@ library VTokenPosition {
 
     struct Position {
         // SLOT 1
-        VTokenType vToken;
+        VTokenAddress vToken;
         int256 balance; // vTokenLong - vTokenShort
         // SLOT 2
         int256 netTraderPosition;
@@ -34,7 +34,7 @@ library VTokenPosition {
         LiquidityPositionSet.Info liquidityPositions;
     }
 
-    function initialize(Position storage position, VTokenType _vToken) internal {
+    function initialize(Position storage position, VTokenAddress _vToken) internal {
         if (isInitialized(position)) {
             revert AlreadyInitialized();
         }
@@ -42,17 +42,17 @@ library VTokenPosition {
     }
 
     function isInitialized(Position storage position) internal view returns (bool) {
-        return VTokenType.unwrap(position.vToken) != address(0);
+        return VTokenAddress.unwrap(position.vToken) != address(0);
     }
 
-    function getTokenPositionValue(Position storage position, uint256 price) internal view returns (int256 value) {
+    function marketValue(Position storage position, uint256 price) internal view returns (int256 value) {
         value = (position.balance * int256(price)) / int256(FixedPoint96.Q96);
         value -= unrealizedFundingPayment(position);
     }
 
-    function getTokenPositionValue(Position storage position) internal view returns (int256) {
+    function marketValue(Position storage position) internal view returns (int256) {
         uint256 price = position.vToken.getVirtualTwapPrice();
-        return getTokenPositionValue(position, price);
+        return marketValue(position, price);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {

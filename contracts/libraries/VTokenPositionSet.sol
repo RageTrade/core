@@ -9,11 +9,11 @@ import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { VTokenType, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
-    using VTokenLib for VTokenType;
+    using VTokenLib for VTokenAddress;
 
     error IncorrectUpdate();
 
@@ -53,12 +53,12 @@ library VTokenPositionSet {
                     int256(FixedPoint96.Q96);
             }
 
-            accountMarketValue += VTokenPosition.getTokenPositionValue(position, price); // TODO consider removing this JUMP, as it's a simple multiplication
+            accountMarketValue += VTokenPosition.marketValue(position, price); // TODO consider removing this JUMP, as it's a simple multiplication
             uint160 sqrtPrice = position.vToken.getVirtualTwapSqrtPrice();
             accountMarketValue += int256(
                 LiquidityPositionSet.baseValue(position.liquidityPositions, sqrtPrice, position.vToken)
             );
-            accountMarketValue += VTokenPosition.getTokenPositionValue(set.positions[truncate(VBASE_ADDRESS)], (price)); // ? TODO consider removing this
+            accountMarketValue += VTokenPosition.marketValue(set.positions[truncate(VBASE_ADDRESS)], (price)); // ? TODO consider removing this
         }
 
         return (accountMarketValue, totalRequiredMargin);
@@ -67,7 +67,7 @@ library VTokenPositionSet {
     function activate(Set storage set, address vTokenAddress) internal {
         set.active.include(truncate(vTokenAddress));
         VTokenPosition.Position storage position = set.positions[truncate(vTokenAddress)];
-        VTokenPosition.initialize(position, VTokenType.wrap(vTokenAddress));
+        VTokenPosition.initialize(position, VTokenAddress.wrap(vTokenAddress));
     }
 
     function update(

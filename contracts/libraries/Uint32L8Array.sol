@@ -8,7 +8,7 @@ library Uint32L8ArrayLib {
     error IllegalElement(uint32 element);
     error NoSpaceLeftToInsert(uint32 element);
 
-    function include(uint32[8] storage array, uint32 element) internal returns (uint256) {
+    function include(uint32[8] storage array, uint32 element) internal {
         if (element == 0) {
             revert IllegalElement(0);
         }
@@ -16,7 +16,7 @@ library Uint32L8ArrayLib {
         uint256 emptyIndex = 8; // max index is 7
         for (uint256 i; i < 8; i++) {
             if (array[i] == element) {
-                return i;
+                return;
             }
             if (emptyIndex == 8 && array[i] == uint32(0)) {
                 emptyIndex = i;
@@ -28,7 +28,6 @@ library Uint32L8ArrayLib {
         }
 
         array[emptyIndex] = element;
-        return emptyIndex;
     }
 
     function exclude(uint32[8] storage array, uint32 element) internal {

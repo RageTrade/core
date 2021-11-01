@@ -58,8 +58,8 @@ describe('VTokenPosition Library', () => {
       await VTokenPosition.init(vTokenAddress, balance, -10, 0);
       expect(await VTokenPosition.isInitilized()).to.be.true;
     });
-    it('getTokenPositionValue', async () => {
-      const result = await VTokenPosition.getTokenPositionValue(priceX96);
+    it('marketValue', async () => {
+      const result = await VTokenPosition.marketValue(priceX96);
       expect(result).to.eq(balance.mul(priceX96).div(Q96));
     });
     it('riskSide', async () => {

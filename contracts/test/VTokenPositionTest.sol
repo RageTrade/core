@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { VTokenType, VTokenPosition } from '../libraries/VTokenPosition.sol';
+import { VTokenAddress, VTokenPosition } from '../libraries/VTokenPosition.sol';
 
 contract VTokenPositionTest {
     using VTokenPosition for VTokenPosition.Position;
@@ -15,14 +15,14 @@ contract VTokenPositionTest {
         int256 _sumAChkpt
     ) external {
         VTokenPosition.Position storage dummy = dummys[num++];
-        dummy.vToken = VTokenType.wrap(_vTokenAddress);
+        dummy.vToken = VTokenAddress.wrap(_vTokenAddress);
         dummy.balance = _balance;
         dummy.netTraderPosition = _netTraderPosition;
         dummy.sumAChkpt = _sumAChkpt;
     }
 
-    function getTokenPositionValue(uint256 price) external view returns (int256 value) {
-        return dummys[0].getTokenPositionValue(price);
+    function marketValue(uint256 price) external view returns (int256 value) {
+        return dummys[0].marketValue(price);
     }
 
     function riskSide() external view returns (uint8) {

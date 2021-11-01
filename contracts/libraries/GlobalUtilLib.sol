@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.9;
 import { TickUtilLib } from './TickUtilLib.sol';
-import { VTokenLib, VTokenType } from './VTokenLib.sol';
+import { VTokenLib, VTokenAddress } from './VTokenLib.sol';
 
 library GlobalUtilLib {
     using GlobalUtilLib for GlobalState;
-    using VTokenLib for VTokenType;
+    using VTokenLib for VTokenAddress;
     int256 constant fundingRateNormalizer = 10000 * 100 * 3600;
     uint256 constant amountNormalizer = 10**18;
 
@@ -16,7 +16,7 @@ library GlobalUtilLib {
         uint48 lastTradeTS;
         int256 sumA;
         int16 fundingRate; // (funding rate/hr in %) * 10000
-        VTokenType vToken;
+        VTokenAddress vToken;
         uint256 feeGrowthGlobalShortsX128; // see if Binary Fixed point is needed or not
     }
 
