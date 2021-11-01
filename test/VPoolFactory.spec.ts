@@ -1,9 +1,12 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { ethers, deployments } from 'hardhat';
+import { network, ethers, deployments } from 'hardhat';
 import { ClearingHouse, UtilsTest } from '../typechain';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { utils } from 'ethers';
+import { config } from 'dotenv';
+config();
+const { ALCHEMY_KEY } = process.env;
 
 const UNISWAP_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 const POOL_BYTE_CODE_HASH = '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54';
@@ -16,8 +19,22 @@ describe('VPoolFactory', () => {
   let vTokenByteCode: string;
   let VPoolWrapperByteCode: string;
 
-  beforeEach(async () => {
-    await (await hre.ethers.getContractFactory('VBase')).deploy();
+  before(async () => {
+    await network.provider.request({
+      method: 'hardhat_reset',
+      params: [
+        {
+          forking: {
+            jsonRpcUrl: 'https://eth-mainnet.alchemyapi.io/v2/' + ALCHEMY_KEY,
+            blockNumber: 13075000,
+          },
+        },
+      ],
+    });
+
+    await (
+      await (await hre.ethers.getContractFactory('VBase')).deploy()
+    ).address;
     oracleContract = (await (await hre.ethers.getContractFactory('OracleContract')).deploy()).address;
     VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
@@ -35,7 +52,7 @@ describe('VPoolFactory', () => {
       const vTokenAddress = events[0].args[1];
       const vPoolWrapper = events[0].args[2];
 
-      // console.log(vTokenAddress, vPool, vPoolWrapper);
+      //console.log(vTokenAddress, vPool, vPoolWrapper);
       // VToken : Create2
       const saltInUint160 = await UtilsTestContract.convertAddressToUint160(realToken);
       let salt = utils.defaultAbiCoder.encode(['uint160'], [saltInUint160]);

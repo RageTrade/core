@@ -8,7 +8,7 @@ import 'hardhat-deploy';
 import '@nomiclabs/hardhat-etherscan';
 import { ethers } from 'ethers';
 config();
-
+const { MNEMONIC, ALCHEMY_KEY } = process.env;
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task('accounts', 'Prints the list of accounts', async (args, hre) => {
@@ -35,22 +35,23 @@ export default {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://eth-mainnet.alchemyapi.io/v2/' + process.env.ALCHEMY_KEY,
+        url: 'https://eth-mainnet.alchemyapi.io/v2/' + ALCHEMY_KEY,
         blockNumber: 13075000,
       },
       gasPrice: 0,
       initialBaseFeePerGas: 0,
+      accounts: { mnemonic: MNEMONIC },
     },
     rinkeby: {
-      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
     arbitrum: {
-      url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
+      url: `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
     arbitrumRinkeby: {
-      url: `https://arb-rinkeby.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
+      url: `https://arb-rinkeby.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
   },
