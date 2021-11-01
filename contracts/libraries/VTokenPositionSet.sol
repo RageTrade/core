@@ -88,7 +88,7 @@ library VTokenPositionSet {
 
     function realizeFundingPaymentToAccount(Set storage set, address vTokenAddress) internal returns (int256) {
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncate(vTokenAddress)];
-        int256 extrapolatedSumA = int256(_VTokenPosition.vToken.vPoolWrapper().getExtrapolatedSumA());
+        int256 extrapolatedSumA = _VTokenPosition.vToken.vPoolWrapper().getExtrapolatedSumA();
 
         VTokenPosition.Position storage _VBasePosition = set.positions[truncate(VBASE_ADDRESS)];
         _VBasePosition.balance -= _VTokenPosition.netTraderPosition * (extrapolatedSumA - _VTokenPosition.sumAChkpt);

@@ -40,6 +40,7 @@ describe('VPoolFactory', () => {
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
+    console.log(utils.keccak256(VPoolWrapperByteCode));
     vTokenByteCode = (await hre.ethers.getContractFactory('VToken')).bytecode;
   });
 

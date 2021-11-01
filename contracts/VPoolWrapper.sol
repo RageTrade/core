@@ -34,7 +34,7 @@ contract VPoolWrapper is IVPoolWrapper {
         int256 liquidity
     ) external returns (int256 vBaseAmount, int256 vTokenAmount) {}
 
-    function getExtrapolatedSumA() external pure returns (uint256) {
+    function getExtrapolatedSumA() external pure returns (int256) {
         return 0;
     }
 }
