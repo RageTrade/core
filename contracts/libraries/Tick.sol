@@ -44,7 +44,7 @@ library Tick {
 
         if (tickCurrent < tickLower) {
             fundingPaymentGrowth = fpOutsideLower - fpOutsideUpper;
-        } else if (tickLower <= tickCurrent && tickCurrent < tickUpper) {
+        } else if (tickCurrent < tickUpper) {
             fundingPaymentGrowth = sumFpGlobal - fpOutsideLower - fpOutsideUpper;
         } else {
             fundingPaymentGrowth = fpOutsideUpper - fpOutsideLower;
@@ -74,7 +74,7 @@ library Tick {
 
         if (tickCurrent < tickLower) {
             uniswapFeeGrowthInside = uniswapFeeGrowthLower - uniswapFeeGrowthUpper;
-        } else if (tickLower <= tickCurrent && tickCurrent < tickUpper) {
+        } else if (tickCurrent < tickUpper) {
             uniswapFeeGrowthInside = (vToken.isToken0() ? vPool.feeGrowthGlobal1X128() : vPool.feeGrowthGlobal0X128());
             uniswapFeeGrowthInside -= (uniswapFeeGrowthLower + uniswapFeeGrowthUpper);
         } else {
@@ -93,7 +93,7 @@ library Tick {
             extendedFeeGrowthInside =
                 self[tickLower].extendedFeeGrowthOutsideX128 -
                 self[tickUpper].extendedFeeGrowthOutsideX128;
-        } else if (tickLower <= tickCurrent && tickCurrent < tickUpper) {
+        } else if (tickCurrent < tickUpper) {
             extendedFeeGrowthInside =
                 extendedFeeGrowthGlobalX128 -
                 self[tickLower].extendedFeeGrowthOutsideX128 -
