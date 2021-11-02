@@ -11,6 +11,8 @@ import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
     using VTokenLib for VTokenAddress;
@@ -76,7 +78,7 @@ library VTokenPositionSet {
         address vTokenAddress
     ) internal {
         if (vTokenAddress != VBASE_ADDRESS) {
-            set.active.include(truncate(vTokenAddress));
+            set.active.include(truncate(vTokenAddress)); // TODO : We can do truncate at once at the top and save it in mem
         }
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncate(vTokenAddress)];
         _VTokenPosition.balance += balanceAdjustments.vTokenIncrease;
@@ -86,9 +88,17 @@ library VTokenPositionSet {
         _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
     }
 
-    function realizeFundingPaymentToAccount(Set storage set, address vTokenAddress) internal {
+    function realizeFundingPayment(Set storage set, address vTokenAddress) internal {
+        realizeFundingPayment(set, vTokenAddress, set.positions[truncate(vTokenAddress)].vToken.vPoolWrapper());
+    }
+
+    function realizeFundingPayment(
+        Set storage set,
+        address vTokenAddress,
+        IVPoolWrapper wrapper
+    ) internal {
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncate(vTokenAddress)];
-        int256 extrapolatedSumA = _VTokenPosition.vToken.vPoolWrapper().getExtrapolatedSumA();
+        int256 extrapolatedSumA = wrapper.getExtrapolatedSumA();
 
         VTokenPosition.Position storage _VBasePosition = set.positions[truncate(VBASE_ADDRESS)];
         _VBasePosition.balance -= _VTokenPosition.netTraderPosition * (extrapolatedSumA - _VTokenPosition.sumAChkpt);

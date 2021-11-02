@@ -63,6 +63,6 @@ contract VPoolWrapperMock is IVPoolWrapper {
     }
 
     function getExtrapolatedSumA() external pure returns (int256) {
-        return 0;
+        return 20;
     }
 }

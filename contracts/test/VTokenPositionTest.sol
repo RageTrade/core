@@ -2,11 +2,18 @@
 
 pragma solidity ^0.8.9;
 import { VTokenAddress, VTokenPosition } from '../libraries/VTokenPosition.sol';
+import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionTest {
     using VTokenPosition for VTokenPosition.Position;
     uint256 num;
     mapping(uint256 => VTokenPosition.Position) internal dummys;
+
+    VPoolWrapperMock public wrapper;
+
+    constructor() {
+        wrapper = new VPoolWrapperMock();
+    }
 
     function init(
         address _vTokenAddress,
@@ -22,7 +29,7 @@ contract VTokenPositionTest {
     }
 
     function marketValue(uint256 price) external view returns (int256 value) {
-        return dummys[0].marketValue(price);
+        return dummys[0].marketValue(price, wrapper);
     }
 
     function riskSide() external view returns (uint8) {
@@ -31,5 +38,9 @@ contract VTokenPositionTest {
 
     function isInitilized() external view returns (bool) {
         return (dummys[0].isInitialized());
+    }
+
+    function unrealizedFundingPayment() external view returns (int256) {
+        return dummys[0].unrealizedFundingPayment(wrapper);
     }
 }

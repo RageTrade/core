@@ -45,9 +45,17 @@ library VTokenPosition {
         return VTokenAddress.unwrap(position.vToken) != address(0);
     }
 
-    function marketValue(Position storage position, uint256 price) internal view returns (int256 value) {
+    function marketValue(
+        Position storage position,
+        uint256 price,
+        IVPoolWrapper wrapper
+    ) internal view returns (int256 value) {
         value = (position.balance * int256(price)) / int256(FixedPoint96.Q96);
-        value -= unrealizedFundingPayment(position);
+        value -= unrealizedFundingPayment(position, wrapper);
+    }
+
+    function marketValue(Position storage position, uint256 price) internal view returns (int256 value) {
+        return marketValue(position, price, position.vToken.vPoolWrapper());
     }
 
     function marketValue(Position storage position) internal view returns (int256) {
@@ -59,9 +67,13 @@ library VTokenPosition {
         return position.balance > 0 ? RISK_SIDE.LONG : RISK_SIDE.SHORT;
     }
 
-    function unrealizedFundingPayment(Position storage position) internal view returns (int256) {
-        int256 extrapolatedSumA = position.vToken.vPoolWrapper().getExtrapolatedSumA();
+    function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
+        int256 extrapolatedSumA = wrapper.getExtrapolatedSumA();
         int256 unrealizedFP = position.netTraderPosition * (extrapolatedSumA - position.sumAChkpt);
         return unrealizedFP;
+    }
+
+    function unrealizedFundingPayment(Position storage position) internal view returns (int256) {
+        return unrealizedFundingPayment(position, position.vToken.vPoolWrapper());
     }
 }
