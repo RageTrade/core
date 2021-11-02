@@ -26,20 +26,16 @@ library VTokenPositionSet {
         mapping(uint32 => VTokenPosition.Position) positions;
     }
 
-    struct Info {
-        mapping(uint32 => address) vTokenAddresses;
-    }
-
     function getAllTokenPositionValueAndMargin(
         Set storage set,
         bool isInitialMargin,
-        Info storage info
+        mapping(uint32 => address) storage vTokenAddresses
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            VTokenAddress vToken = VTokenAddress.wrap(info.vTokenAddresses[truncated]);
+            VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
             VTokenPosition.Position storage position = set.positions[truncated];
             uint256 price = vToken.getVirtualTwapPrice();
             uint16 marginRatio = vToken.getMarginRatio(isInitialMargin);

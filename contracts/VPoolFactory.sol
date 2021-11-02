@@ -22,10 +22,7 @@ abstract contract VPoolFactory is IVPoolFactory {
     address public immutable owner;
     bool public isRestricted;
 
-    struct Info {
-        mapping(uint32 => address) vTokenAddresses;
-    }
-    Info internal info;
+    mapping(uint32 => address) vTokenAddresses;
 
     mapping(address => bool) public realTokenInitilized;
 
@@ -77,14 +74,14 @@ abstract contract VPoolFactory is IVPoolFactory {
         while (true) {
             vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
             key = uint32(uint160(vTokenAddress));
-            if (info.vTokenAddresses[key] == address(0)) {
+            if (vTokenAddresses[key] == address(0)) {
                 break;
             }
             salt++; // using a different salt
         }
         address deployedAddress = Create2.deploy(0, keccak256(abi.encode(salt)), bytecode);
         require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
-        info.vTokenAddresses[key] = deployedAddress;
+        vTokenAddresses[key] = deployedAddress;
         realTokenInitilized[realToken] == true;
         return deployedAddress;
     }
