@@ -21,6 +21,7 @@ jobs:
       - run: yarn test
         env:
           ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
+          MNEMONIC: ${{ secrets.MNEMONIC }}
   format:
     runs-on: ubuntu-latest
     environment: CI

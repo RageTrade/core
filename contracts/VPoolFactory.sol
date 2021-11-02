@@ -22,7 +22,8 @@ abstract contract VPoolFactory is IVPoolFactory {
     address public immutable owner;
     bool public isRestricted;
 
-    mapping(bytes4 => address) public vTokenAddresses; // bytes4(vTokenAddress) => vTokenAddress
+    mapping(uint32 => address) vTokenAddresses;
+
     mapping(address => bool) public realTokenInitilized;
 
     constructor() {
@@ -68,11 +69,11 @@ abstract contract VPoolFactory is IVPoolFactory {
             abi.encode(vTokenName, vTokenSymbol, realToken, oracleAddress, address(this))
         );
         bytes32 byteCodeHash = keccak256(bytecode);
-        bytes4 key;
+        uint32 key;
         address vTokenAddress;
         while (true) {
             vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
-            key = bytes4(abi.encode(vTokenAddress));
+            key = uint32(uint160(vTokenAddress));
             if (vTokenAddresses[key] == address(0)) {
                 break;
             }
