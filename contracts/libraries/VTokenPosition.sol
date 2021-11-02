@@ -23,26 +23,12 @@ library VTokenPosition {
     }
 
     struct Position {
-        // SLOT 1
-        VTokenAddress vToken;
         int256 balance; // vTokenLong - vTokenShort
-        // SLOT 2
         int256 netTraderPosition;
         int256 sumAChkpt; // later look into cint64
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPositionSet.Info liquidityPositions;
-    }
-
-    function initialize(Position storage position, VTokenAddress _vToken) internal {
-        if (isInitialized(position)) {
-            revert AlreadyInitialized();
-        }
-        position.vToken = _vToken;
-    }
-
-    function isInitialized(Position storage position) internal view returns (bool) {
-        return VTokenAddress.unwrap(position.vToken) != address(0);
     }
 
     function marketValue(
@@ -54,13 +40,17 @@ library VTokenPosition {
         value -= unrealizedFundingPayment(position, wrapper);
     }
 
-    function marketValue(Position storage position, uint256 price) internal view returns (int256 value) {
-        return marketValue(position, price, position.vToken.vPoolWrapper());
+    function marketValue(
+        Position storage position,
+        VTokenAddress vToken,
+        uint256 price
+    ) internal view returns (int256 value) {
+        return marketValue(position, price, vToken.vPoolWrapper());
     }
 
-    function marketValue(Position storage position) internal view returns (int256) {
-        uint256 price = position.vToken.getVirtualTwapPrice();
-        return marketValue(position, price);
+    function marketValue(Position storage position, VTokenAddress vToken) internal view returns (int256) {
+        uint256 price = vToken.getVirtualTwapPrice();
+        return marketValue(position, vToken, price);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {
@@ -73,7 +63,7 @@ library VTokenPosition {
         return unrealizedFP;
     }
 
-    function unrealizedFundingPayment(Position storage position) internal view returns (int256) {
-        return unrealizedFundingPayment(position, position.vToken.vPoolWrapper());
+    function unrealizedFundingPayment(Position storage position, VTokenAddress vToken) internal view returns (int256) {
+        return unrealizedFundingPayment(position, vToken.vPoolWrapper());
     }
 }

@@ -6,7 +6,6 @@ import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { VBASE_ADDRESS } from '../Constants.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
-
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
@@ -27,22 +26,27 @@ library VTokenPositionSet {
         mapping(uint32 => VTokenPosition.Position) positions;
     }
 
-    function getAllTokenPositionValueAndMargin(Set storage set, bool isInitialMargin)
-        internal
-        view
-        returns (int256 accountMarketValue, int256 totalRequiredMargin)
-    {
+    struct Info {
+        mapping(uint32 => address) vTokenAddresses;
+    }
+
+    function getAllTokenPositionValueAndMargin(
+        Set storage set,
+        bool isInitialMargin,
+        Info storage info
+    ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
+            VTokenAddress vToken = VTokenAddress.wrap(info.vTokenAddresses[truncated]);
             VTokenPosition.Position storage position = set.positions[truncated];
-            uint256 price = position.vToken.getVirtualTwapPrice();
-            uint16 marginRatio = position.vToken.getMarginRatio(isInitialMargin);
+            uint256 price = vToken.getVirtualTwapPrice();
+            uint16 marginRatio = vToken.getMarginRatio(isInitialMargin);
 
             int256 tokenPosition = position.balance;
             int256 liquidityMaxTokenPosition = int256(
-                LiquidityPositionSet.maxNetPosition(position.liquidityPositions, position.vToken)
+                LiquidityPositionSet.maxNetPosition(position.liquidityPositions, vToken)
             );
 
             if (-2 * tokenPosition < liquidityMaxTokenPosition) {
@@ -55,12 +59,12 @@ library VTokenPositionSet {
                     int256(FixedPoint96.Q96);
             }
 
-            accountMarketValue += VTokenPosition.marketValue(position, price); // TODO consider removing this JUMP, as it's a simple multiplication
-            uint160 sqrtPrice = position.vToken.getVirtualTwapSqrtPrice();
+            accountMarketValue += VTokenPosition.marketValue(position, vToken, price); // TODO consider removing this JUMP, as it's a simple multiplication
+            uint160 sqrtPrice = vToken.getVirtualTwapSqrtPrice();
             accountMarketValue += int256(
-                LiquidityPositionSet.baseValue(position.liquidityPositions, sqrtPrice, position.vToken)
+                LiquidityPositionSet.baseValue(position.liquidityPositions, sqrtPrice, vToken)
             );
-            accountMarketValue += VTokenPosition.marketValue(set.positions[truncate(VBASE_ADDRESS)], (price)); // ? TODO consider removing this
+            accountMarketValue += VTokenPosition.marketValue(set.positions[truncate(VBASE_ADDRESS)], vToken, price); // ? TODO consider removing this
         }
 
         return (accountMarketValue, totalRequiredMargin);
@@ -68,8 +72,6 @@ library VTokenPositionSet {
 
     function activate(Set storage set, address vTokenAddress) internal {
         set.active.include(truncate(vTokenAddress));
-        VTokenPosition.Position storage position = set.positions[truncate(vTokenAddress)];
-        VTokenPosition.initialize(position, VTokenAddress.wrap(vTokenAddress));
     }
 
     function update(
@@ -89,7 +91,7 @@ library VTokenPositionSet {
     }
 
     function realizeFundingPayment(Set storage set, address vTokenAddress) internal {
-        realizeFundingPayment(set, vTokenAddress, set.positions[truncate(vTokenAddress)].vToken.vPoolWrapper());
+        realizeFundingPayment(set, vTokenAddress, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
     }
 
     function realizeFundingPayment(

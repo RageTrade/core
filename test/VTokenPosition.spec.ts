@@ -29,14 +29,10 @@ describe('VTokenPosition Library', () => {
 
     const factory = await hre.ethers.getContractFactory('VTokenPositionTest');
     VTokenPosition = (await factory.deploy()) as unknown as VTokenPositionTest;
+    await VTokenPosition.init(balance, -10, 10);
   });
 
   describe('Functions', () => {
-    it('isInitilized', async () => {
-      expect(await VTokenPosition.isInitilized()).to.be.false;
-      await VTokenPosition.init(vTokenAddress, balance, -10, 10);
-      expect(await VTokenPosition.isInitilized()).to.be.true;
-    });
     it('unrealizedFundingPayment', async () => {
       const result = await VTokenPosition.unrealizedFundingPayment();
       expect(result).to.eq(-100);

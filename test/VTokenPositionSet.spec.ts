@@ -9,7 +9,7 @@ const { ALCHEMY_KEY } = process.env;
 
 const vBaseAddress = '0xF1A16031d66de124735c920e1F2A6b28240C1A5e';
 
-describe('VTokenPosition Library', () => {
+describe('VTokenPositionSet Library', () => {
   let VTokenPositionSet: VTokenPositionSetTest;
   const vTokenAddress: string = utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
 

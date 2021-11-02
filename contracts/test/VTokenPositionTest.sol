@@ -16,13 +16,11 @@ contract VTokenPositionTest {
     }
 
     function init(
-        address _vTokenAddress,
         int256 _balance,
         int256 _netTraderPosition,
         int256 _sumAChkpt
     ) external {
         VTokenPosition.Position storage dummy = dummys[num++];
-        dummy.vToken = VTokenAddress.wrap(_vTokenAddress);
         dummy.balance = _balance;
         dummy.netTraderPosition = _netTraderPosition;
         dummy.sumAChkpt = _sumAChkpt;
@@ -34,10 +32,6 @@ contract VTokenPositionTest {
 
     function riskSide() external view returns (uint8) {
         return uint8(dummys[0].riskSide());
-    }
-
-    function isInitilized() external view returns (bool) {
-        return (dummys[0].isInitialized());
     }
 
     function unrealizedFundingPayment() external view returns (int256) {
