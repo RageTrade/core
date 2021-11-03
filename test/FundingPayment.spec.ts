@@ -5,6 +5,7 @@ import hre, { ethers } from 'hardhat';
 import { FundingPaymentTest } from '../typechain';
 
 const PRECISION_FACTOR = BigNumber.from(10).pow(18);
+const DAY = 24 * 60 * 60;
 
 describe('FundingPayment', () => {
   let test: FundingPaymentTest;
@@ -19,7 +20,8 @@ describe('FundingPayment', () => {
         PRECISION_FACTOR.mul(101 - 100)
           .mul(100)
           .div(101)
-          .mul(20 - 10),
+          .mul(20 - 10)
+          .div(DAY),
       ); // (101-100)/101 * 100 * (20-10)
     });
 
@@ -29,7 +31,8 @@ describe('FundingPayment', () => {
         PRECISION_FACTOR.mul(99 - 100)
           .mul(100)
           .div(99)
-          .mul(20 - 10),
+          .mul(20 - 10)
+          .div(DAY),
       ); // (101-100)/101 * 100 * (20-10)
     });
   });

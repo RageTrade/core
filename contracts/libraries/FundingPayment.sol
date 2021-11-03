@@ -39,10 +39,10 @@ library FundingPayment {
     ) internal pure returns (int256) {
         // FR * P * dt
         return
-            (realPriceX128 - virtualPriceX128).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
+            ((realPriceX128 - virtualPriceX128).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
                 PRECISION_FACTOR,
                 1 << 128
-            ) * int48(blockTimestamp - timestampLast);
+            ) * int48(blockTimestamp - timestampLast)) / 1 days;
     }
 
     function extrapolatedSumA(
