@@ -5,6 +5,7 @@ import { ClearingHouse, UtilsTest, VBase } from '../typechain';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { utils } from 'ethers';
 import { config } from 'dotenv';
+import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 config();
 const { ALCHEMY_KEY } = process.env;
 
@@ -21,17 +22,7 @@ describe('VPoolFactory', () => {
   let VPoolWrapperByteCode: string;
 
   before(async () => {
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: 'https://eth-mainnet.alchemyapi.io/v2/' + ALCHEMY_KEY,
-            blockNumber: 13075000,
-          },
-        },
-      ],
-    });
+    await activateMainnetFork(hre);
 
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
@@ -43,6 +34,8 @@ describe('VPoolFactory', () => {
     // console.log(utils.keccak256(VPoolWrapperByteCode));
     vTokenByteCode = (await hre.ethers.getContractFactory('VToken')).bytecode;
   });
+
+  after(deactivateMainnetFork.bind(null, hre));
 
   describe('Initilize', () => {
     it('Deployments', async () => {

@@ -4,6 +4,7 @@ import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
 import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper } from '../typechain';
 import { config } from 'dotenv';
+import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 config();
 const { ALCHEMY_KEY } = process.env;
 
@@ -20,17 +21,7 @@ describe('VTokenPositionSet Library', () => {
   let VPoolWrapper: VPoolWrapper;
 
   before(async () => {
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: 'https://eth-mainnet.alchemyapi.io/v2/' + ALCHEMY_KEY,
-            blockNumber: 13075000,
-          },
-        },
-      ],
-    });
+    await activateMainnetFork(hre);
 
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
@@ -62,6 +53,8 @@ describe('VTokenPositionSet Library', () => {
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
     VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
   });
+
+  after(deactivateMainnetFork.bind(null, hre));
 
   describe('Functions', () => {
     it('Activate', async () => {

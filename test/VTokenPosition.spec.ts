@@ -15,18 +15,6 @@ describe('VTokenPosition Library', () => {
   const balance = BigNumber.from('10').pow(18);
 
   before(async () => {
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: 'https://eth-mainnet.alchemyapi.io/v2/' + ALCHEMY_KEY,
-            blockNumber: 13075000,
-          },
-        },
-      ],
-    });
-
     const factory = await hre.ethers.getContractFactory('VTokenPositionTest');
     VTokenPosition = (await factory.deploy()) as unknown as VTokenPositionTest;
     await VTokenPosition.init(balance, -10, 10);
