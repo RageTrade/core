@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
+import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 interface IVPoolWrapper {
     function timeHorizon() external view returns (uint32);
@@ -23,7 +24,7 @@ interface IVPoolWrapper {
     function liquidityChange(
         int24 tickLower,
         int24 tickUpper,
-        int256 liquidity
+        int128 liquidity
     ) external returns (int256 vBaseAmount, int256 vTokenAmount);
 
     function getExtrapolatedSumA() external pure returns (int256);

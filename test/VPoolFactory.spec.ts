@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { network, ethers, deployments } from 'hardhat';
-import { ClearingHouse, UtilsTest } from '../typechain';
+import { ClearingHouse, UtilsTest, VBase } from '../typechain';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { utils } from 'ethers';
 import { config } from 'dotenv';
@@ -14,6 +14,7 @@ const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 describe('VPoolFactory', () => {
   let oracle: string;
+  let VBase: VBase;
   let VPoolFactory: ClearingHouse;
   let UtilsTestContract: UtilsTest;
   let vTokenByteCode: string;
@@ -32,11 +33,10 @@ describe('VPoolFactory', () => {
       ],
     });
 
-    await (
-      await (await hre.ethers.getContractFactory('VBase')).deploy()
-    ).address;
+    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
     VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
+    VBase.transferOwnership(VPoolFactory.address);
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
@@ -76,13 +76,13 @@ describe('VPoolFactory', () => {
       const vToken_state_symbol = await vToken.symbol();
       const vToken_state_realToken = await vToken.realToken();
       const vToken_state_oracle = await vToken.oracle();
-      const vToken_state_perpState = await vToken.perpState();
+      const vToken_state_owner = await vToken.owner();
 
       expect(vToken_state_name).to.eq('vWETH');
       expect(vToken_state_symbol).to.eq('vWETH');
       expect(vToken_state_realToken.toLowerCase()).to.eq(realToken);
       expect(vToken_state_oracle).to.eq(oracle);
-      expect(vToken_state_perpState.toLowerCase()).to.eq(VPoolFactory.address.toLowerCase());
+      expect(vToken_state_owner.toLowerCase()).to.eq(VPoolFactory.address.toLowerCase());
 
       // VPool : Create2
       const vBase = await UtilsTestContract.getVBase();

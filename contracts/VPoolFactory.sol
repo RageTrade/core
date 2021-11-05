@@ -7,12 +7,14 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import './interfaces/IVPoolFactory.sol';
 import './interfaces/IOracle.sol';
+import './interfaces/IVBase.sol';
 import './tokens/VToken.sol';
 import './VPoolWrapper.sol';
 import './Constants.sol';
 
 abstract contract VPoolFactory is IVPoolFactory {
     struct Parameters {
+        address vTokenAddress;
         uint16 initialMargin;
         uint16 maintainanceMargin;
         uint32 twapDuration;
@@ -50,6 +52,7 @@ abstract contract VPoolFactory is IVPoolFactory {
         );
         IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPrice(twapDuration));
         address vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
+        IVBase(VBASE_ADDRESS).addMinter(vPoolWrapper);
         emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
 
@@ -95,6 +98,7 @@ abstract contract VPoolFactory is IVPoolFactory {
         bytes32 salt = keccak256(abi.encode(vTokenAddress, VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;
         parameters = Parameters({
+            vTokenAddress: vTokenAddress,
             initialMargin: initialMargin,
             maintainanceMargin: maintainanceMargin,
             twapDuration: twapDuration

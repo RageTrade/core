@@ -36,6 +36,20 @@ library VTokenLib {
         return !isToken0(vToken);
     }
 
+    function flip(
+        VTokenAddress vToken,
+        int256 amount0,
+        int256 amount1
+    ) internal pure returns (int256 baseAmount, int256 vTokenAmount) {
+        if (vToken.isToken0()) {
+            baseAmount = amount1;
+            vTokenAmount = amount0;
+        } else {
+            baseAmount = amount0;
+            vTokenAmount = amount1;
+        }
+    }
+
     function vPool(
         VTokenAddress vToken,
         bytes32 POOL_BYTE_CODE_HASH_,
