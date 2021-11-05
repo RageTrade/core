@@ -17,32 +17,32 @@ describe('Tick', () => {
     });
 
     it('current price inside, global increase', async () => {
-      expect(await test.getFundingPaymentGrowthInside(-1, 1, 0, 0, 10)).to.eq(10);
+      expect(await test.getFundingPaymentGrowthInside(-1, 1, 0, 0, Q128(10))).to.eq(Q128(10));
     });
 
     it('current price outside, global increase', async () => {
-      expect(await test.getFundingPaymentGrowthInside(-1, 1, 2, 0, 10)).to.eq(0);
+      expect(await test.getFundingPaymentGrowthInside(-1, 1, 2, 0, Q128(10))).to.eq(0);
     });
 
     it('current price inside, global increase with ticks', async () => {
-      await setTick(-1, { sumFpOutside: 5 });
-      await setTick(1, { sumFpOutside: 10 });
-      expect(await test.getFundingPaymentGrowthInside(-1, 1, 0, 0, 30)).to.eq(15);
+      await setTick(-1, { sumFpOutsideX128: Q128(5) });
+      await setTick(1, { sumFpOutsideX128: Q128(10) });
+      expect(await test.getFundingPaymentGrowthInside(-1, 1, 0, 0, Q128(30))).to.eq(Q128(15));
     });
 
     it('current price outside, global increase with ticks', async () => {
-      await setTick(-1, { sumFpOutside: 5 });
-      await setTick(1, { sumFpOutside: 10 });
+      await setTick(-1, { sumFpOutsideX128: Q128(5) });
+      await setTick(1, { sumFpOutsideX128: Q128(10) });
 
-      expect(await test.getFundingPaymentGrowthInside(-1, 1, 2, 0, 30)).to.eq(5);
+      expect(await test.getFundingPaymentGrowthInside(-1, 1, 2, 0, Q128(30))).to.eq(Q128(5));
     });
 
     it('current price outside, global increase with ticks and extrapolation', async () => {
-      await setTick(-1, { sumFpOutside: 5 });
-      await setTick(1, { sumFpOutside: 10, sumBOutside: 10 });
+      await setTick(-1, { sumFpOutsideX128: Q128(5) });
+      await setTick(1, { sumFpOutsideX128: Q128(10), sumBOutsideX128: Q128(10) });
 
       // extrapolated fp in -1 to 1 would be 10x10 = 100
-      expect(await test.getFundingPaymentGrowthInside(-1, 1, 2, 10, 30)).to.eq(100 + 5);
+      expect(await test.getFundingPaymentGrowthInside(-1, 1, 2, Q128(10), Q128(30))).to.eq(Q128(100 + 5));
     });
   });
 
@@ -56,27 +56,27 @@ describe('Tick', () => {
     });
 
     it('current price inside, global increase', async () => {
-      await vPool.setFeeGrowth(0, 10); // increasing token1 global var
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0)).to.eq(10);
+      await vPool.setFeeGrowth(0, Q128(10)); // increasing token1 global var
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0)).to.eq(Q128(10));
     });
 
     it('current price outside, global increase', async () => {
-      await vPool.setFeeGrowth(0, 10); // increasing token1 global var
+      await vPool.setFeeGrowth(0, Q128(10)); // increasing token1 global var
       expect(await test.getUniswapFeeGrowthInside(-1, 1, 2, vTokenAddress.suchThatVTokenIsToken0)).to.eq(0);
     });
 
     it('current price inside, global increase with ticks', async () => {
-      await vPool.setFeeGrowth(0, 30); // increasing token1 global var
-      await vPoolMocksetTick(-1, { feeGrowthOutside1X128: 5 });
-      await vPoolMocksetTick(1, { feeGrowthOutside1X128: 10 });
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0)).to.eq(15);
+      await vPool.setFeeGrowth(0, Q128(30)); // increasing token1 global var
+      await vPoolMocksetTick(-1, { feeGrowthOutside1X128: Q128(5) });
+      await vPoolMocksetTick(1, { feeGrowthOutside1X128: Q128(10) });
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0)).to.eq(Q128(15));
     });
 
     it('current price outside, global increase with ticks', async () => {
       await vPool.setFeeGrowth(0, 30); // increasing token1 global var
-      await vPoolMocksetTick(-1, { feeGrowthOutside1X128: 5 });
-      await vPoolMocksetTick(1, { feeGrowthOutside1X128: 10 });
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2, vTokenAddress.suchThatVTokenIsToken0)).to.eq(5);
+      await vPoolMocksetTick(-1, { feeGrowthOutside1X128: Q128(5) });
+      await vPoolMocksetTick(1, { feeGrowthOutside1X128: Q128(10) });
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2, vTokenAddress.suchThatVTokenIsToken0)).to.eq(Q128(5));
     });
   });
 
@@ -86,47 +86,47 @@ describe('Tick', () => {
     });
 
     it('current price inside, global increase', async () => {
-      expect(await test.getExtendedFeeGrowthInside(-1, 1, 0, 10)).to.eq(10);
+      expect(await test.getExtendedFeeGrowthInside(-1, 1, 0, Q128(10))).to.eq(Q128(10));
     });
 
     it('current price outside, global increase', async () => {
-      expect(await test.getExtendedFeeGrowthInside(-1, 1, 2, 10)).to.eq(0);
+      expect(await test.getExtendedFeeGrowthInside(-1, 1, 2, Q128(10))).to.eq(0);
     });
 
     it('current price inside, global increase with ticks', async () => {
-      await setTick(-1, { extendedFeeGrowthOutsideX128: 5 });
-      await setTick(1, { extendedFeeGrowthOutsideX128: 10 });
-      expect(await test.getExtendedFeeGrowthInside(-1, 1, 0, 30)).to.eq(15);
+      await setTick(-1, { extendedFeeGrowthOutsideX128: Q128(5) });
+      await setTick(1, { extendedFeeGrowthOutsideX128: Q128(10) });
+      expect(await test.getExtendedFeeGrowthInside(-1, 1, 0, Q128(30))).to.eq(Q128(15));
     });
 
     it('current price outside, global increase with ticks', async () => {
-      await setTick(-1, { extendedFeeGrowthOutsideX128: 5 });
-      await setTick(1, { extendedFeeGrowthOutsideX128: 10 });
+      await setTick(-1, { extendedFeeGrowthOutsideX128: Q128(5) });
+      await setTick(1, { extendedFeeGrowthOutsideX128: Q128(10) });
 
-      expect(await test.getExtendedFeeGrowthInside(-1, 1, 2, 30)).to.eq(5);
+      expect(await test.getExtendedFeeGrowthInside(-1, 1, 2, Q128(30))).to.eq(Q128(5));
     });
   });
 
   async function setTick(
     tickIndex: number,
     {
-      sumALast,
-      sumBOutside,
-      sumFpOutside,
+      sumALastX128,
+      sumBOutsideX128,
+      sumFpOutsideX128,
       extendedFeeGrowthOutsideX128,
     }: {
-      sumALast?: BigNumberish;
-      sumBOutside?: BigNumberish;
-      sumFpOutside?: BigNumberish;
+      sumALastX128?: BigNumberish;
+      sumBOutsideX128?: BigNumberish;
+      sumFpOutsideX128?: BigNumberish;
       extendedFeeGrowthOutsideX128?: BigNumberish;
     },
   ) {
     const tick = await test.extendedTicks(tickIndex);
-    if (sumALast === undefined) sumALast = tick.sumALast;
-    if (sumBOutside === undefined) sumBOutside = tick.sumBOutside;
-    if (sumFpOutside === undefined) sumFpOutside = tick.sumFpOutside;
+    if (sumALastX128 === undefined) sumALastX128 = tick.sumALastX128;
+    if (sumBOutsideX128 === undefined) sumBOutsideX128 = tick.sumBOutsideX128;
+    if (sumFpOutsideX128 === undefined) sumFpOutsideX128 = tick.sumFpOutsideX128;
     if (extendedFeeGrowthOutsideX128 === undefined) extendedFeeGrowthOutsideX128 = tick.extendedFeeGrowthOutsideX128;
-    await test.setTick(tickIndex, { sumALast, sumBOutside, sumFpOutside, extendedFeeGrowthOutsideX128 });
+    await test.setTick(tickIndex, { sumALastX128, sumBOutsideX128, sumFpOutsideX128, extendedFeeGrowthOutsideX128 });
   }
 
   async function vPoolMocksetTick(
@@ -172,5 +172,9 @@ describe('Tick', () => {
       secondsOutside,
       initialized,
     );
+  }
+
+  function Q128(num: number): BigNumber {
+    return BigNumber.from(1).shl(128).mul(num);
   }
 });

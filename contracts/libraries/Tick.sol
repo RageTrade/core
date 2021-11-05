@@ -14,9 +14,9 @@ library Tick {
     using VTokenLib for VTokenAddress;
 
     struct Info {
-        int256 sumALast;
-        int256 sumBOutside;
-        int256 sumFpOutside;
+        int256 sumALastX128;
+        int256 sumBOutsideX128;
+        int256 sumFpOutsideX128;
         uint256 extendedFeeGrowthOutsideX128; // extended fee for buys + sells
     }
 
@@ -25,29 +25,29 @@ library Tick {
         int24 tickLower,
         int24 tickUpper,
         int24 tickCurrent,
-        int256 sumAGlobal,
-        int256 sumFpGlobal
-    ) internal view returns (int256 fundingPaymentGrowth) {
-        int256 fpOutsideLower = FundingPayment.extrapolatedSumFp(
-            self[tickLower].sumALast,
-            self[tickLower].sumBOutside,
-            self[tickLower].sumFpOutside,
-            sumAGlobal
+        int256 sumAGlobalX128,
+        int256 sumFpGlobalX128
+    ) internal view returns (int256 fundingPaymentGrowthX128) {
+        int256 fpOutsideLowerX128 = FundingPayment.extrapolatedSumFpX128(
+            self[tickLower].sumALastX128,
+            self[tickLower].sumBOutsideX128,
+            self[tickLower].sumFpOutsideX128,
+            sumAGlobalX128
         );
 
-        int256 fpOutsideUpper = FundingPayment.extrapolatedSumFp(
-            self[tickUpper].sumALast,
-            self[tickUpper].sumBOutside,
-            self[tickUpper].sumFpOutside,
-            sumAGlobal
+        int256 fpOutsideUpperX128 = FundingPayment.extrapolatedSumFpX128(
+            self[tickUpper].sumALastX128,
+            self[tickUpper].sumBOutsideX128,
+            self[tickUpper].sumFpOutsideX128,
+            sumAGlobalX128
         );
 
         if (tickCurrent < tickLower) {
-            fundingPaymentGrowth = fpOutsideLower - fpOutsideUpper;
+            fundingPaymentGrowthX128 = fpOutsideLowerX128 - fpOutsideUpperX128;
         } else if (tickCurrent < tickUpper) {
-            fundingPaymentGrowth = sumFpGlobal - fpOutsideLower - fpOutsideUpper;
+            fundingPaymentGrowthX128 = sumFpGlobalX128 - fpOutsideLowerX128 - fpOutsideUpperX128;
         } else {
-            fundingPaymentGrowth = fpOutsideUpper - fpOutsideLower;
+            fundingPaymentGrowthX128 = fpOutsideUpperX128 - fpOutsideLowerX128;
         }
     }
 
@@ -57,28 +57,30 @@ library Tick {
         int24 tickUpper,
         int24 tickCurrent,
         VTokenAddress vToken
-    ) internal view returns (uint256 uniswapFeeGrowthInside) {
-        uint256 uniswapFeeGrowthLower;
-        uint256 uniswapFeeGrowthUpper;
+    ) internal view returns (uint256 uniswapFeeGrowthInsideX128) {
+        uint256 uniswapFeeGrowthLowerX128;
+        uint256 uniswapFeeGrowthUpperX128;
         {
-            (, , uint256 fee0Lower, uint256 fee1Lower, , , , ) = vPool.ticks(tickLower);
-            (, , uint256 fee0Upper, uint256 fee1Upper, , , , ) = vPool.ticks(tickUpper);
+            (, , uint256 fee0LowerX128, uint256 fee1LowerX128, , , , ) = vPool.ticks(tickLower);
+            (, , uint256 fee0UpperX128, uint256 fee1UpperX128, , , , ) = vPool.ticks(tickUpper);
             if (vToken.isToken0()) {
-                uniswapFeeGrowthLower = fee1Lower;
-                uniswapFeeGrowthUpper = fee1Upper;
+                uniswapFeeGrowthLowerX128 = fee1LowerX128;
+                uniswapFeeGrowthUpperX128 = fee1UpperX128;
             } else {
-                uniswapFeeGrowthLower = fee0Lower;
-                uniswapFeeGrowthUpper = fee0Upper;
+                uniswapFeeGrowthLowerX128 = fee0LowerX128;
+                uniswapFeeGrowthUpperX128 = fee0UpperX128;
             }
         }
 
         if (tickCurrent < tickLower) {
-            uniswapFeeGrowthInside = uniswapFeeGrowthLower - uniswapFeeGrowthUpper;
+            uniswapFeeGrowthInsideX128 = uniswapFeeGrowthLowerX128 - uniswapFeeGrowthUpperX128;
         } else if (tickCurrent < tickUpper) {
-            uniswapFeeGrowthInside = (vToken.isToken0() ? vPool.feeGrowthGlobal1X128() : vPool.feeGrowthGlobal0X128());
-            uniswapFeeGrowthInside -= (uniswapFeeGrowthLower + uniswapFeeGrowthUpper);
+            uniswapFeeGrowthInsideX128 = (
+                vToken.isToken0() ? vPool.feeGrowthGlobal1X128() : vPool.feeGrowthGlobal0X128()
+            );
+            uniswapFeeGrowthInsideX128 -= (uniswapFeeGrowthLowerX128 + uniswapFeeGrowthUpperX128);
         } else {
-            uniswapFeeGrowthInside = uniswapFeeGrowthUpper - uniswapFeeGrowthLower;
+            uniswapFeeGrowthInsideX128 = uniswapFeeGrowthUpperX128 - uniswapFeeGrowthLowerX128;
         }
     }
 

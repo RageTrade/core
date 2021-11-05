@@ -4,7 +4,7 @@ import hre, { ethers } from 'hardhat';
 
 import { FundingPaymentTest } from '../typechain';
 
-const PRECISION_FACTOR = BigNumber.from(10).pow(18);
+const Q128 = BigNumber.from(1).shl(128);
 const DAY = 24 * 60 * 60;
 
 describe('FundingPayment', () => {
@@ -15,25 +15,25 @@ describe('FundingPayment', () => {
 
   describe('#a', () => {
     it('rp=101 vp=100 dt=10', async () => {
-      const a = await test.nextA(10, 20, parsePriceX128(101), parsePriceX128(100));
+      const a = await test.nextAX128(10, 20, parsePriceX128(101), parsePriceX128(100));
       expect(a).to.eq(
-        PRECISION_FACTOR.mul(101 - 100)
+        Q128.mul(101 - 100)
           .mul(100)
           .div(101)
           .mul(20 - 10)
           .div(DAY),
-      ); // (101-100)/101 * 100 * (20-10)
+      ); // (101-100)/101 * 100 * (20-10) / DAY
     });
 
     it('rp=99 vp=100 dt=10', async () => {
-      const a = await test.nextA(10, 20, parsePriceX128(99), parsePriceX128(100));
+      const a = await test.nextAX128(10, 20, parsePriceX128(99), parsePriceX128(100));
       expect(a).to.eq(
-        PRECISION_FACTOR.mul(99 - 100)
+        Q128.mul(99 - 100)
           .mul(100)
           .div(99)
           .mul(20 - 10)
           .div(DAY),
-      ); // (101-100)/101 * 100 * (20-10)
+      ); // (101-100)/101 * 100 * (20-10) / DAY
     });
   });
 
