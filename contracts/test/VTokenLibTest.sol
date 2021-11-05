@@ -15,6 +15,14 @@ contract VTokenLibTest {
         return vToken.isToken1();
     }
 
+    function flip(
+        VTokenAddress vToken,
+        int256 amount0,
+        int256 amount1
+    ) external pure returns (int256 baseAmount, int256 vTokenAmount) {
+        return vToken.flip(amount0, amount1);
+    }
+
     function vPool(VTokenAddress vToken) external pure returns (address) {
         return address(vToken.vPool());
     }

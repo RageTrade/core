@@ -9,5 +9,5 @@ interface IVBase is IERC20 {
 
     function burn(address account, uint256 amount) external;
 
-    function addMinter(address vPoolWrapper) external;
+    function authorize(address vPoolWrapper) external;
 }

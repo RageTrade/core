@@ -46,9 +46,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         int256 amount0;
         int256 amount1;
         if (liquidity > 0) {
-            uint256 _amount0;
-            uint256 _amount1;
-            (_amount0, _amount1) = vToken.vPool().mint({
+            (uint256 _amount0, uint256 _amount1) = vToken.vPool().mint({
                 recipient: address(this),
                 tickLower: tickLower,
                 tickUpper: tickUpper,
@@ -58,9 +56,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
             amount0 = int256(_amount0);
             amount1 = int256(_amount1);
         } else {
-            uint256 _amount0;
-            uint256 _amount1;
-            (_amount0, _amount1) = vToken.vPool().burn({
+            (uint256 _amount0, uint256 _amount1) = vToken.vPool().burn({
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 amount: uint128(liquidity)
@@ -70,18 +66,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         }
         (basePrincipal, vTokenPrincipal) = vToken.flip(amount0, amount1);
 
-        // the above uniswapPool.mint or uniswapPool.burn updates fee growth for the position state
-
-        // bytes32 positionKey = PositionKey.compute(address(this), tickLower, tickUpper);
-        // (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = vToken.vPool().positions(
-        //     positionKey
-        // );
-        // (feeGrowthInsideVBaseLastX128, feeGrowthInsideVTokenLastX128) = vToken.flip(
-        //     feeGrowthInside0LastX128,
-        //     feeGrowthInside1LastX128
-        // );
-
-        if (liquidity < 0) collectAndBurn(tickLower, tickUpper); // D
+        if (liquidity < 0) collectAndBurn(tickLower, tickUpper);
     }
 
     function uniswapV3MintCallback(

@@ -22,7 +22,7 @@ contract VBase is ERC20, Ownable {
         _burn(account, amount);
     }
 
-    function addMinter(address vPoolWrapper) external onlyOwner {
+    function authorize(address vPoolWrapper) external onlyOwner {
         isAuth[vPoolWrapper] = true;
     }
 }
