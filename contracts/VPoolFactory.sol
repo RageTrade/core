@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/utils/Create2.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import './interfaces/IVPoolFactory.sol';
-import './interfaces/IOracleContract.sol';
+import './interfaces/IOracle.sol';
 import './tokens/VToken.sol';
 import './VPoolWrapper.sol';
 import './Constants.sol';
@@ -48,7 +48,7 @@ abstract contract VPoolFactory is IVPoolFactory {
             vTokenAddress,
             DEFAULT_FEE_TIER
         );
-        IUniswapV3Pool(vPool).initialize(IOracleContract(oracleAddress).getTwapSqrtPrice(twapDuration));
+        IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPrice(twapDuration));
         address vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
         emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
