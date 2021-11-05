@@ -21,7 +21,7 @@ describe('VTokenPositionSet Library', () => {
   let VPoolWrapper: VPoolWrapper;
 
   before(async () => {
-    await activateMainnetFork(hre);
+    await activateMainnetFork();
 
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
@@ -54,7 +54,7 @@ describe('VTokenPositionSet Library', () => {
     VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
   });
 
-  after(deactivateMainnetFork.bind(null, hre));
+  after(deactivateMainnetFork);
 
   describe('Functions', () => {
     it('Activate', async () => {

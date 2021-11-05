@@ -27,7 +27,7 @@ describe('SimulateSwap', () => {
   let test: SimulateSwapTest;
 
   before(async () => {
-    await activateMainnetFork(hre, 13555700);
+    await activateMainnetFork(13555700);
     signer = await impersonateAccount(ACCOUNT);
     v3Pool = IUniswapV3Pool__factory.connect(UNISWAP_REAL_POOL, signer);
     test = await new SimulateSwapTest__factory(signer).deploy(UNISWAP_REAL_POOL);
@@ -37,7 +37,7 @@ describe('SimulateSwap', () => {
 
   after(async () => {
     await stopImpersonatingAccount(ACCOUNT);
-    await deactivateMainnetFork(hre);
+    await deactivateMainnetFork();
   });
 
   const testCases: Array<{

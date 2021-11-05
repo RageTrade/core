@@ -22,7 +22,7 @@ describe('VPoolFactory', () => {
   let VPoolWrapperByteCode: string;
 
   before(async () => {
-    await activateMainnetFork(hre);
+    await activateMainnetFork();
 
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
