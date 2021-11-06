@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { network, ethers, deployments } from 'hardhat';
+import { network } from 'hardhat';
 import { ClearingHouse, UtilsTest, VBase } from '../typechain';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { utils } from 'ethers';
@@ -36,7 +36,7 @@ describe('VPoolFactory', () => {
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
     VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
-    VBase.transferOwnership(VPoolFactory.address);
+    await VBase.transferOwnership(VPoolFactory.address);
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;

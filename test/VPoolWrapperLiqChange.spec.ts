@@ -1,7 +1,6 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { network } from 'hardhat';
-import { UniswapV3poolABI, erc20ABI } from './utils/abi';
 import { ClearingHouse, VBase, VPoolWrapper, VToken } from '../typechain';
 import { config } from 'dotenv';
 config();
@@ -49,8 +48,8 @@ describe('VPoolWrapper', () => {
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
 
     const signers = await hre.ethers.getSigners();
-    UniswapV3pool = new hre.ethers.Contract(VPoolAddress, UniswapV3poolABI, signers[0]);
-    VToken = new hre.ethers.Contract(VTokenAddress, erc20ABI, signers[0]);
+    UniswapV3pool = await hre.ethers.getContractAt('IUniswapV3Pool', VPoolAddress);
+    VToken = await hre.ethers.getContractAt('IERC20', VTokenAddress);
   });
 
   describe('Liquidity Change', () => {

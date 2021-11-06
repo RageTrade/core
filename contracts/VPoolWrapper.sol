@@ -7,8 +7,7 @@ pragma solidity ^0.8.9;
 import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
 import './interfaces/IVPoolFactory.sol';
-import { VBASE_ADDRESS, VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
-import '@uniswap/v3-periphery/contracts/libraries/PositionKey.sol';
+import { VBASE_ADDRESS, VTokenAddress, VTokenLib, IUniswapV3Pool } from './libraries/VTokenLib.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import './interfaces/IVBase.sol';
 import './interfaces/IVToken.sol';
@@ -20,12 +19,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
     uint16 public immutable maintainanceMarginRatio;
     uint32 public immutable timeHorizon;
     VTokenAddress public immutable vToken;
+    IUniswapV3Pool public immutable vPool;
 
     constructor() {
         address vTokenAddress;
         (vTokenAddress, initialMarginRatio, maintainanceMarginRatio, timeHorizon) = IVPoolFactory(msg.sender)
             .parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);
+        vPool = vToken.vPool();
     }
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
@@ -48,7 +49,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         int256 amount0;
         int256 amount1;
         if (liquidity > 0) {
-            (uint256 _amount0, uint256 _amount1) = vToken.vPool().mint({
+            (uint256 _amount0, uint256 _amount1) = vPool.mint({
                 recipient: address(this),
                 tickLower: tickLower,
                 tickUpper: tickUpper,
@@ -58,7 +59,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
             amount0 = _amount0.toInt256();
             amount1 = _amount1.toInt256();
         } else {
-            (uint256 _amount0, uint256 _amount1) = vToken.vPool().burn({
+            (uint256 _amount0, uint256 _amount1) = vPool.burn({
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 amount: uint128(liquidity * -1)
@@ -77,14 +78,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         uint256 amount1,
         bytes calldata data
     ) external override {
-        require(msg.sender == address(vToken.vPool()));
+        require(msg.sender == address(vPool));
         (int256 vBaseAmount, int256 vTokenAmount) = vToken.flip(amount0.toInt256(), amount1.toInt256());
         if (vBaseAmount > 0) IVBase(VBASE_ADDRESS).mint(msg.sender, uint256(vBaseAmount));
         if (vTokenAmount > 0) IVToken(VTokenAddress.unwrap(vToken)).mint(msg.sender, uint256(vTokenAmount));
     }
 
     function collect(int24 tickLower, int24 tickUpper) internal {
-        (uint256 amount0, uint256 amount1) = vToken.vPool().collect({
+        (uint256 amount0, uint256 amount1) = vPool.collect({
             recipient: address(this),
             tickLower: tickLower,
             tickUpper: tickUpper,
