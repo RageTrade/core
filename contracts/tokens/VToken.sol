@@ -10,18 +10,18 @@ import '../interfaces/IVToken.sol';
 contract VToken is ERC20, IVToken {
     address public immutable override realToken;
     address public immutable override oracle;
-    address public immutable owner;
+    address public owner;
 
     constructor(
         string memory vTokenName,
         string memory vTokenSymbol,
         address _realToken,
         address _oracle,
-        address _perpState
+        address clearingHouse
     ) ERC20(vTokenName, vTokenSymbol) {
         realToken = _realToken;
         oracle = _oracle;
-        owner = _perpState;
+        owner = clearingHouse;
     }
 
     function mint(address receiver, uint256 amount) external onlyOwner {
@@ -30,6 +30,10 @@ contract VToken is ERC20, IVToken {
 
     function burn(address account, uint256 amount) external onlyOwner {
         _burn(account, amount);
+    }
+
+    function setOwner(address vPoolWrapper) external onlyOwner {
+        owner = vPoolWrapper;
     }
 
     modifier onlyOwner() {

@@ -12,4 +12,6 @@ interface IVToken is IERC20 {
     function mint(address account, uint256 amount) external;
 
     function burn(address account, uint256 amount) external;
+
+    function setOwner(address vPoolWrapper) external;
 }

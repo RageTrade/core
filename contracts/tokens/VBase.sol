@@ -6,8 +6,9 @@
 pragma solidity ^0.8.9;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '../interfaces/IVBase.sol';
 
-contract VBase is ERC20, Ownable {
+contract VBase is IVBase, ERC20, Ownable {
     mapping(address => bool) isAuth;
 
     constructor() ERC20('vBase', 'vBase') {}

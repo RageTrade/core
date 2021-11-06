@@ -82,7 +82,7 @@ describe('VPoolFactory', () => {
       expect(vToken_state_symbol).to.eq('vWETH');
       expect(vToken_state_realToken.toLowerCase()).to.eq(realToken);
       expect(vToken_state_oracle).to.eq(oracle);
-      expect(vToken_state_owner.toLowerCase()).to.eq(VPoolFactory.address.toLowerCase());
+      expect(vToken_state_owner.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
 
       // VPool : Create2
       const vBase = await UtilsTestContract.getVBase();

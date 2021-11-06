@@ -7,39 +7,38 @@ import { VBase } from '../typechain';
 describe('VBase', () => {
   let VBase: VBase;
   let signers: Signer[];
+  let signer0Address: string;
+  let signer1Address: string;
   before(async () => {
     signers = await hre.ethers.getSigners();
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
+    signer0Address = await signers[0].getAddress();
+    signer1Address = await signers[1].getAddress();
   });
 
   describe('Functions', () => {
     it('Mint Unsuccessful', async () => {
-      const account = await signers[1].getAddress();
-      expect(VBase.mint(account, 10)).revertedWith('Not Auth');
+      expect(VBase.mint(signer1Address, 10)).revertedWith('Not Auth');
     });
 
     it('Burn Unsuccessful', async () => {
-      const account = await signers[1].getAddress();
-      expect(VBase.burn(account, 10)).revertedWith('Not Auth');
+      expect(VBase.burn(signer1Address, 10)).revertedWith('Not Auth');
     });
 
     it('Authorize', async () => {
-      const account = await signers[0].getAddress();
-      expect(VBase.connect(signers[1]).authorize(account)).revertedWith('Ownable: caller is not the owner');
-      await VBase.authorize(account);
+      expect(VBase.connect(signers[1]).authorize(signer0Address)).revertedWith('Ownable: caller is not the owner');
+      await VBase.authorize(signer0Address);
     });
 
     it('Mint Successful', async () => {
-      const account = await signers[1].getAddress();
-      await VBase.mint(account, 10);
-      const bal = await VBase.balanceOf(account);
+      await VBase.mint(signer1Address, 10);
+      const bal = await VBase.balanceOf(signer1Address);
       expect(bal).to.eq(10);
     });
 
     it('Burn Unsuccessful', async () => {
-      const account = await signers[1].getAddress();
-      await VBase.burn(account, 5);
-      const bal = await VBase.balanceOf(account);
+      await VBase.burn(signer1Address, 5);
+      const bal = await VBase.balanceOf(signer1Address);
       expect(bal).to.eq(5);
     });
   });

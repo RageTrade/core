@@ -4,6 +4,7 @@
 
 // if importing uniswap v3 libraries this might not work
 pragma solidity ^0.8.9;
+import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
 import './interfaces/IVPoolFactory.sol';
 import { VBASE_ADDRESS, VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
@@ -13,6 +14,7 @@ import './interfaces/IVBase.sol';
 import './interfaces/IVToken.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
+    using SafeCast for uint256;
     using VTokenLib for VTokenAddress;
     uint16 public immutable initialMarginRatio;
     uint16 public immutable maintainanceMarginRatio;
@@ -53,20 +55,21 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
                 amount: uint128(liquidity),
                 data: '0x'
             });
-            amount0 = int256(_amount0);
-            amount1 = int256(_amount1);
+            amount0 = _amount0.toInt256();
+            amount1 = _amount1.toInt256();
         } else {
             (uint256 _amount0, uint256 _amount1) = vToken.vPool().burn({
                 tickLower: tickLower,
                 tickUpper: tickUpper,
-                amount: uint128(liquidity)
+                amount: uint128(liquidity * -1)
             });
-            amount0 = int256(_amount0) * -1;
-            amount1 = int256(_amount1) * -1;
+            amount0 = _amount0.toInt256() * -1;
+            amount1 = _amount1.toInt256() * -1;
+            // review : do we want final amount here with fees included or just the am for liq ?
+            // As per spec its am for liq only
+            collect(tickLower, tickUpper);
         }
         (basePrincipal, vTokenPrincipal) = vToken.flip(amount0, amount1);
-
-        if (liquidity < 0) collectAndBurn(tickLower, tickUpper);
     }
 
     function uniswapV3MintCallback(
@@ -75,12 +78,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         bytes calldata data
     ) external override {
         require(msg.sender == address(vToken.vPool()));
-        (int256 vBaseAmount, int256 vTokenAmount) = vToken.flip(int256(amount0), int256(amount1));
+        (int256 vBaseAmount, int256 vTokenAmount) = vToken.flip(amount0.toInt256(), amount1.toInt256());
         if (vBaseAmount > 0) IVBase(VBASE_ADDRESS).mint(msg.sender, uint256(vBaseAmount));
         if (vTokenAmount > 0) IVToken(VTokenAddress.unwrap(vToken)).mint(msg.sender, uint256(vTokenAmount));
     }
 
-    function collectAndBurn(int24 tickLower, int24 tickUpper) internal {
+    function collect(int24 tickLower, int24 tickUpper) internal {
         (uint256 amount0, uint256 amount1) = vToken.vPool().collect({
             recipient: address(this),
             tickLower: tickLower,
@@ -89,13 +92,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
             amount1Requested: type(uint128).max
         });
         (int256 basePrincipalPlusLongFees, int256 vTokenPrincipalPlusShortFees) = vToken.flip(
-            int256(amount0),
-            int256(amount1)
+            amount0.toInt256(),
+            amount1.toInt256()
         );
 
         // burn ERC20 tokens sent by uniswap and fwd accounting to perp state
-        IVBase(VBASE_ADDRESS).burn(msg.sender, uint256(basePrincipalPlusLongFees));
-        IVToken(VTokenAddress.unwrap(vToken)).burn(msg.sender, uint256(vTokenPrincipalPlusShortFees));
+        IVBase(VBASE_ADDRESS).burn(address(this), uint256(basePrincipalPlusLongFees));
+        IVToken(VTokenAddress.unwrap(vToken)).burn(address(this), uint256(vTokenPrincipalPlusShortFees));
     }
 
     function getExtrapolatedSumA() external pure returns (int256) {
