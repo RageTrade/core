@@ -7,6 +7,7 @@ import { VBASE_ADDRESS } from '../Constants.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { Account } from './Account.sol';
+import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
@@ -15,8 +16,11 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
     using VTokenLib for VTokenAddress;
+    using VTokenPositionSet for Set;
+    using LiquidityPosition for LiquidityPosition.Info;
 
     error IncorrectUpdate();
+    error DeactivationFailed(address);
 
     struct Set {
         // fixed length array of truncate(tokenAddress)
@@ -70,9 +74,17 @@ library VTokenPositionSet {
         set.active.include(truncate(vTokenAddress));
     }
 
+    function deactivate(Set storage set, address vTokenAddress) internal {
+        if (set.positions[truncate(vTokenAddress)].balance != 0) {
+            revert DeactivationFailed(vTokenAddress);
+        }
+
+        set.active.exclude(truncate(vTokenAddress));
+    }
+
     function update(
-        Account.BalanceAdjustments memory balanceAdjustments,
         Set storage set,
+        Account.BalanceAdjustments memory balanceAdjustments,
         address vTokenAddress
     ) internal {
         if (vTokenAddress != VBASE_ADDRESS) {
@@ -84,6 +96,10 @@ library VTokenPositionSet {
 
         VTokenPosition.Position storage _VBasePosition = set.positions[truncate(VBASE_ADDRESS)];
         _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
+
+        if (_VTokenPosition.balance == 0) {
+            set.deactivate(vTokenAddress);
+        }
     }
 
     function realizeFundingPayment(Set storage set, address vTokenAddress) internal {
