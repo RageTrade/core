@@ -128,4 +128,94 @@ library VTokenPositionSet {
     function truncate(address _add) internal pure returns (uint32) {
         return uint32(uint160(_add));
     }
+
+    function getTokenPosition(Set storage set, address vTokenAddress)
+        internal
+        returns (VTokenPosition.Position storage)
+    {
+        if (vTokenAddress != VBASE_ADDRESS) {
+            set.activate(vTokenAddress);
+        }
+
+        VTokenPosition.Position storage position = set.positions[truncate(vTokenAddress)];
+
+        return position;
+    }
+
+    function swapTokenAmount(
+        Set storage set,
+        address vTokenAddress,
+        int256 vTokenAmount
+    ) internal returns (int256) {
+        return set.swapTokenAmount(vTokenAddress, vTokenAmount, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
+    }
+
+    function swapTokenNotional(
+        Set storage set,
+        address vTokenAddress,
+        int256 vTokenNotional
+    ) internal returns (int256) {
+        return set.swapTokenNotional(vTokenAddress, vTokenNotional, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
+    }
+
+    function liquidityChange(
+        Set storage set,
+        address vTokenAddress,
+        LiquidityPosition.Info storage position,
+        int128 liquidity
+    ) internal returns (int256) {
+        return set.liquidityChange(vTokenAddress, position, liquidity, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
+    }
+
+    function swapTokenAmount(
+        Set storage set,
+        address vTokenAddress,
+        int256 vTokenAmount,
+        IVPoolWrapper wrapper
+    ) internal returns (int256) {
+        int256 vBaseAmount = wrapper.swapTokenAmount(vTokenAmount);
+        Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
+            vBaseAmount,
+            vTokenAmount,
+            vTokenAmount
+        );
+
+        set.update(balanceAdjustments, vTokenAddress);
+
+        return vBaseAmount;
+    }
+
+    function swapTokenNotional(
+        Set storage set,
+        address vTokenAddress,
+        int256 vTokenNotional,
+        IVPoolWrapper wrapper
+    ) internal returns (int256) {
+        int256 vTokenAmount = wrapper.swapTokenNotional(vTokenNotional);
+
+        Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
+            -1 * vTokenNotional,
+            vTokenAmount,
+            vTokenAmount
+        );
+
+        set.update(balanceAdjustments, vTokenAddress);
+
+        return vTokenNotional;
+    }
+
+    function liquidityChange(
+        Set storage set,
+        address vTokenAddress,
+        LiquidityPosition.Info storage position,
+        int128 liquidity,
+        IVPoolWrapper wrapper
+    ) internal returns (int256) {
+        Account.BalanceAdjustments memory balanceAdjustments;
+        position.liquidityChange(liquidity, wrapper, balanceAdjustments);
+
+        set.update(balanceAdjustments, vTokenAddress);
+
+        return balanceAdjustments.vBaseIncrease;
+    }
 }
