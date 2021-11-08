@@ -105,4 +105,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
     function getExtrapolatedSumA() external pure returns (int256) {
         return 0;
     }
+
+    function swapTokenNotional(int256 vBaseAmount) external returns (int256) {
+        //TODO
+        return 0;
+    }
+
+    function swapTokenAmount(int256 vTokenAmount) external returns (int256) {
+        //TODO
+        return 0;
+    }
 }
