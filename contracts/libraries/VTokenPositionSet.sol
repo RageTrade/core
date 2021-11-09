@@ -47,7 +47,6 @@ library VTokenPositionSet {
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
-
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
             VTokenPosition.Position storage position = set.positions[truncated];

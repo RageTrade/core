@@ -7,14 +7,14 @@ pragma solidity ^0.8.9;
 import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
 import './interfaces/IVPoolFactory.sol';
-import { VBASE_ADDRESS, VTokenAddress, VTokenLib, IUniswapV3Pool } from './libraries/VTokenLib.sol';
+import { VBASE_ADDRESS, VTokenAddress, VTokenLib2, IUniswapV3Pool } from './libraries/VTokenLib2.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import './interfaces/IVBase.sol';
 import './interfaces/IVToken.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
     using SafeCast for uint256;
-    using VTokenLib for VTokenAddress;
+    using VTokenLib2 for VTokenAddress;
     uint16 public immutable initialMarginRatio;
     uint16 public immutable maintainanceMarginRatio;
     uint32 public immutable timeHorizon;

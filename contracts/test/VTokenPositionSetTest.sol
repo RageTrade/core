@@ -9,14 +9,13 @@ import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VBASE_ADDRESS } from '../Constants.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account } from '../libraries/Account.sol';
-
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionSetTest {
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using Uint32L8ArrayLib for uint32[8];
-
+    mapping(uint32 => address) vTokenAddresses;
     VTokenPositionSet.Set dummy;
 
     VPoolWrapperMock public wrapper;
@@ -26,14 +25,18 @@ contract VTokenPositionSetTest {
     }
 
     function init(address vTokenAddress) external {
-        VTokenPositionSet.activate(dummy, VBASE_ADDRESS);
         VTokenPositionSet.activate(dummy, vTokenAddress);
+        vTokenAddresses[VTokenPositionSet.truncate(vTokenAddress)] = vTokenAddress;
         wrapper.setLiquidityRates(-100, 100, 4000, 1);
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
     function update(Account.BalanceAdjustments memory balanceAdjustments, address vTokenAddress) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress);
+    }
+
+    function getAllTokenPositionValueAndMargin(bool isInitialMargin) external view returns (int256, int256) {
+        return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses);
     }
 
     function realizeFundingPaymentToAccount(address vTokenAddress) external {

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { VTokenAddress } from '../libraries/VTokenLib2.sol';
 
 interface IVPoolWrapper {
     function timeHorizon() external view returns (uint32);

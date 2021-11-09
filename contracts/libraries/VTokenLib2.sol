@@ -13,13 +13,12 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
-
-bytes32 constant WRAPPER_BYTE_CODE_HASH = 0x1da53e078056b3e50096e3b38088ce238f67be2cc9ce23288d71495e274d3909; // TODO : Update
+import 'hardhat/console.sol';
 
 type VTokenAddress is address;
 
-library VTokenLib {
-    using VTokenLib for VTokenAddress;
+library VTokenLib2 {
+    using VTokenLib2 for VTokenAddress;
     using FullMath for uint256;
 
     function iface(VTokenAddress vToken) internal pure returns (IVToken) {
@@ -95,56 +94,5 @@ library VTokenLib {
     // overload
     function vPool(VTokenAddress vToken) internal pure returns (IUniswapV3Pool) {
         return vToken.vPool(POOL_BYTE_CODE_HASH, UNISWAP_FACTORY_ADDRESS);
-    }
-
-    function vPoolWrapper(
-        VTokenAddress vToken,
-        bytes32 WRAPPER_BYTE_CODE_HASH_,
-        address VPOOL_FACTORY_
-    ) internal pure returns (IVPoolWrapper) {
-        return
-            IVPoolWrapper(
-                Create2.computeAddress(
-                    keccak256(abi.encode(VTokenAddress.unwrap(vToken), VBASE_ADDRESS)),
-                    WRAPPER_BYTE_CODE_HASH_,
-                    VPOOL_FACTORY_
-                )
-            );
-    }
-
-    // overload
-    function vPoolWrapper(VTokenAddress vToken) internal pure returns (IVPoolWrapper) {
-        return vToken.vPoolWrapper(WRAPPER_BYTE_CODE_HASH, VPOOL_FACTORY);
-    }
-
-    function getVirtualTwapSqrtPrice(VTokenAddress vToken) internal view returns (uint160 sqrtPriceX96) {
-        // console.log(VTokenAddress.unwrap(vToken), address(vToken.vPoolWrapper()));
-        return Oracle.getTwapSqrtPrice(vToken.vPool(), vToken.vPoolWrapper().timeHorizon());
-    }
-
-    function getRealTwapSqrtPrice(VTokenAddress vToken) internal view returns (uint160 sqrtPriceX96) {
-        return IOracle(vToken.iface().oracle()).getTwapSqrtPrice(vToken.vPoolWrapper().timeHorizon());
-    }
-
-    function getVirtualTwapTick(VTokenAddress vToken) internal view returns (int24 tick) {
-        return Oracle.getTwapTick(vToken.vPool(), vToken.vPoolWrapper().timeHorizon());
-    }
-
-    function getVirtualTwapPrice(VTokenAddress vToken) internal view returns (uint256 price) {
-        uint256 sqrtPriceX96 = vToken.getVirtualTwapSqrtPrice();
-        return sqrtPriceX96.mulDiv(sqrtPriceX96, FixedPoint96.Q96); // TODO refactor this
-    }
-
-    function getRealTwapPrice(VTokenAddress vToken) internal view returns (uint256 price) {
-        uint256 sqrtPriceX96 = vToken.getRealTwapSqrtPrice();
-        return sqrtPriceX96.mulDiv(sqrtPriceX96, FixedPoint96.Q96); // TODO refactor this
-    }
-
-    function getMarginRatio(VTokenAddress vToken, bool isInitialMargin) internal view returns (uint16) {
-        if (isInitialMargin) {
-            return vToken.vPoolWrapper().initialMarginRatio();
-        } else {
-            return vToken.vPoolWrapper().maintainanceMarginRatio();
-        }
     }
 }
