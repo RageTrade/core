@@ -7,6 +7,7 @@ interface IVPoolFactory {
         external
         view
         returns (
+            address vTokenAddress,
             uint16 initialMargin,
             uint16 maintainanceMargin,
             uint32 twapDuration

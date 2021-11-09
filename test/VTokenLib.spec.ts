@@ -25,6 +25,12 @@ describe('VTokenLib Library', () => {
       expect(result).to.be.false;
     });
 
+    it('flip', async () => {
+      const result = await vTokenLib.flip(vTokenAdddres, 20, 30);
+      expect(result[0]).to.eq(30); //BaseAmnt
+      expect(result[1]).to.eq(20); //VTokenAmnt
+    });
+
     it('vPool', async () => {
       const result = await vTokenLib.vPool(vTokenAdddres);
       expect(result.toLowerCase()).to.eq(vPoolAddress.toLowerCase());

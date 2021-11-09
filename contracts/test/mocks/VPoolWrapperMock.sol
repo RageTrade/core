@@ -50,7 +50,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     function liquidityChange(
         int24 tickLower,
         int24 tickUpper,
-        int256 liquidity
+        int128 liquidity
     ) external returns (int256 vBaseAmount, int256 vTokenAmount) {
         if (liquidity > 0) {
             _liquidity += liquidity;
