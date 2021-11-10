@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
+import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
@@ -65,14 +65,7 @@ contract VTokenPositionSetTest {
         int24 tickUpper,
         int128 liquidity
     ) external {
-        LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
-            vTokenAddress,
-            tickLower,
-            tickUpper,
-            liquidity,
-            LimitOrderType.NONE
-        );
-        dummy.liquidityChange(liquidityChangeParams, wrapper);
+        dummy.liquidityChange(vTokenAddress, tickLower, tickUpper, liquidity, LimitOrderType.NONE, wrapper);
     }
 
     function getIsActive(address vTokenAddress) external view returns (bool) {
