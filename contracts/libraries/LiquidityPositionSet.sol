@@ -62,6 +62,22 @@ library LiquidityPositionSet {
         }
     }
 
+    function getLiquidityPosition(
+        Info storage set,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal returns (LiquidityPosition.Info storage position) {
+        if (tickLower > tickUpper) {
+            revert IllegalTicks(tickLower, tickUpper);
+        }
+
+        uint48 positionId = _include(set.active, tickLower, tickUpper);
+        position = set.positions[positionId];
+
+        require(position.isInitialized());
+        return position;
+    }
+
     function activate(
         Info storage set,
         int24 tickLower,
