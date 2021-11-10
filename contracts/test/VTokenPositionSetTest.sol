@@ -59,8 +59,19 @@ contract VTokenPositionSetTest {
         dummy.liquidityChange(vTokenAddress, dummyLiquidity, liquidity, wrapper);
     }
 
-    function liquidityChange2(address vTokenAddress,int24 tickLower, int24 tickUpper, int128 liquidity) external {
-        LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(vTokenAddress, tickLower, tickUpper, liquidity, LimitOrderType.NONE);
+    function liquidityChange2(
+        address vTokenAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidity
+    ) external {
+        LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
+            vTokenAddress,
+            tickLower,
+            tickUpper,
+            liquidity,
+            LimitOrderType.NONE
+        );
         dummy.liquidityChange(liquidityChangeParams, wrapper);
     }
 

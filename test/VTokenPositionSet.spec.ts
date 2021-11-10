@@ -205,7 +205,6 @@ describe('VTokenPositionSet Library', () => {
       // expect(resultVToken[2]).to.eq(-50);
       expect(resultVBase[0]).to.eq(-200000);
     });
-
   });
 
   describe('Liquidity Change - 2', () => {
@@ -219,22 +218,20 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.liquidityChange2(vTokenAddress, -50, 50, 100);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-  
+
       expect(resultVToken[0]).to.eq(-100);
       // expect(resultVToken[2]).to.eq(-100);
       expect(resultVBase[0]).to.eq(-400000);
     });
-  
+
     it('Remove Liquidity', async () => {
       await VTokenPositionSet.liquidityChange2(vTokenAddress, -50, 50, -50);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-  
+
       expect(resultVToken[0]).to.eq(-50);
       // expect(resultVToken[2]).to.eq(-50);
       expect(resultVBase[0]).to.eq(-200000);
     });
-
   });
-
 });
