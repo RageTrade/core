@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
+import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
-import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
+import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VBASE_ADDRESS } from '../Constants.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
@@ -32,6 +32,7 @@ contract VTokenPositionSetTest {
         VTokenPositionSet.activate(dummy, vTokenAddress);
         dummyLiquidity = dummy.getTokenPosition(vTokenAddress).liquidityPositions.activate(-100, 100);
         wrapper.setLiquidityRates(-100, 100, 4000, 1);
+        wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
     function update(Account.BalanceAdjustments memory balanceAdjustments, address vTokenAddress) external {
@@ -54,8 +55,13 @@ contract VTokenPositionSetTest {
         dummy.swapTokenNotional(vTokenAddress, vTokenNotional, wrapper);
     }
 
-    function liquidityChange(address vTokenAddress, int128 liquidity) external {
+    function liquidityChange1(address vTokenAddress, int128 liquidity) external {
         dummy.liquidityChange(vTokenAddress, dummyLiquidity, liquidity, wrapper);
+    }
+
+    function liquidityChange2(address vTokenAddress,int24 tickLower, int24 tickUpper, int128 liquidity) external {
+        LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(vTokenAddress, tickLower, tickUpper, liquidity, LimitOrderType.NONE);
+        dummy.liquidityChange(liquidityChangeParams, wrapper);
     }
 
     function getIsActive(address vTokenAddress) external view returns (bool) {
