@@ -70,13 +70,6 @@ describe('VTokenPositionSet Library', () => {
     });
   });
 
-  describe('getPosition', () => {
-    // it('Initialized Position', async() => {
-    // });
-    // it('Uninitialized Position', async() => {
-    // });
-  });
-
   describe('Token Swaps (Token Amount)', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
@@ -84,7 +77,7 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Token1', async () => {
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(false);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
 
       await VTokenPositionSet.swapTokenAmount(vTokenAddress, 4);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
@@ -92,11 +85,11 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(4);
       expect(resultVToken[2]).to.eq(4);
       expect(resultVBase[0]).to.eq(-16000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(true);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
     it('Token2', async () => {
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.eq(false);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.false;
 
       await VTokenPositionSet.swapTokenAmount(vTokenAddress1, 2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress1);
@@ -104,7 +97,7 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(2);
       expect(resultVToken[2]).to.eq(2);
       expect(resultVBase[0]).to.eq(-24000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.eq(true);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.true;
     });
 
     it('Token1 Partial Close', async () => {
@@ -114,7 +107,7 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(2);
       expect(resultVToken[2]).to.eq(2);
       expect(resultVBase[0]).to.eq(-16000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(true);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
     it('Token1 Close', async () => {
@@ -124,7 +117,7 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(0);
       expect(resultVToken[2]).to.eq(0);
       expect(resultVBase[0]).to.eq(-8000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(false);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
     });
   });
 
@@ -135,7 +128,7 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Token1', async () => {
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(false);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
 
       await VTokenPositionSet.swapTokenNotional(vTokenAddress, 16000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
@@ -143,11 +136,11 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(4);
       expect(resultVToken[2]).to.eq(4);
       expect(resultVBase[0]).to.eq(-16000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(true);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
     it('Token2', async () => {
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.eq(false);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.false;
 
       await VTokenPositionSet.swapTokenNotional(vTokenAddress1, 8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress1);
@@ -155,7 +148,7 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(2);
       expect(resultVToken[2]).to.eq(2);
       expect(resultVBase[0]).to.eq(-24000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.eq(true);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.true;
     });
 
     it('Token1 Partial Close', async () => {
@@ -165,7 +158,7 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(2);
       expect(resultVToken[2]).to.eq(2);
       expect(resultVBase[0]).to.eq(-16000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(true);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
     it('Token1 Close', async () => {
@@ -175,7 +168,7 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[0]).to.eq(0);
       expect(resultVToken[2]).to.eq(0);
       expect(resultVBase[0]).to.eq(-8000);
-      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.eq(false);
+      expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
     });
   });
 
