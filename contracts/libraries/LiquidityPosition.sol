@@ -13,6 +13,12 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 
+enum LimitOrderType {
+    NONE,
+    LOWER_LIMIT,
+    UPPER_LIMIT
+}
+
 library LiquidityPosition {
     using FullMath for uint256;
     using LiquidityPosition for Info;
@@ -21,6 +27,8 @@ library LiquidityPosition {
     error AlreadyInitialized();
 
     struct Info {
+        //Extra boolean to check if it is limit order and uint to track limit price.
+        LimitOrderType limitOrderType;
         // the tick range of the position; TODO Is storing ticks needed as it's in the positionId?
         int24 tickLower;
         int24 tickUpper;
