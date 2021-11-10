@@ -109,6 +109,17 @@ library FullMath {
 
     function mulDiv(
         int256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (int256 result) {
+        result = int256(mulDiv(a < 0 ? uint256(-1 * a) : uint256(a), b, denominator));
+        if (a < 0) {
+            result *= -1;
+        }
+    }
+
+    function mulDiv(
+        int256 a,
         int256 b,
         int256 denominator
     ) internal pure returns (int256 result) {
