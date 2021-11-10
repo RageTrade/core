@@ -20,6 +20,22 @@ library Tick {
         uint256 extendedFeeGrowthOutsideX128; // extended fee for buys + sells
     }
 
+    function getNetPositionInside(
+        mapping(int24 => Tick.Info) storage self,
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickCurrent,
+        int256 sumBGlobalX128
+    ) internal view returns (int256 netPositionGrowthX128) {
+        if (tickCurrent < tickLower) {
+            netPositionGrowthX128 = self[tickLower].sumBOutsideX128 - self[tickUpper].sumBOutsideX128;
+        } else if (tickCurrent < tickUpper) {
+            netPositionGrowthX128 = sumBGlobalX128 - self[tickLower].sumBOutsideX128 - self[tickUpper].sumBOutsideX128;
+        } else {
+            netPositionGrowthX128 = self[tickUpper].sumBOutsideX128 - self[tickLower].sumBOutsideX128;
+        }
+    }
+
     function getFundingPaymentGrowthInside(
         mapping(int24 => Tick.Info) storage self,
         int24 tickLower,
@@ -116,5 +132,22 @@ library Tick {
     //     // TODO if tick is flipped (when changing liquidity) then handle that case
     // }
 
-    // add tick cross method
+    function cross(
+        mapping(int24 => Tick.Info) storage self,
+        int24 tick,
+        FundingPayment.Info memory fpGlobal,
+        uint256 extendedFeeGrowthOutsideX128
+    ) internal {
+        Tick.Info storage info = self[tick];
+        int256 sumFpOutsideX128 = FundingPayment.extrapolatedSumFpX128(
+            info.sumALastX128,
+            info.sumBOutsideX128,
+            info.sumFpOutsideX128,
+            fpGlobal.sumAX128
+        );
+        info.sumALastX128 = fpGlobal.sumAX128;
+        info.sumBOutsideX128 = fpGlobal.sumBX128 - info.sumBOutsideX128;
+        info.sumFpOutsideX128 = fpGlobal.sumFpX128 - sumFpOutsideX128;
+        info.extendedFeeGrowthOutsideX128 = extendedFeeGrowthOutsideX128 - info.extendedFeeGrowthOutsideX128;
+    }
 }
