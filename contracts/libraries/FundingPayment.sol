@@ -28,7 +28,7 @@ library FundingPayment {
         int256 virtualPriceX128
     ) internal {
         int256 a = nextAX128(info.timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
-        info.sumAX128 += a * info.sumBX128;
+        info.sumFpX128 += a.mulDiv(info.sumBX128, int256(FixedPoint128.Q128));
         info.sumAX128 += a;
         info.sumBX128 += tokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
         info.timestampLast = blockTimestamp;
