@@ -78,7 +78,7 @@ describe('VTokenPositionSet Library', () => {
   });
 
   describe('Token Swaps (Token Amount)', () => {
-    it('Init', async () => {
+    before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
     });
@@ -129,7 +129,7 @@ describe('VTokenPositionSet Library', () => {
   });
 
   describe('Token Swaps (Token Notional)', () => {
-    it('Init', async () => {
+    before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
     });
@@ -180,7 +180,7 @@ describe('VTokenPositionSet Library', () => {
   });
 
   describe('Liquidity Change - 1', () => {
-    it('Init', async () => {
+    before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
@@ -208,7 +208,7 @@ describe('VTokenPositionSet Library', () => {
   });
 
   describe('Liquidity Change - 2', () => {
-    it('Init', async () => {
+    before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
