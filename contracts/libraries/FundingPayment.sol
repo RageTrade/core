@@ -7,6 +7,7 @@ import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 
 library FundingPayment {
     using FullMath for int256;
+    using FullMath for uint256;
 
     struct Info {
         // FR * P * dt
@@ -24,8 +25,8 @@ library FundingPayment {
         int256 tokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) internal {
         int256 a = nextAX128(info.timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
         info.sumFpX128 += a.mulDiv(info.sumBX128, int256(FixedPoint128.Q128));
@@ -37,12 +38,12 @@ library FundingPayment {
     function nextAX128(
         uint48 timestampLast,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) internal pure returns (int256 aX128) {
         return
-            (realPriceX128 - virtualPriceX128).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
-                int48(blockTimestamp - timestampLast),
+            (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
+                blockTimestamp - timestampLast,
                 1 days
             );
     }
@@ -51,8 +52,8 @@ library FundingPayment {
         int256 sumAX128,
         uint48 timestampLast,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) internal pure returns (int256) {
         return sumAX128 + nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
     }

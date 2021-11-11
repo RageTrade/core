@@ -70,8 +70,8 @@ contract TickTest {
         int256 tokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public {
         fpGlobal.update(tokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
     }

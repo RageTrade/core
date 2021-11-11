@@ -13,8 +13,8 @@ contract FundingPaymentTest {
         int256 tokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public {
         return fpGlobal.update(tokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
     }
@@ -22,8 +22,8 @@ contract FundingPaymentTest {
     function nextAX128(
         uint48 timestampLast,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public pure returns (int256) {
         return FundingPayment.nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
     }
@@ -32,8 +32,8 @@ contract FundingPaymentTest {
         int256 sumA,
         uint48 timestampLast,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public pure returns (int256) {
         return
             FundingPayment.extrapolatedSumAX128(sumA, timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
