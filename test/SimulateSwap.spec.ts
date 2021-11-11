@@ -8,7 +8,7 @@ import {
   IUniswapV3Pool__factory,
   SimulateSwapTest,
   SimulateSwapTest__factory,
-} from '../typechain';
+} from '../typechain-types';
 import { impersonateAccount, stopImpersonatingAccount } from './utils/impersonate-account';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

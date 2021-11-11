@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper } from '../typechain';
+import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper } from '../typechain-types';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 config();

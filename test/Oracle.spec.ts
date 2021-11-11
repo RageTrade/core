@@ -1,6 +1,6 @@
 import hre from 'hardhat';
 
-import { OracleTest } from '../typechain';
+import { OracleTest } from '../typechain-types';
 
 describe('Oracle Library', () => {
   let test: OracleTest;

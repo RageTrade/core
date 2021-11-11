@@ -2,7 +2,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { VToken } from '../typechain';
+import { VToken } from '../typechain-types';
 
 describe('VToken contract', () => {
   let VToken: VToken;

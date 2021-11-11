@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { LiquidityPositionSetTest } from '../typechain';
+import { LiquidityPositionSetTest } from '../typechain-types';
 
 describe('LiquidityPositionSet Library', () => {
   let test: LiquidityPositionSetTest;

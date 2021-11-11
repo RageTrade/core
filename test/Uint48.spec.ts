@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { Uint48Test } from '../typechain';
+import { Uint48Test } from '../typechain-types';
 
 describe('Uint48 Library', () => {
   let test: Uint48Test;

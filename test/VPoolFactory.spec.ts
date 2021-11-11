@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
-import { ClearingHouse, UtilsTest, VBase } from '../typechain';
+import { ClearingHouse, UtilsTest, VBase } from '../typechain-types';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { utils } from 'ethers';
 import { config } from 'dotenv';

@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import hre from 'hardhat';
 
-import { FullMathTest } from '../typechain';
+import { FullMathTest } from '../typechain-types';
 
 interface TestCase {
   a: BigNumberish;

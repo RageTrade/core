@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { SqrtPriceMath, TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_ } from '@uniswap/v3-sdk';
 
-import { LiquidityPositionTest } from '../typechain';
+import { LiquidityPositionTest } from '../typechain-types';
 
 describe('LiquidityPosition Library', () => {
   let test: LiquidityPositionTest;

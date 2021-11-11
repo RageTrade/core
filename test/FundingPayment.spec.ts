@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
 
-import { FundingPaymentTest } from '../typechain';
+import { FundingPaymentTest } from '../typechain-types';
 import { Q128, toQ128, fromQ128 } from './utils/fixed-point';
 
 const DAY = 24 * 60 * 60;

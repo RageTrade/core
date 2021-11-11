@@ -1,5 +1,5 @@
 import hre from 'hardhat';
-import { TickTest, UniswapV3PoolMock } from '../typechain';
+import { TickTest, UniswapV3PoolMock } from '../typechain-types';
 import { BigNumber, BigNumberish, ethers } from 'ethers';
 import { expect } from 'chai';
 import { Q128, toQ128 } from './utils/fixed-point';

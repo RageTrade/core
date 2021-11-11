@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionTest, ClearingHouse } from '../typechain';
+import { VTokenPositionTest, ClearingHouse } from '../typechain-types';
 import { config } from 'dotenv';
 config();
 const { ALCHEMY_KEY } = process.env;

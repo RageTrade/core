@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { Uint32L8ArrayTest } from '../typechain';
+import { Uint32L8ArrayTest } from '../typechain-types';
 
 describe('Uint32L8Set Library', () => {
   let array: Uint32L8ArrayTest;
