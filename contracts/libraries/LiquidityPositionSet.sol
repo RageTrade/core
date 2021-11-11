@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.9;
 
-import { LiquidityPosition } from './LiquidityPosition.sol';
+import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { Account } from './Account.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -125,5 +126,35 @@ library LiquidityPositionSet {
         int24 val2
     ) private view returns (bool) {
         return array.exists(Uint48Lib.concat(val1, val2));
+    }
+
+    function liquidityChange(
+        Info storage set,
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidity,
+        LimitOrderType limitOrderType,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        LiquidityPosition.Info storage position = set.activate(tickLower, tickUpper);
+
+        position.limitOrderType = limitOrderType;
+
+        set.liquidityChange(position, liquidity, wrapper, balanceAdjustments);
+    }
+
+    function liquidityChange(
+        Info storage set,
+        LiquidityPosition.Info storage position,
+        int128 liquidity,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        position.liquidityChange(liquidity, wrapper, balanceAdjustments);
+
+        if (position.liquidity == 0) {
+            set.deactivate(position);
+        }
     }
 }

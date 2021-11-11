@@ -13,6 +13,13 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
+struct LiquidityChangeParams {
+    int24 tickLower;
+    int24 tickUpper;
+    int128 liquidity;
+    LimitOrderType limitOrderType;
+}
+
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
     using VTokenLib for VTokenAddress;
@@ -172,20 +179,10 @@ library VTokenPositionSet {
     function liquidityChange(
         Set storage set,
         address vTokenAddress,
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidity,
-        LimitOrderType limitOrderType
+        LiquidityChangeParams memory liquidityChangeParams
     ) internal returns (int256) {
         return
-            set.liquidityChange(
-                vTokenAddress,
-                tickLower,
-                tickUpper,
-                liquidity,
-                limitOrderType,
-                VTokenAddress.wrap(vTokenAddress).vPoolWrapper()
-            );
+            set.liquidityChange(vTokenAddress, liquidityChangeParams, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
     }
 
     function swapTokenAmount(
@@ -228,25 +225,23 @@ library VTokenPositionSet {
     function liquidityChange(
         Set storage set,
         address vTokenAddress,
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidity,
-        LimitOrderType limitOrderType,
+        LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper
     ) internal returns (int256) {
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress);
+        Account.BalanceAdjustments memory balanceAdjustments;
 
-        LiquidityPosition.Info storage position = vTokenPosition.liquidityPositions.activate(tickLower, tickUpper);
+        set.getTokenPosition(vTokenAddress).liquidityPositions.liquidityChange(
+            liquidityChangeParams.tickLower,
+            liquidityChangeParams.tickUpper,
+            liquidityChangeParams.liquidity,
+            liquidityChangeParams.limitOrderType,
+            wrapper,
+            balanceAdjustments
+        );
 
-        int256 vBaseIncrease = set.liquidityChange(vTokenAddress, position, liquidity, wrapper);
+        set.update(balanceAdjustments, vTokenAddress);
 
-        if (position.liquidity == 0) {
-            vTokenPosition.liquidityPositions.deactivate(position);
-        } else {
-            position.limitOrderType = limitOrderType;
-        }
-
-        return vBaseIncrease;
+        return balanceAdjustments.vBaseIncrease;
     }
 
     function liquidityChange(
@@ -258,7 +253,12 @@ library VTokenPositionSet {
     ) internal returns (int256) {
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        position.liquidityChange(liquidity, wrapper, balanceAdjustments);
+        set.getTokenPosition(vTokenAddress).liquidityPositions.liquidityChange(
+            position,
+            liquidity,
+            wrapper,
+            balanceAdjustments
+        );
 
         set.update(balanceAdjustments, vTokenAddress);
 
