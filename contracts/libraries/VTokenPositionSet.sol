@@ -10,6 +10,7 @@ import { Account } from './Account.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { SafeCast } from './uniswap/SafeCast.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -26,6 +27,7 @@ library VTokenPositionSet {
     using VTokenPositionSet for Set;
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using SafeCast for uint256;
 
     error IncorrectUpdate();
     error DeactivationFailed(address);
@@ -112,6 +114,15 @@ library VTokenPositionSet {
 
     function realizeFundingPayment(Set storage set, address vTokenAddress) internal {
         realizeFundingPayment(set, vTokenAddress, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
+    }
+
+    function realizeFundingPayment(Set storage set, mapping(uint32 => address) storage vTokenAddresses) internal {
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 truncated = set.active[i];
+            if (truncated == 0) break;
+
+            set.realizeFundingPayment(vTokenAddresses[truncated]);
+        }
     }
 
     function realizeFundingPayment(
@@ -241,7 +252,10 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, vTokenAddress);
 
-        return balanceAdjustments.vBaseIncrease;
+        return
+            // balanceAdjustments.vTokenIncrease *
+            // VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
+            balanceAdjustments.vBaseIncrease;
     }
 
     function liquidityChange(
@@ -262,6 +276,9 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, vTokenAddress);
 
-        return balanceAdjustments.vBaseIncrease;
+        return
+            // balanceAdjustments.vTokenIncrease *
+            // VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
+            balanceAdjustments.vBaseIncrease;
     }
 }
