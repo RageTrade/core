@@ -19,8 +19,6 @@ contract VTokenPositionSetTest {
 
     VTokenPositionSet.Set dummy;
 
-    LiquidityPosition.Info dummyLiquidity;
-
     VPoolWrapperMock public wrapper;
 
     constructor() {
@@ -30,7 +28,6 @@ contract VTokenPositionSetTest {
     function init(address vTokenAddress) external {
         VTokenPositionSet.activate(dummy, VBASE_ADDRESS);
         VTokenPositionSet.activate(dummy, vTokenAddress);
-        dummyLiquidity = dummy.getTokenPosition(vTokenAddress).liquidityPositions.activate(-100, 100);
         wrapper.setLiquidityRates(-100, 100, 4000, 1);
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
@@ -56,7 +53,7 @@ contract VTokenPositionSetTest {
     }
 
     function liquidityChange1(address vTokenAddress, int128 liquidity) external {
-        dummy.liquidityChange(vTokenAddress, dummyLiquidity, liquidity, wrapper);
+        dummy.liquidityChange(vTokenAddress, dummy.getTokenPosition(vTokenAddress).liquidityPositions.activate(-100, 100), liquidity, wrapper);
     }
 
     function liquidityChange2(
