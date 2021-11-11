@@ -53,7 +53,12 @@ contract VTokenPositionSetTest {
     }
 
     function liquidityChange1(address vTokenAddress, int128 liquidity) external {
-        dummy.liquidityChange(vTokenAddress, dummy.getTokenPosition(vTokenAddress).liquidityPositions.activate(-100, 100), liquidity, wrapper);
+        dummy.liquidityChange(
+            vTokenAddress,
+            dummy.getTokenPosition(vTokenAddress).liquidityPositions.activate(-100, 100),
+            liquidity,
+            wrapper
+        );
     }
 
     function liquidityChange2(
