@@ -252,8 +252,8 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress);
 
         return
-            // balanceAdjustments.vTokenIncrease *
-            // VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
+            balanceAdjustments.vTokenIncrease *
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
             balanceAdjustments.vBaseIncrease;
     }
 
@@ -276,8 +276,8 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress);
 
         return
-            // balanceAdjustments.vTokenIncrease *
-            // VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
+            balanceAdjustments.vTokenIncrease *
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
             balanceAdjustments.vBaseIncrease;
     }
 }

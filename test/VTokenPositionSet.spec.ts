@@ -2,17 +2,22 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, ClearingHouse, VToken } from '../typechain';
+import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper } from '../typechain';
 import { config } from 'dotenv';
 config();
 const { ALCHEMY_KEY } = process.env;
 
 const vBaseAddress = '0xF1A16031d66de124735c920e1F2A6b28240C1A5e';
-
+const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 describe('VTokenPositionSet Library', () => {
+  // const vTokenAddress: string = utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
+  // const vTokenAddress1: string = utils.hexZeroPad(BigNumber.from(2).toHexString(), 20);
   let VTokenPositionSet: VTokenPositionSetTest;
-  const vTokenAddress: string = utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
-  const vTokenAddress1: string = utils.hexZeroPad(BigNumber.from(2).toHexString(), 20);
+  let vTokenAddress: string;
+  let vTokenAddress1: string;
+  let VPoolFactory: ClearingHouse;
+  let VBase: VBase;
+  let VPoolWrapper: VPoolWrapper;
 
   before(async () => {
     await network.provider.request({
@@ -26,6 +31,33 @@ describe('VTokenPositionSet Library', () => {
         },
       ],
     });
+
+    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
+    const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
+    VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
+
+    await VBase.transferOwnership(VPoolFactory.address);
+    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracleAddress, 2, 3, 2);
+
+    const eventFilter = VPoolFactory.filters.poolInitlized();
+    const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
+    vTokenAddress = events[0].args[1];
+    console.log('vTokenAddres', vTokenAddress);
+    console.log('VPoolFactoryAddress', VPoolFactory.address);
+    console.log('Vwrapper', events[0].args[2]);
+    VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
+    await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
+
+    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracleAddress, 2, 3, 2);
+
+    const eventFilter1 = VPoolFactory.filters.poolInitlized();
+    const events1 = await VPoolFactory.queryFilter(eventFilter1, 'latest');
+    vTokenAddress1 = events1[0].args[1];
+    console.log('vTokenAddres1', vTokenAddress);
+    console.log('VPoolFactoryAddress1', VPoolFactory.address);
+    console.log('Vwrapper1', events1[0].args[2]);
+    VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events1[0].args[2]);
+    await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
     VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
