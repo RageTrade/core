@@ -87,7 +87,7 @@ library SimulateSwap {
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
-        function(SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
+        function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
         require(amountSpecified != 0, 'AS');
 
@@ -171,7 +171,7 @@ library SimulateSwap {
                 state.feeGrowthGlobalX128 += FullMath.mulDiv(step.feeAmount, FixedPoint128.Q128, state.liquidity);
 
             if (onSwapStep != emptyFunction) {
-                onSwapStep(cache, state, step);
+                onSwapStep(zeroForOne, cache, state, step);
             }
 
             // shift tick if we reached the next price
@@ -199,6 +199,7 @@ library SimulateSwap {
     }
 
     function emptyFunction(
+        bool zeroForOne,
         SimulateSwap.SwapCache memory,
         SimulateSwap.SwapState memory,
         SimulateSwap.StepComputations memory

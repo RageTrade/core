@@ -1,18 +1,12 @@
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-import {
-  IERC20,
-  IERC20__factory,
-  IUniswapV3Pool,
-  IUniswapV3Pool__factory,
-  SimulateSwapTest,
-  SimulateSwapTest__factory,
-} from '../typechain-types';
+import { IUniswapV3Pool, OracleMock, SimulateSwapTest } from '../typechain-types';
 import { impersonateAccount, stopImpersonatingAccount } from './utils/impersonate-account';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { formatUnits, parseEther, parseUnits } from '@ethersproject/units';
+import { Q128 } from './utils/fixed-point';
 
 const UNISWAP_REAL_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8';
 const ACCOUNT = '0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0';
@@ -24,15 +18,27 @@ const SWAP = {
 describe('SimulateSwap', () => {
   let signer: SignerWithAddress;
   let v3Pool: IUniswapV3Pool;
+  let oracle: OracleMock;
   let test: SimulateSwapTest;
 
   before(async () => {
     await activateMainnetFork(13555700);
     signer = await impersonateAccount(ACCOUNT);
-    v3Pool = IUniswapV3Pool__factory.connect(UNISWAP_REAL_POOL, signer);
-    test = await new SimulateSwapTest__factory(signer).deploy(UNISWAP_REAL_POOL);
-    await IERC20__factory.connect(await v3Pool.token0(), signer).approve(test.address, ethers.constants.MaxInt256);
-    await IERC20__factory.connect(await v3Pool.token1(), signer).approve(test.address, ethers.constants.MaxInt256);
+    v3Pool = await hre.ethers.getContractAt('IUniswapV3Pool', UNISWAP_REAL_POOL, signer);
+    oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+
+    test = await (
+      await hre.ethers.getContractFactory('SimulateSwapTest', signer)
+    ).deploy(UNISWAP_REAL_POOL, oracle.address);
+
+    (await hre.ethers.getContractAt('IERC20', await v3Pool.token0(), signer)).approve(
+      test.address,
+      ethers.constants.MaxInt256,
+    );
+    (await hre.ethers.getContractAt('IERC20', await v3Pool.token1(), signer)).approve(
+      test.address,
+      ethers.constants.MaxInt256,
+    );
   });
 
   after(async () => {
@@ -89,6 +95,44 @@ describe('SimulateSwap', () => {
 
         expect(amount0_simulated).to.eq(amount0_actual);
         expect(amount1_simulated).to.eq(amount1_actual);
+      });
+    }
+  });
+
+  describe('#onSwapStep', () => {
+    beforeEach(async () => {
+      await test.clearSwapCache();
+    });
+
+    for (const { zeroForOne, amountSpecified } of testCases) {
+      it(`swap ${formatUnits(amountSpecified, zeroForOne ? 6 : 18)} ${zeroForOne ? 'USDC' : 'WETH'} for ${
+        zeroForOne ? 'WETH' : 'USDC'
+      }`, async () => {
+        const fpGlobalBefore = await test.fpGlobal();
+
+        const sqrtPrice = await test.sqrtPrice();
+        const [amount0_simulated, amount1_simulated, cache, steps] = await test.callStatic.simulateSwap2(
+          zeroForOne,
+          amountSpecified,
+          zeroForOne ? sqrtPrice.div(2) : sqrtPrice.mul(2),
+        );
+        await test.simulateSwap2(zeroForOne, amountSpecified, zeroForOne ? sqrtPrice.div(2) : sqrtPrice.mul(2));
+
+        let amountSent = BigNumber.from(0);
+        let amountReceived = BigNumber.from(0);
+        let b = BigNumber.from(0);
+
+        for (const { state, step } of steps) {
+          amountSent = amountSent.add(step.amountIn.add(step.feeAmount));
+          amountReceived = amountReceived.sub(step.amountOut);
+          b = b.add((zeroForOne ? step.amountOut : step.amountIn).mul(Q128).div(state.liquidity));
+        }
+
+        expect(amountSent).to.eq(zeroForOne ? amount0_simulated : amount1_simulated);
+        expect(amountReceived).to.eq(zeroForOne ? amount1_simulated : amount0_simulated);
+
+        const fpGlobalAfter = await test.fpGlobal();
+        expect(fpGlobalAfter.sumBX128.sub(fpGlobalBefore.sumBX128)).to.eq(b);
       });
     }
   });
