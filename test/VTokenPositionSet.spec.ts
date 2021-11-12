@@ -68,8 +68,8 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.init(vTokenAddress);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(0);
-      expect(resultVBase[0]).to.eq(0);
+      expect(resultVToken.balance).to.eq(0);
+      expect(resultVBase.balance).to.eq(0);
     });
 
     it('Update', async () => {
@@ -83,9 +83,9 @@ describe('VTokenPositionSet Library', () => {
       );
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(20);
-      expect(resultVToken[2]).to.eq(30);
-      expect(resultVBase[0]).to.eq(10);
+      expect(resultVToken.balance).to.eq(20);
+      expect(resultVToken.netTraderPosition).to.eq(30);
+      expect(resultVBase.balance).to.eq(10);
     });
 
     it('Realized Funding Payment', async () => {
@@ -93,7 +93,7 @@ describe('VTokenPositionSet Library', () => {
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
       expect(resultVToken[1]).to.eq(20); //sumAChk
-      expect(resultVBase[0]).to.eq(-590);
+      expect(resultVBase.balance).to.eq(-590);
     });
 
     it('abs', async () => {
@@ -114,9 +114,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenAmount(vTokenAddress, 4);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(4);
-      expect(resultVToken[2]).to.eq(4);
-      expect(resultVBase[0]).to.eq(-16000);
+      expect(resultVToken.balance).to.eq(4);
+      expect(resultVToken.netTraderPosition).to.eq(4);
+      expect(resultVBase.balance).to.eq(-16000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
@@ -126,9 +126,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenAmount(vTokenAddress1, 2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress1);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(2);
-      expect(resultVToken[2]).to.eq(2);
-      expect(resultVBase[0]).to.eq(-24000);
+      expect(resultVToken.balance).to.eq(2);
+      expect(resultVToken.netTraderPosition).to.eq(2);
+      expect(resultVBase.balance).to.eq(-24000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.true;
     });
 
@@ -136,9 +136,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenAmount(vTokenAddress, -2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(2);
-      expect(resultVToken[2]).to.eq(2);
-      expect(resultVBase[0]).to.eq(-16000);
+      expect(resultVToken.balance).to.eq(2);
+      expect(resultVToken.netTraderPosition).to.eq(2);
+      expect(resultVBase.balance).to.eq(-16000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
@@ -146,9 +146,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenAmount(vTokenAddress, -2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(0);
-      expect(resultVToken[2]).to.eq(0);
-      expect(resultVBase[0]).to.eq(-8000);
+      expect(resultVToken.balance).to.eq(0);
+      expect(resultVToken.netTraderPosition).to.eq(0);
+      expect(resultVBase.balance).to.eq(-8000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
     });
   });
@@ -165,9 +165,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenNotional(vTokenAddress, 16000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(4);
-      expect(resultVToken[2]).to.eq(4);
-      expect(resultVBase[0]).to.eq(-16000);
+      expect(resultVToken.balance).to.eq(4);
+      expect(resultVToken.netTraderPosition).to.eq(4);
+      expect(resultVBase.balance).to.eq(-16000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
@@ -177,9 +177,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenNotional(vTokenAddress1, 8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress1);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(2);
-      expect(resultVToken[2]).to.eq(2);
-      expect(resultVBase[0]).to.eq(-24000);
+      expect(resultVToken.balance).to.eq(2);
+      expect(resultVToken.netTraderPosition).to.eq(2);
+      expect(resultVBase.balance).to.eq(-24000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.true;
     });
 
@@ -187,9 +187,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenNotional(vTokenAddress, -8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(2);
-      expect(resultVToken[2]).to.eq(2);
-      expect(resultVBase[0]).to.eq(-16000);
+      expect(resultVToken.balance).to.eq(2);
+      expect(resultVToken.netTraderPosition).to.eq(2);
+      expect(resultVBase.balance).to.eq(-16000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.true;
     });
 
@@ -197,9 +197,9 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.swapTokenNotional(vTokenAddress, -8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
-      expect(resultVToken[0]).to.eq(0);
-      expect(resultVToken[2]).to.eq(0);
-      expect(resultVBase[0]).to.eq(-8000);
+      expect(resultVToken.balance).to.eq(0);
+      expect(resultVToken.netTraderPosition).to.eq(0);
+      expect(resultVBase.balance).to.eq(-8000);
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
     });
   });
@@ -216,9 +216,9 @@ describe('VTokenPositionSet Library', () => {
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
 
-      expect(resultVToken[0]).to.eq(-100);
-      // expect(resultVToken[2]).to.eq(-100);
-      expect(resultVBase[0]).to.eq(-400000);
+      expect(resultVToken.balance).to.eq(-100);
+      // expect(resultVToken.netTraderPosition).to.eq(-100);
+      expect(resultVBase.balance).to.eq(-400000);
     });
 
     it('Remove Liquidity', async () => {
@@ -226,9 +226,9 @@ describe('VTokenPositionSet Library', () => {
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
 
-      expect(resultVToken[0]).to.eq(-50);
-      // expect(resultVToken[2]).to.eq(-50);
-      expect(resultVBase[0]).to.eq(-200000);
+      expect(resultVToken.balance).to.eq(-50);
+      // expect(resultVToken.netTraderPosition).to.eq(-50);
+      expect(resultVBase.balance).to.eq(-200000);
     });
   });
 
@@ -244,9 +244,9 @@ describe('VTokenPositionSet Library', () => {
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
 
-      expect(resultVToken[0]).to.eq(-100);
-      // expect(resultVToken[2]).to.eq(-100);
-      expect(resultVBase[0]).to.eq(-400000);
+      expect(resultVToken.balance).to.eq(-100);
+      // expect(resultVToken.netTraderPosition).to.eq(-100);
+      expect(resultVBase.balance).to.eq(-400000);
     });
 
     it('Remove Liquidity', async () => {
@@ -254,9 +254,9 @@ describe('VTokenPositionSet Library', () => {
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBaseAddress);
 
-      expect(resultVToken[0]).to.eq(-50);
-      // expect(resultVToken[2]).to.eq(-50);
-      expect(resultVBase[0]).to.eq(-200000);
+      expect(resultVToken.balance).to.eq(-50);
+      // expect(resultVToken.netTraderPosition).to.eq(-50);
+      expect(resultVBase.balance).to.eq(-200000);
     });
   });
 });

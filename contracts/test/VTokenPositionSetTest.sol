@@ -87,9 +87,9 @@ contract VTokenPositionSetTest {
         external
         view
         returns (
-            int256,
-            int256,
-            int256
+            int256 balance,
+            int256 sumACkhpt,
+            int256 netTraderPosition
         )
     {
         VTokenPosition.Position storage pos = dummy.positions[VTokenPositionSet.truncate(vTokenAddress)];
