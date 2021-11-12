@@ -14,7 +14,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 
-bytes32 constant WRAPPER_BYTE_CODE_HASH = 0x78e449045ee5580dcdabdf4b39c95ea3c56395bf72a463c73eef299e8231a67c; // TODO : Update
+bytes32 constant WRAPPER_BYTE_CODE_HASH = 0x6b19edb35866aacd79bca959f33a7b34690fc573018a9af2d6961e1629c4f34d; // TODO : Update
 
 type VTokenAddress is address;
 
