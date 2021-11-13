@@ -1,7 +1,7 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { network } from 'hardhat';
-import { ClearingHouse, VBase, VPoolWrapper, VToken } from '../typechain';
+import { ClearingHouse, VBase, VPoolWrapper, VToken } from '../typechain-types';
 import { config } from 'dotenv';
 config();
 import { BigNumber } from '@ethersproject/bignumber';

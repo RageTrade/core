@@ -13,41 +13,42 @@ contract FundingPaymentTest {
         int256 tokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public {
         return fpGlobal.update(tokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
     }
 
-    function nextA(
+    function nextAX128(
         uint48 timestampLast,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public pure returns (int256) {
-        return FundingPayment.nextA(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+        return FundingPayment.nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
     }
 
-    function extrapolatedSumA(
+    function extrapolatedSumAX128(
         int256 sumA,
         uint48 timestampLast,
         uint48 blockTimestamp,
-        int256 realPriceX128,
-        int256 virtualPriceX128
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
     ) public pure returns (int256) {
-        return FundingPayment.extrapolatedSumA(sumA, timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+        return
+            FundingPayment.extrapolatedSumAX128(sumA, timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
     }
 
-    function extrapolatedSumFp(
-        int256 sumA,
-        int256 sumB,
-        int256 sumFp,
-        int256 sumALatest
+    function extrapolatedSumFpX128(
+        int256 sumAX128,
+        int256 sumBX128,
+        int256 sumFpX128,
+        int256 sumALatestX128
     ) public pure returns (int256) {
-        return FundingPayment.extrapolatedSumFp(sumA, sumB, sumFp, sumALatest);
+        return FundingPayment.extrapolatedSumFpX128(sumAX128, sumBX128, sumFpX128, sumALatestX128);
     }
 
-    function bill(int256 sumFp, uint256 liquidity) internal pure returns (int256) {
-        return FundingPayment.bill(sumFp, liquidity);
+    function bill(int256 sumFpX128, uint256 liquidity) internal pure returns (int256) {
+        return FundingPayment.bill(sumFpX128, liquidity);
     }
 }

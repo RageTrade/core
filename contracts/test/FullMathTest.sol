@@ -17,6 +17,14 @@ contract FullMathTest {
 
     function mulDiv(
         int256 a,
+        uint256 b,
+        uint256 denominator
+    ) public pure returns (int256 result) {
+        return FullMath.mulDiv(a, b, denominator);
+    }
+
+    function mulDiv(
+        int256 a,
         int256 b,
         int256 denominator
     ) public pure returns (int256 result) {

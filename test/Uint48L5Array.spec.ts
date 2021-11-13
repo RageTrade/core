@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { Uint48L5ArrayTest } from '../typechain';
+import { Uint48L5ArrayTest } from '../typechain-types';
 
 describe('Uint48L5Array Library', () => {
   let array: Uint48L5ArrayTest;

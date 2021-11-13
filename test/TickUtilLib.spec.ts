@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import hre from 'hardhat';
 
-import { TickUtilLibTest } from '../typechain';
+import { TickUtilLibTest } from '../typechain-types';
 
 const fundingRateNormalizer = BigNumber.from(10000 * 100 * 3600);
 const fixedMathMultiplier = BigNumber.from(10 ** 12);

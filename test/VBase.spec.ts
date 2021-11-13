@@ -2,7 +2,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { VBase } from '../typechain';
+import { VBase } from '../typechain-types';
 
 describe('VBase', () => {
   let VBase: VBase;
