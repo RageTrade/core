@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 
+import { console } from 'hardhat/console.sol';
+
 contract VPoolWrapperMock is IVPoolWrapper {
     struct ValuesInside {
         int256 sumA;
@@ -47,6 +49,17 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
     int256 _liquidity;
 
+    function setLiquidityRates(
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 vBasePerLiquidity,
+        uint256 vTokenPerLiquidity
+    ) external {
+        LiquidityRate storage liquidityRate = _liquidityRates[tickLower][tickUpper];
+        liquidityRate.vBasePerLiquidity = vBasePerLiquidity;
+        liquidityRate.vTokenPerLiquidity = vTokenPerLiquidity;
+    }
+
     function liquidityChange(
         int24 tickLower,
         int24 tickUpper,
@@ -58,11 +71,19 @@ contract VPoolWrapperMock is IVPoolWrapper {
             _liquidity -= liquidity;
         }
 
-        vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity;
-        vTokenAmount = int256(_liquidityRates[tickLower][tickUpper].vTokenPerLiquidity) * liquidity;
+        vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity * -1;
+        vTokenAmount = int256(_liquidityRates[tickLower][tickUpper].vTokenPerLiquidity) * liquidity * -1;
     }
 
     function getExtrapolatedSumA() external pure returns (int256) {
         return 20;
+    }
+
+    function swapTokenAmount(int256 vTokenAmount) external returns (int256) {
+        return vTokenAmount * (-4000);
+    }
+
+    function swapTokenNotional(int256 vTokenNotional) external returns (int256) {
+        return vTokenNotional / (4000);
     }
 }
