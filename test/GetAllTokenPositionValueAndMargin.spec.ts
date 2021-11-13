@@ -31,9 +31,9 @@ describe('VTokenPositionSet Library', () => {
     const eventFilter = VPoolFactory.filters.poolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
     vTokenAddress = events[0].args[1];
-    console.log('vTokenAddres', vTokenAddress);
-    console.log('VPoolFactoryAddress', VPoolFactory.address);
-    console.log('Vwrapper', events[0].args[2]);
+    // console.log('vTokenAddres', vTokenAddress);
+    // console.log('VPoolFactoryAddress', VPoolFactory.address);
+    // console.log('Vwrapper', events[0].args[2]);
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
@@ -43,18 +43,19 @@ describe('VTokenPositionSet Library', () => {
   after(deactivateMainnetFork);
 
   describe('Functions', () => {
-    it('GetAllTokenPositionValueAndMargin, Single', async () => {
-      await VTokenPositionSet.init(vTokenAddress);
-      await VTokenPositionSet.update(
-        {
-          vBaseIncrease: 10,
-          vTokenIncrease: 20,
-          traderPositionIncrease: 30,
-        },
-        vTokenAddress,
-      );
-      const result = await VTokenPositionSet.getAllTokenPositionValueAndMargin(true);
-      console.log(result);
-    });
+    it('GetAllTokenPositionValueAndMargin, Single');
+    // , async () => {
+    //   await VTokenPositionSet.init(vTokenAddress);
+    //   await VTokenPositionSet.update(
+    //     {
+    //       vBaseIncrease: 10,
+    //       vTokenIncrease: 20,
+    //       traderPositionIncrease: 30,
+    //     },
+    //     vTokenAddress,
+    //   );
+    //   const result = await VTokenPositionSet.getAllTokenPositionValueAndMargin(true);
+    //   console.log(result);
+    // });
   });
 });
