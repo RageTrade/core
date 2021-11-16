@@ -88,7 +88,10 @@ export default {
   typechain: {
     target: 'ethers-v5',
     alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
-    externalArtifacts: ['node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'], // optional array of glob patterns with external artifacts to process (for example external libs from node_modules)
+    externalArtifacts: [
+      'node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json',
+      'node_modules/@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3PoolDeployer.sol/IUniswapV3PoolDeployer.json',
+    ], // optional array of glob patterns with external artifacts to process (for example external libs from node_modules)
   },
   etherscan: {
     // Your API key for Etherscan
