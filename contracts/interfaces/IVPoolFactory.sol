@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import '../Constants.sol';
+import { Constants } from '../Constants.sol';
 
 interface IVPoolFactory {
     function parameters()
@@ -13,6 +13,6 @@ interface IVPoolFactory {
             uint16 initialMargin,
             uint16 maintainanceMargin,
             uint32 twapDuration,
-            Constants memory _constants
+            Constants memory constants
         );
 }

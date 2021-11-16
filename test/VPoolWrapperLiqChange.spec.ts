@@ -46,7 +46,7 @@ describe('VPoolWrapper', () => {
     VToken = await hre.ethers.getContractAt('IERC20', VTokenAddress);
   });
 
-  after(deactivateMainnetFork.bind(null, hre));
+  after(deactivateMainnetFork);
 
   describe('Liquidity Change', () => {
     it('Add Liquidity', async () => {

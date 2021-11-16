@@ -10,7 +10,6 @@ import './interfaces/IOracle.sol';
 import './interfaces/IVBase.sol';
 import './tokens/VToken.sol';
 import './VPoolWrapper.sol';
-import './Constants.sol';
 
 abstract contract VPoolFactory is IVPoolFactory {
     struct Parameters {
@@ -18,7 +17,7 @@ abstract contract VPoolFactory is IVPoolFactory {
         uint16 initialMargin;
         uint16 maintainanceMargin;
         uint32 twapDuration;
-        Constants _constants;
+        Constants constants;
     }
     Parameters public override parameters;
 
@@ -119,7 +118,7 @@ abstract contract VPoolFactory is IVPoolFactory {
             initialMargin: initialMargin,
             maintainanceMargin: maintainanceMargin,
             twapDuration: twapDuration,
-            _constants: constants
+            constants: constants
         });
         address deployedAddress = Create2.deploy(0, salt, bytecode);
         delete parameters;
