@@ -152,15 +152,66 @@ describe('AccountTest Library', () => {
     // });
   });
 
-  describe('#Limit Order', () => {
-    before(async () => {
-      await test.liquidityChange(vTokenAddress, -100, 100, 5, 2);
-      const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
-      const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
-      expect(vTokenPosition[0]).to.eq('15');
-      expect(vBasePosition[0]).to.eq(-100000);
+  describe('#Remove Limit Order', () => {
+    describe('Not limit order', () => {
+      before(async() => {
+        await test.liquidityChange(vTokenAddress, -100, 100, 5, 0);
+        const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
+        const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
+        expect(vTokenPosition[0]).to.eq('15');
+        expect(vBasePosition[0]).to.eq(-100000);
+      });
+      it('Remove Failure - Inside Range (No Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,90)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
+      it('Remove Failure - Below Range (No Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,-110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
+      it('Remove Failure - Above Range (No Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
     });
-    it('Remove Limit Order');
+    describe('Lower limit order', () => {
+      before(async() => {
+        await test.liquidityChange(vTokenAddress, -100, 100, 0, 1);
+        const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
+        const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
+        expect(vTokenPosition[0]).to.eq('15');
+        expect(vBasePosition[0]).to.eq(-100000);
+      });
+      it('Remove Failure - Inside Range (Lower Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,90)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
+      it('Remove Failure - Above Range (Lower Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
+      it('Remove Success - Below Range (Lower Limit)');
+      // , async() => {
+      //   expect(test.removeLimitOrder(vTokenAddress,-100,100,-110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      // });
+    });
+    describe('Upper limit order', () => {
+      before(async() => {
+        await test.liquidityChange(vTokenAddress, -100, 100, 0, 2);
+        const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
+        const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
+        expect(vTokenPosition[0]).to.eq('15');
+        expect(vBasePosition[0]).to.eq(-100000);
+      });
+      it('Remove Failure - Inside Range (Upper Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,90)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
+      it('Remove Failure - Below Range (Upper Limit)', async() => {
+        expect(test.removeLimitOrder(vTokenAddress,-100,100,-110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      });
+      it('Remove Success - Above Range (Upper Limit)');
+      // , async() => {
+      //   expect(test.removeLimitOrder(vTokenAddress,-100,100,110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      // });
+    });
+
+
+    // it('Remove Limit Order');
     // , async() => {
     //   await test.removeLimitOrder(vTokenAddress,-100,100,105);
     //   const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
