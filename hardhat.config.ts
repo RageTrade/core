@@ -38,6 +38,7 @@ export default {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
       accounts: { mnemonic: MNEMONIC },
+      allowUnlimitedContractSize: true, // TODO: remove this
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,
