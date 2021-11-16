@@ -406,6 +406,8 @@ library Account {
             (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
         ) {
             account.tokenPositions.liquidityChange(vTokenAddress, position, -1 * int128(position.liquidity));
+        } else {
+            revert IneligibleLimitOrderRemoval();
         }
     }
 }
