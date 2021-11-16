@@ -10,8 +10,7 @@ import { FullMath } from './FullMath.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-
-import { console } from 'hardhat/console.sol';
+import { Constants } from '../Constants.sol';
 
 enum LimitOrderType {
     NONE,
@@ -140,11 +139,15 @@ library LiquidityPosition {
         vBaseIncrease += (shortsFeeGrowthInside - position.shortsFeeGrowthInsideLast) * position.liquidity;
     }
 
-    function maxNetPosition(Info storage position, VTokenAddress vToken) internal view returns (uint256) {
+    function maxNetPosition(
+        Info storage position,
+        VTokenAddress vToken,
+        Constants memory constants
+    ) internal view returns (uint256) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
-        if (vToken.isToken0()) {
+        if (vToken.isToken0(constants)) {
             return SqrtPriceMath.getAmount0Delta(priceLower, priceUpper, position.liquidity, true);
         } else {
             return SqrtPriceMath.getAmount1Delta(priceLower, priceUpper, position.liquidity, true);
@@ -154,16 +157,18 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken
+        VTokenAddress vToken,
+        Constants memory constants
     ) internal view returns (uint256 baseValue_) {
-        return position.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper());
+        return position.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
     }
 
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
-        IVPoolWrapper wrapper
+        IVPoolWrapper wrapper,
+        Constants memory constants
     ) internal view returns (uint256 baseValue_) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
@@ -182,7 +187,7 @@ library LiquidityPosition {
 
         // adding vToken value
         uint256 vTokenAmount = SqrtPriceMath.getAmount1Delta(sqrtPriceMiddle, priceUpper, position.liquidity, false);
-        if (vToken.isToken0()) {
+        if (vToken.isToken0(constants)) {
             (baseValue_, vTokenAmount) = (vTokenAmount, baseValue_);
             sqrtPriceCurrent = uint160(FixedPoint96.Q96.mulDiv(FixedPoint96.Q96, sqrtPriceCurrent)); // TODO safe reprocate the price
         }

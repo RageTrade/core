@@ -16,7 +16,7 @@ describe('VBase', () => {
     signer1Address = await signers[1].getAddress();
   });
 
-  describe('Functions', () => {
+  describe('Mint', () => {
     it('Mint Unsuccessful', async () => {
       expect(VBase.mint(signer1Address, 10)).revertedWith('Not Auth');
     });
@@ -36,7 +36,7 @@ describe('VBase', () => {
       expect(bal).to.eq(10);
     });
 
-    it('Burn Unsuccessful', async () => {
+    it('Burn Successful', async () => {
       await VBase.burn(signer1Address, 5);
       const bal = await VBase.balanceOf(signer1Address);
       expect(bal).to.eq(5);

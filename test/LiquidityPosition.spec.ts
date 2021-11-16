@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { SqrtPriceMath, TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_ } from '@uniswap/v3-sdk';
-
+import { constants } from './utils/dummyConstants';
 import { LiquidityPositionTest } from '../typechain-types';
 
 describe('LiquidityPosition Library', () => {
@@ -220,7 +220,7 @@ describe('LiquidityPosition Library', () => {
   describe('#baseValue', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.baseValue(oneSqrtPrice, vTokenAddress.suchThatVTokenIsToken1)).to.eq(0);
+      expect(await test.baseValue(oneSqrtPrice, vTokenAddress.suchThatVTokenIsToken1, constants)).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
@@ -242,7 +242,7 @@ describe('LiquidityPosition Library', () => {
           await test.initialize(tickLower, tickUpper);
           await test.liquidityChange(liquidity);
 
-          expect(await test.baseValue(sqrtPriceCurrent, vToken)).to.eq(
+          expect(await test.baseValue(sqrtPriceCurrent, vToken, constants)).to.eq(
             baseActual.add(mulPrice(vTokenActual, isToken0 ? inversex96(sqrtPriceCurrent) : sqrtPriceCurrent)),
           );
         });
@@ -253,7 +253,7 @@ describe('LiquidityPosition Library', () => {
   describe('#maxNetPosition', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.maxNetPosition(vTokenAddress.suchThatVTokenIsToken1)).to.eq(0);
+      expect(await test.maxNetPosition(vTokenAddress.suchThatVTokenIsToken1, constants)).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
@@ -275,7 +275,7 @@ describe('LiquidityPosition Library', () => {
           await test.initialize(tickLower, tickUpper);
           await test.liquidityChange(liquidity);
 
-          expect(await test.maxNetPosition(vToken)).to.eq(maxNetPosition);
+          expect(await test.maxNetPosition(vToken, constants)).to.eq(maxNetPosition);
         });
       }
     });

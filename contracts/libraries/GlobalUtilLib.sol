@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 import { TickUtilLib } from './TickUtilLib.sol';
 import { VTokenLib, VTokenAddress } from './VTokenLib.sol';
+import { Constants } from '../Constants.sol';
 
 library GlobalUtilLib {
     using GlobalUtilLib for GlobalState;
@@ -20,13 +21,27 @@ library GlobalUtilLib {
         uint256 feeGrowthGlobalShortsX128; // see if Binary Fixed point is needed or not
     }
 
-    function getExtrapolatedSumA(GlobalState storage global, uint48 blockTimestamp) internal view returns (int256) {
+    function getExtrapolatedSumA(
+        GlobalState storage global,
+        uint48 blockTimestamp,
+        Constants memory constants
+    ) internal view returns (int256) {
         // uint48 blockTimestamp = uint48(block.timestamp);
         uint48 diffTS = blockTimestamp - global.lastTradeTS;
         return
             global.sumA +
-            (global.fundingRate * int256(uint256(global.vToken.getVirtualTwapPrice() * (diffTS)))) /
+            (global.fundingRate * int256(uint256(global.vToken.getVirtualTwapPrice(constants) * (diffTS)))) /
             fundingRateNormalizer;
+    }
+
+    function getExtrapolatedSumFP(
+        GlobalState storage global,
+        TickUtilLib.TickState memory state,
+        uint48 blockTimestamp,
+        Constants memory constants
+    ) internal view returns (int256) {
+        return
+            getExtrapolatedSumFP(global, state.sumA, state.sumBOutside, state.sumFPOutside, blockTimestamp, constants);
     }
 
     function getExtrapolatedSumFP(
@@ -34,14 +49,19 @@ library GlobalUtilLib {
         int256 sumACkpt,
         int256 sumBCkpt,
         int256 sumFPCkpt,
-        uint48 blockTimestamp
+        uint48 blockTimestamp,
+        Constants memory constants
     ) internal view returns (int256) {
-        return sumFPCkpt + sumBCkpt * (global.getExtrapolatedSumA(blockTimestamp) - sumACkpt);
+        return sumFPCkpt + sumBCkpt * (global.getExtrapolatedSumA(blockTimestamp, constants) - sumACkpt);
     }
 
-    function calculateFundingRate(GlobalState storage global) internal view returns (int16) {
-        int256 realPrice = int256(global.vToken.getRealTwapPrice());
-        int256 virtualPrice = int256(global.vToken.getVirtualTwapPrice());
+    function calculateFundingRate(GlobalState storage global, Constants memory constants)
+        internal
+        view
+        returns (int16)
+    {
+        int256 realPrice = int256(global.vToken.getRealTwapPrice(constants));
+        int256 virtualPrice = int256(global.vToken.getVirtualTwapPrice(constants));
 
         return int16(((virtualPrice - realPrice) * (10**6)) / realPrice);
     }
@@ -51,7 +71,8 @@ library GlobalUtilLib {
         int256 tokenAmount,
         uint256 fees,
         uint256 liquidity,
-        uint48 blockTimestamp
+        uint48 blockTimestamp,
+        Constants memory constants
     ) internal {
         //sumFP should be updated before updating sumB and lastTradeTS
 
@@ -63,7 +84,7 @@ library GlobalUtilLib {
         global.lastTradeTS = blockTimestamp;
 
         //TODO: Use vToken
-        int256 a = int256(uint256(global.vToken.getVirtualTwapPrice())) * int48(diffTS); //vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
+        int256 a = int256(uint256(global.vToken.getVirtualTwapPrice(constants))) * int48(diffTS); //vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
         global.sumFP = global.sumFP + (global.fundingRate * a * global.sumB) / fundingRateNormalizer;
         global.sumA = global.sumA + a;
         global.sumB = global.sumB + (tokenAmount * int256(amountNormalizer)) / int256(liquidity);
@@ -118,7 +139,8 @@ library GlobalUtilLib {
         GlobalState storage global,
         TickUtilLib.TickLowerHigher storage tickLowerHigher,
         uint8 pricePosition,
-        uint48 blockTimestamp
+        uint48 blockTimestamp,
+        Constants memory constants
     )
         internal
         view
@@ -129,69 +151,32 @@ library GlobalUtilLib {
             uint256
         )
     {
-        // return(
-        //     global.getExtrapolatedSumA(blockTimestamp),
-        //     global.getSumBInside(tickLower,tickHigher,pricePosition),
-        //     global.getSumFPInside(tickLower, tickHigher,pricePosition),
-        //     global.getFeesShortsInside(tickLower,tickHigher,pricePosition)
-        //     );
-
         if (pricePosition == 0) {
             return (
-                global.getExtrapolatedSumA(blockTimestamp),
+                global.getExtrapolatedSumA(blockTimestamp, constants),
                 tickLowerHigher.tickLower.sumBOutside - tickLowerHigher.tickHigher.sumBOutside,
-                global.getExtrapolatedSumFP(
-                    tickLowerHigher.tickLower.sumA,
-                    tickLowerHigher.tickLower.sumBOutside,
-                    tickLowerHigher.tickLower.sumFPOutside,
-                    blockTimestamp
-                ) -
-                    global.getExtrapolatedSumFP(
-                        tickLowerHigher.tickHigher.sumA,
-                        tickLowerHigher.tickHigher.sumBOutside,
-                        tickLowerHigher.tickHigher.sumFPOutside,
-                        blockTimestamp
-                    ),
+                global.getExtrapolatedSumFP(tickLowerHigher.tickLower, blockTimestamp, constants) -
+                    global.getExtrapolatedSumFP(tickLowerHigher.tickHigher, blockTimestamp, constants),
                 tickLowerHigher.tickLower.feeGrowthOutsideShortsX128 -
                     tickLowerHigher.tickHigher.feeGrowthOutsideShortsX128
             );
         } else if (pricePosition == 1) {
             return (
-                global.getExtrapolatedSumA(blockTimestamp),
+                global.getExtrapolatedSumA(blockTimestamp, constants),
                 global.sumB - tickLowerHigher.tickHigher.sumBOutside - tickLowerHigher.tickLower.sumBOutside,
                 global.sumFP -
-                    global.getExtrapolatedSumFP(
-                        tickLowerHigher.tickLower.sumA,
-                        tickLowerHigher.tickLower.sumBOutside,
-                        tickLowerHigher.tickLower.sumFPOutside,
-                        blockTimestamp
-                    ) -
-                    global.getExtrapolatedSumFP(
-                        tickLowerHigher.tickHigher.sumA,
-                        tickLowerHigher.tickHigher.sumBOutside,
-                        tickLowerHigher.tickHigher.sumFPOutside,
-                        blockTimestamp
-                    ),
+                    global.getExtrapolatedSumFP(tickLowerHigher.tickLower, blockTimestamp, constants) -
+                    global.getExtrapolatedSumFP(tickLowerHigher.tickHigher, blockTimestamp, constants),
                 global.feeGrowthGlobalShortsX128 -
                     tickLowerHigher.tickLower.feeGrowthOutsideShortsX128 -
                     tickLowerHigher.tickHigher.feeGrowthOutsideShortsX128
             );
         } else {
             return (
-                global.getExtrapolatedSumA(blockTimestamp),
+                global.getExtrapolatedSumA(blockTimestamp, constants),
                 tickLowerHigher.tickHigher.sumBOutside - tickLowerHigher.tickLower.sumBOutside,
-                global.getExtrapolatedSumFP(
-                    tickLowerHigher.tickHigher.sumA,
-                    tickLowerHigher.tickHigher.sumBOutside,
-                    tickLowerHigher.tickHigher.sumFPOutside,
-                    blockTimestamp
-                ) -
-                    global.getExtrapolatedSumFP(
-                        tickLowerHigher.tickLower.sumA,
-                        tickLowerHigher.tickLower.sumBOutside,
-                        tickLowerHigher.tickLower.sumFPOutside,
-                        blockTimestamp
-                    ),
+                global.getExtrapolatedSumFP(tickLowerHigher.tickHigher, blockTimestamp, constants) -
+                    global.getExtrapolatedSumFP(tickLowerHigher.tickLower, blockTimestamp, constants),
                 tickLowerHigher.tickHigher.feeGrowthOutsideShortsX128 -
                     tickLowerHigher.tickLower.feeGrowthOutsideShortsX128
             );
@@ -204,7 +189,8 @@ library GlobalUtilLib {
         TickUtilLib.TickLowerHigher storage tickLowerHigher,
         int24 tickLowerIndex,
         int24 tickHigherIndex,
-        uint48 blockTimestamp
+        uint48 blockTimestamp,
+        Constants memory constants
     )
         internal
         view
@@ -216,13 +202,14 @@ library GlobalUtilLib {
         )
     {
         //TODO: Correct current price code
-        int24 curPriceIndex = global.vToken.getVirtualTwapTick();
+        int24 curPriceIndex = global.vToken.getVirtualTwapTick(constants);
         // uint8 pricePosition = ;
         return
             global.getUpdatedLPStateInternal(
                 tickLowerHigher,
                 getPricePosition(curPriceIndex, tickLowerIndex, tickHigherIndex),
-                blockTimestamp
+                blockTimestamp,
+                constants
             );
     }
 }
