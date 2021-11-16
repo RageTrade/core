@@ -5,11 +5,12 @@ import { FullMath } from './FullMath.sol';
 import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
-import { Account } from './Account.sol';
+import { Account, LiquidationParams } from './Account.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { LiquidityPositionSet, LiquidityChangeParams } from './LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { SafeCast } from './uniswap/SafeCast.sol';
+import { FullMath } from './FullMath.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Constants } from '../Constants.sol';
@@ -21,6 +22,7 @@ library VTokenPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using SafeCast for uint256;
+    using FullMath for int256;
 
     error IncorrectUpdate();
     error DeactivationFailed(address);
@@ -76,6 +78,37 @@ library VTokenPositionSet {
         }
 
         return (accountMarketValue, totalRequiredMargin);
+    }
+
+    function getAccountMarketValue(Set storage set, mapping(uint32 => address) storage vTokenAddresses)
+        internal
+        view
+        returns (int256 accountMarketValue)
+    {
+        //TODO
+    }
+
+    function getRequiredMarginWithExclusion(
+        Set storage set,
+        bool isInitialMargin,
+        mapping(uint32 => address) storage vTokenAddresses,
+        address vTokenAddressToSkip
+    ) internal view returns (int256 requiredMargin, int256 requiredMarginOther) {
+        //TODO
+    }
+
+    function getRequiredMargin(
+        Set storage set,
+        bool isInitialMargin,
+        mapping(uint32 => address) storage vTokenAddresses
+    ) internal view returns (int256 requiredMargin) {
+        int256 requiredMarginOther;
+        (requiredMargin, requiredMarginOther) = set.getRequiredMarginWithExclusion(
+            isInitialMargin,
+            vTokenAddresses,
+            address(0)
+        );
+        return requiredMargin;
     }
 
     function activate(Set storage set, address vTokenAddress) internal {
@@ -232,6 +265,26 @@ library VTokenPositionSet {
             );
     }
 
+    function liquidateLiquidityPositions(Set storage set, address vTokenAddress) internal returns (int256) {
+        set.liquidateLiquidityPositions(vTokenAddress, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
+    }
+
+    function liquidateLiquidityPositions(Set storage set, mapping(uint32 => address) storage vTokenAddresses)
+        internal
+        returns (int256)
+    {
+        int256 notionalAmountClosed;
+
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 truncated = set.active[i];
+            if (truncated == 0) break;
+
+            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]]);
+        }
+
+        return notionalAmountClosed;
+    }
+
     function swapTokenAmount(
         Set storage set,
         address vTokenAddress,
@@ -317,5 +370,85 @@ library VTokenPositionSet {
             balanceAdjustments.vTokenIncrease *
             VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants).toInt256() +
             balanceAdjustments.vBaseIncrease;
+    }
+
+    function liquidateLiquidityPositions(
+        Set storage set,
+        address vTokenAddress,
+        IVPoolWrapper wrapper
+    ) internal returns (int256) {
+        Account.BalanceAdjustments memory balanceAdjustments;
+
+        LiquidityPositionSet.Info storage liquidityPositions = set.getTokenPosition(vTokenAddress).liquidityPositions;
+
+        LiquidityPosition.Info storage position;
+
+        while (liquidityPositions.active[0] != 0) {
+            position = liquidityPositions.positions[liquidityPositions.active[0]];
+            liquidityPositions.liquidityChange(position, -1 * int128(position.liquidity), wrapper, balanceAdjustments);
+        }
+
+        set.update(balanceAdjustments, vTokenAddress);
+
+        return
+            balanceAdjustments.vTokenIncrease *
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
+            balanceAdjustments.vBaseIncrease;
+    }
+
+    function liquidateLiquidityPositions(
+        Set storage set,
+        mapping(uint32 => address) storage vTokenAddresses,
+        IVPoolWrapper wrapper
+    ) internal returns (int256) {
+        int256 notionalAmountClosed;
+
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 truncated = set.active[i];
+            if (truncated == 0) break;
+
+            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], wrapper);
+        }
+
+        return notionalAmountClosed;
+    }
+
+    function getTokenPositionToLiquidate(
+        Set storage set,
+        address vTokenAddress,
+        LiquidationParams memory liquidationParams,
+        mapping(uint32 => address) storage vTokenAddresses
+    )
+        internal
+        returns (
+            int256,
+            int256,
+            int256
+        )
+    {
+        int256 accountMarketValue;
+        int256 totalRequiredMargin;
+        int256 totalRequiredMarginOther;
+
+        accountMarketValue = set.getAccountMarketValue(vTokenAddresses);
+
+        (totalRequiredMargin, totalRequiredMarginOther) = set.getRequiredMarginWithExclusion(
+            false,
+            vTokenAddresses,
+            vTokenAddress
+        );
+
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress);
+
+        VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
+        int256 tokensToTrade = (accountMarketValue -
+            liquidationParams.fixFee.toInt256() -
+            (totalRequiredMarginOther +
+                (vToken.getVirtualTwapPrice().toInt256() * vTokenPosition.balance).mulDiv(
+                    vToken.getMarginRatio(false),
+                    1e5
+                )).mulDiv(liquidationParams.targetMarginRatio, 1e1));
+
+        return (tokensToTrade, accountMarketValue, totalRequiredMargin);
     }
 }
