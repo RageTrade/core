@@ -7,7 +7,7 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 interface IVBase is IERC20 {
     function mint(address account, uint256 amount) external;
 
-    function burn(address account, uint256 amount) external;
+    function burn(uint256 amount) external;
 
     function authorize(address vPoolWrapper) external;
 }

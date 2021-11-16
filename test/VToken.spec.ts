@@ -16,30 +16,23 @@ describe('VToken contract', () => {
     VToken = await (
       await hre.ethers.getContractFactory('VToken')
     ).deploy('', '', signer1Address, signer1Address, signer1Address);
+
+    await VToken.setOwner(signer1Address);
   });
 
   describe('Functions', () => {
     it('Mint Unsuccessful', async () => {
-      expect(VToken.mint(signer0Address, 10)).revertedWith('Not a owner');
-    });
-
-    it('Burn Unsuccessful', async () => {
-      expect(VToken.burn(signer0Address, 10)).revertedWith('Not a owner');
-    });
-
-    it('Set Owner', async () => {
-      expect(VToken.setOwner(signer0Address)).revertedWith('Not a owner');
-      await VToken.connect(signers[1]).setOwner(signer0Address);
+      expect(VToken.mint(signer0Address, 10)).revertedWith('Unauthorised()');
     });
 
     it('Mint Successful', async () => {
-      await VToken.mint(signer0Address, 10);
+      await VToken.connect(signers[1]).mint(signer0Address, 10);
       const bal = await VToken.balanceOf(signer0Address);
       expect(bal).to.eq(10);
     });
 
     it('Burn Successful', async () => {
-      await VToken.burn(signer0Address, 5);
+      await VToken.burn(5);
       const bal = await VToken.balanceOf(signer0Address);
       expect(bal).to.eq(5);
     });

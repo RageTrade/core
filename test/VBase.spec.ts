@@ -18,11 +18,7 @@ describe('VBase', () => {
 
   describe('Mint', () => {
     it('Mint Unsuccessful', async () => {
-      expect(VBase.mint(signer1Address, 10)).revertedWith('Not Auth');
-    });
-
-    it('Burn Unsuccessful', async () => {
-      expect(VBase.burn(signer1Address, 10)).revertedWith('Not Auth');
+      expect(VBase.mint(signer1Address, 10)).revertedWith('Unauthorised()');
     });
 
     it('Authorize', async () => {
@@ -37,7 +33,7 @@ describe('VBase', () => {
     });
 
     it('Burn Successful', async () => {
-      await VBase.burn(signer1Address, 5);
+      await VBase.connect(signers[1]).burn(5);
       const bal = await VBase.balanceOf(signer1Address);
       expect(bal).to.eq(5);
     });
