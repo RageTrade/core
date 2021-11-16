@@ -60,6 +60,11 @@ export default {
             enabled: true,
             runs: 200,
           },
+          outputSelection: {
+            '*': {
+              '*': ['storageLayout'],
+            },
+          },
         },
       },
       {
@@ -68,6 +73,11 @@ export default {
           optimizer: {
             enabled: true,
             runs: 200,
+          },
+          outputSelection: {
+            '*': {
+              '*': ['storageLayout'],
+            },
           },
         },
       },
