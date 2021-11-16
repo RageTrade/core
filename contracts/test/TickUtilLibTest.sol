@@ -6,6 +6,7 @@ import { TickUtilLib } from '../libraries/TickUtilLib.sol';
 import { GlobalUtilLib } from '../libraries/GlobalUtilLib.sol';
 
 import { console } from 'hardhat/console.sol';
+import { Constants } from '../Constants.sol';
 
 contract TickUtilLibTest {
     using TickUtilLib for TickUtilLib.TickState;
@@ -54,7 +55,7 @@ contract TickUtilLibTest {
         return blockTimestamp;
     }
 
-    function simulateCross() external {
-        tick.cross(global, blockTimestamp);
+    function simulateCross(Constants memory constants) external {
+        tick.cross(global, blockTimestamp, constants);
     }
 }

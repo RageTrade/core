@@ -10,7 +10,14 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Account } from './Account.sol';
 
-import { console } from 'hardhat/console.sol';
+import { Constants } from '../Constants.sol';
+
+struct LiquidityChangeParams {
+    int24 tickLower;
+    int24 tickUpper;
+    int128 liquidity;
+    LimitOrderType limitOrderType;
+}
 
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
@@ -39,27 +46,33 @@ library LiquidityPositionSet {
     function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken
+        VTokenAddress vToken,
+        Constants memory constants
     ) internal view returns (uint256 baseValue_) {
-        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper());
+        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
     }
 
     function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
-        IVPoolWrapper wrapper // TODO refactor this
+        IVPoolWrapper wrapper, // TODO refactor this
+        Constants memory constants
     ) internal view returns (uint256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper);
+            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
         }
     }
 
-    function maxNetPosition(Info storage set, VTokenAddress vToken) internal view returns (uint256 risk) {
+    function maxNetPosition(
+        Info storage set,
+        VTokenAddress vToken,
+        Constants memory constants
+    ) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            risk += set.positions[id].maxNetPosition(vToken);
+            risk += set.positions[id].maxNetPosition(vToken, constants);
         }
     }
 
@@ -130,18 +143,18 @@ library LiquidityPositionSet {
 
     function liquidityChange(
         Info storage set,
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidity,
-        LimitOrderType limitOrderType,
+        LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        LiquidityPosition.Info storage position = set.activate(tickLower, tickUpper);
+        LiquidityPosition.Info storage position = set.activate(
+            liquidityChangeParams.tickLower,
+            liquidityChangeParams.tickUpper
+        );
 
-        position.limitOrderType = limitOrderType;
+        position.limitOrderType = liquidityChangeParams.limitOrderType;
 
-        set.liquidityChange(position, liquidity, wrapper, balanceAdjustments);
+        set.liquidityChange(position, liquidityChangeParams.liquidity, wrapper, balanceAdjustments);
     }
 
     function liquidityChange(

@@ -10,6 +10,7 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { VPoolFactory } from '../VPoolFactory.sol';
 
 import { console } from 'hardhat/console.sol';
+import { Constants } from '../Constants.sol';
 
 contract LiquidityPositionTest {
     using LiquidityPosition for LiquidityPosition.Info;
@@ -39,11 +40,15 @@ contract LiquidityPositionTest {
         lp.liquidityChange(liquidity, wrapper, balanceAdjustments);
     }
 
-    function maxNetPosition(VTokenAddress vToken) public view returns (uint256) {
-        return lp.maxNetPosition(vToken);
+    function maxNetPosition(VTokenAddress vToken, Constants memory constants) public view returns (uint256) {
+        return lp.maxNetPosition(vToken, constants);
     }
 
-    function baseValue(uint160 sqrtPriceCurrent, VTokenAddress vToken) public view returns (uint256) {
-        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper);
+    function baseValue(
+        uint160 sqrtPriceCurrent,
+        VTokenAddress vToken,
+        Constants memory constants
+    ) public view returns (uint256) {
+        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
     }
 }

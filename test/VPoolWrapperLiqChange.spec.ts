@@ -1,7 +1,9 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { network } from 'hardhat';
-import { ClearingHouse, VBase, VPoolWrapper, VToken } from '../typechain-types';
+import { ClearingHouse, VBase, VPoolWrapper } from '../typechain-types';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
+import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { config } from 'dotenv';
 config();
 import { BigNumber } from '@ethersproject/bignumber';
@@ -23,21 +25,13 @@ describe('VPoolWrapper', () => {
   const higherTick: BigNumber = BigNumber.from(10);
 
   before(async () => {
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: 'https://eth-mainnet.alchemyapi.io/v2/' + ALCHEMY_KEY,
-            blockNumber: 13075000,
-          },
-        },
-      ],
-    });
+    await activateMainnetFork();
 
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
-    VPoolFactory = await (await hre.ethers.getContractFactory('ClearingHouse')).deploy();
+    VPoolFactory = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(VBase.address, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH);
     VBase.transferOwnership(VPoolFactory.address);
 
     await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 2, 3, 60);
@@ -51,6 +45,8 @@ describe('VPoolWrapper', () => {
     UniswapV3pool = await hre.ethers.getContractAt('IUniswapV3Pool', VPoolAddress);
     VToken = await hre.ethers.getContractAt('IERC20', VTokenAddress);
   });
+
+  after(deactivateMainnetFork.bind(null, hre));
 
   describe('Liquidity Change', () => {
     it('Add Liquidity', async () => {

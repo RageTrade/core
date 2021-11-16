@@ -11,6 +11,8 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
+import { Constants } from '../Constants.sol';
+
 library VTokenPosition {
     error AlreadyInitialized();
     using VTokenLib for VTokenAddress;
@@ -43,14 +45,19 @@ library VTokenPosition {
     function marketValue(
         Position storage position,
         VTokenAddress vToken,
-        uint256 price
+        uint256 price,
+        Constants memory constants
     ) internal view returns (int256 value) {
-        return marketValue(position, price, vToken.vPoolWrapper());
+        return marketValue(position, price, vToken.vPoolWrapper(constants));
     }
 
-    function marketValue(Position storage position, VTokenAddress vToken) internal view returns (int256) {
-        uint256 price = vToken.getVirtualTwapPrice();
-        return marketValue(position, vToken, price);
+    function marketValue(
+        Position storage position,
+        VTokenAddress vToken,
+        Constants memory constants
+    ) internal view returns (int256) {
+        uint256 price = vToken.getVirtualTwapPrice(constants);
+        return marketValue(position, vToken, price, constants);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {
@@ -63,7 +70,11 @@ library VTokenPosition {
         return unrealizedFP;
     }
 
-    function unrealizedFundingPayment(Position storage position, VTokenAddress vToken) internal view returns (int256) {
-        return unrealizedFundingPayment(position, vToken.vPoolWrapper());
+    function unrealizedFundingPayment(
+        Position storage position,
+        VTokenAddress vToken,
+        Constants memory constants
+    ) internal view returns (int256) {
+        return unrealizedFundingPayment(position, vToken.vPoolWrapper(constants));
     }
 }

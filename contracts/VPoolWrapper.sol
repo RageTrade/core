@@ -7,26 +7,29 @@ pragma solidity ^0.8.9;
 import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
 import './interfaces/IVPoolFactory.sol';
-import { VBASE_ADDRESS, VTokenAddress, VTokenLib2, IUniswapV3Pool } from './libraries/VTokenLib2.sol';
+import { VTokenAddress, VTokenLib, IUniswapV3Pool, Constants } from './libraries/VTokenLib.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import './interfaces/IVBase.sol';
 import './interfaces/IVToken.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
     using SafeCast for uint256;
-    using VTokenLib2 for VTokenAddress;
+    using VTokenLib for VTokenAddress;
+
     uint16 public immutable initialMarginRatio;
     uint16 public immutable maintainanceMarginRatio;
     uint32 public immutable timeHorizon;
     VTokenAddress public immutable vToken;
     IUniswapV3Pool public immutable vPool;
 
+    Constants public constants;
+
     constructor() {
         address vTokenAddress;
-        (vTokenAddress, initialMarginRatio, maintainanceMarginRatio, timeHorizon) = IVPoolFactory(msg.sender)
+        (vTokenAddress, initialMarginRatio, maintainanceMarginRatio, timeHorizon, constants) = IVPoolFactory(msg.sender)
             .parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);
-        vPool = vToken.vPool();
+        vPool = vToken.vPool(constants);
     }
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
@@ -70,7 +73,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
             // As per spec its am for liq only
             collect(tickLower, tickUpper);
         }
-        (basePrincipal, vTokenPrincipal) = vToken.flip(amount0, amount1);
+        (basePrincipal, vTokenPrincipal) = vToken.flip(amount0, amount1, constants);
     }
 
     function uniswapV3MintCallback(
@@ -79,8 +82,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         bytes calldata data
     ) external override {
         require(msg.sender == address(vPool));
-        (int256 vBaseAmount, int256 vTokenAmount) = vToken.flip(amount0.toInt256(), amount1.toInt256());
-        if (vBaseAmount > 0) IVBase(VBASE_ADDRESS).mint(msg.sender, uint256(vBaseAmount));
+        (int256 vBaseAmount, int256 vTokenAmount) = vToken.flip(amount0.toInt256(), amount1.toInt256(), constants);
+        if (vBaseAmount > 0) IVBase(constants.VBASE_ADDRESS).mint(msg.sender, uint256(vBaseAmount));
         if (vTokenAmount > 0) IVToken(VTokenAddress.unwrap(vToken)).mint(msg.sender, uint256(vTokenAmount));
     }
 
@@ -94,11 +97,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback {
         });
         (int256 basePrincipalPlusLongFees, int256 vTokenPrincipalPlusShortFees) = vToken.flip(
             amount0.toInt256(),
-            amount1.toInt256()
+            amount1.toInt256(),
+            constants
         );
 
         // burn ERC20 tokens sent by uniswap and fwd accounting to perp state
-        IVBase(VBASE_ADDRESS).burn(address(this), uint256(basePrincipalPlusLongFees));
+        IVBase(constants.VBASE_ADDRESS).burn(address(this), uint256(basePrincipalPlusLongFees));
         IVToken(VTokenAddress.unwrap(vToken)).burn(address(this), uint256(vTokenPrincipalPlusShortFees));
     }
 

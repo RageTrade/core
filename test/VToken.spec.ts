@@ -38,7 +38,7 @@ describe('VToken contract', () => {
       expect(bal).to.eq(10);
     });
 
-    it('Burn Unsuccessful', async () => {
+    it('Burn Successful', async () => {
       await VToken.burn(signer0Address, 5);
       const bal = await VToken.balanceOf(signer0Address);
       expect(bal).to.eq(5);

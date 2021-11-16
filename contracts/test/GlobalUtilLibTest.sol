@@ -6,6 +6,7 @@ import { TickUtilLib } from '../libraries/TickUtilLib.sol';
 import { GlobalUtilLib } from '../libraries/GlobalUtilLib.sol';
 
 import { console } from 'hardhat/console.sol';
+import '../Constants.sol';
 
 contract GlobalUtilLibTest {
     using TickUtilLib for TickUtilLib.TickState;
@@ -67,8 +68,8 @@ contract GlobalUtilLibTest {
         global.feeGrowthGlobalShortsX128 = feeGrowthGlobalShortsX128;
     }
 
-    function getExtrapolatedSumA() external view returns (int256) {
-        return (global.getExtrapolatedSumA(blockTimestamp));
+    function getExtrapolatedSumA(Constants memory constants) external view returns (int256) {
+        return (global.getExtrapolatedSumA(blockTimestamp, constants));
     }
 
     function setBlockTimestamp(uint48 _blockTimestamp) external {
@@ -83,27 +84,29 @@ contract GlobalUtilLibTest {
         return GlobalUtilLib.getPricePosition(curPriceIndex, tickLowerIndex, tickHigherIndex);
     }
 
-    function calculateFundingRate() external view returns (int16) {
-        return global.calculateFundingRate();
+    function calculateFundingRate(Constants memory constants) external view returns (int16) {
+        return global.calculateFundingRate(constants);
     }
 
     function getExtrapolatedSumFP(
         int256 sumACkpt,
         int256 sumBCkpt,
-        int256 sumFPCkpt
+        int256 sumFPCkpt,
+        Constants memory constants
     ) external view returns (int256) {
-        return (global.getExtrapolatedSumFP(sumACkpt, sumBCkpt, sumFPCkpt, blockTimestamp));
+        return (global.getExtrapolatedSumFP(sumACkpt, sumBCkpt, sumFPCkpt, blockTimestamp, constants));
     }
 
     function simulateUpdateOnTrade(
         int256 tokenAmount,
         uint256 fees,
-        uint256 liquidity
+        uint256 liquidity,
+        Constants memory constants
     ) external {
-        global.updateOnTrade(tokenAmount, fees, liquidity, blockTimestamp);
+        global.updateOnTrade(tokenAmount, fees, liquidity, blockTimestamp, constants);
     }
 
-    function getUpdatedLPState()
+    function getUpdatedLPState(Constants memory constants)
         external
         view
         returns (
@@ -113,6 +116,6 @@ contract GlobalUtilLibTest {
             uint256
         )
     {
-        return global.getUpdatedLPState(tickLowerHigher, tickLowerIndex, tickHigherIndex, blockTimestamp);
+        return global.getUpdatedLPState(tickLowerHigher, tickLowerIndex, tickHigherIndex, blockTimestamp, constants);
     }
 }

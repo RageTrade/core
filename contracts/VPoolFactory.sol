@@ -18,8 +18,11 @@ abstract contract VPoolFactory is IVPoolFactory {
         uint16 initialMargin;
         uint16 maintainanceMargin;
         uint32 twapDuration;
+        Constants _constants;
     }
     Parameters public override parameters;
+
+    Constants public constants;
 
     address public immutable owner;
     bool public isRestricted;
@@ -28,9 +31,22 @@ abstract contract VPoolFactory is IVPoolFactory {
 
     mapping(address => bool) public realTokenInitilized;
 
-    constructor() {
+    constructor(
+        address VBASE_ADDRESS,
+        address UNISWAP_FACTORY_ADDRESS,
+        uint24 DEFAULT_FEE_TIER,
+        bytes32 POOL_BYTE_CODE_HASH
+    ) {
         isRestricted = true;
         owner = msg.sender;
+        constants = Constants(
+            address(this),
+            VBASE_ADDRESS,
+            UNISWAP_FACTORY_ADDRESS,
+            DEFAULT_FEE_TIER,
+            POOL_BYTE_CODE_HASH,
+            keccak256(type(VPoolWrapper).creationCode)
+        );
     }
 
     event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
@@ -45,14 +61,14 @@ abstract contract VPoolFactory is IVPoolFactory {
         uint32 twapDuration
     ) external isAllowed {
         address vTokenAddress = _deployVToken(vTokenName, vTokenSymbol, realToken, oracleAddress);
-        address vPool = IUniswapV3Factory(UNISWAP_FACTORY_ADDRESS).createPool(
-            VBASE_ADDRESS,
+        address vPool = IUniswapV3Factory(constants.UNISWAP_FACTORY_ADDRESS).createPool(
+            constants.VBASE_ADDRESS,
             vTokenAddress,
-            DEFAULT_FEE_TIER
+            constants.DEFAULT_FEE_TIER
         );
         IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPrice(twapDuration));
         address vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
-        IVBase(VBASE_ADDRESS).authorize(vPoolWrapper);
+        IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
         IVToken(vTokenAddress).setOwner(vPoolWrapper);
         emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
@@ -96,13 +112,14 @@ abstract contract VPoolFactory is IVPoolFactory {
         uint16 maintainanceMargin,
         uint32 twapDuration
     ) internal returns (address) {
-        bytes32 salt = keccak256(abi.encode(vTokenAddress, VBASE_ADDRESS));
+        bytes32 salt = keccak256(abi.encode(vTokenAddress, constants.VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;
         parameters = Parameters({
             vTokenAddress: vTokenAddress,
             initialMargin: initialMargin,
             maintainanceMargin: maintainanceMargin,
-            twapDuration: twapDuration
+            twapDuration: twapDuration,
+            _constants: constants
         });
         address deployedAddress = Create2.deploy(0, salt, bytecode);
         delete parameters;
