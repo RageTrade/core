@@ -6,6 +6,7 @@ import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-etherscan';
+
 import { ethers } from 'ethers';
 config();
 const { MNEMONIC, ALCHEMY_KEY } = process.env;
@@ -82,6 +83,11 @@ export default {
         },
       },
     ],
+  },
+  typechain: {
+    target: 'ethers-v5',
+    alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
+    externalArtifacts: ['node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'], // optional array of glob patterns with external artifacts to process (for example external libs from node_modules)
   },
   etherscan: {
     // Your API key for Etherscan
