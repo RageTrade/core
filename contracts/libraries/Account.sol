@@ -283,7 +283,7 @@ library Account {
             vTokenAddresses,
             constants
         );
-        // require(accountMarketValue < totalRequiredMargin, "Account not underwater");
+        require(accountMarketValue < totalRequiredMargin, 'Account not underwater');
 
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
