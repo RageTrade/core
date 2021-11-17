@@ -263,6 +263,20 @@ library Account {
         require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
     }
 
+    function computeLiquidationFees(
+        int256 accountMarketValue,
+        int256 fixFee,
+        int256 liquidationFeeHalf
+    ) internal pure returns (int256 keeperFees, int256 insuranceFundFees) {
+        if (accountMarketValue - fixFee - 2 * liquidationFeeHalf < 0) {
+            keeperFees = fixFee;
+            insuranceFundFees = accountMarketValue - fixFee;
+        } else {
+            keeperFees = liquidationFeeHalf + fixFee;
+            insuranceFundFees = liquidationFeeHalf;
+        }
+    }
+
     //Fee Fraction * e6 is input
     //Fee can be positive and negative (in case of negative fee insurance fund is to take care of the whole thing
     function liquidateLiquidityPositions(
@@ -271,7 +285,7 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256, int256) {
+    ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
@@ -287,12 +301,8 @@ library Account {
 
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
-        if (accountMarketValue < 0) {
-            return (fixFee, -1 * (abs(accountMarketValue) + fixFee));
-        } else {
-            int256 fee = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-            return (fee + fixFee, fee);
-        }
+        int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
+        return computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
     }
 
     //Fee Fraction * e6 is input
@@ -302,7 +312,7 @@ library Account {
         uint16 liquidationFeeFraction,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal returns (int256, int256) {
+    ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
@@ -318,18 +328,8 @@ library Account {
 
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
-        if (accountMarketValue < 0) {
-            return (fixFee, -1 * (abs(accountMarketValue) + fixFee));
-        } else {
-            int256 fee = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-            return (fee + fixFee, fee);
-        }
-        // if (accountMarketValue<0) {
-        //     insuranceFund.request(-accountMarketValue);
-        // } else {
-        //     insuranceFund.transfer(fee/2);
-        //     IERC20(RBASE_ADDRESS).transfer(msg.sender(),fee/2);
-        // }
+        int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
+        return computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
     }
 
     function abs(int256 value) internal pure returns (int256) {
@@ -348,7 +348,7 @@ library Account {
         LiquidationParams memory liquidationParams,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal returns (int256, int256) {
+    ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             vTokenAddress,
             constants
@@ -395,16 +395,13 @@ library Account {
         }
         accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
 
-        if (accountMarketValue < 0) {
-            return (
-                liquidationParams.fixFee.toInt256(),
-                -1 * (abs(accountMarketValue) + liquidationParams.fixFee.toInt256())
-            );
-        } else {
-            int256 fee = (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants)))
-                .mulDiv(liquidationParams.liquidationFeeFraction, 1e5) / 2;
-            return (fee + liquidationParams.fixFee.toInt256(), fee);
-        }
+        int256 liquidationFeeHalf = (abs(tokensToTrade) *
+            int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants))).mulDiv(
+                liquidationParams.liquidationFeeFraction,
+                1e5
+            ) / 2;
+
+        return computeLiquidationFees(accountMarketValue, liquidationParams.fixFee.toInt256(), liquidationFeeHalf);
     }
 
     function removeLimitOrder(
