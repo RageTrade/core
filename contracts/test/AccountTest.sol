@@ -31,9 +31,14 @@ contract AccountTest {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
-            testAccount.swapTokenAmount(testVTokenAddresses[truncatedAddress], -set.positions[truncatedAddress].balance, testVTokenAddresses, wrapper, constants);
+            testAccount.swapTokenAmount(
+                testVTokenAddresses[truncatedAddress],
+                -set.positions[truncatedAddress].balance,
+                testVTokenAddresses,
+                wrapper,
+                constants
+            );
         }
-
     }
 
     function truncate(address vTokenAddress) internal pure returns (uint32) {
