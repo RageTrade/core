@@ -298,7 +298,7 @@ library Account {
             constants
         );
         require(accountMarketValue < totalRequiredMargin, 'Account not underwater');
-
+        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
@@ -325,7 +325,7 @@ library Account {
             constants
         );
         require(accountMarketValue < totalRequiredMargin, 'Account not underwater');
-
+        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
@@ -382,7 +382,7 @@ library Account {
             if (abs(tokensToTrade) > abs(vTokenPosition.balance)) {
                 tokensToTrade = -1 * vTokenPosition.balance;
             }
-
+            account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
             account.tokenPositions.swapTokenAmount(vTokenAddress, tokensToTrade, constants);
 
             int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(
@@ -409,6 +409,7 @@ library Account {
         address vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
+        mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
         account.removeLimitOrder(
@@ -416,6 +417,7 @@ library Account {
             tickLower,
             tickUpper,
             VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants),
+            vTokenAddresses,
             VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
             constants
         );
@@ -427,6 +429,7 @@ library Account {
         int24 tickLower,
         int24 tickUpper,
         int24 currentTick,
+        mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal {
@@ -444,6 +447,7 @@ library Account {
             (currentTick >= tickUpper && position.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
             (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
         ) {
+            account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
             account.tokenPositions.liquidityChange(
                 vTokenAddress,
                 position,
