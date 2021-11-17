@@ -8,9 +8,15 @@ import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 contract VToken is ERC20, IVToken {
-    address public immutable override realToken;
     address public immutable override oracle;
     address public vPoolWrapper; // TODO change to immutable
+
+    address public immutable realToken;
+    uint8 immutable _decimals;
+
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
+    }
 
     constructor(
         string memory vTokenName,
@@ -20,6 +26,7 @@ contract VToken is ERC20, IVToken {
         address vPoolWrapper_
     ) ERC20(vTokenName, vTokenSymbol) {
         realToken = realToken_;
+        _decimals = ERC20(realToken_).decimals();
         oracle = oracle_;
         // owner = clearingHouse;
         vPoolWrapper = vPoolWrapper_;

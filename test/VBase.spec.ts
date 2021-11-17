@@ -1,41 +1,62 @@
-import { Signer } from '@ethersproject/abstract-signer';
+import { FakeContract, smock } from '@defi-wonderland/smock';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import hre from 'hardhat';
+import hre, { ethers } from 'hardhat';
 
-import { VBase } from '../typechain-types';
+import { ERC20, VBase } from '../typechain-types';
 
 describe('VBase', () => {
-  let VBase: VBase;
-  let signers: Signer[];
-  let signer0Address: string;
-  let signer1Address: string;
-  before(async () => {
+  let rBase: FakeContract<ERC20>;
+  let vBase: VBase;
+  let signers: SignerWithAddress[];
+
+  beforeEach(async () => {
     signers = await hre.ethers.getSigners();
-    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
-    signer0Address = await signers[0].getAddress();
-    signer1Address = await signers[1].getAddress();
+
+    rBase = await smock.fake<ERC20>('ERC20');
+    rBase.decimals.returns(10);
+
+    vBase = await (await hre.ethers.getContractFactory('VBase')).deploy(rBase.address);
+    await vBase.authorize(signers[0].address);
   });
 
-  describe('Mint', () => {
-    it('Mint Unsuccessful', async () => {
-      expect(VBase.mint(signer1Address, 10)).revertedWith('Unauthorised()');
+  describe('#decimals', () => {
+    it('inherits decimals of real token', async () => {
+      expect(await vBase.decimals()).to.eq(await rBase.decimals());
+    });
+  });
+
+  const addr = '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf';
+
+  describe('#authorise', () => {
+    it('works', async () => {
+      expect(await vBase.isAuth(addr)).to.be.false;
+      await vBase.authorize(addr);
+      expect(await vBase.isAuth(addr)).to.be.true;
     });
 
-    it('Authorize', async () => {
-      expect(VBase.connect(signers[1]).authorize(signer0Address)).revertedWith('Ownable: caller is not the owner');
-      await VBase.authorize(signer0Address);
+    it('onlyOwner', async () => {
+      expect(vBase.connect(signers[1]).authorize(addr)).revertedWith('Ownable: caller is not the owner');
+    });
+  });
+
+  describe('#mint', () => {
+    it('works', async () => {
+      await vBase.mint(addr, 10);
+      expect(await vBase.balanceOf(addr)).to.eq(10);
     });
 
-    it('Mint Successful', async () => {
-      await VBase.mint(signer1Address, 10);
-      const bal = await VBase.balanceOf(signer1Address);
-      expect(bal).to.eq(10);
+    it('unauthorised', async () => {
+      expect(vBase.connect(signers[1]).mint(addr, 10)).revertedWith('Unauthorised()');
     });
+  });
 
-    it('Burn Successful', async () => {
-      await VBase.connect(signers[1]).burn(5);
-      const bal = await VBase.balanceOf(signer1Address);
-      expect(bal).to.eq(5);
+  describe('#burn', () => {
+    it('works', async () => {
+      await vBase.mint(signers[0].address, 15);
+
+      await vBase.burn(5);
+      expect(await vBase.balanceOf(signers[0].address)).to.eq(10);
     });
   });
 });

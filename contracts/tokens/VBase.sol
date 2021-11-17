@@ -9,7 +9,19 @@ import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 
 contract VBase is IVBase, ERC20('Virtual Base Token', 'vBase'), Ownable {
-    mapping(address => bool) isAuth;
+    mapping(address => bool) public isAuth;
+
+    address public immutable realBase;
+    uint8 immutable _decimals;
+
+    constructor(address realBase_) {
+        realBase = realBase_;
+        _decimals = ERC20(realBase_).decimals();
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
+    }
 
     function authorize(address vPoolWrapper) external onlyOwner {
         isAuth[vPoolWrapper] = true;
