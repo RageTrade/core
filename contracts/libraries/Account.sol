@@ -117,9 +117,15 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal view returns (int256, int256) {
-        (int256 accountMarketValue, int256 totalRequiredMargin) = account
-            .tokenPositions
-            .getAllTokenPositionValueAndMargin(isInitialMargin, vTokenAddresses, constants);
+        // (int256 accountMarketValue, int256 totalRequiredMargin) = account
+        //     .tokenPositions
+        //     .getAllTokenPositionValueAndMargin(isInitialMargin, vTokenAddresses, constants);
+        int256 accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+        int256 totalRequiredMargin = account.tokenPositions.getRequiredMargin(
+            isInitialMargin,
+            vTokenAddresses,
+            constants
+        );
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
         return (accountMarketValue, totalRequiredMargin);
     }
@@ -143,9 +149,7 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal view returns (bool) {
-        (int256 totalPositionValue, int256 totalRequiredMargin) = account
-            .tokenPositions
-            .getAllTokenPositionValueAndMargin(false, vTokenAddresses, constants);
+        int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
         return totalPositionValue > 0;
     }
 
@@ -367,27 +371,29 @@ library Account {
                 require(tokensToTrade < 0, 'Invalid token amount to trade');
             }
 
-            int256 absTokensToTrade = abs(tokensToTrade);
-
             if (
-                (absTokensToTrade * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants))) <
+                (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants))) <
                 liquidationParams.liquidationMinSizeBaseAmount.toInt256()
             ) {
                 tokensToTrade = (-1 *
                     sign(vTokenPosition.balance) *
                     liquidationParams.liquidationMinSizeBaseAmount.toInt256());
             }
-            if (absTokensToTrade > abs(vTokenPosition.balance)) {
+            if (abs(tokensToTrade) > abs(vTokenPosition.balance)) {
                 tokensToTrade = -1 * vTokenPosition.balance;
             }
 
             account.tokenPositions.swapTokenAmount(vTokenAddress, tokensToTrade, constants);
 
-            int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(false, vTokenAddresses);
+            int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(
+                false,
+                vTokenAddresses,
+                constants
+            );
 
             require(totalRequiredMarginFinal < totalRequiredMargin, 'Invalid position liquidation (Wrong Side)');
         }
-        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses);
+        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
 
         if (accountMarketValue < 0) {
             return (

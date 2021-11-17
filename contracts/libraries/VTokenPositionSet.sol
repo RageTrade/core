@@ -18,6 +18,7 @@ import { Constants } from '../Constants.sol';
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
     using VTokenLib for VTokenAddress;
+    using VTokenPosition for VTokenPosition.Position;
     using VTokenPositionSet for Set;
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
@@ -35,78 +36,150 @@ library VTokenPositionSet {
         mapping(uint32 => VTokenPosition.Position) positions;
     }
 
-    function getAllTokenPositionValueAndMargin(
+    // function getAllTokenPositionValueAndMargin(
+    //     Set storage set,
+    //     bool isInitialMargin,
+    //     mapping(uint32 => address) storage vTokenAddresses,
+    //     Constants memory constants
+    // ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
+    //     for (uint8 i = 0; i < set.active.length; i++) {
+    //         uint32 truncated = set.active[i];
+    //         if (truncated == 0) break;
+    //         VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
+    //         VTokenPosition.Position storage position = set.positions[truncated];
+    //         uint256 price = vToken.getVirtualTwapPrice(constants);
+    //         uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
+
+    //         int256 tokenPosition = position.balance;
+    //         int256 liquidityMaxTokenPosition = int256(
+    //             LiquidityPositionSet.maxNetPosition(position.liquidityPositions, vToken, constants)
+    //         );
+
+    //         if (-2 * tokenPosition < liquidityMaxTokenPosition) {
+    //             totalRequiredMargin +=
+    //                 (abs(tokenPosition + liquidityMaxTokenPosition) * int256(price) * int16(marginRatio)) /
+    //                 int256(FixedPoint96.Q96);
+    //         } else {
+    //             totalRequiredMargin +=
+    //                 (abs(tokenPosition) * int256(price) * int16(marginRatio)) /
+    //                 int256(FixedPoint96.Q96);
+    //         }
+
+    //         accountMarketValue += VTokenPosition.marketValue(position, vToken, price, constants); // TODO consider removing this JUMP, as it's a simple multiplication
+    //         uint160 sqrtPrice = vToken.getVirtualTwapSqrtPrice(constants);
+    //         accountMarketValue += int256(
+    //             LiquidityPositionSet.baseValue(position.liquidityPositions, sqrtPrice, vToken, constants)
+    //         );
+    //         accountMarketValue += VTokenPosition.marketValue(
+    //             set.positions[truncate(constants.VBASE_ADDRESS)],
+    //             vToken,
+    //             price,
+    //             constants
+    //         ); // ? TODO consider removing this
+    //     }
+
+    //     return (accountMarketValue, totalRequiredMargin);
+    // }
+
+    function getAccountMarketValue(
         Set storage set,
-        bool isInitialMargin,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
+    ) internal view returns (int256 accountMarketValue) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
             VTokenPosition.Position storage position = set.positions[truncated];
-            uint256 price = vToken.getVirtualTwapPrice(constants);
-            uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
 
-            int256 tokenPosition = position.balance;
-            int256 liquidityMaxTokenPosition = int256(
-                LiquidityPositionSet.maxNetPosition(position.liquidityPositions, vToken, constants)
-            );
+            accountMarketValue += position.marketValue(vToken, constants);
 
-            if (-2 * tokenPosition < liquidityMaxTokenPosition) {
-                totalRequiredMargin +=
-                    (abs(tokenPosition + liquidityMaxTokenPosition) * int256(price) * int16(marginRatio)) /
-                    int256(FixedPoint96.Q96);
-            } else {
-                totalRequiredMargin +=
-                    (abs(tokenPosition) * int256(price) * int16(marginRatio)) /
-                    int256(FixedPoint96.Q96);
-            }
-
-            accountMarketValue += VTokenPosition.marketValue(position, vToken, price, constants); // TODO consider removing this JUMP, as it's a simple multiplication
             uint160 sqrtPrice = vToken.getVirtualTwapSqrtPrice(constants);
-            accountMarketValue += int256(
-                LiquidityPositionSet.baseValue(position.liquidityPositions, sqrtPrice, vToken, constants)
-            );
-            accountMarketValue += VTokenPosition.marketValue(
-                set.positions[truncate(constants.VBASE_ADDRESS)],
-                vToken,
-                price,
-                constants
-            ); // ? TODO consider removing this
+            accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPrice, vToken, constants));
         }
 
-        return (accountMarketValue, totalRequiredMargin);
+        accountMarketValue += set.positions[truncate(constants.VBASE_ADDRESS)].balance;
+
+        return (accountMarketValue);
     }
 
-    function getAccountMarketValue(Set storage set, mapping(uint32 => address) storage vTokenAddresses)
-        internal
-        view
-        returns (int256 accountMarketValue)
-    {
-        //TODO
+    function max(int256 a, int256 b) internal pure returns (int256 c) {
+        if (a > b) c = a;
+        else c = b;
+    }
+
+    function getLongShortSideRisk(
+        Set storage set,
+        bool isInitialMargin,
+        address vTokenAddress,
+        Constants memory constants
+    ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
+        VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
+        VTokenPosition.Position storage position = set.positions[truncate(vTokenAddress)];
+
+        uint256 price = vToken.getVirtualTwapPrice(constants);
+        uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
+
+        int256 tokenPosition = position.balance;
+        int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition(vToken, constants));
+
+        longSideRisk =
+            (max(tokenPosition + liquidityMaxTokenPosition, 0) * int256(price) * int16(marginRatio)) /
+            int256(FixedPoint96.Q96);
+
+        shortSideRisk = (max(-tokenPosition, 0) * int256(price) * int16(marginRatio)) / int256(FixedPoint96.Q96);
+
+        return (longSideRisk, shortSideRisk);
     }
 
     function getRequiredMarginWithExclusion(
         Set storage set,
         bool isInitialMargin,
         mapping(uint32 => address) storage vTokenAddresses,
-        address vTokenAddressToSkip
+        address vTokenAddressToSkip,
+        Constants memory constants
     ) internal view returns (int256 requiredMargin, int256 requiredMarginOther) {
-        //TODO
+        int256 longSideRiskTotal;
+        int256 shortSideRiskTotal;
+        int256 longSideRisk;
+        int256 shortSideRisk;
+        for (uint8 i = 0; i < set.active.length; i++) {
+            if (set.active[i] == 0) break;
+            if (vTokenAddresses[set.active[i]] == vTokenAddressToSkip) continue;
+            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(
+                isInitialMargin,
+                vTokenAddresses[set.active[i]],
+                constants
+            );
+
+            longSideRiskTotal += longSideRisk;
+            shortSideRiskTotal += shortSideRisk;
+        }
+
+        requiredMarginOther = max(longSideRiskTotal, shortSideRiskTotal);
+        if (vTokenAddressToSkip != address(0)) {
+            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vTokenAddressToSkip, constants);
+        }
+
+        longSideRiskTotal += longSideRisk;
+        shortSideRiskTotal += shortSideRisk;
+
+        requiredMargin = max(longSideRiskTotal, shortSideRiskTotal);
+        return (requiredMargin, requiredMarginOther);
     }
 
     function getRequiredMargin(
         Set storage set,
         bool isInitialMargin,
-        mapping(uint32 => address) storage vTokenAddresses
+        mapping(uint32 => address) storage vTokenAddresses,
+        Constants memory constants
     ) internal view returns (int256 requiredMargin) {
         int256 requiredMarginOther;
         (requiredMargin, requiredMarginOther) = set.getRequiredMarginWithExclusion(
             isInitialMargin,
             vTokenAddresses,
-            address(0)
+            address(0),
+            constants
         );
         return requiredMargin;
     }
@@ -442,12 +515,13 @@ library VTokenPositionSet {
     {
         int256 totalRequiredMarginOther;
 
-        accountMarketValue = set.getAccountMarketValue(vTokenAddresses);
+        accountMarketValue = set.getAccountMarketValue(vTokenAddresses, constants);
 
         (totalRequiredMargin, totalRequiredMarginOther) = set.getRequiredMarginWithExclusion(
             false,
             vTokenAddresses,
-            vTokenAddress
+            vTokenAddress,
+            constants
         );
 
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, constants);

@@ -39,13 +39,13 @@ contract VTokenPositionSetTest {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
     }
 
-    function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
-        external
-        view
-        returns (int256, int256)
-    {
-        return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
-    }
+    // function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
+    //     external
+    //     view
+    //     returns (int256, int256)
+    // {
+    //     return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
+    // }
 
     function realizeFundingPaymentToAccount(address vTokenAddress, Constants memory constants) external {
         VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, constants);
