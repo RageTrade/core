@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
+import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
@@ -11,6 +12,8 @@ import { Constants } from '../Constants.sol';
 contract AccountTest {
     using Account for Account.Info;
     using VTokenPosition for VTokenPosition.Position;
+    using VTokenPositionSet for VTokenPositionSet.Set;
+    using LiquidityPositionSet for LiquidityPositionSet.Info;
 
     Account.Info testAccount;
     mapping(uint32 => address) testVTokenAddresses;
@@ -19,6 +22,18 @@ contract AccountTest {
     constructor() {
         wrapper = new VPoolWrapperMock();
         wrapper.setLiquidityRates(-100, 100, 4000, 1);
+    }
+
+    function cleanPositions(Constants memory constants) external {
+        testAccount.tokenPositions.liquidateLiquidityPositions(testVTokenAddresses, wrapper, constants);
+        VTokenPositionSet.Set storage set = testAccount.tokenPositions;
+
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 truncatedAddress = set.active[i];
+            if (truncatedAddress == 0) break;
+            testAccount.swapTokenAmount(testVTokenAddresses[truncatedAddress], -set.positions[truncatedAddress].balance, testVTokenAddresses, wrapper, constants);
+        }
+
     }
 
     function truncate(address vTokenAddress) internal pure returns (uint32) {
