@@ -6,12 +6,12 @@ import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPos
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
-import { VBASE_ADDRESS } from '../Constants.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
+import { Constants } from '../Constants.sol';
 
 contract DepositTokenSetTest {
     using DepositTokenSet for DepositTokenSet.Info;
@@ -31,16 +31,24 @@ contract DepositTokenSetTest {
         vTokenAddresses[VTokenPositionSet.truncate(vTokenAddress)] = vTokenAddress;
     }
 
-    function increaseBalance(address vTokenAddress, uint256 amount) external {
-        depositTokenSet.increaseBalance(vTokenAddress, amount);
+    function increaseBalance(
+        address vTokenAddress,
+        uint256 amount,
+        Constants memory constants
+    ) external {
+        depositTokenSet.increaseBalance(vTokenAddress, amount, constants);
     }
 
-    function decreaseBalance(address vTokenAddress, uint256 amount) external {
-        depositTokenSet.decreaseBalance(vTokenAddress, amount);
+    function decreaseBalance(
+        address vTokenAddress,
+        uint256 amount,
+        Constants memory constants
+    ) external {
+        depositTokenSet.decreaseBalance(vTokenAddress, amount, constants);
     }
 
-    function getAllDepositAccountMarketValue() external view {
-        depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses);
+    function getAllDepositAccountMarketValue(Constants memory constants) external view {
+        depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses, constants);
     }
 
     function getBalance(address vTokenAddress) external view returns (uint256 balance) {

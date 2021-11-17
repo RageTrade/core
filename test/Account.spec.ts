@@ -8,6 +8,8 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 
 import { AccountTest, ClearingHouse, RealTokenMock } from '../typechain-types';
+import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -24,6 +26,7 @@ describe('AccountTest Library', () => {
   let testContractAddress: string;
   let oracleAddress: string;
   let realToken: RealTokenMock;
+  let constants: ConstantsStruct;
 
   let signers: SignerWithAddress[];
 
@@ -67,7 +70,12 @@ describe('AccountTest Library', () => {
     oracleAddress = oracle.address;
 
     const clearingHouseFactory = await hre.ethers.getContractFactory('ClearingHouse');
-    const clearingHouse = await clearingHouseFactory.deploy();
+    const clearingHouse = await clearingHouseFactory.deploy(
+      vBaseAddress,
+      UNISWAP_FACTORY_ADDRESS,
+      DEFAULT_FEE_TIER,
+      POOL_BYTE_CODE_HASH,
+    );
 
     await vBase.transferOwnership(clearingHouse.address);
 
@@ -83,6 +91,8 @@ describe('AccountTest Library', () => {
     const tester = signers[0];
     ownerAddress = await tester.getAddress();
     testContractAddress = test.address;
+
+    constants = await clearingHouse.constants();
   });
 
   after(async () => {
@@ -102,14 +112,14 @@ describe('AccountTest Library', () => {
 
   describe('#Margin', () => {
     it('Add Margin', async () => {
-      await test.addMargin(vTokenAddress, '100');
+      await test.addMargin(vTokenAddress, '100', constants);
       expect(await realToken.balanceOf(ownerAddress)).to.eq('9900');
       expect(await realToken.balanceOf(testContractAddress)).to.eq('100');
       expect(await test.getAccountDepositBalance(vTokenAddress)).to.eq('100');
     });
 
     it('Remove Margin', async () => {
-      await test.removeMargin(vTokenAddress, '50');
+      await test.removeMargin(vTokenAddress, '50', constants);
       expect(await realToken.balanceOf(ownerAddress)).to.eq('9950');
       expect(await realToken.balanceOf(testContractAddress)).to.eq('50');
       expect(await test.getAccountDepositBalance(vTokenAddress)).to.eq('50');
@@ -118,7 +128,7 @@ describe('AccountTest Library', () => {
 
   describe('#Trades', () => {
     it('Swap Token (Token Amount)', async () => {
-      await test.swapTokenAmount(vTokenAddress, '10');
+      await test.swapTokenAmount(vTokenAddress, '10', constants);
       const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
       const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
       expect(vTokenPosition[0]).to.eq('10');
@@ -126,7 +136,7 @@ describe('AccountTest Library', () => {
     });
 
     it('Swap Token (Token Notional)', async () => {
-      await test.swapTokenNotional(vTokenAddress, '40000');
+      await test.swapTokenNotional(vTokenAddress, '40000', constants);
       const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
       const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
       expect(vTokenPosition[0]).to.eq('20');
@@ -134,7 +144,7 @@ describe('AccountTest Library', () => {
     });
 
     it('Liqudity Change', async () => {
-      await test.liquidityChange(vTokenAddress, -100, 100, 5, 0);
+      await test.liquidityChange(vTokenAddress, -100, 100, 5, 0, constants);
       const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
       const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
       expect(vTokenPosition[0]).to.eq('15');
@@ -144,7 +154,7 @@ describe('AccountTest Library', () => {
 
   describe('#Liquidation', () => {
     it('Liquidate Liquidity Positions', async () => {
-      await test.liquidateLiquidityPositions(15); // feeFraction=15/10=1.5
+      await test.liquidateLiquidityPositions(15, constants); // feeFraction=15/10=1.5
     });
     it('Liquidate Token Positions');
     // , async () => {
@@ -154,62 +164,81 @@ describe('AccountTest Library', () => {
 
   describe('#Remove Limit Order', () => {
     describe('Not limit order', () => {
-      before(async() => {
-        await test.liquidityChange(vTokenAddress, -100, 100, 5, 0);
+      before(async () => {
+        await test.liquidityChange(vTokenAddress, -100, 100, 5, 0, constants);
         const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
         const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
         expect(vTokenPosition[0]).to.eq('15');
         expect(vBasePosition[0]).to.eq(-100000);
       });
-      it('Remove Failure - Inside Range (No Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,90)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Inside Range (No Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, 90, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
-      it('Remove Failure - Below Range (No Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,-110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Below Range (No Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, -110, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
-      it('Remove Failure - Above Range (No Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Above Range (No Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, 110, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
     });
     describe('Lower limit order', () => {
-      before(async() => {
-        await test.liquidityChange(vTokenAddress, -100, 100, 0, 1);
+      before(async () => {
+        await test.liquidityChange(vTokenAddress, -100, 100, 0, 1, constants);
         const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
         const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
         expect(vTokenPosition[0]).to.eq('15');
         expect(vBasePosition[0]).to.eq(-100000);
       });
-      it('Remove Failure - Inside Range (Lower Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,90)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Inside Range (Lower Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, 90, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
-      it('Remove Failure - Above Range (Lower Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Above Range (Lower Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, 110, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
-      it('Remove Success - Below Range (Lower Limit)');
-      // , async() => {
-      //   expect(test.removeLimitOrder(vTokenAddress,-100,100,-110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
-      // });
+      it('Remove Success - Below Range (Lower Limit)', async () => {
+        test.removeLimitOrder(vTokenAddress, -100, 100, -110, constants);
+        const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
+        const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
+        expect(vTokenPosition[0]).to.eq('20');
+        expect(vBasePosition[0]).to.eq(-80000);
+      });
     });
     describe('Upper limit order', () => {
-      before(async() => {
-        await test.liquidityChange(vTokenAddress, -100, 100, 0, 2);
+      before(async () => {
+        await test.liquidityChange(vTokenAddress, -100, 100, 5, 2, constants);
         const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
         const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
         expect(vTokenPosition[0]).to.eq('15');
         expect(vBasePosition[0]).to.eq(-100000);
       });
-      it('Remove Failure - Inside Range (Upper Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,90)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Inside Range (Upper Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, 90, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
-      it('Remove Failure - Below Range (Upper Limit)', async() => {
-        expect(test.removeLimitOrder(vTokenAddress,-100,100,-110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
+      it('Remove Failure - Below Range (Upper Limit)', async () => {
+        expect(test.removeLimitOrder(vTokenAddress, -100, 100, -110, constants)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
-      it('Remove Success - Above Range (Upper Limit)');
-      // , async() => {
-      //   expect(test.removeLimitOrder(vTokenAddress,-100,100,110)).to.be.revertedWith('IneligibleLimitOrderRemoval()');
-      // });
+      it('Remove Success - Above Range (Upper Limit)', async () => {
+        test.removeLimitOrder(vTokenAddress, -100, 100, 110, constants);
+        const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
+        const vBasePosition = await test.getAccountTokenDetails(vBaseAddress);
+        expect(vTokenPosition[0]).to.eq('20');
+        expect(vBasePosition[0]).to.eq(-80000);
+      });
     });
-
 
     // it('Remove Limit Order');
     // , async() => {

@@ -6,6 +6,7 @@ import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPos
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
+import { Constants } from '../Constants.sol';
 
 contract AccountTest {
     using Account for Account.Info;
@@ -28,24 +29,40 @@ contract AccountTest {
         testVTokenAddresses[truncate(vTokenAddress)] = vTokenAddress;
     }
 
-    function addMargin(address vTokenAddress, uint256 amount) external {
-        testAccount.addMargin(vTokenAddress, amount);
+    function addMargin(
+        address vTokenAddress,
+        uint256 amount,
+        Constants memory constants
+    ) external {
+        testAccount.addMargin(vTokenAddress, amount, constants);
     }
 
-    function removeMargin(address vTokenAddress, uint256 amount) external {
-        testAccount.removeMargin(vTokenAddress, amount, testVTokenAddresses);
+    function removeMargin(
+        address vTokenAddress,
+        uint256 amount,
+        Constants memory constants
+    ) external {
+        testAccount.removeMargin(vTokenAddress, amount, testVTokenAddresses, constants);
     }
 
-    function removeProfit(uint256 amount) external {
-        testAccount.removeProfit(amount, testVTokenAddresses);
+    function removeProfit(uint256 amount, Constants memory constants) external {
+        testAccount.removeProfit(amount, testVTokenAddresses, constants);
     }
 
-    function swapTokenAmount(address vTokenAddress, int256 amount) external {
-        testAccount.swapTokenAmount(vTokenAddress, amount, testVTokenAddresses, wrapper);
+    function swapTokenAmount(
+        address vTokenAddress,
+        int256 amount,
+        Constants memory constants
+    ) external {
+        testAccount.swapTokenAmount(vTokenAddress, amount, testVTokenAddresses, wrapper, constants);
     }
 
-    function swapTokenNotional(address vTokenAddress, int256 amount) external {
-        testAccount.swapTokenNotional(vTokenAddress, amount, testVTokenAddresses, wrapper);
+    function swapTokenNotional(
+        address vTokenAddress,
+        int256 amount,
+        Constants memory constants
+    ) external {
+        testAccount.swapTokenNotional(vTokenAddress, amount, testVTokenAddresses, wrapper, constants);
     }
 
     function liquidityChange(
@@ -53,7 +70,8 @@ contract AccountTest {
         int24 tickLower,
         int24 tickUpper,
         int128 liquidity,
-        LimitOrderType limitOrderType
+        LimitOrderType limitOrderType,
+        Constants memory constants
     ) external {
         LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
             tickLower,
@@ -62,11 +80,11 @@ contract AccountTest {
             limitOrderType
         );
 
-        testAccount.liquidityChange(vTokenAddress, liquidityChangeParams, testVTokenAddresses, wrapper);
+        testAccount.liquidityChange(vTokenAddress, liquidityChangeParams, testVTokenAddresses, wrapper, constants);
     }
 
-    function liquidateLiquidityPositions(uint16 liquidationFeeFraction) external {
-        testAccount.liquidateLiquidityPositions(liquidationFeeFraction, testVTokenAddresses, wrapper);
+    function liquidateLiquidityPositions(uint16 liquidationFeeFraction, Constants memory constants) external {
+        testAccount.liquidateLiquidityPositions(liquidationFeeFraction, testVTokenAddresses, wrapper, constants);
     }
 
     function liquidateTokenPosition(
@@ -74,7 +92,8 @@ contract AccountTest {
         uint16 liquidationFeeFraction,
         uint256 liquidationMinSizeBaseAmount,
         uint8 targetMarginRation,
-        uint256 fixFee
+        uint256 fixFee,
+        Constants memory constants
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
             liquidationFeeFraction,
@@ -82,16 +101,17 @@ contract AccountTest {
             targetMarginRation,
             fixFee
         );
-        testAccount.liquidateTokenPosition(vTokenAddress, liquidationParams, testVTokenAddresses);
+        testAccount.liquidateTokenPosition(vTokenAddress, liquidationParams, testVTokenAddresses, constants);
     }
 
     function removeLimitOrder(
         address vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
-        int24 currentTick
+        int24 currentTick,
+        Constants memory constants
     ) external {
-        testAccount.removeLimitOrder(vTokenAddress, tickLower, tickUpper, currentTick);
+        testAccount.removeLimitOrder(vTokenAddress, tickLower, tickUpper, currentTick, wrapper, constants);
     }
 
     function getAccountDepositBalance(address vTokenAddress) external view returns (uint256) {

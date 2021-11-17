@@ -6,8 +6,9 @@ import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork
 import { DepositTokenSetTest, ClearingHouse, RealTokenMock } from '../typechain-types';
 import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
 
 describe('DepositTokenSet Library', () => {
   let test: DepositTokenSetTest;
@@ -18,6 +19,7 @@ describe('DepositTokenSet Library', () => {
   let testContractAddress: string;
   let oracleAddress: string;
   let realToken: RealTokenMock;
+  let constants: ConstantsStruct;
 
   let signers: SignerWithAddress[];
 
@@ -61,8 +63,12 @@ describe('DepositTokenSet Library', () => {
     oracleAddress = oracle.address;
 
     const clearingHouseFactory = await hre.ethers.getContractFactory('ClearingHouse');
-    const clearingHouse = await clearingHouseFactory.deploy();
-
+    const clearingHouse = await clearingHouseFactory.deploy(
+      vBaseAddress,
+      UNISWAP_FACTORY_ADDRESS,
+      DEFAULT_FEE_TIER,
+      POOL_BYTE_CODE_HASH,
+    );
     await vBase.transferOwnership(clearingHouse.address);
 
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
@@ -77,24 +83,25 @@ describe('DepositTokenSet Library', () => {
     const tester = signers[0];
     ownerAddress = await tester.getAddress();
     testContractAddress = test.address;
+
+    constants = await clearingHouse.constants();
   });
 
   describe('#Functions', () => {
-    it('Add Margin', async() => {
-        test.increaseBalance(vTokenAddress,100);
-        const balance = await test.getBalance(vTokenAddress);
-        expect(balance).to.eq(100);
+    it('Add Margin', async () => {
+      test.increaseBalance(vTokenAddress, 100, constants);
+      const balance = await test.getBalance(vTokenAddress);
+      expect(balance).to.eq(100);
     });
-    it('Remove Margin', async() => {
-        test.decreaseBalance(vTokenAddress,50);
-        const balance = await test.getBalance(vTokenAddress);
-        expect(balance).to.eq(50);
+    it('Remove Margin', async () => {
+      test.decreaseBalance(vTokenAddress, 50, constants);
+      const balance = await test.getBalance(vTokenAddress);
+      expect(balance).to.eq(50);
     });
     it('Deposit Market Value');
     // , async() => {
-    //     const marketValue = await test.getAllDepositAccountMarketValue();
+    //     const marketValue = await test.getAllDepositAccountMarketValue(constants);
     //     expect(marketValue).to.eq(200000);
     // });
-
   });
 });

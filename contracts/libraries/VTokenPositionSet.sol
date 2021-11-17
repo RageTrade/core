@@ -265,21 +265,30 @@ library VTokenPositionSet {
             );
     }
 
-    function liquidateLiquidityPositions(Set storage set, address vTokenAddress) internal returns (int256) {
-        set.liquidateLiquidityPositions(vTokenAddress, VTokenAddress.wrap(vTokenAddress).vPoolWrapper());
+    function liquidateLiquidityPositions(
+        Set storage set,
+        address vTokenAddress,
+        Constants memory constants
+    ) internal returns (int256) {
+        set.liquidateLiquidityPositions(
+            vTokenAddress,
+            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+            constants
+        );
     }
 
-    function liquidateLiquidityPositions(Set storage set, mapping(uint32 => address) storage vTokenAddresses)
-        internal
-        returns (int256)
-    {
+    function liquidateLiquidityPositions(
+        Set storage set,
+        mapping(uint32 => address) storage vTokenAddresses,
+        Constants memory constants
+    ) internal returns (int256) {
         int256 notionalAmountClosed;
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
-            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]]);
+            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], constants);
         }
 
         return notionalAmountClosed;
@@ -375,11 +384,14 @@ library VTokenPositionSet {
     function liquidateLiquidityPositions(
         Set storage set,
         address vTokenAddress,
-        IVPoolWrapper wrapper
+        IVPoolWrapper wrapper,
+        Constants memory constants
     ) internal returns (int256) {
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        LiquidityPositionSet.Info storage liquidityPositions = set.getTokenPosition(vTokenAddress).liquidityPositions;
+        LiquidityPositionSet.Info storage liquidityPositions = set
+            .getTokenPosition(vTokenAddress, constants)
+            .liquidityPositions;
 
         LiquidityPosition.Info storage position;
 
@@ -388,18 +400,19 @@ library VTokenPositionSet {
             liquidityPositions.liquidityChange(position, -1 * int128(position.liquidity), wrapper, balanceAdjustments);
         }
 
-        set.update(balanceAdjustments, vTokenAddress);
+        set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
             balanceAdjustments.vTokenIncrease *
-            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice().toInt256() +
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants).toInt256() +
             balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(
         Set storage set,
         mapping(uint32 => address) storage vTokenAddresses,
-        IVPoolWrapper wrapper
+        IVPoolWrapper wrapper,
+        Constants memory constants
     ) internal returns (int256) {
         int256 notionalAmountClosed;
 
@@ -407,7 +420,7 @@ library VTokenPositionSet {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
-            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], wrapper);
+            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], wrapper, constants);
         }
 
         return notionalAmountClosed;
@@ -417,17 +430,16 @@ library VTokenPositionSet {
         Set storage set,
         address vTokenAddress,
         LiquidationParams memory liquidationParams,
-        mapping(uint32 => address) storage vTokenAddresses
+        mapping(uint32 => address) storage vTokenAddresses,
+        Constants memory constants
     )
         internal
         returns (
-            int256,
-            int256,
-            int256
+            int256 tokensToTrade,
+            int256 accountMarketValue,
+            int256 totalRequiredMargin
         )
     {
-        int256 accountMarketValue;
-        int256 totalRequiredMargin;
         int256 totalRequiredMarginOther;
 
         accountMarketValue = set.getAccountMarketValue(vTokenAddresses);
@@ -438,14 +450,14 @@ library VTokenPositionSet {
             vTokenAddress
         );
 
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress);
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, constants);
 
         VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
-        int256 tokensToTrade = (accountMarketValue -
+        tokensToTrade = (accountMarketValue -
             liquidationParams.fixFee.toInt256() -
             (totalRequiredMarginOther +
-                (vToken.getVirtualTwapPrice().toInt256() * vTokenPosition.balance).mulDiv(
-                    vToken.getMarginRatio(false),
+                (vToken.getVirtualTwapPrice(constants).toInt256() * vTokenPosition.balance).mulDiv(
+                    vToken.getMarginRatio(false, constants),
                     1e5
                 )).mulDiv(liquidationParams.targetMarginRatio, 1e1));
 

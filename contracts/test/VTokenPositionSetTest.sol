@@ -101,8 +101,8 @@ contract VTokenPositionSetTest {
         dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
     }
 
-    function liquidateLiquidityPositions(address vTokenAddress) external {
-        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper);
+    function liquidateLiquidityPositions(address vTokenAddress, Constants memory constants) external {
+        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, constants);
     }
 
     function liquidateTokenPosition(
@@ -110,7 +110,8 @@ contract VTokenPositionSetTest {
         uint16 liquidationFeeFraction,
         uint256 liquidationMinSizeBaseAmount,
         uint8 targetMarginRation,
-        uint256 fixFee
+        uint256 fixFee,
+        Constants memory constants
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
             liquidationFeeFraction,
@@ -118,7 +119,7 @@ contract VTokenPositionSetTest {
             targetMarginRation,
             fixFee
         );
-        dummy.getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses);
+        dummy.getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
     }
 
     function getIsActive(address vTokenAddress) external view returns (bool) {

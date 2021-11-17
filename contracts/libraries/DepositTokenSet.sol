@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { VBASE_ADDRESS } from '../Constants.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { FullMath } from './FullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { Constants } from '../Constants.sol';
 
 library DepositTokenSet {
     using VTokenLib for VTokenAddress;
@@ -25,10 +25,11 @@ library DepositTokenSet {
     function increaseBalance(
         Info storage info,
         address vTokenAddress,
-        uint256 amount
+        uint256 amount,
+        Constants memory constants
     ) internal {
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (vTokenAddress != VBASE_ADDRESS) {
+        if (vTokenAddress != constants.VBASE_ADDRESS) {
             info.active.include(truncate(vTokenAddress));
         }
         info.deposits[truncate(vTokenAddress)] += amount;
@@ -37,10 +38,11 @@ library DepositTokenSet {
     function decreaseBalance(
         Info storage info,
         address vTokenAddress,
-        uint256 amount
+        uint256 amount,
+        Constants memory constants
     ) internal {
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (vTokenAddress != VBASE_ADDRESS) {
+        if (vTokenAddress != constants.VBASE_ADDRESS) {
             info.active.include(truncate(vTokenAddress));
         }
 
@@ -52,11 +54,11 @@ library DepositTokenSet {
         return uint32(uint160(_add));
     }
 
-    function getAllDepositAccountMarketValue(Info storage set, mapping(uint32 => address) storage vTokenAddresses)
-        internal
-        view
-        returns (int256)
-    {
+    function getAllDepositAccountMarketValue(
+        Info storage set,
+        mapping(uint32 => address) storage vTokenAddresses,
+        Constants memory constants
+    ) internal view returns (int256) {
         int256 accountMarketValue;
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
@@ -64,10 +66,10 @@ library DepositTokenSet {
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
 
-            accountMarketValue += int256(set.deposits[truncated] * vToken.getRealTwapPrice());
+            accountMarketValue += int256(set.deposits[truncated] * vToken.getRealTwapPrice(constants));
         }
 
-        accountMarketValue += int256(set.deposits[truncate(VBASE_ADDRESS)]);
+        accountMarketValue += int256(set.deposits[truncate(constants.VBASE_ADDRESS)]);
 
         return accountMarketValue;
     }
