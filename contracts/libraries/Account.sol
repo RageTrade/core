@@ -59,7 +59,6 @@ library Account {
 
     struct Info {
         address owner;
-        uint64 fpBilledPrevious;
         VTokenPositionSet.Set tokenPositions;
         DepositTokenSet.Info tokenDeposits;
     }
