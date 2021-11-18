@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
+    "size": "hardhat size-contracts",
     "typechain": "hardhat typechain",
     "test": "hardhat test",
     "format": "prettier --check contracts test",
@@ -38,6 +39,7 @@
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.3.0",
     "hardhat": "^2.2.1",
+    "hardhat-contract-sizer": "^2.1.1",
     "hardhat-deploy": "^0.9.3",
     "hardhat-gas-reporter": "^1.0.4",
     "hardhat-tracer": "^1.0.0-alpha.6",

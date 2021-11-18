@@ -4,6 +4,7 @@ import '@nomiclabs/hardhat-waffle';
 import 'hardhat-tracer';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
+import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-etherscan';
 
@@ -106,6 +107,9 @@ export default {
     gasPrice: 100,
     enabled: !!process.env.REPORT_GAS, // REPORT_GAS=true yarn test
     coinmarketcap: process.env.COINMARKETCAP, // https://coinmarketcap.com/api/pricing/
+  },
+  contractSizer: {
+    strict: true,
   },
   namedAccounts: {
     deployer: {
