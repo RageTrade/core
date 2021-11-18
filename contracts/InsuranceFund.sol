@@ -10,11 +10,13 @@ import './interfaces/IInsuranceFund.sol';
 contract InsuranceFund is IInsuranceFund, ERC20 {
     using SafeERC20 for IERC20;
     IERC20 public base;
-    address public owner;
+    address public clearingHouse;
+
+    error Unauthorised();
 
     constructor(IERC20 _base, address _clearingHouse) ERC20('iBase', 'iBase') {
         base = _base;
-        owner = _clearingHouse;
+        clearingHouse = _clearingHouse;
     }
 
     function deposit(uint256 amount) external {
@@ -39,7 +41,7 @@ contract InsuranceFund is IInsuranceFund, ERC20 {
     }
 
     function claim(uint256 amount) external {
-        require(owner == msg.sender, 'Not welcome');
+        if (clearingHouse != msg.sender) revert Unauthorised();
         base.safeTransfer(msg.sender, amount);
     }
 }

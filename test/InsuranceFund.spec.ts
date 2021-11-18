@@ -35,9 +35,9 @@ describe('InsuranceFund', () => {
   describe('Functions', () => {
     it('Is initilized Correctly', async () => {
       const _baseAdd = await InsuranceFund.base();
-      const _owner = await InsuranceFund.owner();
+      const _clearingHouse = await InsuranceFund.clearingHouse();
       expect(_baseAdd.toLowerCase()).to.be.eq(realBase);
-      expect(_owner).to.be.eq(signer2Address);
+      expect(_clearingHouse).to.be.eq(signer2Address);
     });
 
     it('Deposit 1:1', async () => {
@@ -74,7 +74,7 @@ describe('InsuranceFund', () => {
     //100 : 50
     it('Claim, ratio 1 USDC : 2 shares', async () => {
       const amount = tokenAmount('75', 6);
-      await expect(InsuranceFund.claim(amount)).to.be.revertedWith('Not welcome');
+      await expect(InsuranceFund.claim(amount)).to.be.revertedWith('Unauthorised');
       await InsuranceFund.connect(signers[2]).claim(amount);
       expect(await Base.balanceOf(signer2Address)).to.be.eq(amount);
     });
