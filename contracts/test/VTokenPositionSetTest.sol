@@ -7,7 +7,7 @@ import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
-import { Account } from '../libraries/Account.sol';
+import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { Constants } from '../Constants.sol';
 
@@ -39,13 +39,13 @@ contract VTokenPositionSetTest {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
     }
 
-    function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
-        external
-        view
-        returns (int256, int256)
-    {
-        return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
-    }
+    // function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
+    //     external
+    //     view
+    //     returns (int256, int256)
+    // {
+    //     return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
+    // }
 
     function realizeFundingPaymentToAccount(address vTokenAddress, Constants memory constants) external {
         VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, constants);
@@ -99,6 +99,27 @@ contract VTokenPositionSetTest {
             LimitOrderType.NONE
         );
         dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
+    }
+
+    function liquidateLiquidityPositions(address vTokenAddress, Constants memory constants) external {
+        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, constants);
+    }
+
+    function liquidateTokenPosition(
+        address vTokenAddress,
+        uint16 liquidationFeeFraction,
+        uint256 liquidationMinSizeBaseAmount,
+        uint8 targetMarginRation,
+        uint256 fixFee,
+        Constants memory constants
+    ) external {
+        LiquidationParams memory liquidationParams = LiquidationParams(
+            liquidationFeeFraction,
+            liquidationMinSizeBaseAmount,
+            targetMarginRation,
+            fixFee
+        );
+        dummy.getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
     }
 
     function getIsActive(address vTokenAddress) external view returns (bool) {

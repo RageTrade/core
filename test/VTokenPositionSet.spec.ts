@@ -264,4 +264,51 @@ describe('VTokenPositionSet Library', () => {
     //   expect(resultVBase.balance).to.eq(-200000);
     // });
   });
+
+  describe('Liquididate Liquidity Positions (For a token)', () => {
+    before(async () => {
+      const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
+      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      await VTokenPositionSet.init(vTokenAddress);
+      await VTokenPositionSet.liquidityChange2(vTokenAddress, -100, 100, 100, constants);
+      await VTokenPositionSet.liquidityChange2(vTokenAddress, -50, 50, 100, constants);
+    });
+
+    it('Liquidate Liquidity Position', async () => {
+      let resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      let resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      expect(resultVToken.balance).to.eq(-200);
+      expect(resultVBase.balance).to.eq(-800000);
+
+      await VTokenPositionSet.liquidateLiquidityPositions(vTokenAddress, constants);
+
+      resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      expect(resultVToken.balance).to.eq(0);
+      expect(resultVBase.balance).to.eq(0);
+    });
+  });
+
+  describe('Liquidate Token Position (For a token)', () => {
+    before(async () => {
+      const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
+      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      await VTokenPositionSet.init(vTokenAddress);
+      await VTokenPositionSet.swapTokenAmount(vTokenAddress, 100, constants);
+    });
+
+    it('Liquidate Token Position', async () => {
+      let resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      let resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      expect(resultVToken.balance).to.eq(100);
+      expect(resultVBase.balance).to.eq(-400000);
+
+      await VTokenPositionSet.liquidateTokenPosition(vTokenAddress, 5000, 50, 15, 8, constants);
+
+      // resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      // resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      // expect(resultVToken.balance).to.eq(0);
+      // expect(resultVBase.balance).to.eq(0);
+    });
+  });
 });
