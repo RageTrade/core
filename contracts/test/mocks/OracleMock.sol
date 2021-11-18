@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IOracle } from '../../interfaces/IOracle.sol';
+import { FullMath } from '../../libraries/FullMath.sol';
 
 contract OracleMock is IOracle {
     uint160 _sqrtPrice;
@@ -17,5 +18,9 @@ contract OracleMock is IOracle {
 
     function setSqrtPrice(uint160 sqrtPrice) public {
         _sqrtPrice = sqrtPrice;
+    }
+
+    function getTwapPriceX128(uint32) external view returns (uint256 sqrtPriceX128) {
+        return FullMath.mulDiv(_sqrtPrice, _sqrtPrice, 1 << 64);
     }
 }
