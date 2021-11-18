@@ -40,6 +40,11 @@ library Account {
     using Account for Account.Info;
 
     error IneligibleLimitOrderRemoval();
+    error InvalidTransactionNotEnoughMargin(int256 accountMarketValue, int256 totalRequiredMargin);
+    error InvalidTransactionNotEnoughProfit(int256 totalProfit);
+    error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
+    error InvalidTokenTradeAmount(int256 balance, int256 tokensToTrade);
+    error InvalidLiquidationWrongSide(int256 totalRequiredMarginFinal, int256 totalRequiredMargin);
 
     // @dev some functions in token position and liquidity position want to
     //  change user's balances. pointer to this memory struct is passed and
@@ -84,7 +89,7 @@ library Account {
     ) internal {
         account.tokenDeposits.decreaseBalance(vTokenAddress, amount, constants);
 
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants), 'Cannot Withdraw');
+        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
 
         // process real token withdrawal
         IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
@@ -102,11 +107,8 @@ library Account {
         );
         vTokenPosition.balance -= int256(amount);
 
-        require(
-            account.checkIfMarginAvailable(true, vTokenAddresses, constants),
-            'Cannot Withdraw - Not enough margin'
-        );
-        require(account.checkIfProfitAvailable(vTokenAddresses, constants), 'Cannot Withdraw - Not enough profit');
+        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
+        account.checkIfProfitAvailable(vTokenAddresses, constants);
 
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
     }
@@ -135,22 +137,23 @@ library Account {
         bool isInitialMargin,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal view returns (bool) {
+    ) internal view {
         (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
             isInitialMargin,
             vTokenAddresses,
             constants
         );
-        return accountMarketValue >= totalRequiredMargin;
+        if (accountMarketValue < totalRequiredMargin)
+            revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
     }
 
     function checkIfProfitAvailable(
         Info storage account,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal view returns (bool) {
+    ) internal view {
         int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
-        return totalPositionValue > 0;
+        if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
     function swapTokenAmount(
@@ -169,7 +172,7 @@ library Account {
         account.tokenPositions.swapTokenAmount(vTokenAddress, vTokenAmount, wrapper, constants);
 
         // after all the stuff, account should be above water
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
+        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
     }
 
     //vTokenNotional > 0 => long in token
@@ -189,7 +192,7 @@ library Account {
         account.tokenPositions.swapTokenNotional(vTokenAddress, vTokenNotional, wrapper, constants);
 
         // after all the stuff, account should be above water
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
+        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
     }
 
     //vTokenAmount > 0 => long in token
@@ -240,7 +243,7 @@ library Account {
         account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
 
         // after all the stuff, account should be above water
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
+        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
     }
 
     function liquidityChange(
@@ -293,7 +296,9 @@ library Account {
             vTokenAddresses,
             constants
         );
-        require(accountMarketValue < totalRequiredMargin, 'Account not underwater');
+        if (accountMarketValue < totalRequiredMargin) {
+            revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+        }
         account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
@@ -320,7 +325,9 @@ library Account {
             vTokenAddresses,
             constants
         );
-        require(accountMarketValue < totalRequiredMargin, 'Account not underwater');
+        if (accountMarketValue < totalRequiredMargin) {
+            revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+        }
         account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
@@ -357,13 +364,12 @@ library Account {
                 .tokenPositions
                 .getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
 
-            require(accountMarketValue < totalRequiredMargin, 'Account not underwater');
-
-            if (vTokenPosition.balance < 0) {
-                require(tokensToTrade > 0, 'Invalid token amount to trade');
-            } else {
-                require(tokensToTrade < 0, 'Invalid token amount to trade');
+            if (accountMarketValue < totalRequiredMargin) {
+                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
             }
+
+            if (sign(vTokenPosition.balance) * sign(tokensToTrade) > 0)
+                revert InvalidTokenTradeAmount(vTokenPosition.balance, tokensToTrade);
 
             if (
                 (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants))) <
@@ -385,7 +391,8 @@ library Account {
                 constants
             );
 
-            require(totalRequiredMarginFinal < totalRequiredMargin, 'Invalid position liquidation (Wrong Side)');
+            if (totalRequiredMarginFinal < totalRequiredMargin)
+                revert InvalidLiquidationWrongSide(totalRequiredMarginFinal, totalRequiredMargin);
         }
         accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
 
