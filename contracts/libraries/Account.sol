@@ -19,7 +19,7 @@ import { TickUtilLib } from './TickUtilLib.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Constants } from '../Constants.sol';
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 struct LiquidationParams {
     uint16 liquidationFeeFraction; //*e5
