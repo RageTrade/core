@@ -200,15 +200,7 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
-        // account fp bill
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-
-        // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
-        // mints erc20 tokens in callback. an  d send to the pool
-        account.tokenPositions.swapTokenAmount(vTokenAddress, vTokenAmount, constants);
-
-        // after all the stuff, account should be above water
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
+        account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
     }
 
     //vTokenNotional > 0 => long in token
@@ -219,15 +211,7 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
-        // account fp bill
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-
-        // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
-        // mints erc20 tokens in callback. and send to the pool
-        account.tokenPositions.swapTokenNotional(vTokenAddress, vTokenNotional, constants);
-
-        // after all the stuff, account should be above water
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
+        account.swapTokenNotional(vTokenAddress, vTokenNotional, vTokenAddresses, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
     }
 
     function liquidityChange(
@@ -254,13 +238,7 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
-        // mint/burn tokens + fee + funding payment
-
-        account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, constants);
-
-        // after all the stuff, account should be above water
-        require(account.checkIfMarginAvailable(true, vTokenAddresses, constants));
+        account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
     }
 
     function computeLiquidationFees(
