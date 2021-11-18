@@ -200,7 +200,13 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
-        account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
+        account.swapTokenAmount(
+            vTokenAddress,
+            vTokenAmount,
+            vTokenAddresses,
+            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+            constants
+        );
     }
 
     //vTokenNotional > 0 => long in token
@@ -211,7 +217,13 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
-        account.swapTokenNotional(vTokenAddress, vTokenNotional, vTokenAddresses, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
+        account.swapTokenNotional(
+            vTokenAddress,
+            vTokenNotional,
+            vTokenAddresses,
+            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+            constants
+        );
     }
 
     function liquidityChange(
@@ -238,7 +250,13 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
-        account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
+        account.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            vTokenAddresses,
+            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+            constants
+        );
     }
 
     function computeLiquidationFees(
