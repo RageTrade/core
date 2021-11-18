@@ -36,51 +36,6 @@ library VTokenPositionSet {
         mapping(uint32 => VTokenPosition.Position) positions;
     }
 
-    // function getAllTokenPositionValueAndMargin(
-    //     Set storage set,
-    //     bool isInitialMargin,
-    //     mapping(uint32 => address) storage vTokenAddresses,
-    //     Constants memory constants
-    // ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
-    //     for (uint8 i = 0; i < set.active.length; i++) {
-    //         uint32 truncated = set.active[i];
-    //         if (truncated == 0) break;
-    //         VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
-    //         VTokenPosition.Position storage position = set.positions[truncated];
-    //         uint256 price = vToken.getVirtualTwapPrice(constants);
-    //         uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
-
-    //         int256 tokenPosition = position.balance;
-    //         int256 liquidityMaxTokenPosition = int256(
-    //             LiquidityPositionSet.maxNetPosition(position.liquidityPositions, vToken, constants)
-    //         );
-
-    //         if (-2 * tokenPosition < liquidityMaxTokenPosition) {
-    //             totalRequiredMargin +=
-    //                 (abs(tokenPosition + liquidityMaxTokenPosition) * int256(price) * int16(marginRatio)) /
-    //                 int256(FixedPoint96.Q96);
-    //         } else {
-    //             totalRequiredMargin +=
-    //                 (abs(tokenPosition) * int256(price) * int16(marginRatio)) /
-    //                 int256(FixedPoint96.Q96);
-    //         }
-
-    //         accountMarketValue += VTokenPosition.marketValue(position, vToken, price, constants); // TODO consider removing this JUMP, as it's a simple multiplication
-    //         uint160 sqrtPrice = vToken.getVirtualTwapSqrtPrice(constants);
-    //         accountMarketValue += int256(
-    //             LiquidityPositionSet.baseValue(position.liquidityPositions, sqrtPrice, vToken, constants)
-    //         );
-    //         accountMarketValue += VTokenPosition.marketValue(
-    //             set.positions[truncate(constants.VBASE_ADDRESS)],
-    //             vToken,
-    //             price,
-    //             constants
-    //         ); // ? TODO consider removing this
-    //     }
-
-    //     return (accountMarketValue, totalRequiredMargin);
-    // }
-
     function getAccountMarketValue(
         Set storage set,
         mapping(uint32 => address) storage vTokenAddresses,
