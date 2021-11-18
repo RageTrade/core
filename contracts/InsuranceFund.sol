@@ -28,8 +28,8 @@ contract InsuranceFund is IInsuranceFund, ERC20 {
         } else {
             toMint = (amount * totalShares) / totalBase;
         }
-        _mint(msg.sender, toMint);
         base.safeTransferFrom(msg.sender, address(this), amount);
+        _mint(msg.sender, toMint);
     }
 
     function withdraw(uint256 shares) external {
