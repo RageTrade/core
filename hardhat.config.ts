@@ -101,6 +101,12 @@ export default {
   mocha: {
     timeout: 100000,
   },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 100,
+    enabled: !!process.env.REPORT_GAS, // REPORT_GAS=true yarn test
+    coinmarketcap: process.env.COINMARKETCAP, // https://coinmarketcap.com/api/pricing/
+  },
   namedAccounts: {
     deployer: {
       default: 0,
