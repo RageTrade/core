@@ -333,13 +333,11 @@ library Account {
     }
 
     function abs(int256 value) internal pure returns (int256) {
-        if (value < 0) return value * -1;
-        else return value;
+        return value > 0 ? value : -value;
     }
 
     function sign(int256 value) internal pure returns (int256) {
-        if (value < 0) return -1;
-        else return 1;
+        return value > 0 ? 1 : -1;
     }
 
     function liquidateTokenPosition(
