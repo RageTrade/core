@@ -30,7 +30,7 @@ library GlobalUtilLib {
         uint48 diffTS = blockTimestamp - global.lastTradeTS;
         return
             global.sumA +
-            (global.fundingRate * int256(uint256(global.vToken.getVirtualTwapPrice(constants) * (diffTS)))) /
+            (global.fundingRate * int256(uint256(global.vToken.getVirtualTwapPriceX128(constants) * (diffTS)))) /
             fundingRateNormalizer;
     }
 
@@ -60,8 +60,8 @@ library GlobalUtilLib {
         view
         returns (int16)
     {
-        int256 realPrice = int256(global.vToken.getRealTwapPrice(constants));
-        int256 virtualPrice = int256(global.vToken.getVirtualTwapPrice(constants));
+        int256 realPrice = int256(global.vToken.getRealTwapPriceX128(constants));
+        int256 virtualPrice = int256(global.vToken.getVirtualTwapPriceX128(constants));
 
         return int16(((virtualPrice - realPrice) * (10**6)) / realPrice);
     }
@@ -84,7 +84,7 @@ library GlobalUtilLib {
         global.lastTradeTS = blockTimestamp;
 
         //TODO: Use vToken
-        int256 a = int256(uint256(global.vToken.getVirtualTwapPrice(constants))) * int48(diffTS); //vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
+        int256 a = int256(uint256(global.vToken.getVirtualTwapPriceX128(constants))) * int48(diffTS); //vToken.getVirtualTwapPrice(diffTS) * (diffTS) ;
         global.sumFP = global.sumFP + (global.fundingRate * a * global.sumB) / fundingRateNormalizer;
         global.sumA = global.sumA + a;
         global.sumB = global.sumB + (tokenAmount * int256(amountNormalizer)) / int256(liquidity);

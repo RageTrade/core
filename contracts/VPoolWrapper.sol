@@ -21,12 +21,14 @@ import { FullMath } from './libraries/FullMath.sol';
 import { FundingPayment } from './libraries/FundingPayment.sol';
 import { SimulateSwap } from './libraries/SimulateSwap.sol';
 import { Tick } from './libraries/Tick.sol';
+import { PriceMath } from './libraries/PriceMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback {
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
+    using PriceMath for uint160;
     using SafeCast for uint256;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
@@ -178,7 +180,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // console.log('step vBaseAmount', vBaseAmount);
         // console.log('step vTokenAmount', vTokenAmount);
         if (state.liquidity > 0) {
-            uint256 priceX128 = oracle.getTwapPriceX128(1 hours);
+            uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
             fpGlobal.update(
                 buyVToken ? int256(vTokenAmount) : -int256(vTokenAmount),
                 state.liquidity,

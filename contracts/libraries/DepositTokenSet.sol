@@ -66,7 +66,7 @@ library DepositTokenSet {
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
 
-            accountMarketValue += int256(set.deposits[truncated] * vToken.getRealTwapPrice(constants));
+            accountMarketValue += int256(set.deposits[truncated] * vToken.getRealTwapPriceX128(constants));
         }
 
         accountMarketValue += int256(set.deposits[truncate(constants.VBASE_ADDRESS)]);

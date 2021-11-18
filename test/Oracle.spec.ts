@@ -11,8 +11,9 @@ describe('Oracle Library', () => {
   });
 
   describe('#twap', () => {
-    it('1 hour', async () => {
-      await test.checkPrice();
-    });
+    it('1 hour');
+    //  async () => {
+    //   await test.checkPrice();
+    // });
   });
 });

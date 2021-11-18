@@ -66,7 +66,7 @@ abstract contract VPoolFactory is IVPoolFactory {
             vTokenAddress,
             constants.DEFAULT_FEE_TIER
         );
-        IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPrice(twapDuration));
+        IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPriceX96(twapDuration));
         address vPoolWrapper = _deployVPoolWrapper(
             vTokenAddress,
             vPool,
