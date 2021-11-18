@@ -7,7 +7,7 @@ import 'hardhat-gas-reporter';
 import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-etherscan';
-
+import 'hardhat-contract-sizer';
 import { ethers } from 'ethers';
 config();
 const { MNEMONIC, ALCHEMY_KEY } = process.env;
