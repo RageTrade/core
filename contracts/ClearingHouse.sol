@@ -11,7 +11,7 @@ contract ClearingHouse is VPoolFactory {
     mapping(address => bool) public supportedVTokens;
     mapping(address => bool) public supportedDeposits;
 
-    uint256 numAccounts;
+    uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
 
     constructor(
