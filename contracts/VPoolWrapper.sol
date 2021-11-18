@@ -21,13 +21,16 @@ import { FullMath } from './libraries/FullMath.sol';
 import { FundingPayment } from './libraries/FundingPayment.sol';
 import { SimulateSwap } from './libraries/SimulateSwap.sol';
 import { Tick } from './libraries/Tick.sol';
+import { TickMath } from './libraries/uniswap/TickMath.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
+import { SignedMath } from './libraries/SignedMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback {
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
+    using SignedMath for int256;
     using PriceMath for uint160;
     using SafeCast for uint256;
     using SimulateSwap for IUniswapV3Pool;
@@ -42,6 +45,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     bool public immutable isToken0;
     uint24 public immutable fee;
     uint24 public protocolFee;
+    uint256 public accruedProtocolFee;
 
     // oracle for real prices
     IOracle public oracle;
@@ -66,6 +70,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         vToken = VTokenAddress.wrap(vTokenAddress);
         vPool = IUniswapV3Pool(vPoolAddress);
         fee = vPool.fee();
+        protocolFee = fee;
         isToken0 = vToken.isToken0(constants);
         // console.log('isToken0', isToken0 ? 'true' : 'false');
     }
@@ -73,6 +78,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     // TODO restrict this to governance
     function setOracle(address oracle_) external {
         oracle = IOracle(oracle_);
+    }
+
+    // TODO restrict this to governance
+    function setProtocolFee(uint24 protocolFee_) external {
+        protocolFee = protocolFee_;
     }
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
@@ -87,14 +97,20 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {}
 
-    function swapTokenNotional(int256 vBaseAmount) external returns (int256) {
-        //TODO
-        return 0;
+    function swapTokenNotional(int256 vBaseAmount) external returns (int256 vTokenAmount) {
+        (, vTokenAmount) = swap(
+            vBaseAmount > 0,
+            -vBaseAmount.abs(),
+            ((vBaseAmount > 0) == isToken0) ? TickMath.MIN_SQRT_RATIO : TickMath.MAX_SQRT_RATIO
+        );
     }
 
-    function swapTokenAmount(int256 vTokenAmount) external returns (int256) {
-        //TODO
-        return 0;
+    function swapTokenAmount(int256 vTokenAmount) external returns (int256 vBaseAmount) {
+        (vBaseAmount, ) = swap(
+            vTokenAmount > 0,
+            -vTokenAmount.abs(),
+            ((vTokenAmount > 0) == isToken0) ? TickMath.MIN_SQRT_RATIO : TickMath.MAX_SQRT_RATIO
+        );
     }
 
     /// @notice swaps token
@@ -105,25 +121,40 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         bool buyVToken,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    ) public returns (int256 baseAmount, int256 vTokenAmount) {
+    ) public returns (int256 vBaseIn, int256 vTokenIn) {
         bool zeroForOne = vToken.isToken0(constants) != buyVToken; // this is correct
 
-        // if specified dollars then apply the protocol fee before swap
+        bool isVTokenSpecified = amountSpecified > 0;
+
+        uint256 protocolFeeCollected;
+        /// @dev if specified dollars then apply the protocol fee before swap
         if (amountSpecified < 0) {
-            amountSpecified = (amountSpecified * int24(1e6 - protocolFee)) / 1e6;
+            protocolFeeCollected = (uint256(-amountSpecified) * protocolFee) / 1e6;
+            if (buyVToken) {
+                /// @dev buy vtoken with less vbase (consumes vbase)
+                amountSpecified += int256(protocolFeeCollected);
+            } else {
+                /// @dev sell vtoken with more vbase (gives vbase)
+                amountSpecified -= int256(protocolFeeCollected);
+            }
         }
 
         if (buyVToken) {
-            /// @dev user is buying vtoken then exact output
+            /// @dev trader is buying vtoken then exact output
             amountSpecified = -amountSpecified;
         } else {
-            /// @dev user is selling then uniswap collects fee in vtoken
-            ///     so we inflate the amountSpecified and account for fee
+            /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
             amountSpecified = (amountSpecified * 1e6) / int24(1e6 - fee);
         }
 
         {
-            // updates global and tick states
+            // TODO: remove this after testing
+            // if (amountSpecified > 0) {
+            //     console.log('amountSpecified', uint256(amountSpecified));
+            // } else {
+            //     console.log('amountSpecified -', uint256(-amountSpecified));
+            // }
+            /// @dev updates global and tick states
             (int256 amount0_simulated, int256 amount1_simulated) = vPool.simulateSwap(
                 zeroForOne,
                 amountSpecified,
@@ -131,7 +162,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 _onSwapSwap
             );
 
-            // execute trade on uniswap
+            /// @dev execute trade on uniswap
             (int256 amount0, int256 amount1) = vPool.swap(
                 address(this),
                 zeroForOne,
@@ -143,14 +174,27 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             // TODO remove this check in production
             assert(amount0_simulated == amount0 && amount1_simulated == amount1);
 
-            (baseAmount, vTokenAmount) = vToken.flip(amount0, amount1, constants);
+            (vBaseIn, vTokenIn) = vToken.flip(amount0, amount1, constants);
         }
 
-        // if specified vtoken then apply the protocol fee after swap
-        if (amountSpecified > 0) {
-            baseAmount = (baseAmount * int24(1e6 - protocolFee)) / 1e6;
+        /// @dev de-inflate
+        if (!buyVToken) {
+            vBaseIn = (vBaseIn * int24(1e6 - fee)) / 1e6 - 1; // negative
+            vTokenIn = (vTokenIn * int24(1e6 - fee)) / 1e6 + 1; // positive
         }
 
+        /// @dev if specified vtoken then apply the protocol fee after swap
+        if (isVTokenSpecified) {
+            protocolFeeCollected = (uint256(vBaseIn.abs()) * protocolFee) / 1e6;
+        }
+
+        /// @dev user pays protocol fee so add it as in
+        vBaseIn += int256(protocolFeeCollected);
+
+        /// @dev increment the accrual variable
+        accruedProtocolFee += protocolFeeCollected;
+
+        /// @dev burn the tokens received from the swap
         _vBurn();
     }
 
@@ -165,6 +209,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             ? (step.amountIn, step.amountOut)
             : (step.amountIn, step.amountOut);
 
+        // TODO: remove this after testing
         // console.log('');
         // if (state.amountSpecifiedRemaining > 0) {
         //     console.log('state.amountSpecifiedRemaining', uint256(state.amountSpecifiedRemaining));
