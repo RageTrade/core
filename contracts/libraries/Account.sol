@@ -266,11 +266,10 @@ library Account {
         int256 fixFee,
         int256 liquidationFeeHalf
     ) internal pure returns (int256 keeperFees, int256 insuranceFundFees) {
+        keeperFees = liquidationFeeHalf + fixFee;
         if (accountMarketValue - fixFee - 2 * liquidationFeeHalf < 0) {
-            keeperFees = fixFee;
-            insuranceFundFees = accountMarketValue - fixFee;
+            insuranceFundFees = accountMarketValue - fixFee - liquidationFeeHalf;
         } else {
-            keeperFees = liquidationFeeHalf + fixFee;
             insuranceFundFees = liquidationFeeHalf;
         }
     }
