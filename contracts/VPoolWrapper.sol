@@ -108,7 +108,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     function swapTokenAmount(int256 vTokenAmount) external returns (int256 vBaseAmount) {
         (vBaseAmount, ) = swap(
             vTokenAmount > 0,
-            -vTokenAmount.abs(),
+            vTokenAmount.abs(),
             ((vTokenAmount > 0) == isToken0) ? TickMath.MIN_SQRT_RATIO : TickMath.MAX_SQRT_RATIO
         );
     }
