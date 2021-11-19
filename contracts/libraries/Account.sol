@@ -370,7 +370,7 @@ library Account {
                 revert InvalidTokenTradeAmount(vTokenPosition.balance, tokensToTrade);
 
             if (
-                (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants))) <
+                (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants))) <
                 liquidationParams.liquidationMinSizeBaseAmount.toInt256()
             ) {
                 tokensToTrade = (-1 *
@@ -395,7 +395,7 @@ library Account {
         accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
 
         int256 liquidationFeeHalf = (abs(tokensToTrade) *
-            int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants))).mulDiv(
+            int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants))).mulDiv(
                 liquidationParams.liquidationFeeFraction,
                 1e5
             ) / 2;

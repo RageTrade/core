@@ -17,8 +17,8 @@ interface IVPoolWrapper {
             int256 sumA,
             int256 sumBInside,
             int256 sumFpInside,
-            uint256 longsFeeInside,
-            uint256 shortsFeeInside
+            uint256 uniswapFeeInside,
+            uint256 extendedFeeInside
         );
 
     function liquidityChange(

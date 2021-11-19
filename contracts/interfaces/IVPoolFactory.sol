@@ -10,6 +10,7 @@ interface IVPoolFactory {
         view
         returns (
             address vTokenAddress,
+            address vPoolAddress,
             uint16 initialMargin,
             uint16 maintainanceMargin,
             uint32 twapDuration,

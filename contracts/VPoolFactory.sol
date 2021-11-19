@@ -14,6 +14,7 @@ import './VPoolWrapper.sol';
 abstract contract VPoolFactory is IVPoolFactory {
     struct Parameters {
         address vTokenAddress;
+        address vPoolAddress;
         uint16 initialMargin;
         uint16 maintainanceMargin;
         uint32 twapDuration;
@@ -65,10 +66,16 @@ abstract contract VPoolFactory is IVPoolFactory {
             vTokenAddress,
             constants.DEFAULT_FEE_TIER
         );
-        IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPrice(twapDuration));
-        address vPoolWrapper = _deployVPoolWrapper(vTokenAddress, initialMargin, maintainanceMargin, twapDuration);
+        IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPriceX96(twapDuration));
+        address vPoolWrapper = _deployVPoolWrapper(
+            vTokenAddress,
+            vPool,
+            initialMargin,
+            maintainanceMargin,
+            twapDuration
+        );
         IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
-        IVToken(vTokenAddress).setOwner(vPoolWrapper);
+        IVToken(vTokenAddress).setOwner(vPoolWrapper); // TODO remove this
         emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
 
@@ -83,6 +90,7 @@ abstract contract VPoolFactory is IVPoolFactory {
 
         uint160 salt = uint160(realToken);
         bytes memory bytecode = type(VToken).creationCode;
+        // TODO compute vPoolWrapper address here and pass it to vToken contract as immutable
         bytecode = abi.encodePacked(
             bytecode,
             abi.encode(vTokenName, vTokenSymbol, realToken, oracleAddress, address(this))
@@ -107,19 +115,14 @@ abstract contract VPoolFactory is IVPoolFactory {
 
     function _deployVPoolWrapper(
         address vTokenAddress,
+        address vPool,
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration
     ) internal returns (address) {
         bytes32 salt = keccak256(abi.encode(vTokenAddress, constants.VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;
-        parameters = Parameters({
-            vTokenAddress: vTokenAddress,
-            initialMargin: initialMargin,
-            maintainanceMargin: maintainanceMargin,
-            twapDuration: twapDuration,
-            constants: constants
-        });
+        parameters = Parameters(vTokenAddress, vPool, initialMargin, maintainanceMargin, twapDuration, constants);
         address deployedAddress = Create2.deploy(0, salt, bytecode);
         delete parameters;
         return deployedAddress;

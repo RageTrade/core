@@ -6,6 +6,7 @@ import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { Oracle } from './Oracle.sol';
 import { FullMath } from './FullMath.sol';
 import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
+import { PriceMath } from './PriceMath.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -20,6 +21,7 @@ type VTokenAddress is address;
 library VTokenLib {
     using VTokenLib for VTokenAddress;
     using FullMath for uint256;
+    using PriceMath for uint160;
 
     function iface(VTokenAddress vToken) internal pure returns (IVToken) {
         return IVToken(VTokenAddress.unwrap(vToken));
@@ -105,7 +107,7 @@ library VTokenLib {
             );
     }
 
-    function getVirtualTwapSqrtPrice(VTokenAddress vToken, Constants memory constants)
+    function getVirtualTwapSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
         internal
         view
         returns (uint160 sqrtPriceX96)
@@ -118,26 +120,28 @@ library VTokenLib {
         return Oracle.getTwapTick(vToken.vPool(constants), vToken.vPoolWrapper(constants).timeHorizon());
     }
 
-    function getVirtualTwapPrice(VTokenAddress vToken, Constants memory constants)
+    function getVirtualTwapPriceX128(VTokenAddress vToken, Constants memory constants)
         internal
         view
-        returns (uint256 price)
+        returns (uint256 priceX128)
     {
-        uint256 sqrtPriceX96 = vToken.getVirtualTwapSqrtPrice(constants);
-        return sqrtPriceX96.mulDiv(sqrtPriceX96, FixedPoint96.Q96); // TODO refactor this
+        return vToken.getVirtualTwapSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
     }
 
-    function getRealTwapSqrtPrice(VTokenAddress vToken, Constants memory constants)
+    function getRealTwapSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
-        return IOracle(vToken.iface().oracle()).getTwapSqrtPrice(vToken.vPoolWrapper(constants).timeHorizon());
+        return IOracle(vToken.iface().oracle()).getTwapSqrtPriceX96(vToken.vPoolWrapper(constants).timeHorizon());
     }
 
-    function getRealTwapPrice(VTokenAddress vToken, Constants memory constants) internal view returns (uint256 price) {
-        uint256 sqrtPriceX96 = vToken.getRealTwapSqrtPrice(constants);
-        return sqrtPriceX96.mulDiv(sqrtPriceX96, FixedPoint96.Q96); // TODO refactor this
+    function getRealTwapPriceX128(VTokenAddress vToken, Constants memory constants)
+        internal
+        view
+        returns (uint256 priceX128)
+    {
+        return vToken.getRealTwapSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
     }
 
     function getMarginRatio(

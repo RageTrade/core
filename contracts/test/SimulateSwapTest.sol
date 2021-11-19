@@ -97,7 +97,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
             zeroForOne == isToken0 ? int256(step.amountIn) : int256(step.amountOut),
             state.liquidity,
             cache.blockTimestamp,
-            oracle.getTwapSqrtPrice(1 hours),
+            oracle.getTwapSqrtPriceX96(1 hours),
             (isToken0 ? step.amountIn : step.amountOut).mulDiv(
                 FixedPoint128.Q128,
                 isToken0 ? step.amountOut : step.amountIn

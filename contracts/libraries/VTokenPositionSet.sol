@@ -49,8 +49,8 @@ library VTokenPositionSet {
 
             accountMarketValue += position.marketValue(vToken, constants);
 
-            uint160 sqrtPrice = vToken.getVirtualTwapSqrtPrice(constants);
-            accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPrice, vToken, constants));
+            uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(constants);
+            accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPriceX96, vToken, constants));
         }
 
         accountMarketValue += set.positions[truncate(constants.VBASE_ADDRESS)].balance;
@@ -72,7 +72,7 @@ library VTokenPositionSet {
         VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
         VTokenPosition.Position storage position = set.positions[truncate(vTokenAddress)];
 
-        uint256 price = vToken.getVirtualTwapPrice(constants);
+        uint256 price = vToken.getVirtualTwapPriceX128(constants);
         uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
 
         int256 tokenPosition = position.balance;
@@ -380,7 +380,7 @@ library VTokenPositionSet {
 
         return
             balanceAdjustments.vTokenIncrease *
-            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants).toInt256() +
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants).toInt256() +
             balanceAdjustments.vBaseIncrease;
     }
 
@@ -405,7 +405,7 @@ library VTokenPositionSet {
 
         return
             balanceAdjustments.vTokenIncrease *
-            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants).toInt256() +
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants).toInt256() +
             balanceAdjustments.vBaseIncrease;
     }
 
@@ -432,7 +432,7 @@ library VTokenPositionSet {
 
         return
             balanceAdjustments.vTokenIncrease *
-            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPrice(constants).toInt256() +
+            VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants).toInt256() +
             balanceAdjustments.vBaseIncrease;
     }
 
@@ -485,7 +485,7 @@ library VTokenPositionSet {
         tokensToTrade = (accountMarketValue -
             liquidationParams.fixFee.toInt256() -
             (totalRequiredMarginOther +
-                (vToken.getVirtualTwapPrice(constants).toInt256() * vTokenPosition.balance).mulDiv(
+                (vToken.getVirtualTwapPriceX128(constants).toInt256() * vTokenPosition.balance).mulDiv(
                     vToken.getMarginRatio(false, constants),
                     1e5
                 )).mulDiv(liquidationParams.targetMarginRatio, 1e1));

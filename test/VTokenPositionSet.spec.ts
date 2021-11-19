@@ -2,11 +2,12 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper } from '../typechain-types';
+import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper, ERC20 } from '../typechain-types';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+import { smock } from '@defi-wonderland/smock';
 config();
 const { ALCHEMY_KEY } = process.env;
 
@@ -26,7 +27,9 @@ describe('VTokenPositionSet Library', () => {
   before(async () => {
     await activateMainnetFork();
 
-    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy();
+    const realBase = await smock.fake<ERC20>('ERC20');
+    realBase.decimals.returns(10);
+    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
     VPoolFactory = await (
       await hre.ethers.getContractFactory('ClearingHouse')
