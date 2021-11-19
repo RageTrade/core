@@ -32,7 +32,7 @@ export async function setupWrapper({
     3, // maintainanceMargin
     60, // twapDuration
     [
-      '0xe4E6E50A2f4A6872feC414c0b3C3D1ac1a464Fe3', // VPOOL_FACTORY
+      AddressZero, // VPOOL_FACTORY
       vBase.address, // VBASE_ADDRESS
       AddressZero, //  UNISWAP_FACTORY_ADDRESS
       500, // DEFAULT_FEE_TIER
@@ -46,8 +46,6 @@ export async function setupWrapper({
 
   vBase.setVariable('isAuth', { [vPoolWrapper.address]: true });
   vToken.setVariable('vPoolWrapper', vPoolWrapper.address);
-  await vBase.approve(vPoolWrapper.address, ethers.constants.MaxUint256);
-  await vToken.approve(vPoolWrapper.address, ethers.constants.MaxUint256);
 
   return { vPoolWrapper, vPool, vBase, vToken, oracle, isToken0 };
 }
