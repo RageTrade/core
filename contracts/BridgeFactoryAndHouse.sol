@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
+import { IBridgeFactoryAndHouse } from './interfaces/IBridgeFactoryAndHouse.sol';
 
-abstract contract BridgeFactoryAndHouse {
+abstract contract BridgeFactoryAndHouse is IBridgeFactoryAndHouse {
     address public VPoolFactory;
 
     mapping(uint32 => address) vTokenAddresses;

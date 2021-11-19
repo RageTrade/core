@@ -10,6 +10,7 @@ import './interfaces/IOracle.sol';
 import './interfaces/IVBase.sol';
 import './tokens/VToken.sol';
 import './VPoolWrapper.sol';
+import { IBridgeFactoryAndHouse } from './interfaces/IBridgeFactoryAndHouse.sol';
 
 contract VPoolFactory is IVPoolFactory {
     struct Parameters {
@@ -26,9 +27,7 @@ contract VPoolFactory is IVPoolFactory {
     address public immutable owner;
     bool public isRestricted;
 
-    mapping(uint32 => address) vTokenAddresses;
-
-    mapping(address => bool) public realTokenInitilized;
+    IBridgeFactoryAndHouse public bridge;
 
     constructor(
         address VBASE_ADDRESS,
@@ -49,6 +48,10 @@ contract VPoolFactory is IVPoolFactory {
     }
 
     event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
+
+    function initBridge(address _clearingHouse) external onlyOwner {
+        bridge = IBridgeFactoryAndHouse(_clearingHouse);
+    }
 
     function initializePool(
         string calldata vTokenName,
@@ -79,7 +82,7 @@ contract VPoolFactory is IVPoolFactory {
         address oracleAddress
     ) internal returns (address) {
         // Pool for this token must not be already created
-        require(realTokenInitilized[realToken] == false, 'Duplicate Pool');
+        require(bridge.isRealTokenAlreadyInitilized(realToken), 'Duplicate Pool');
 
         uint160 salt = uint160(realToken);
         bytes memory bytecode = type(VToken).creationCode;
@@ -93,15 +96,15 @@ contract VPoolFactory is IVPoolFactory {
         while (true) {
             vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
             key = uint32(uint160(vTokenAddress));
-            if (vTokenAddresses[key] == address(0)) {
+            if (bridge.isKeyAvailable(key)) {
                 break;
             }
             salt++; // using a different salt
         }
         address deployedAddress = Create2.deploy(0, keccak256(abi.encode(salt)), bytecode);
         require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
-        vTokenAddresses[key] = deployedAddress;
-        realTokenInitilized[realToken] == true;
+        bridge.addKey(key, deployedAddress);
+        bridge.initRealToken(realToken);
         return deployedAddress;
     }
 
