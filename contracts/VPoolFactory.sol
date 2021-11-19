@@ -11,7 +11,7 @@ import './interfaces/IVBase.sol';
 import './tokens/VToken.sol';
 import './VPoolWrapper.sol';
 
-abstract contract VPoolFactory is IVPoolFactory {
+contract VPoolFactory is IVPoolFactory {
     struct Parameters {
         address vTokenAddress;
         uint16 initialMargin;
