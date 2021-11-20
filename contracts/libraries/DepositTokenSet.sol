@@ -6,10 +6,14 @@ import { FullMath } from './FullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Constants } from '../utils/Constants.sol';
+import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
+
+import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
     using VTokenLib for VTokenAddress;
     using Uint32L8ArrayLib for uint32[8];
+    using FullMath for int256;
     int256 internal constant Q96 = 0x1000000000000000000000000;
 
     struct Info {
@@ -66,7 +70,10 @@ library DepositTokenSet {
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
 
-            accountMarketValue += int256(set.deposits[truncated] * vToken.getRealTwapPriceX128(constants));
+            accountMarketValue += int256(set.deposits[truncated]).mulDiv(
+                vToken.getRealTwapPriceX128(constants),
+                FixedPoint96.Q96
+            );
         }
 
         accountMarketValue += int256(set.deposits[truncate(constants.VBASE_ADDRESS)]);
