@@ -15,7 +15,7 @@ import { Constants } from '../utils/Constants.sol';
 struct LiquidityChangeParams {
     int24 tickLower;
     int24 tickUpper;
-    int128 liquidity;
+    int128 liquidityDelta;
     LimitOrderType limitOrderType;
 }
 
@@ -154,7 +154,7 @@ library LiquidityPositionSet {
 
         position.limitOrderType = liquidityChangeParams.limitOrderType;
 
-        set.liquidityChange(position, liquidityChangeParams.liquidity, wrapper, balanceAdjustments);
+        set.liquidityChange(position, liquidityChangeParams.liquidityDelta, wrapper, balanceAdjustments);
     }
 
     function liquidityChange(
