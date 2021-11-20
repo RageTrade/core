@@ -4,9 +4,7 @@ import hre from 'hardhat';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { calculateAddressFor } from './utils/create-addresses';
 import { DepositTokenSetTest, VPoolFactory, ClearingHouse, RealTokenMock, ERC20 } from '../typechain-types';
-=======
-import { DepositTokenSetTest, ClearingHouse, RealTokenMock, OracleMock } from '../typechain-types';
->>>>>>> b1258f6 (test: added testing for account margin value)
+
 import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
@@ -130,7 +128,6 @@ describe('DepositTokenSet Library', () => {
     });
     it('Deposit Market Value', async () => {
       await oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
-      console.log(await (await oracle.getTwapSqrtPrice(0)).toBigInt());
       const marketValue = await test.getAllDepositAccountMarketValue(constants);
       expect(marketValue).to.eq(20000);
     });
@@ -142,11 +139,10 @@ describe('DepositTokenSet Library', () => {
       test.cleanDeposits(constants);
     });
     it('Add Margin', async () => {
-
       test.increaseBalance(vTokenAddress, 50, constants);
       let balance = await test.getBalance(vTokenAddress);
       expect(balance).to.eq(50);
-      
+
       test.increaseBalance(vTokenAddress1, 100, constants);
       balance = await test.getBalance(vTokenAddress1);
       expect(balance).to.eq(100);
@@ -165,6 +161,5 @@ describe('DepositTokenSet Library', () => {
       const marketValue = await test.getAllDepositAccountMarketValue(constants);
       expect(marketValue).to.eq(45000);
     });
-
   });
 });

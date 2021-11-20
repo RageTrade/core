@@ -32,11 +32,15 @@ contract DepositTokenSetTest {
     }
 
     function cleanDeposits(Constants memory constants) external {
-        for(uint i=0; i<depositTokenSet.active.length; i++){
+        for (uint256 i = 0; i < depositTokenSet.active.length; i++) {
             uint32 truncatedAddress = depositTokenSet.active[i];
-            if(truncatedAddress==0) break;
+            if (truncatedAddress == 0) break;
 
-            depositTokenSet.decreaseBalance(vTokenAddresses[truncatedAddress], depositTokenSet.deposits[truncatedAddress], constants);
+            depositTokenSet.decreaseBalance(
+                vTokenAddresses[truncatedAddress],
+                depositTokenSet.deposits[truncatedAddress],
+                constants
+            );
         }
     }
 
