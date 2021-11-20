@@ -4,8 +4,10 @@ import '@nomiclabs/hardhat-waffle';
 import 'hardhat-tracer';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
+import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-etherscan';
+
 import { ethers } from 'ethers';
 config();
 const { MNEMONIC, ALCHEMY_KEY } = process.env;
@@ -37,6 +39,7 @@ export default {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
       accounts: { mnemonic: MNEMONIC },
+      allowUnlimitedContractSize: true, // TODO: remove this
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,
@@ -60,6 +63,11 @@ export default {
             enabled: true,
             runs: 200,
           },
+          outputSelection: {
+            '*': {
+              '*': ['storageLayout'],
+            },
+          },
         },
       },
       {
@@ -69,9 +77,22 @@ export default {
             enabled: true,
             runs: 200,
           },
+          outputSelection: {
+            '*': {
+              '*': ['storageLayout'],
+            },
+          },
         },
       },
     ],
+  },
+  typechain: {
+    target: 'ethers-v5',
+    alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
+    externalArtifacts: [
+      'node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json',
+      'node_modules/@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3PoolDeployer.sol/IUniswapV3PoolDeployer.json',
+    ], // optional array of glob patterns with external artifacts to process (for example external libs from node_modules)
   },
   etherscan: {
     // Your API key for Etherscan
@@ -80,6 +101,15 @@ export default {
   },
   mocha: {
     timeout: 100000,
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 100,
+    enabled: !!process.env.REPORT_GAS, // REPORT_GAS=true yarn test
+    coinmarketcap: process.env.COINMARKETCAP, // https://coinmarketcap.com/api/pricing/
+  },
+  contractSizer: {
+    strict: true,
   },
   namedAccounts: {
     deployer: {

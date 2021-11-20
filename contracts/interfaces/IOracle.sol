@@ -3,5 +3,5 @@
 pragma solidity ^0.8.9;
 
 interface IOracle {
-    function getTwapSqrtPrice(uint32 twapDuration) external view returns (uint160 sqrtPrice);
+    function getTwapSqrtPriceX96(uint32 twapDuration) external view returns (uint160 sqrtPriceX96);
 }

@@ -56,7 +56,7 @@ library VTokenPosition {
         VTokenAddress vToken,
         Constants memory constants
     ) internal view returns (int256) {
-        uint256 price = vToken.getVirtualTwapPrice(constants);
+        uint256 price = vToken.getVirtualTwapPriceX128(constants);
         return marketValue(position, vToken, price, constants);
     }
 

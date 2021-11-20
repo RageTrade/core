@@ -38,11 +38,11 @@ contract VTokenLibTest {
     }
 
     function getVirtualTwapSqrtPrice(VTokenAddress vToken, Constants memory constants) external view returns (uint160) {
-        return vToken.getVirtualTwapSqrtPrice(constants);
+        return vToken.getVirtualTwapSqrtPriceX96(constants);
     }
 
     function getRealTwapSqrtPrice(VTokenAddress vToken, Constants memory constants) external view returns (uint160) {
-        return vToken.getRealTwapSqrtPrice(constants);
+        return vToken.getRealTwapSqrtPriceX96(constants);
     }
 
     function getMarginRatio(

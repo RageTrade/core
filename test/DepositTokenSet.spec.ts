@@ -3,12 +3,13 @@ import hre from 'hardhat';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 
-import { DepositTokenSetTest, ClearingHouse, RealTokenMock } from '../typechain-types';
+import { DepositTokenSetTest, ClearingHouse, RealTokenMock, ERC20 } from '../typechain-types';
 import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { smock } from '@defi-wonderland/smock';
 
 describe('DepositTokenSet Library', () => {
   let test: DepositTokenSetTest;
@@ -54,8 +55,10 @@ describe('DepositTokenSet Library', () => {
   before(async () => {
     await activateMainnetFork();
 
+    const rBase = await smock.fake<ERC20>('ERC20');
+    rBase.decimals.returns(18);
     const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    const vBase = await vBaseFactory.deploy();
+    const vBase = await vBaseFactory.deploy(rBase.address);
     vBaseAddress = vBase.address;
 
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
