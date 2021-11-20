@@ -6,7 +6,7 @@ import { FullMath } from './FullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Constants } from '../utils/Constants.sol';
-import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
+import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -72,7 +72,7 @@ library DepositTokenSet {
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
                 vToken.getRealTwapPriceX128(constants),
-                FixedPoint96.Q96
+                FixedPoint128.Q128
             );
         }
 
