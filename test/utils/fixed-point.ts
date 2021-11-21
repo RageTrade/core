@@ -8,9 +8,12 @@ export function toQ128(num: number): BigNumber {
   const frac = num - Math.floor(num);
   num -= frac;
   return Q128.mul(num).add(
-    BigNumber.from(Math.floor(Number.MAX_SAFE_INTEGER * frac))
-      .mul(Q128)
-      .div('0x1fffffffffffff'), // Number.MAX_SAFE_INTEGER
+    // BigNumber.from(Math.floor(Number.MAX_SAFE_INTEGER * frac))
+    //   .mul(Q128)
+    //   .div('0x1fffffffffffff'), // Number.MAX_SAFE_INTEGER
+
+    // fractional part
+    Q128.mul(Math.floor((1 << 30) * frac)).div(BigNumber.from(1).shl(30)),
   );
 }
 
@@ -23,7 +26,7 @@ export function fromQ128(val: BigNumber): number {
       .div(Q128)
       .toNumber() /
     (Number.MAX_SAFE_INTEGER - 1);
-  return formatted;
+  return Math.round(formatted * 10 ** 10) / 10 ** 10;
 }
 
 export const Q96 = BigNumber.from(1).shl(96);
@@ -32,9 +35,12 @@ export function toQ96(num: number): BigNumber {
   const frac = num - Math.floor(num);
   num -= frac;
   return Q96.mul(num).add(
-    BigNumber.from(Math.floor(Number.MAX_SAFE_INTEGER * frac))
-      .mul(Q96)
-      .div('0x1fffffffffffff'), // Number.MAX_SAFE_INTEGER
+    // BigNumber.from(Math.floor(Number.MAX_SAFE_INTEGER * frac))
+    //   .mul(Q96)
+    //   .div('0x1fffffffffffff'), // Number.MAX_SAFE_INTEGER
+
+    // fractional part
+    Q96.mul(Math.floor((1 << 30) * frac)).div(BigNumber.from(1).shl(30)),
   );
 }
 
@@ -47,5 +53,5 @@ export function fromQ96(val: BigNumber): number {
       .div(Q96)
       .toNumber() /
     (Number.MAX_SAFE_INTEGER - 1);
-  return formatted;
+  return Math.round(formatted * 10 ** 10) / 10 ** 18;
 }
