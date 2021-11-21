@@ -151,6 +151,10 @@ export async function sqrtPriceX96ToPrice(
   return priceX128ToPrice(priceX128, vBase, vToken);
 }
 
+export function initializableTick(tick: number, tickSpacing: number) {
+  return Math.floor(tick / tickSpacing) * tickSpacing;
+}
+
 const ONE = BigNumber.from(1);
 const TWO = BigNumber.from(2);
 
