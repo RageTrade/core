@@ -12,25 +12,25 @@ abstract contract BridgeFactoryAndHouse is IBridgeFactoryAndHouse {
 
     error NotVPoolFactory();
 
-    constructor(address VPoolFactory_) {
-        VPoolFactory = VPoolFactory_;
+    constructor(address _VPoolFactory) {
+        VPoolFactory = _VPoolFactory;
     }
 
-    function isKeyAvailable(uint32 _key) external view returns (bool) {
-        if (vTokenAddresses[_key] == address(0)) return true;
+    function isKeyAvailable(uint32 key) external view returns (bool) {
+        if (vTokenAddresses[key] == address(0)) return true;
         else return false;
     }
 
-    function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool) {
-        return realTokenInitilized[_realToken];
+    function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
+        return realTokenInitilized[realToken];
     }
 
-    function addKey(uint32 _key, address _add) external onlyVPoolFactory {
-        vTokenAddresses[_key] = _add;
+    function addKey(uint32 key, address add) external onlyVPoolFactory {
+        vTokenAddresses[key] = add;
     }
 
-    function initRealToken(address _realToken) external onlyVPoolFactory {
-        realTokenInitilized[_realToken] = true;
+    function initRealToken(address realToken) external onlyVPoolFactory {
+        realTokenInitilized[realToken] = true;
     }
 
     function setConstants(Constants memory _constants) external onlyVPoolFactory {
