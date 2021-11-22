@@ -1,5 +1,6 @@
 struct Constants {
     address VPOOL_FACTORY;
+    address VPOOL_WRAPPER_DEPLOYER;
     address VBASE_ADDRESS;
     address UNISWAP_FACTORY_ADDRESS;
     uint24 DEFAULT_FEE_TIER;

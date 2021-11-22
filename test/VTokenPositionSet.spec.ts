@@ -31,9 +31,17 @@ describe('VTokenPositionSet Library', () => {
     realBase.decimals.returns(10);
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
+
+    const VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
-    ).deploy(VBase.address, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH);
+    ).deploy(
+      VBase.address,
+      VPoolWrapperDeployer.address,
+      UNISWAP_FACTORY_ADDRESS,
+      DEFAULT_FEE_TIER,
+      POOL_BYTE_CODE_HASH,
+    );
 
     await VBase.transferOwnership(VPoolFactory.address);
     const clearingHouse = await (

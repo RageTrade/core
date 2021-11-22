@@ -6,7 +6,7 @@
 pragma solidity ^0.8.9;
 import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
-import './interfaces/IVPoolFactory.sol';
+import './interfaces/IVPoolWrapperDeployer.sol';
 import { VTokenAddress, VTokenLib, IUniswapV3Pool, Constants } from './libraries/VTokenLib.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
@@ -66,7 +66,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             maintainanceMarginRatio,
             timeHorizon,
             constants
-        ) = IVPoolFactory(msg.sender).parameters();
+        ) = IVPoolWrapperDeployer(msg.sender).parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);
         vPool = IUniswapV3Pool(vPoolAddress);
         fee = vPool.fee();

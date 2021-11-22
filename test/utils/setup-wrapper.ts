@@ -2,7 +2,7 @@ import hre from 'hardhat';
 import { smock } from '@defi-wonderland/smock';
 import { constants } from './dummyConstants';
 import { ethers } from 'ethers';
-import { VPoolFactory } from '../../typechain-types';
+import { VPoolFactory, VPoolWrapperDeployer } from '../../typechain-types';
 import { setupVPool } from './setup-vPool';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -19,12 +19,11 @@ export async function setupWrapper({
 
   const { vPool, vBase, vToken, oracle, isToken0 } = await setupVPool({ vPriceInitial, rPriceInitial });
 
-  const wrapperDeployer = await smock.fake<VPoolFactory>('VPoolFactory', {
+  const wrapperDeployer = await smock.fake<VPoolWrapperDeployer>('VPoolWrapperDeployer', {
     address: signer.address,
   });
 
   const { AddressZero, HashZero } = ethers.constants;
-
   wrapperDeployer.parameters.returns([
     vToken.address,
     vPool.address,
@@ -33,6 +32,7 @@ export async function setupWrapper({
     60, // twapDuration
     [
       AddressZero, // VPOOL_FACTORY
+      AddressZero, // VPOOL_WRAPPER_DEPLOYER
       vBase.address, // VBASE_ADDRESS
       AddressZero, //  UNISWAP_FACTORY_ADDRESS
       500, // DEFAULT_FEE_TIER

@@ -2,49 +2,43 @@
 
 pragma solidity ^0.8.9;
 
-import '@openzeppelin/contracts/utils/Create2.sol';
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
-import './interfaces/IVPoolFactory.sol';
-import './interfaces/IOracle.sol';
-import './interfaces/IVBase.sol';
-import './tokens/VToken.sol';
-import './VPoolWrapper.sol';
+import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Factory } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+import { Constants } from './utils/Constants.sol';
+import { IOracle } from './interfaces/IOracle.sol';
+import { IVBase } from './interfaces/IVBase.sol';
+import { VToken, IVToken } from './tokens/VToken.sol';
+import { IVPoolWrapperDeployer } from './interfaces/IVPoolWrapperDeployer.sol';
 import { IBridgeFactoryAndHouse } from './interfaces/IBridgeFactoryAndHouse.sol';
 
-contract VPoolFactory is IVPoolFactory {
-    struct Parameters {
-        address vTokenAddress;
-        address vPoolAddress;
-        uint16 initialMargin;
-        uint16 maintainanceMargin;
-        uint32 twapDuration;
-        Constants constants;
-    }
-    Parameters public override parameters;
-
+contract VPoolFactory {
     Constants public constants;
 
     address public immutable owner;
     bool public isRestricted;
 
     IBridgeFactoryAndHouse public bridge;
+    IVPoolWrapperDeployer public VPoolWrapperDeployer;
 
     constructor(
         address VBASE_ADDRESS,
+        address VPoolWrapperDeployerAddress,
         address UNISWAP_FACTORY_ADDRESS,
         uint24 DEFAULT_FEE_TIER,
         bytes32 POOL_BYTE_CODE_HASH
     ) {
         isRestricted = true;
         owner = msg.sender;
+        VPoolWrapperDeployer = IVPoolWrapperDeployer(VPoolWrapperDeployerAddress);
         constants = Constants(
             address(this),
+            VPoolWrapperDeployerAddress,
             VBASE_ADDRESS,
             UNISWAP_FACTORY_ADDRESS,
             DEFAULT_FEE_TIER,
             POOL_BYTE_CODE_HASH,
-            keccak256(type(VPoolWrapper).creationCode)
+            VPoolWrapperDeployer.byteCodeHash()
         );
     }
 
@@ -71,12 +65,13 @@ contract VPoolFactory is IVPoolFactory {
             constants.DEFAULT_FEE_TIER
         );
         IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPriceX96(twapDuration));
-        address vPoolWrapper = _deployVPoolWrapper(
+        address vPoolWrapper = VPoolWrapperDeployer.deployVPoolWrapper(
             vTokenAddress,
             vPool,
             initialMargin,
             maintainanceMargin,
-            twapDuration
+            twapDuration,
+            constants
         );
         IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
         IVToken(vTokenAddress).setOwner(vPoolWrapper); // TODO remove this
@@ -114,21 +109,6 @@ contract VPoolFactory is IVPoolFactory {
         require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
         bridge.addKey(key, deployedAddress);
         bridge.initRealToken(realToken);
-        return deployedAddress;
-    }
-
-    function _deployVPoolWrapper(
-        address vTokenAddress,
-        address vPool,
-        uint16 initialMargin,
-        uint16 maintainanceMargin,
-        uint32 twapDuration
-    ) internal returns (address) {
-        bytes32 salt = keccak256(abi.encode(vTokenAddress, constants.VBASE_ADDRESS));
-        bytes memory bytecode = type(VPoolWrapper).creationCode;
-        parameters = Parameters(vTokenAddress, vPool, initialMargin, maintainanceMargin, twapDuration, constants);
-        address deployedAddress = Create2.deploy(0, salt, bytecode);
-        delete parameters;
         return deployedAddress;
     }
 

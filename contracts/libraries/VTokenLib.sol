@@ -102,7 +102,7 @@ library VTokenLib {
                 Create2.computeAddress(
                     keccak256(abi.encode(VTokenAddress.unwrap(vToken), constants.VBASE_ADDRESS)),
                     constants.WRAPPER_BYTE_CODE_HASH,
-                    constants.VPOOL_FACTORY
+                    constants.VPOOL_WRAPPER_DEPLOYER
                 )
             );
     }

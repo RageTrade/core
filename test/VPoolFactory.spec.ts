@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
-import { VPoolFactory, ClearingHouse, ERC20, UtilsTest, VBase } from '../typechain-types';
+import { VPoolFactory, VPoolWrapperDeployer, ERC20, UtilsTest, VBase } from '../typechain-types';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { utils } from 'ethers';
@@ -17,6 +17,7 @@ describe('VPoolFactory', () => {
   let oracle: string;
   let VBase: VBase;
   let VPoolFactory: VPoolFactory;
+  let VPoolWrapperDeployer: VPoolWrapperDeployer;
   let UtilsTestContract: UtilsTest;
   let vTokenByteCode: string;
   let VPoolWrapperByteCode: string;
@@ -28,10 +29,16 @@ describe('VPoolFactory', () => {
     realToken.decimals.returns(10);
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realToken.address);
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
-
+    VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
-    ).deploy(VBase.address, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH);
+    ).deploy(
+      VBase.address,
+      VPoolWrapperDeployer.address,
+      UNISWAP_FACTORY_ADDRESS,
+      DEFAULT_FEE_TIER,
+      POOL_BYTE_CODE_HASH,
+    );
     await VBase.transferOwnership(VPoolFactory.address);
     const clearingHouse = await (
       await hre.ethers.getContractFactory('ClearingHouse')
@@ -94,7 +101,7 @@ describe('VPoolFactory', () => {
 
       // VPoolWrapper : Create2
       salt = utils.defaultAbiCoder.encode(['address', 'address'], [vTokenAddress, VBase.address]);
-      const vPoolWrapperCalculated = getCreate2Address(VPoolFactory.address, salt, VPoolWrapperByteCode);
+      const vPoolWrapperCalculated = getCreate2Address(VPoolWrapperDeployer.address, salt, VPoolWrapperByteCode);
       expect(vPoolWrapper).to.eq(vPoolWrapperCalculated);
 
       // VPoolWrapper : Params

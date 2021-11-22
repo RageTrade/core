@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 
-import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
@@ -71,10 +70,11 @@ describe('AccountTest Library', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
     oracleAddress = oracle.address;
-
+    const VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
     const VPoolFactoryFactory = await hre.ethers.getContractFactory('VPoolFactory');
     const VPoolFactory = await VPoolFactoryFactory.deploy(
       vBaseAddress,
+      VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
