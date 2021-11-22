@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, ClearingHouse, VBase, VPoolWrapper, ERC20 } from '../typechain-types';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
+import { VTokenPositionSetTest, VPoolFactory, VBase, VPoolWrapper, ERC20 } from '../typechain-types';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
@@ -11,15 +11,15 @@ import { smock } from '@defi-wonderland/smock';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
-
+const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 describe('VTokenPositionSet Library', () => {
   // const vTokenAddress: string = utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
   // const vTokenAddress1: string = utils.hexZeroPad(BigNumber.from(2).toHexString(), 20);
   let VTokenPositionSet: VTokenPositionSetTest;
   let vTokenAddress: string;
   let vTokenAddress1: string;
-  let VPoolFactory: ClearingHouse;
+  let VPoolFactory: VPoolFactory;
   let VBase: VBase;
   let VPoolWrapper: VPoolWrapper;
   let constants: ConstantsStruct;
@@ -32,11 +32,16 @@ describe('VTokenPositionSet Library', () => {
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
     VPoolFactory = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
+      await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(VBase.address, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH);
 
     await VBase.transferOwnership(VPoolFactory.address);
-    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracleAddress, 2, 3, 2);
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(VPoolFactory.address, REAL_BASE);
+    await VPoolFactory.initBridge(clearingHouse.address);
+
+    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken0, oracleAddress, 2, 3, 2);
 
     const eventFilter = VPoolFactory.filters.poolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
@@ -47,7 +52,7 @@ describe('VTokenPositionSet Library', () => {
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
-    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracleAddress, 2, 3, 2);
+    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken1, oracleAddress, 2, 3, 2);
 
     const eventFilter1 = VPoolFactory.filters.poolInitlized();
     const events1 = await VPoolFactory.queryFilter(eventFilter1, 'latest');

@@ -7,7 +7,7 @@ import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract AccountTest {
     using Account for Account.Info;

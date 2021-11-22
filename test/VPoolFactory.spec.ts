@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
-import { ClearingHouse, ERC20, UtilsTest, VBase } from '../typechain-types';
+import { VPoolFactory, ClearingHouse, ERC20, UtilsTest, VBase } from '../typechain-types';
 import { getCreate2Address, getCreate2Address2 } from './utils/create2';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { utils } from 'ethers';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
@@ -16,7 +16,7 @@ const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 describe('VPoolFactory', () => {
   let oracle: string;
   let VBase: VBase;
-  let VPoolFactory: ClearingHouse;
+  let VPoolFactory: VPoolFactory;
   let UtilsTestContract: UtilsTest;
   let vTokenByteCode: string;
   let VPoolWrapperByteCode: string;
@@ -30,9 +30,13 @@ describe('VPoolFactory', () => {
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     VPoolFactory = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
+      await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(VBase.address, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH);
     await VBase.transferOwnership(VPoolFactory.address);
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(VPoolFactory.address, REAL_BASE);
+    await VPoolFactory.initBridge(clearingHouse.address);
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
@@ -82,7 +86,9 @@ describe('VPoolFactory', () => {
       expect(vToken_state_owner.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
 
       // VPool : Create2
-      salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, VBase.address, 500]);
+      if (VBase.address.toLowerCase() < vTokenAddress.toLowerCase())
+        salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [VBase.address, vTokenAddress, 500]);
+      else salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, VBase.address, 500]);
       const vPoolCalculated = getCreate2Address2(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
       expect(vPool).to.eq(vPoolCalculated);
 

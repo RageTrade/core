@@ -14,7 +14,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 type VTokenAddress is address;
 

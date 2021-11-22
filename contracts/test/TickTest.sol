@@ -9,7 +9,7 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { UniswapV3PoolMock } from './mocks/UniswapV3PoolMock.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract TickTest {
     using FundingPayment for FundingPayment.Info;

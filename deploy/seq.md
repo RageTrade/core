@@ -1,6 +1,7 @@
-0. Compute and Update constants
-1. VBase
-2. Oracle
-3. VPoolFactory
-4. ClearingHouse(VPoolFactory)
-5. Init VPoolFactory(ClearingHouse)
+0. Deploy VBase
+1. Deploy Oracle
+2. Deploy VPoolFactory (VBase, Oracle)
+   VBase - SetOwnerShip(VPoolFactory)
+3. Deploy ClearingHouse(VPoolFactory, RealBase)
+   ClearingHouse - setFixedFee
+4. VPoolFactory - InitBridge(ClearingHouse)

@@ -11,7 +11,7 @@ import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract DepositTokenSetTest {
     using DepositTokenSet for DepositTokenSet.Info;

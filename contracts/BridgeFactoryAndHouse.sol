@@ -1,14 +1,16 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 import { IBridgeFactoryAndHouse } from './interfaces/IBridgeFactoryAndHouse.sol';
+import { Constants } from './utils/Constants.sol';
 
 abstract contract BridgeFactoryAndHouse is IBridgeFactoryAndHouse {
     address public VPoolFactory;
+    Constants public constants;
 
     mapping(uint32 => address) vTokenAddresses;
     mapping(address => bool) public realTokenInitilized;
 
-    error Unauthorised();
+    error NotVPoolFactory();
 
     constructor(address VPoolFactory_) {
         VPoolFactory = VPoolFactory_;
@@ -19,17 +21,24 @@ abstract contract BridgeFactoryAndHouse is IBridgeFactoryAndHouse {
         else return false;
     }
 
-    function addKey(uint32 _key, address _add) external {
-        if (VPoolFactory != msg.sender) revert Unauthorised();
-        vTokenAddresses[_key] = _add;
-    }
-
     function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool) {
         return realTokenInitilized[_realToken];
     }
 
-    function initRealToken(address _realToken) external {
-        if (VPoolFactory != msg.sender) revert Unauthorised();
+    function addKey(uint32 _key, address _add) external onlyVPoolFactory {
+        vTokenAddresses[_key] = _add;
+    }
+
+    function initRealToken(address _realToken) external onlyVPoolFactory {
         realTokenInitilized[_realToken] = true;
+    }
+
+    function setConstants(Constants memory _constants) external onlyVPoolFactory {
+        constants = _constants;
+    }
+
+    modifier onlyVPoolFactory() {
+        if (VPoolFactory != msg.sender) revert NotVPoolFactory();
+        _;
     }
 }

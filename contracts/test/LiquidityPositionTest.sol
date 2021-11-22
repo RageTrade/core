@@ -10,7 +10,7 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { VPoolFactory } from '../VPoolFactory.sol';
 
 import { console } from 'hardhat/console.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract LiquidityPositionTest {
     using LiquidityPosition for LiquidityPosition.Info;

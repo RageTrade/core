@@ -5,16 +5,18 @@ pragma solidity ^0.8.9;
 import { Account, LiquidityChangeParams } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { BridgeFactoryAndHouse } from './BridgeFactoryAndHouse.sol';
+import { Governance } from './Governance.sol';
 
-contract ClearingHouse is BridgeFactoryAndHouse {
+contract ClearingHouse is Governance, BridgeFactoryAndHouse {
     using Account for Account.Info;
-    mapping(address => bool) public supportedVTokens;
-    mapping(address => bool) public supportedDeposits;
-
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
 
-    constructor(address VPoolFactory_) BridgeFactoryAndHouse(VPoolFactory_) {}
+    address public immutable realBase;
+
+    constructor(address VPoolFactory, address _realBase) BridgeFactoryAndHouse(VPoolFactory) {
+        realBase = _realBase;
+    }
 
     function createAccount() external {
         Account.Info storage newAccount = accounts[numAccounts++];

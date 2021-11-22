@@ -1,8 +1,8 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { network } from 'hardhat';
-import { ClearingHouse, ERC20, VBase, VPoolWrapper } from '../typechain-types';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
+import { VPoolFactory, ERC20, VBase, VPoolWrapper } from '../typechain-types';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { config } from 'dotenv';
 config();
@@ -14,7 +14,7 @@ const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 describe('VPoolWrapper', () => {
   let oracle: string;
-  let VPoolFactory: ClearingHouse;
+  let VPoolFactory: VPoolFactory;
   let VPoolWrapper: VPoolWrapper;
   let VBase: VBase;
   let VTokenAddress: string;
@@ -33,9 +33,13 @@ describe('VPoolWrapper', () => {
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
     VPoolFactory = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
+      await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(VBase.address, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH);
     VBase.transferOwnership(VPoolFactory.address);
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(VPoolFactory.address, REAL_BASE);
+    await VPoolFactory.initBridge(clearingHouse.address);
 
     await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 2, 3, 60);
     const eventFilter = VPoolFactory.filters.poolInitlized();

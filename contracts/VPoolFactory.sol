@@ -52,6 +52,7 @@ contract VPoolFactory is IVPoolFactory {
 
     function initBridge(address _clearingHouse) external onlyOwner {
         bridge = IBridgeFactoryAndHouse(_clearingHouse);
+        bridge.setConstants(constants);
     }
 
     function initializePool(
@@ -89,7 +90,7 @@ contract VPoolFactory is IVPoolFactory {
         address oracleAddress
     ) internal returns (address) {
         // Pool for this token must not be already created
-        require(bridge.isRealTokenAlreadyInitilized(realToken), 'Duplicate Pool');
+        require(bridge.isRealTokenAlreadyInitilized(realToken) == false, 'Duplicate Pool');
 
         uint160 salt = uint160(realToken);
         bytes memory bytecode = type(VToken).creationCode;

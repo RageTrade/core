@@ -17,7 +17,7 @@ import { FullMath } from './FullMath.sol';
 
 import { TickUtilLib } from './TickUtilLib.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 

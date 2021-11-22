@@ -9,7 +9,7 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { console } from 'hardhat/console.sol';
 
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 // extended tick state
 library Tick {

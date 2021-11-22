@@ -5,7 +5,7 @@ import { VTokenPosition } from './VTokenPosition.sol';
 import { FullMath } from './FullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 library DepositTokenSet {
     using VTokenLib for VTokenAddress;
