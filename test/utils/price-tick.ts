@@ -1,14 +1,17 @@
-import { MockContract } from '@defi-wonderland/smock';
+import { FakeContract, MockContract } from '@defi-wonderland/smock';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { Contract } from '@ethersproject/contracts';
 import { TickMath } from '@uniswap/v3-sdk';
 import JSBI from 'jsbi';
 import { VBase, VToken } from '../../typechain-types';
 import { fromQ128, fromQ96, Q96, toQ128, toQ96 } from './fixed-point';
 
+declare type ContractOrSmock<C extends Contract> = C | MockContract<C> | FakeContract<C>;
+
 export async function priceToTick(
   price: number,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ): Promise<number> {
   // console.log('price', price);
   const vBaseDecimals = await vBase.decimals();
@@ -31,8 +34,8 @@ export async function sqrtPriceX96ToTick(sqrtPriceX96: BigNumberish): Promise<nu
 
 export async function tickToPrice(
   tick: number,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ): Promise<number> {
   let price = fromQ96(BigNumber.from(TickMath.getSqrtRatioAtTick(tick).toString())) ** 2;
   if (!BigNumber.from(vBase.address).gt(vToken.address)) {
@@ -58,13 +61,14 @@ export async function tickToSqrtPriceX96(tick: number): Promise<BigNumber> {
  */
 export async function priceToPriceX128(
   price: number,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ): Promise<BigNumber> {
   const vBaseDecimals = await vBase.decimals();
   const vTokenDecimals = await vToken.decimals();
 
   let priceX128 = toQ128(price);
+
   priceX128 = priceX128.mul(BigNumber.from(10).pow(vBaseDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
   // if (!BigNumber.from(vBase.address).gt(vToken.address)) {
   //   price = 1 / price;
@@ -81,8 +85,8 @@ export async function priceToPriceX128(
  */
 export async function priceX128ToPrice(
   priceX128: BigNumberish,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ): Promise<number> {
   priceX128 = BigNumber.from(priceX128);
   let price: number = fromQ128(priceX128);
@@ -104,8 +108,8 @@ export async function priceX128ToPrice(
  */
 export function priceX128ToSqrtPriceX96(
   priceX128: BigNumberish,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ): BigNumber {
   priceX128 = BigNumber.from(priceX128);
   let sqrtPriceX96 = sqrt(priceX128.mul(1n << 64n)); // 96 = (128 + 64) / 2
@@ -118,24 +122,37 @@ export function priceX128ToSqrtPriceX96(
 
 export function sqrtPriceX96ToPriceX128(
   sqrtPriceX96: BigNumberish,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ): BigNumber {
   sqrtPriceX96 = BigNumber.from(sqrtPriceX96);
   if (!BigNumber.from(vBase.address).gt(vToken.address)) {
     sqrtPriceX96 = Q96.mul(Q96).div(sqrtPriceX96);
   }
-  let priceX128 = sqrtPriceX96.mul(sqrtPriceX96).div(Q96);
+  let priceX128 = sqrtPriceX96.mul(sqrtPriceX96).div(1n << 64n);
   return priceX128;
 }
 
 export async function priceToSqrtPriceX96(
   price: number,
-  vBase: VBase | MockContract<VBase>,
-  vToken: VToken | MockContract<VToken>,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
 ) {
   let priceX128 = await priceToPriceX128(price, vBase, vToken);
   return priceX128ToSqrtPriceX96(priceX128, vBase, vToken);
+}
+
+export async function sqrtPriceX96ToPrice(
+  sqrtPriceX96: BigNumberish,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
+) {
+  const priceX128 = sqrtPriceX96ToPriceX128(sqrtPriceX96, vBase, vToken);
+  return priceX128ToPrice(priceX128, vBase, vToken);
+}
+
+export function initializableTick(tick: number, tickSpacing: number) {
+  return Math.floor(tick / tickSpacing) * tickSpacing;
 }
 
 const ONE = BigNumber.from(1);

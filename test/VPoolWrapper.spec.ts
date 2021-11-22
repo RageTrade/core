@@ -3,7 +3,7 @@ import hre, { ethers } from 'hardhat';
 import { VPoolWrapper, VPoolFactory, ERC20, VBase, VToken, UniswapV3Pool } from '../typechain-types';
 import { Q96, toQ96 } from './utils/fixed-point';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
-import { priceToSqrtPriceX96, priceToTick, tickToPrice } from './utils/price-tick';
+import { initializableTick, priceToSqrtPriceX96, priceToTick, tickToPrice } from './utils/price-tick';
 import { setupWrapper } from './utils/setup-wrapper';
 import { MockContract } from '@defi-wonderland/smock';
 import { TickMath } from '@uniswap/v3-sdk';
@@ -19,47 +19,77 @@ describe('PoolWrapper', () => {
   let SQRT_RATIO_LOWER_LIMIT: BigNumberish;
   let SQRT_RATIO_UPPER_LIMIT: BigNumberish;
 
-  before(async () => {
-    ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
-      rPriceInitial: 2000,
-      vPriceInitial: 2000,
-    }));
-    // const { tick } = await vPool.slot0();
-    // console.log({ isToken0, tick });
+  describe('#liquidityChange', () => {
+    before(async () => {
+      ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+        rPriceInitial: 1,
+        vPriceInitial: 1,
+      }));
+    });
 
-    await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
-    await liquidityChange(2000, 3000, 10n ** 30n); // here vtoken should be put
-    await liquidityChange(3000, 4000, 10n ** 15n); // here vtoken should be put
-    await liquidityChange(4000, 5000, 10n ** 15n);
-    await liquidityChange(1000, 4000, 10n ** 15n); // here vtoken should be put
+    it('adds liquidity', async () => {
+      const { tick } = await vPool.slot0();
+      await vPoolWrapper.liquidityChange(
+        initializableTick(tick - 100, 10),
+        initializableTick(tick + 100, 10),
+        10_000_000,
+      );
+      expect(await vPool.liquidity()).to.eq(10_000_000);
+    });
 
-    SQRT_RATIO_LOWER_LIMIT = await priceToSqrtPriceX96(1000, vBase, vToken);
-    SQRT_RATIO_UPPER_LIMIT = await priceToSqrtPriceX96(5000, vBase, vToken);
+    it('removes liquidity', async () => {
+      const { tick } = await vPool.slot0();
+      await vPoolWrapper.liquidityChange(
+        initializableTick(tick - 100, 10),
+        initializableTick(tick + 100, 10),
+        -4_000_000,
+      );
+      expect(await vPool.liquidity()).to.eq(6_000_000);
+    });
   });
 
-  const testCases: Array<{
-    buyVToken: boolean;
-    amountSpecified: BigNumber;
-  }> = [
-    {
-      buyVToken: true,
-      amountSpecified: parseEther('1'),
-    },
-    {
-      buyVToken: true,
-      amountSpecified: parseUsdc('2000').mul(-1),
-    },
-    {
-      buyVToken: false,
-      amountSpecified: parseEther('1'),
-    },
-    {
-      buyVToken: false,
-      amountSpecified: parseUsdc('2000').mul(-1),
-    },
-  ];
-
   describe('#swap', () => {
+    before(async () => {
+      ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+        rPriceInitial: 2000,
+        vPriceInitial: 2000,
+      }));
+      // const { tick, sqrtPriceX96 } = await vPool.slot0();
+      // console.log({ isToken0, tick, sqrtPriceX96 });
+
+      // bootstraping initial liquidity
+      await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
+      await liquidityChange(2000, 3000, 10n ** 15n); // here vtoken should be put
+      await liquidityChange(3000, 4000, 10n ** 15n); // here vtoken should be put
+      await liquidityChange(4000, 5000, 10n ** 15n);
+      await liquidityChange(1000, 4000, 10n ** 15n); // here vtoken should be put
+
+      SQRT_RATIO_LOWER_LIMIT = await priceToSqrtPriceX96(1000, vBase, vToken);
+      SQRT_RATIO_UPPER_LIMIT = await priceToSqrtPriceX96(5000, vBase, vToken);
+    });
+
+    const testCases: Array<{
+      buyVToken: boolean;
+      amountSpecified: BigNumber;
+    }> = [
+      {
+        buyVToken: true,
+        amountSpecified: parseEther('1'),
+      },
+      {
+        buyVToken: true,
+        amountSpecified: parseUsdc('2000').mul(-1),
+      },
+      {
+        buyVToken: false,
+        amountSpecified: parseEther('1'),
+      },
+      {
+        buyVToken: false,
+        amountSpecified: parseUsdc('2000').mul(-1),
+      },
+    ];
+
     for (const { buyVToken, amountSpecified } of testCases) {
       it(`${buyVToken ? 'buy' : 'sell'} ${
         amountSpecified.gt(0)
@@ -69,7 +99,7 @@ describe('PoolWrapper', () => {
         const { vBaseIn, vTokenIn } = await vPoolWrapper.callStatic.swap(
           buyVToken,
           amountSpecified,
-          buyVToken != isToken0 ? BigNumber.from(SQRT_RATIO_UPPER_LIMIT) : BigNumber.from(SQRT_RATIO_LOWER_LIMIT),
+          buyVToken ? BigNumber.from(SQRT_RATIO_UPPER_LIMIT) : BigNumber.from(SQRT_RATIO_LOWER_LIMIT),
         );
         // await vPoolWrapper.swap(
         //   buyVToken,

@@ -14,6 +14,7 @@ import { getCreateAddress } from './create-addresses';
 import { toQ96 } from './fixed-point';
 import { parseEther, parseUnits } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { priceToSqrtPriceX96 } from './price-tick';
 
 export async function setupVPool({
   vPriceInitial,
@@ -53,25 +54,13 @@ export async function setupVPool({
   );
   hre.tracer.nameTags[vToken.address] = 'vToken';
 
-  // normalising prices to token decimals
-  const vBaseDecimals = await vBase.decimals();
-  const vTokenDecimals = await vToken.decimals();
-  vPriceInitial *= 10 ** (vBaseDecimals - vTokenDecimals);
-  rPriceInitial *= 10 ** (vBaseDecimals - vTokenDecimals);
-
-  const isToken0 = BigNumber.from(vBase.address).gt(vToken.address);
-  if (!isToken0) {
-    vPriceInitial = 1 / vPriceInitial;
-    rPriceInitial = 1 / rPriceInitial;
-  }
-
-  // oracle.getTwapSqrtPrice.returns(toQ96(Math.sqrt(rPriceInitial)).toHexString());
   await oracle.setSqrtPrice(toQ96(Math.sqrt(rPriceInitial)));
 
   const v3Deployer = await smock.fake<IUniswapV3PoolDeployer>('IUniswapV3PoolDeployer', {
     address: signer.address,
   });
 
+  const isToken0 = BigNumber.from(vBase.address).gt(vToken.address);
   const token0 = isToken0 ? vToken.address : vBase.address;
   const token1 = isToken0 ? vBase.address : vToken.address;
   const fee = 500;
@@ -79,8 +68,9 @@ export async function setupVPool({
   v3Deployer.parameters.returns([signer.address, token0, token1, fee, tickSpacing]);
 
   const vPool = await new UniswapV3Pool__factory(signer).deploy();
+  hre.tracer.nameTags[vPool.address] = 'vPool';
 
-  const sqrtPrice = toQ96(Math.sqrt(vPriceInitial));
+  const sqrtPrice = await priceToSqrtPriceX96(vPriceInitial, vBase, vToken);
   await vPool.initialize(sqrtPrice);
 
   return { vPool, vBase, vToken, oracle, isToken0 };
