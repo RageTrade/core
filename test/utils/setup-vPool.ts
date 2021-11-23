@@ -16,17 +16,25 @@ import { parseEther, parseUnits } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { priceToSqrtPriceX96 } from './price-tick';
 
+export interface SetupArgs {
+  vPriceInitial: number;
+  rPriceInitial: number;
+  vBaseDecimals?: number;
+  vTokenDecimals?: number;
+  signer?: SignerWithAddress;
+  vBase?: MockContract<VBase>;
+}
+
 export async function setupVPool({
   vPriceInitial,
   rPriceInitial,
+  vBaseDecimals,
+  vTokenDecimals,
   signer,
   vBase,
-}: {
-  vPriceInitial: number;
-  rPriceInitial: number;
-  signer?: SignerWithAddress;
-  vBase?: MockContract<VBase>;
-}) {
+}: SetupArgs) {
+  vBaseDecimals = vBaseDecimals ?? 6;
+  vTokenDecimals = vTokenDecimals ?? 18;
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
@@ -34,7 +42,7 @@ export async function setupVPool({
   if (!vBase) {
     // setting up virtual base
     const realBase = await smock.fake<ERC20>('ERC20');
-    realBase.decimals.returns(6);
+    realBase.decimals.returns(vBaseDecimals);
     const VBase__factory = await smock.mock<VBase__factory>('VBase', signer); // await hre.ethers.getContractFactory('VBase');
     vBase = await VBase__factory.deploy(realBase.address);
     hre.tracer.nameTags[vBase.address] = 'vBase';
@@ -42,7 +50,7 @@ export async function setupVPool({
 
   // setting up virtual token
   const realToken = await smock.fake<ERC20>('ERC20');
-  realToken.decimals.returns(18);
+  realToken.decimals.returns(vTokenDecimals);
   const VToken__factory = await smock.mock<VToken__factory>('VToken', signer); // await hre.ethers.getContractFactory('VToken');
   const vPoolWrapperAddressCalculated = signer.address; // ethers.constants.AddressZero;
   const vToken = await VToken__factory.deploy(
