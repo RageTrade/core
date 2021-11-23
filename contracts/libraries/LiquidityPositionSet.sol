@@ -10,7 +10,7 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Account } from './Account.sol';
 
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 struct LiquidityChangeParams {
     int24 tickLower;

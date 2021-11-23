@@ -6,7 +6,7 @@ import { TickUtilLib } from '../libraries/TickUtilLib.sol';
 import { GlobalUtilLib } from '../libraries/GlobalUtilLib.sol';
 
 import { console } from 'hardhat/console.sol';
-import '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract GlobalUtilLibTest {
     using TickUtilLib for TickUtilLib.TickState;

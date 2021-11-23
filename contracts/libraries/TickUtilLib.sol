@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 import { GlobalUtilLib } from './GlobalUtilLib.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 library TickUtilLib {
     using GlobalUtilLib for GlobalUtilLib.GlobalState;

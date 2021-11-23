@@ -2,24 +2,20 @@
 
 pragma solidity ^0.8.9;
 
-import { VPoolFactory } from './VPoolFactory.sol';
 import { Account, LiquidityChangeParams } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
+import { ClearingHouseState } from './ClearingHouseState.sol';
 
-contract ClearingHouse is VPoolFactory {
+contract ClearingHouse is ClearingHouseState {
     using Account for Account.Info;
-    mapping(address => bool) public supportedVTokens;
-    mapping(address => bool) public supportedDeposits;
-
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
 
-    constructor(
-        address VBASE_ADDRESS,
-        address UNISWAP_FACTORY_ADDRESS,
-        uint24 DEFAULT_FEE_TIER,
-        bytes32 POOL_BYTE_CODE_HASH
-    ) VPoolFactory(VBASE_ADDRESS, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH) {}
+    address public immutable realBase;
+
+    constructor(address VPoolFactory, address _realBase) ClearingHouseState(VPoolFactory) {
+        realBase = _realBase;
+    }
 
     function createAccount() external {
         Account.Info storage newAccount = accounts[numAccounts++];

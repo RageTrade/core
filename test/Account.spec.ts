@@ -2,14 +2,13 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 
-import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-
-import { AccountTest, ClearingHouse, ERC20, RealTokenMock } from '../typechain-types';
+import { calculateAddressFor } from './utils/create-addresses';
+import { AccountTest, VPoolFactory, ClearingHouse, ERC20, RealTokenMock } from '../typechain-types';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH } from './utils/realConstants';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -31,13 +30,13 @@ describe('AccountTest Library', () => {
 
   let signers: SignerWithAddress[];
 
-  async function deployPool(
-    clearingHouse: ClearingHouse,
+  async function initializePool(
+    VPoolFactory: VPoolFactory,
     initialMargin: BigNumberish,
     maintainanceMargin: BigNumberish,
     twapDuration: BigNumberish,
   ) {
-    await clearingHouse.initializePool(
+    await VPoolFactory.initializePool(
       'vWETH',
       'vWETH',
       realToken.address,
@@ -47,8 +46,8 @@ describe('AccountTest Library', () => {
       twapDuration,
     );
 
-    const eventFilter = clearingHouse.filters.poolInitlized();
-    const events = await clearingHouse.queryFilter(eventFilter, 'latest');
+    const eventFilter = VPoolFactory.filters.poolInitlized();
+    const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     vTokenAddress = events[0].args[1];
     const vPoolWrapper = events[0].args[2];
@@ -71,31 +70,41 @@ describe('AccountTest Library', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
     oracleAddress = oracle.address;
+    signers = await hre.ethers.getSigners();
 
-    const clearingHouseFactory = await hre.ethers.getContractFactory('ClearingHouse');
-    const clearingHouse = await clearingHouseFactory.deploy(
+    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const VPoolWrapperDeployer = await (
+      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    ).deploy(futureVPoolFactoryAddress);
+
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
+
+    const VPoolFactory = await (
+      await hre.ethers.getContractFactory('VPoolFactory')
+    ).deploy(
       vBaseAddress,
+      clearingHouse.address,
+      VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
     );
 
-    await vBase.transferOwnership(clearingHouse.address);
-
+    await vBase.transferOwnership(VPoolFactory.address);
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
     realToken = await realTokenFactory.deploy();
 
-    await deployPool(clearingHouse, 20, 10, 1);
-
+    await initializePool(VPoolFactory, 20, 10, 1);
     const factory = await hre.ethers.getContractFactory('AccountTest');
     test = await factory.deploy();
 
-    signers = await hre.ethers.getSigners();
     const tester = signers[0];
     ownerAddress = await tester.getAddress();
     testContractAddress = test.address;
 
-    constants = await clearingHouse.constants();
+    constants = await VPoolFactory.constants();
   });
 
   after(async () => {

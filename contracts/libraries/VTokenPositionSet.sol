@@ -13,7 +13,7 @@ import { SafeCast } from './uniswap/SafeCast.sol';
 import { FullMath } from './FullMath.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];

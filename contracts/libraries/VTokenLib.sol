@@ -14,7 +14,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 type VTokenAddress is address;
 
@@ -102,7 +102,7 @@ library VTokenLib {
                 Create2.computeAddress(
                     keccak256(abi.encode(VTokenAddress.unwrap(vToken), constants.VBASE_ADDRESS)),
                     constants.WRAPPER_BYTE_CODE_HASH,
-                    constants.VPOOL_FACTORY
+                    constants.VPOOL_WRAPPER_DEPLOYER
                 )
             );
     }

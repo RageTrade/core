@@ -9,7 +9,7 @@ import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract VTokenPositionSetTest {
     using VTokenPositionSet for VTokenPositionSet.Set;

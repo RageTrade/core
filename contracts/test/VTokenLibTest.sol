@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 contract VTokenLibTest {
     using VTokenLib for VTokenAddress;

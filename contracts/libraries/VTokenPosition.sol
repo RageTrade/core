@@ -11,7 +11,7 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 library VTokenPosition {
     error AlreadyInitialized();

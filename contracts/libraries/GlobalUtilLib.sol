@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 import { TickUtilLib } from './TickUtilLib.sol';
 import { VTokenLib, VTokenAddress } from './VTokenLib.sol';
-import { Constants } from '../Constants.sol';
+import { Constants } from '../utils/Constants.sol';
 
 library GlobalUtilLib {
     using GlobalUtilLib for GlobalState;
