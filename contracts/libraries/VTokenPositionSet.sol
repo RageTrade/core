@@ -298,7 +298,7 @@ library VTokenPositionSet {
         address vTokenAddress,
         Constants memory constants
     ) internal returns (int256) {
-        set.liquidateLiquidityPositions(
+        return set.liquidateLiquidityPositions(
             vTokenAddress,
             VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
             constants
