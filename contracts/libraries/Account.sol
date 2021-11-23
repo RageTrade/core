@@ -46,11 +46,11 @@ library Account {
     error InvalidTokenTradeAmount(int256 balance, int256 tokensToTrade);
     error InvalidLiquidationWrongSide(int256 totalRequiredMarginFinal, int256 totalRequiredMargin);
 
-    // @dev some functions in token position and liquidity position want to
-    //  change user's balances. pointer to this memory struct is passed and
-    //  the inner methods update values. after the function exec these can
-    //  be applied to user's virtual balance.
-    //  example: see liquidityChange in LiquidityPosition
+    /// @dev some functions in token position and liquidity position want to
+    ///  change user's balances. pointer to this memory struct is passed and
+    ///  the inner methods update values. after the function exec these can
+    ///  be applied to user's virtual balance.
+    ///  example: see liquidityChange in LiquidityPosition
     struct BalanceAdjustments {
         int256 vBaseIncrease;
         int256 vTokenIncrease;
@@ -127,6 +127,18 @@ library Account {
         account.checkIfProfitAvailable(vTokenAddresses, constants);
 
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
+    }
+
+    function chargeFee(
+        Info storage account,
+        uint256 amount,
+        Constants memory constants
+    ) internal {
+        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+            constants.VBASE_ADDRESS,
+            constants
+        );
+        vTokenPosition.balance -= int256(amount);
     }
 
     /// @notice returns market value and required margin for the account based on current market conditions
@@ -383,7 +395,9 @@ library Account {
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-        return computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+
+        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
     /// @notice liquidates all range positions in case the account is under water
@@ -415,7 +429,9 @@ library Account {
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-        return computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+
+        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
     function abs(int256 value) internal pure returns (int256) {
@@ -491,7 +507,12 @@ library Account {
                 1e5
             ) / 2;
 
-        return computeLiquidationFees(accountMarketValue, liquidationParams.fixFee.toInt256(), liquidationFeeHalf);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(
+            accountMarketValue,
+            liquidationParams.fixFee.toInt256(),
+            liquidationFeeHalf
+        );
+        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)
@@ -506,6 +527,7 @@ library Account {
         address vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
+        uint256 limitOrderFee,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
@@ -514,6 +536,7 @@ library Account {
             tickLower,
             tickUpper,
             VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants),
+            limitOrderFee,
             vTokenAddresses,
             VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
             constants
@@ -534,19 +557,16 @@ library Account {
         int24 tickLower,
         int24 tickUpper,
         int24 currentTick,
+        uint256 limitOrderFee,
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            vTokenAddress,
-            constants
-        );
-
-        LiquidityPosition.Info storage position = vTokenPosition.liquidityPositions.getLiquidityPosition(
-            tickLower,
-            tickUpper
-        );
+        LiquidityPosition.Info storage position = account
+            .tokenPositions
+            .getTokenPosition(vTokenAddress, constants)
+            .liquidityPositions
+            .getLiquidityPosition(tickLower, tickUpper);
 
         if (
             (currentTick >= tickUpper && position.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
@@ -563,5 +583,7 @@ library Account {
         } else {
             revert IneligibleLimitOrderRemoval();
         }
+
+        account.chargeFee(limitOrderFee, constants);
     }
 }
