@@ -213,7 +213,7 @@ library Account {
         Constants memory constants
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. an  d send to the pool
@@ -245,7 +245,7 @@ library Account {
         Constants memory constants
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. and send to the pool
@@ -324,7 +324,7 @@ library Account {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal {
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
 
         // mint/burn tokens + fee + funding payment
         account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
@@ -403,7 +403,7 @@ library Account {
         if (accountMarketValue < totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
@@ -437,7 +437,7 @@ library Account {
         if (accountMarketValue < totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
@@ -499,7 +499,7 @@ library Account {
             if (abs(tokensToTrade) > abs(vTokenPosition.balance)) {
                 tokensToTrade = -1 * vTokenPosition.balance;
             }
-            account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
             account.tokenPositions.swapTokenAmount(vTokenAddress, tokensToTrade, constants);
 
             int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(
@@ -584,7 +584,7 @@ library Account {
             (currentTick >= tickUpper && position.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
             (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
         ) {
-            account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
             account.tokenPositions.liquidityChange(
                 vTokenAddress,
                 position,

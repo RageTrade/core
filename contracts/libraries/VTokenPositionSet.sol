@@ -160,6 +160,8 @@ library VTokenPositionSet {
         if (vTokenAddress != constants.VBASE_ADDRESS) {
             set.active.include(truncate(vTokenAddress)); // TODO : We can do truncate at once at the top and save it in mem
         }
+        // set.realizeFundingPayment(accountNo, vTokenAddress, constants);
+        //TODO: Add realize funding payment and event
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncate(vTokenAddress)];
         _VTokenPosition.balance += balanceAdjustments.vTokenIncrease;
         _VTokenPosition.netTraderPosition += balanceAdjustments.traderPositionIncrease;
@@ -177,21 +179,22 @@ library VTokenPositionSet {
         address vTokenAddress,
         Constants memory constants
     ) internal {
-        realizeFundingPayment(set, vTokenAddress, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
+        set.realizeFundingPayment(vTokenAddress, VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants), constants);
     }
 
-    function realizeFundingPayment(
-        Set storage set,
-        mapping(uint32 => address) storage vTokenAddresses,
-        Constants memory constants
-    ) internal {
-        for (uint8 i = 0; i < set.active.length; i++) {
-            uint32 truncated = set.active[i];
-            if (truncated == 0) break;
+    // function realizeFundingPayment(
+    //     Set storage set,
+    //     uint256 accountNo,
+    //     mapping(uint32 => address) storage vTokenAddresses,
+    //     Constants memory constants
+    // ) internal {
+    //     for (uint8 i = 0; i < set.active.length; i++) {
+    //         uint32 truncated = set.active[i];
+    //         if (truncated == 0) break;
 
-            set.realizeFundingPayment(vTokenAddresses[truncated], constants);
-        }
-    }
+    //         set.realizeFundingPayment(vTokenAddresses[truncated], constants);
+    //     }
+    // }
 
     function realizeFundingPayment(
         Set storage set,
