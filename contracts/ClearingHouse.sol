@@ -5,34 +5,13 @@ pragma solidity ^0.8.9;
 import { Account, LiquidityChangeParams, LiquidationParams } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseState } from './ClearingHouseState.sol';
+import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 
-contract ClearingHouse is ClearingHouseState {
+contract ClearingHouse is ClearingHouseState, IClearingHouse {
     LiquidationParams public liquidationParams;
     using Account for Account.Info;
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
-
-    address public immutable realBase;
-    event AccountCreated(address ownerAddress, uint256 accountNo);
-    event DepositMargin(uint256 accountNo, uint32 truncatedTokenAddress, uint256 amount);
-    event WithdrawMargin(uint256 accountNo, uint32 truncatedTokenAddress, uint256 amount);
-    event WithdrawProfit(uint256 accountNo, int256 amount);
-
-    event Swap(uint256 accountNo, uint32 truncatedTokenAddress, int256 tokenAmountOut, int256 baseAmountOut);
-    event LiqudityChange(
-        uint256 accountNo,
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidityDelta,
-        LimitOrderType limitOrderType,
-        int256 tokenAmountOut,
-        int256 baseAmountOut
-    );
-    event LiquidateRanges(uint256 accountNo, uint256 liquidationFee);
-    event LiquidateTokenPosition(uint256 accountNo, uint256 notionalClosed, uint256 liquidationFee);
-
-    event FundingPayment(uint256 accountNo, uint256 identifier, int256 amount);
-    event Fee(uint256 accountNo, uint256 identifier, int256 amount);
 
     constructor(
         address VBASE_ADDRESS,
@@ -102,8 +81,7 @@ contract ClearingHouse is ClearingHouseState {
             constants
         );
 
-        //TODO: add base amount as return value and replace 0 with that
-        emit Swap(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
+        emit TokenPositionChange(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     function swapTokenNotional(
@@ -124,8 +102,7 @@ contract ClearingHouse is ClearingHouseState {
             constants
         );
 
-        //TODO: add base amount as return value and replace 0 with that
-        emit Swap(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
+        emit TokenPositionChange(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     function updateRangeOrder(
