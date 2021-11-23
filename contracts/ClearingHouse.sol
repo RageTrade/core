@@ -13,14 +13,43 @@ contract ClearingHouse is ClearingHouseState {
     mapping(uint256 => Account.Info) accounts;
 
     address public immutable realBase;
+    event AccountCreated(address ownerAddress, uint256 accountNo);
+    event DepositMargin(uint256 accountNo, uint32 truncatedTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 accountNo, uint32 truncatedTokenAddress, uint256 amount);
+    event WithdrawProfit(uint256 accountNo, int256 amount);
+
+    event Swap(uint256 accountNo, uint32 truncatedTokenAddress, int256 tokenAmountOut, int256 baseAmountOut);
+    event LiqudityChange(
+        uint256 accountNo,
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta,
+        LimitOrderType limitOrderType,
+        int256 tokenAmountOut,
+        int256 baseAmountOut
+    );
+    event LiquidateRanges(uint256 accountNo, uint256 liquidationFee);
+    event LiquidateTokenPosition(uint256 accountNo, uint256 notionalClosed, uint256 liquidationFee);
+
+    event FundingPayment(uint256 accountNo, uint256 identifier, int256 amount);
+    event Fee(uint256 accountNo, uint256 identifier, int256 amount);
+
+    constructor(
+        address VBASE_ADDRESS,
+        address UNISWAP_FACTORY_ADDRESS,
+        uint24 DEFAULT_FEE_TIER,
+        bytes32 POOL_BYTE_CODE_HASH
+    ) VPoolFactory(VBASE_ADDRESS, UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH) {}
 
     constructor(address VPoolFactory, address _realBase) ClearingHouseState(VPoolFactory) {
         realBase = _realBase;
     }
 
     function createAccount() external {
-        Account.Info storage newAccount = accounts[numAccounts++];
+        Account.Info storage newAccount = accounts[numAccounts];
         newAccount.owner = msg.sender;
+
+        emit AccountCreated(msg.sender, numAccounts++);
     }
 
     function addMargin(
@@ -35,6 +64,8 @@ contract ClearingHouse is ClearingHouseState {
         require(supportedDeposits[vTokenAddress], 'Unsupported Token');
 
         account.addMargin(vTokenAddress, amount, constants);
+
+        emit DepositMargin(accountNo, vTokenTruncatedAddress, amount);
     }
 
     function removeMargin(
@@ -49,6 +80,8 @@ contract ClearingHouse is ClearingHouseState {
         require(supportedDeposits[vTokenAddress], 'Unsupported Token');
 
         account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
+
+        emit WithdrawMargin(accountNo, vTokenTruncatedAddress, amount);
     }
 
     function swapTokenAmount(
@@ -63,6 +96,9 @@ contract ClearingHouse is ClearingHouseState {
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
         account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
+
+        //TODO: add base amount as return value and replace 0 with that
+        emit Swap(accountNo, vTokenTruncatedAddress, vTokenAmount, 0);
     }
 
     function swapTokenNotional(
@@ -77,6 +113,9 @@ contract ClearingHouse is ClearingHouseState {
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
         account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
+
+        //TODO: add base amount as return value and replace 0 with that
+        emit Swap(accountNo, vTokenTruncatedAddress, 0, -vBaseAmount);
     }
 
     function updateRangeOrder(
@@ -91,6 +130,16 @@ contract ClearingHouse is ClearingHouseState {
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
         account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, constants);
+
+        emit LiqudityChange(
+            accountNo,
+            liquidityChangeParams.tickLower,
+            liquidityChangeParams.tickUpper,
+            liquidityChangeParams.liquidityDelta,
+            liquidityChangeParams.limitOrderType,
+            0,
+            0
+        );
     }
 
     function removeLimitOrder(
@@ -104,13 +153,23 @@ contract ClearingHouse is ClearingHouseState {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, vTokenAddresses, constants);
+        //TODO: Add remove limit order fee immutable and replace 0 with that
+        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, 0, vTokenAddresses, constants);
+
+        // emit LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function liquidateLiquidityPositions(uint256 accountNo) external {
         Account.Info storage account = accounts[accountNo];
 
-        account.liquidateLiquidityPositions(liquidationParams.liquidationFeeFraction, vTokenAddresses, constants);
+        (int256 keeperFee, int256 insuranceFundFee) = account.liquidateLiquidityPositions(
+            liquidationParams.liquidationFeeFraction,
+            vTokenAddresses,
+            constants
+        );
+        int256 accountFee = keeperFee + insuranceFundFee;
+
+        emit LiquidateRanges(accountNo, uint256(accountFee));
     }
 
     function liquidateTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddress) external {
