@@ -8,11 +8,11 @@ import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { smock } from '@defi-wonderland/smock';
-config();
-const { ALCHEMY_KEY } = process.env;
-
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { calculateAddressFor } from './utils/create-addresses';
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
+
 describe('VTokenPositionSet Library', () => {
   // const vTokenAddress: string = utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
   // const vTokenAddress1: string = utils.hexZeroPad(BigNumber.from(2).toHexString(), 20);
@@ -23,7 +23,7 @@ describe('VTokenPositionSet Library', () => {
   let VBase: VBase;
   let VPoolWrapper: VPoolWrapper;
   let constants: ConstantsStruct;
-
+  let signers: SignerWithAddress[];
   before(async () => {
     await activateMainnetFork();
 
@@ -32,11 +32,19 @@ describe('VTokenPositionSet Library', () => {
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
-    const VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
+    signers = await hre.ethers.getSigners();
+    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const VPoolWrapperDeployer = await (
+      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    ).deploy(futureVPoolFactoryAddress);
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(
       VBase.address,
+      clearingHouse.address,
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
@@ -44,10 +52,6 @@ describe('VTokenPositionSet Library', () => {
     );
 
     await VBase.transferOwnership(VPoolFactory.address);
-    const clearingHouse = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(VPoolFactory.address, REAL_BASE);
-    await VPoolFactory.initBridge(clearingHouse.address);
 
     await VPoolFactory.initializePool('vWETH', 'vWETH', realToken0, oracleAddress, 2, 3, 2);
 

@@ -19,6 +19,11 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         Constants constants;
     }
     Parameters public override parameters;
+    address public immutable VPoolFactory;
+
+    constructor(address _VPoolFactory) {
+        VPoolFactory = _VPoolFactory;
+    }
 
     function deployVPoolWrapper(
         address vTokenAddress,
@@ -28,6 +33,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         uint32 twapDuration,
         Constants memory constants
     ) external returns (address) {
+        if (msg.sender != VPoolFactory) revert NotVPoolFactory();
         bytes32 salt = keccak256(abi.encode(vTokenAddress, constants.VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;
         parameters = Parameters(vTokenAddress, vPool, initialMargin, maintainanceMargin, twapDuration, constants);

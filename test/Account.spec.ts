@@ -5,7 +5,7 @@ import { network } from 'hardhat';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-
+import { calculateAddressFor } from './utils/create-addresses';
 import { AccountTest, VPoolFactory, ClearingHouse, ERC20, RealTokenMock } from '../typechain-types';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
@@ -70,10 +70,22 @@ describe('AccountTest Library', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
     oracleAddress = oracle.address;
-    const VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
-    const VPoolFactoryFactory = await hre.ethers.getContractFactory('VPoolFactory');
-    const VPoolFactory = await VPoolFactoryFactory.deploy(
+    signers = await hre.ethers.getSigners();
+
+    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const VPoolWrapperDeployer = await (
+      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    ).deploy(futureVPoolFactoryAddress);
+
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
+
+    const VPoolFactory = await (
+      await hre.ethers.getContractFactory('VPoolFactory')
+    ).deploy(
       vBaseAddress,
+      clearingHouse.address,
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
@@ -81,20 +93,13 @@ describe('AccountTest Library', () => {
     );
 
     await vBase.transferOwnership(VPoolFactory.address);
-
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
     realToken = await realTokenFactory.deploy();
-
-    const clearingHouse = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(VPoolFactory.address, REAL_BASE);
-    await VPoolFactory.initBridge(clearingHouse.address);
 
     await initializePool(VPoolFactory, 20, 10, 1);
     const factory = await hre.ethers.getContractFactory('AccountTest');
     test = await factory.deploy();
 
-    signers = await hre.ethers.getSigners();
     const tester = signers[0];
     ownerAddress = await tester.getAddress();
     testContractAddress = test.address;

@@ -1,9 +1,7 @@
 0. Deploy VBase
 1. Deploy Oracle
-2. Deploy VPoolWrapperDeployer
-3. Deploy VPoolFactory (VBase, VPoolWrapperDeployer)
+2. Deploy VPoolWrapperDeployer (FutureVPoolFactory)
+3. Deploy ClearingHouse(FutureVPoolFactory, RealBase)
+4. Deploy VPoolFactory (VBase, VPoolWrapperDeployer, ClearingHouse)
    VBase - SetOwnerShip(VPoolFactory)
-4. Deploy ClearingHouse(VPoolFactory, RealBase)
    ClearingHouse - setFixedFee
-
-5. VPoolFactory - InitBridge(ClearingHouse)

@@ -4,13 +4,12 @@ import { network } from 'hardhat';
 import { VPoolFactory, ERC20, VBase, VPoolWrapper } from '../typechain-types';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-import { config } from 'dotenv';
-config();
 import { BigNumber } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { smock } from '@defi-wonderland/smock';
-const { ALCHEMY_KEY } = process.env;
 const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { calculateAddressFor } from './utils/create-addresses';
 
 describe('VPoolWrapper', () => {
   let oracle: string;
@@ -24,7 +23,7 @@ describe('VPoolWrapper', () => {
   const liq: BigNumber = BigNumber.from(10000000000000);
   const lowerTick: BigNumber = BigNumber.from(-10);
   const higherTick: BigNumber = BigNumber.from(10);
-
+  let signers: SignerWithAddress[];
   before(async () => {
     await activateMainnetFork();
 
@@ -32,21 +31,26 @@ describe('VPoolWrapper', () => {
     realBase.decimals.returns(10);
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
-    const VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
+
+    signers = await hre.ethers.getSigners();
+    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const VPoolWrapperDeployer = await (
+      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    ).deploy(futureVPoolFactoryAddress);
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(
       VBase.address,
+      clearingHouse.address,
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
     );
-    VBase.transferOwnership(VPoolFactory.address);
-    const clearingHouse = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(VPoolFactory.address, REAL_BASE);
-    await VPoolFactory.initBridge(clearingHouse.address);
+    await VBase.transferOwnership(VPoolFactory.address);
 
     await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 2, 3, 60);
     const eventFilter = VPoolFactory.filters.poolInitlized();
@@ -55,7 +59,6 @@ describe('VPoolWrapper', () => {
     VPoolAddress = events[0].args[0];
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
 
-    const signers = await hre.ethers.getSigners();
     UniswapV3pool = await hre.ethers.getContractAt('IUniswapV3Pool', VPoolAddress);
     VToken = await hre.ethers.getContractAt('IERC20', VTokenAddress);
   });

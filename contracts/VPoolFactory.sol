@@ -10,7 +10,7 @@ import { IOracle } from './interfaces/IOracle.sol';
 import { IVBase } from './interfaces/IVBase.sol';
 import { VToken, IVToken } from './tokens/VToken.sol';
 import { IVPoolWrapperDeployer } from './interfaces/IVPoolWrapperDeployer.sol';
-import { IBridgeFactoryAndHouse } from './interfaces/IBridgeFactoryAndHouse.sol';
+import { IClearingHouseState } from './interfaces/IClearingHouseState.sol';
 
 contract VPoolFactory {
     Constants public constants;
@@ -18,11 +18,12 @@ contract VPoolFactory {
     address public immutable owner;
     bool public isRestricted;
 
-    IBridgeFactoryAndHouse public bridge;
+    IClearingHouseState public ClearingHouse;
     IVPoolWrapperDeployer public VPoolWrapperDeployer;
 
     constructor(
         address VBASE_ADDRESS,
+        address ClearingHouseAddress,
         address VPoolWrapperDeployerAddress,
         address UNISWAP_FACTORY_ADDRESS,
         uint24 DEFAULT_FEE_TIER,
@@ -40,14 +41,11 @@ contract VPoolFactory {
             POOL_BYTE_CODE_HASH,
             VPoolWrapperDeployer.byteCodeHash()
         );
+        ClearingHouse = IClearingHouseState(ClearingHouseAddress);
+        ClearingHouse.setConstants(constants);
     }
 
     event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
-
-    function initBridge(address _clearingHouse) external onlyOwner {
-        bridge = IBridgeFactoryAndHouse(_clearingHouse);
-        bridge.setConstants(constants);
-    }
 
     function initializePool(
         string calldata vTokenName,
@@ -85,7 +83,7 @@ contract VPoolFactory {
         address oracleAddress
     ) internal returns (address) {
         // Pool for this token must not be already created
-        require(bridge.isRealTokenAlreadyInitilized(realToken) == false, 'Duplicate Pool');
+        require(ClearingHouse.isRealTokenAlreadyInitilized(realToken) == false, 'Duplicate Pool');
 
         uint160 salt = uint160(realToken);
         bytes memory bytecode = type(VToken).creationCode;
@@ -100,15 +98,15 @@ contract VPoolFactory {
         while (true) {
             vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
             key = uint32(uint160(vTokenAddress));
-            if (bridge.isKeyAvailable(key)) {
+            if (ClearingHouse.isKeyAvailable(key)) {
                 break;
             }
             salt++; // using a different salt
         }
         address deployedAddress = Create2.deploy(0, keccak256(abi.encode(salt)), bytecode);
         require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
-        bridge.addKey(key, deployedAddress);
-        bridge.initRealToken(realToken);
+        ClearingHouse.addKey(key, deployedAddress);
+        ClearingHouse.initRealToken(realToken);
         return deployedAddress;
     }
 

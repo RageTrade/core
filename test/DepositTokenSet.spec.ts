@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-
+import { calculateAddressFor } from './utils/create-addresses';
 import { DepositTokenSetTest, VPoolFactory, ClearingHouse, RealTokenMock, ERC20 } from '../typechain-types';
 import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
@@ -63,10 +63,22 @@ describe('DepositTokenSet Library', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
     oracleAddress = oracle.address;
-    const VPoolWrapperDeployer = await (await hre.ethers.getContractFactory('VPoolWrapperDeployer')).deploy();
-    const VPoolFactoryFactory = await hre.ethers.getContractFactory('VPoolFactory');
-    const VPoolFactory = await VPoolFactoryFactory.deploy(
+    signers = await hre.ethers.getSigners();
+
+    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const VPoolWrapperDeployer = await (
+      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    ).deploy(futureVPoolFactoryAddress);
+
+    const clearingHouse = await (
+      await hre.ethers.getContractFactory('ClearingHouse')
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
+
+    const VPoolFactory = await (
+      await hre.ethers.getContractFactory('VPoolFactory')
+    ).deploy(
       vBaseAddress,
+      clearingHouse.address,
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
@@ -77,11 +89,6 @@ describe('DepositTokenSet Library', () => {
 
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
     realToken = await realTokenFactory.deploy();
-
-    const clearingHouse = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(VPoolFactory.address, REAL_BASE);
-    await VPoolFactory.initBridge(clearingHouse.address);
 
     await initializePool(VPoolFactory, 20, 10, 1);
 
