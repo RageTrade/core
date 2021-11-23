@@ -18,8 +18,8 @@ contract VPoolFactory {
     address public immutable owner;
     bool public isRestricted;
 
-    IClearingHouseState public ClearingHouse;
-    IVPoolWrapperDeployer public VPoolWrapperDeployer;
+    IClearingHouseState public immutable ClearingHouse;
+    IVPoolWrapperDeployer public immutable VPoolWrapperDeployer;
 
     constructor(
         address VBASE_ADDRESS,

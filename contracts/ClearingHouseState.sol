@@ -5,13 +5,14 @@ import { Constants } from './utils/Constants.sol';
 import { Governable } from './utils/Governable.sol';
 
 abstract contract ClearingHouseState is IClearingHouseState, Governable {
-    address public VPoolFactory;
+    address public immutable VPoolFactory;
     Constants public constants;
 
     mapping(uint32 => address) vTokenAddresses;
     mapping(address => bool) public realTokenInitilized;
     mapping(address => bool) public supportedVTokens;
     mapping(address => bool) public supportedDeposits;
+
     uint256 public fixedFee;
 
     error NotVPoolFactory();
