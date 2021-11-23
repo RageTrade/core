@@ -298,11 +298,12 @@ library VTokenPositionSet {
         address vTokenAddress,
         Constants memory constants
     ) internal returns (int256) {
-        return set.liquidateLiquidityPositions(
-            vTokenAddress,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-            constants
-        );
+        return
+            set.liquidateLiquidityPositions(
+                vTokenAddress,
+                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                constants
+            );
     }
 
     function liquidateLiquidityPositions(
