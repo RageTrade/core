@@ -236,7 +236,7 @@ library VTokenPositionSet {
         address vTokenAddress,
         int256 vTokenAmount,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256, int256) {
         return
             set.swapTokenAmount(
                 vTokenAddress,
@@ -251,7 +251,7 @@ library VTokenPositionSet {
         address vTokenAddress,
         int256 vTokenNotional,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256, int256) {
         return
             set.swapTokenNotional(
                 vTokenAddress,
@@ -329,7 +329,7 @@ library VTokenPositionSet {
         int256 vTokenAmount,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256, int256) {
         int256 vBaseAmount = wrapper.swapTokenAmount(vTokenAmount);
         Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
             vBaseAmount,
@@ -339,7 +339,7 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, vTokenAddress, constants);
 
-        return vBaseAmount;
+        return (vTokenAmount, vBaseAmount);
     }
 
     function swapTokenNotional(
@@ -348,7 +348,7 @@ library VTokenPositionSet {
         int256 vTokenNotional,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256, int256) {
         int256 vTokenAmount = wrapper.swapTokenNotional(vTokenNotional);
 
         Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
@@ -359,7 +359,7 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, vTokenAddress, constants);
 
-        return vTokenNotional;
+        return (vTokenAmount, -vTokenNotional);
     }
 
     function liquidityChange(

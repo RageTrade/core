@@ -211,13 +211,18 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
         account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. an  d send to the pool
-        account.tokenPositions.swapTokenAmount(vTokenAddress, vTokenAmount, wrapper, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapTokenAmount(
+            vTokenAddress,
+            vTokenAmount,
+            wrapper,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
@@ -238,13 +243,18 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
         account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. and send to the pool
-        account.tokenPositions.swapTokenNotional(vTokenAddress, vTokenNotional, wrapper, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapTokenNotional(
+            vTokenAddress,
+            vTokenNotional,
+            wrapper,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
@@ -263,14 +273,15 @@ library Account {
         int256 vTokenAmount,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal {
-        account.swapTokenAmount(
-            vTokenAddress,
-            vTokenAmount,
-            vTokenAddresses,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-            constants
-        );
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+        return
+            account.swapTokenAmount(
+                vTokenAddress,
+                vTokenAmount,
+                vTokenAddresses,
+                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                constants
+            );
     }
 
     /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
@@ -286,14 +297,15 @@ library Account {
         int256 vTokenNotional,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal {
-        account.swapTokenNotional(
-            vTokenAddress,
-            vTokenNotional,
-            vTokenAddresses,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-            constants
-        );
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+        return
+            account.swapTokenNotional(
+                vTokenAddress,
+                vTokenNotional,
+                vTokenAddresses,
+                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                constants
+            );
     }
 
     /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'

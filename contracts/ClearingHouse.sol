@@ -95,10 +95,15 @@ contract ClearingHouse is ClearingHouseState {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
-        account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
+        (int256 vTokenAmountOut, int256 vBaseAmountOut) = account.swapTokenAmount(
+            vTokenAddress,
+            vTokenAmount,
+            vTokenAddresses,
+            constants
+        );
 
         //TODO: add base amount as return value and replace 0 with that
-        emit Swap(accountNo, vTokenTruncatedAddress, vTokenAmount, 0);
+        emit Swap(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     function swapTokenNotional(
@@ -112,10 +117,15 @@ contract ClearingHouse is ClearingHouseState {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
-        account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
+        (int256 vTokenAmountOut, int256 vBaseAmountOut) = account.swapTokenNotional(
+            vTokenAddress,
+            vBaseAmount,
+            vTokenAddresses,
+            constants
+        );
 
         //TODO: add base amount as return value and replace 0 with that
-        emit Swap(accountNo, vTokenTruncatedAddress, 0, -vBaseAmount);
+        emit Swap(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     function updateRangeOrder(
