@@ -1,8 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
 
-// pragma solidity ^0.7.6;
-
-// if importing uniswap v3 libraries this might not work
 pragma solidity ^0.8.9;
 import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
@@ -104,7 +101,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     {
         (, int24 currentTick, , , , , ) = vPool.slot0();
         FundingPayment.Info memory _fpGlobal = fpGlobal;
-        sumAX128 = fpGlobal.sumAX128;
+        sumAX128 = _fpGlobal.sumAX128;
         sumBInsideX128 = extendedTicks.getNetPositionInside(tickLower, tickUpper, currentTick, _fpGlobal.sumBX128);
         sumFpInsideX128 = extendedTicks.getFundingPaymentGrowthInside(
             tickLower,
@@ -139,7 +136,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
-        bool zeroForOne = isToken0 != buyVToken; // this is correct
+        bool zeroForOne = isToken0 != buyVToken;
 
         if (sqrtPriceLimitX96 == 0) {
             sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
@@ -343,11 +340,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             amount1Requested: type(uint128).max
         });
 
-        // (uint256 basePrincipalPlusLongFees, uint256 vTokenPrincipalPlusShortFees) = vToken.flip(amount0, amount1, constants);
-
-        // burn ERC20 tokens sent by uniswap and fwd accounting to perp state
-        // IVBase(constants.VBASE_ADDRESS).burn(address(this), basePrincipalPlusLongFees);
-        // vToken.iface().burn(address(this), vTokenPrincipalPlusShortFees);
         _vBurn();
     }
 
