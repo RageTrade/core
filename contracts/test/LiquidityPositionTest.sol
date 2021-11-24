@@ -48,7 +48,7 @@ contract LiquidityPositionTest {
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
         Constants memory constants
-    ) public view returns (uint256) {
+    ) public view returns (int256) {
         return lp.baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
     }
 }

@@ -48,7 +48,7 @@ library LiquidityPositionSet {
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
         Constants memory constants
-    ) internal view returns (uint256 baseValue_) {
+    ) internal view returns (int256 baseValue_) {
         baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
     }
 
@@ -58,7 +58,7 @@ library LiquidityPositionSet {
         VTokenAddress vToken,
         IVPoolWrapper wrapper, // TODO refactor this
         Constants memory constants
-    ) internal view returns (uint256 baseValue_) {
+    ) internal view returns (int256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
             baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
