@@ -118,8 +118,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, constants);
 
-        emit LiqudityChange(
+        emit LiquidityChange(
             accountNo,
+            uint32(uint160(vTokenAddress)),
             liquidityChangeParams.tickLower,
             liquidityChangeParams.tickUpper,
             liquidityChangeParams.liquidityDelta,
