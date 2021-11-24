@@ -18,6 +18,8 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   wrapperDeployer.parameters.returns([
     vToken.address,
     vPool.address,
+    setupArgs.extendedFee ?? 500,
+    setupArgs.protocolFee ?? 500,
     2, // initialMargin
     3, // maintainanceMargin
     60, // twapDuration

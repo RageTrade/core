@@ -68,7 +68,7 @@ describe('PoolWrapper', () => {
       }));
 
       protocolFee = await vPoolWrapper.protocolFee();
-      uniswapFee = await vPoolWrapper.fee();
+      uniswapFee = await vPoolWrapper.uniswapFee();
       // const { tick, sqrtPriceX96 } = await vPool.slot0();
       // console.log({ isToken0, tick, sqrtPriceX96 });
 
@@ -164,9 +164,11 @@ describe('PoolWrapper', () => {
         vPriceInitial: 1,
         vBaseDecimals: 18,
         vTokenDecimals: 18,
+        extendedFee: 0,
+        protocolFee: 500,
       }));
       protocolFee = await vPoolWrapper.protocolFee();
-      uniswapFee = await vPoolWrapper.fee();
+      uniswapFee = await vPoolWrapper.uniswapFee();
 
       const { sqrtPriceX96 } = await vPool.slot0();
       liquidity1 = maxLiquidityForAmounts(
@@ -300,8 +302,8 @@ describe('PoolWrapper', () => {
         );
       });
 
-      // buy VToken worth 50 VBase, does not cross tick
-      it('single tick cross');
+      it('buy: single tick cross');
+      it('sell: single tick cross');
     });
   });
 

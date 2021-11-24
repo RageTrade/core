@@ -21,6 +21,8 @@ export interface SetupArgs {
   rPriceInitial: number;
   vBaseDecimals?: number;
   vTokenDecimals?: number;
+  extendedFee?: number;
+  protocolFee?: number;
   signer?: SignerWithAddress;
   vBase?: MockContract<VBase>;
 }
