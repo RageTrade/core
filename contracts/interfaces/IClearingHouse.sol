@@ -6,6 +6,10 @@ import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityChangeParams } from '../libraries/Account.sol';
 
 interface IClearingHouse {
+    error AccessDenied(address senderAddress);
+    error UnsupportedToken(address vTokenAddress);
+    error InvalidNotionalValue(int256 notionalValue);
+
     function createAccount() external;
 
     function addMargin(

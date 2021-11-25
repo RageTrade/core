@@ -32,10 +32,10 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 amount
     ) external {
         Account.Info storage account = accounts[accountNo];
-        require(msg.sender == account.owner, 'Access Denied');
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedDeposits[vTokenAddress], 'Unsupported Token');
+        if (!supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.addMargin(vTokenAddress, amount, constants);
 
@@ -48,10 +48,10 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 amount
     ) external {
         Account.Info storage account = accounts[accountNo];
-        require(msg.sender == account.owner, 'Access Denied');
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedDeposits[vTokenAddress], 'Unsupported Token');
+        if (!supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
 
@@ -64,10 +64,10 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         int256 vTokenAmount
     ) external {
         Account.Info storage account = accounts[accountNo];
-        require(msg.sender == account.owner, 'Access Denied');
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedVTokens[vTokenAddress], 'Unsupported Token');
+        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
     }
@@ -78,10 +78,10 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         int256 vBaseAmount
     ) external {
         Account.Info storage account = accounts[accountNo];
-        require(msg.sender == account.owner, 'Access Denied');
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedVTokens[vTokenAddress], 'Unsupported Token');
+        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
     }
@@ -92,10 +92,10 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         LiquidityChangeParams calldata liquidityChangeParams
     ) external {
         Account.Info storage account = accounts[accountNo];
-        require(msg.sender == account.owner, 'Access Denied');
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedVTokens[vTokenAddress], 'Unsupported Token');
+        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, constants);
     }
@@ -109,7 +109,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedVTokens[vTokenAddress], 'Unsupported Token');
+        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         //TODO: Add remove limit order fee immutable and replace 0 with that
         account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, 0, constants);
@@ -134,7 +134,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        require(supportedVTokens[vTokenAddress], 'Unsupported Token');
+        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         (int256 keeperFee, int256 insuranceFundFee) = account.liquidateTokenPosition(
             vTokenAddress,
