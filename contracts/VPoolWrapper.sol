@@ -21,6 +21,7 @@ import { Tick } from './libraries/Tick.sol';
 import { TickMath } from './libraries/uniswap/TickMath.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
+import { Oracle } from './libraries/Oracle.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -30,6 +31,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using SignedMath for int256;
     using PriceMath for uint160;
     using SafeCast for uint256;
+    using Oracle for IUniswapV3Pool;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
@@ -309,6 +311,18 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (amount1Delta > 0) {
             IVToken(vPool.token1()).mint(address(vPool), uint256(amount1Delta));
         }
+    }
+
+    // for updating global funding payment
+    function zeroSwap() external {
+        uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
+        fpGlobal.update(
+            0,
+            1,
+            uint48(block.timestamp),
+            priceX128,
+            vPool.getTwapSqrtPrice(1 hours).toPriceX128(isToken0)
+        );
     }
 
     function liquidityChange(
