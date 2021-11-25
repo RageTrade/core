@@ -64,10 +64,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }
 
-    function removeProfit(
-        uint256 accountNo,
-        uint256 amount
-    ) external {
+    function removeProfit(uint256 accountNo, uint256 amount) external {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -115,6 +112,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+
+        if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
+            revert InvalidLiquidityChangeParameters();
 
         account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, constants);
     }
