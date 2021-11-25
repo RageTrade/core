@@ -46,6 +46,51 @@ library Account {
     error InvalidTokenTradeAmount(int256 balance, int256 tokensToTrade);
     error InvalidLiquidationWrongSide(int256 totalRequiredMarginFinal, int256 totalRequiredMargin);
 
+    event AccountCreated(address ownerAddress, uint256 accountNo);
+    event DepositMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
+    event WithdrawProfit(uint256 accountNo, int256 amount);
+
+    event TokenPositionChange(uint256 accountNo, address vTokenAddress, int256 tokenAmountOut, int256 baseAmountOut);
+
+    event LiquidityTokenPositionChange(
+        uint256 accountNo,
+        address vTokenAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        int256 tokenAmountOut
+    );
+
+    event LiquidityChange(
+        uint256 accountNo,
+        address vTokenAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta,
+        LimitOrderType limitOrderType,
+        int256 tokenAmountOut,
+        int256 baseAmountOut
+    );
+
+    event FundingPayment(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
+    event LiquidityFee(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
+
+    event LiquidateRanges(
+        uint256 accountNo,
+        address keeperAddress,
+        int256 liquidationFee,
+        int256 keeperFee,
+        int256 insuranceFundFee
+    );
+    event LiquidateTokenPosition(
+        uint256 accountNo,
+        address vTokenAddress,
+        address keeperAddress,
+        int256 liquidationFee,
+        int256 keeperFee,
+        int256 insuranceFundFee
+    );
+
     /// @dev some functions in token position and liquidity position want to
     ///  change user's balances. pointer to this memory struct is passed and
     ///  the inner methods update values. after the function exec these can

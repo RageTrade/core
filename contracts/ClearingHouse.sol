@@ -22,7 +22,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage newAccount = accounts[numAccounts];
         newAccount.owner = msg.sender;
 
-        emit AccountCreated(msg.sender, numAccounts++);
+        emit Account.AccountCreated(msg.sender, numAccounts++);
     }
 
     function addMargin(
@@ -38,7 +38,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         account.addMargin(vTokenAddress, amount, constants);
 
-        emit DepositMargin(accountNo, vTokenTruncatedAddress, amount);
+        emit Account.DepositMargin(accountNo, vTokenAddress, amount);
     }
 
     function removeMargin(
@@ -54,7 +54,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
 
-        emit WithdrawMargin(accountNo, vTokenTruncatedAddress, amount);
+        emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }
 
     function swapTokenAmount(
@@ -74,8 +74,6 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             vTokenAddresses,
             constants
         );
-
-        emit TokenPositionChange(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     function swapTokenNotional(
@@ -95,8 +93,6 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             vTokenAddresses,
             constants
         );
-
-        emit TokenPositionChange(accountNo, vTokenTruncatedAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     function updateRangeOrder(
@@ -111,17 +107,6 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
         account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, constants);
-
-        emit LiquidityChange(
-            accountNo,
-            uint32(uint160(vTokenAddress)),
-            liquidityChangeParams.tickLower,
-            liquidityChangeParams.tickUpper,
-            liquidityChangeParams.liquidityDelta,
-            liquidityChangeParams.limitOrderType,
-            0,
-            0
-        );
     }
 
     function removeLimitOrder(
@@ -136,9 +121,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
         //TODO: Add remove limit order fee immutable and replace 0 with that
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, 0, vTokenAddresses, constants);
+        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, 0, constants);
 
-        // emit LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
+        // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function liquidateLiquidityPositions(uint256 accountNo) external {
@@ -151,7 +136,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
-        emit LiquidateRanges(accountNo, uint256(accountFee));
+        emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
     function liquidateTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddress) external {
@@ -160,6 +145,21 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         require(supportedVTokens[vTokenAddress], 'Unsupported Token');
 
-        account.liquidateTokenPosition(vTokenAddress, liquidationParams, vTokenAddresses, constants);
+        (int256 keeperFee, int256 insuranceFundFee) = account.liquidateTokenPosition(
+            vTokenAddress,
+            liquidationParams,
+            vTokenAddresses,
+            constants
+        );
+        int256 accountFee = keeperFee + insuranceFundFee;
+
+        emit Account.LiquidateTokenPosition(
+            accountNo,
+            vTokenAddress,
+            msg.sender,
+            accountFee,
+            keeperFee,
+            insuranceFundFee
+        );
     }
 }
