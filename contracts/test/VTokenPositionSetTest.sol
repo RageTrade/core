@@ -91,6 +91,7 @@ contract VTokenPositionSetTest {
             tickLower,
             tickUpper,
             liquidity,
+            false,
             LimitOrderType.NONE
         );
         dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);

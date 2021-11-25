@@ -16,6 +16,7 @@ struct LiquidityChangeParams {
     int24 tickLower;
     int24 tickUpper;
     int128 liquidityDelta;
+    bool closeTokenPosition;
     LimitOrderType limitOrderType;
 }
 
