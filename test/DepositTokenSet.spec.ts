@@ -38,7 +38,6 @@ describe('DepositTokenSet Library', () => {
     maintainanceMargin: BigNumberish,
     twapDuration: BigNumberish,
   ) {
-
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
     const realToken = await realTokenFactory.deploy();
 
@@ -101,11 +100,14 @@ describe('DepositTokenSet Library', () => {
     await vBase.transferOwnership(VPoolFactory.address);
 
     let out = await initializePool(VPoolFactory, 20, 10, 1);
-    vTokenAddress = out.vTokenAddress; oracle = out.oracle; realToken = out.realToken;
+    vTokenAddress = out.vTokenAddress;
+    oracle = out.oracle;
+    realToken = out.realToken;
 
     out = await initializePool(VPoolFactory, 20, 10, 1);
-    vTokenAddress1 = out.vTokenAddress; oracle1 = out.oracle; realToken1 = out.realToken;
-
+    vTokenAddress1 = out.vTokenAddress;
+    oracle1 = out.oracle;
+    realToken1 = out.realToken;
 
     const factory = await hre.ethers.getContractFactory('DepositTokenSetTest');
     test = await factory.deploy();
