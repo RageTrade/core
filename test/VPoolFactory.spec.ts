@@ -22,7 +22,8 @@ describe('VPoolFactory', () => {
   let signers: SignerWithAddress[];
   before(async () => {
     await activateMainnetFork();
-
+    const rBase = await smock.fake<ERC20>('ERC20');
+    rBase.decimals.returns(18);
     const realToken = await smock.fake<ERC20>('ERC20');
     realToken.decimals.returns(10);
     VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realToken.address);
@@ -30,12 +31,14 @@ describe('VPoolFactory', () => {
 
     signers = await hre.ethers.getSigners();
     const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const futureInsurnaceFundAddress = await calculateAddressFor(signers[0], 3);
+
     VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     ).deploy(futureVPoolFactoryAddress);
     const clearingHouse = await (
       await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(
@@ -46,6 +49,11 @@ describe('VPoolFactory', () => {
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
     );
+
+    const InsuranceFund = await (
+      await hre.ethers.getContractFactory('InsuranceFund')
+    ).deploy(rBase.address, clearingHouse.address);
+
     await VBase.transferOwnership(VPoolFactory.address);
 
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();

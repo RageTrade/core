@@ -73,13 +73,15 @@ describe('AccountTest Library', () => {
     signers = await hre.ethers.getSigners();
 
     const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const futureInsurnaceFundAddress = await calculateAddressFor(signers[0], 3);
+
     const VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     ).deploy(futureVPoolFactoryAddress);
 
     const clearingHouse = await (
       await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
 
     const VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
@@ -91,6 +93,10 @@ describe('AccountTest Library', () => {
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
     );
+
+    const InsuranceFund = await (
+      await hre.ethers.getContractFactory('InsuranceFund')
+    ).deploy(rBase.address, clearingHouse.address);
 
     await vBase.transferOwnership(VPoolFactory.address);
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');

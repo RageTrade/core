@@ -8,6 +8,7 @@ import { ClearingHouseState } from './ClearingHouseState.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
+import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 
 contract ClearingHouse is ClearingHouseState, IClearingHouse {
     LiquidationParams public liquidationParams;
@@ -16,9 +17,18 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
     address public immutable realBase;
+    address public immutable insuranceFundAddress;
 
-    constructor(address VPoolFactory, address _realBase) ClearingHouseState(VPoolFactory) {
+    uint256 public removeLimitOrderFee;
+    uint256 public minTradeNotionalValue;
+
+    constructor(
+        address VPoolFactory,
+        address _realBase,
+        address _insuranceFundAddress
+    ) ClearingHouseState(VPoolFactory) {
         realBase = _realBase;
+        insuranceFundAddress = _insuranceFundAddress;
     }
 
     function createAccount() external {
@@ -130,9 +140,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
-        //TODO: Add remove limit order fee immutable and replace 0 with that
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, 0, constants);
+        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, removeLimitOrderFee, constants);
 
+        IERC20(realBase).transfer(msg.sender, removeLimitOrderFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
@@ -145,6 +155,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             constants
         );
         int256 accountFee = keeperFee + insuranceFundFee;
+
+        IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
+        transferInsuranceFundFee(insuranceFundFee);
 
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
@@ -163,6 +176,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
+        IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
+        transferInsuranceFundFee(insuranceFundFee);
+
         emit Account.LiquidateTokenPosition(
             accountNo,
             vTokenAddress,
@@ -171,5 +187,13 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             keeperFee,
             insuranceFundFee
         );
+    }
+
+    function transferInsuranceFundFee(int256 insuranceFundFee) internal {
+        if (insuranceFundFee > 0) {
+            IERC20(realBase).transfer(insuranceFundAddress, uint256(insuranceFundFee));
+        } else {
+            IInsuranceFund(insuranceFundAddress).claim(uint256(-insuranceFundFee));
+        }
     }
 }

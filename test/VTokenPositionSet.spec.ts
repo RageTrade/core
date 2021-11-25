@@ -34,12 +34,14 @@ describe('VTokenPositionSet Library', () => {
 
     signers = await hre.ethers.getSigners();
     const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
+    const futureInsurnaceFundAddress = await calculateAddressFor(signers[0], 3);
+
     const VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     ).deploy(futureVPoolFactoryAddress);
     const clearingHouse = await (
       await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE);
+    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(
@@ -50,6 +52,10 @@ describe('VTokenPositionSet Library', () => {
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
     );
+
+    const InsuranceFund = await (
+      await hre.ethers.getContractFactory('InsuranceFund')
+    ).deploy(realBase.address, clearingHouse.address);
 
     await VBase.transferOwnership(VPoolFactory.address);
 
