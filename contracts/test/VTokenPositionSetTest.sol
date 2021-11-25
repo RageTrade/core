@@ -71,15 +71,10 @@ contract VTokenPositionSetTest {
         dummy.swapTokenNotional(vTokenAddress, vTokenNotional, wrapper, constants);
     }
 
-    function liquidityChange1(
-        address vTokenAddress,
-        int128 liquidity,
-        Constants memory constants
-    ) external {
-        dummy.liquidityChange(
+    function liquidityChange1(address vTokenAddress, Constants memory constants) external {
+        dummy.closeLiquidityPosition(
             vTokenAddress,
             dummy.getTokenPosition(vTokenAddress, constants).liquidityPositions.activate(-100, 100),
-            liquidity,
             wrapper,
             constants
         );

@@ -29,7 +29,7 @@ contract LiquidityPositionTest {
     }
 
     function updateCheckpoints() external {
-        lp.update(wrapper, balanceAdjustments);
+        lp.update(0, address(0), wrapper, balanceAdjustments);
     }
 
     function netPosition() public view returns (int256) {
@@ -37,7 +37,7 @@ contract LiquidityPositionTest {
     }
 
     function liquidityChange(int128 liquidity) public {
-        lp.liquidityChange(liquidity, wrapper, balanceAdjustments);
+        lp.liquidityChange(0, address(0), liquidity, wrapper, balanceAdjustments);
     }
 
     function maxNetPosition(VTokenAddress vToken, Constants memory constants) public view returns (uint256) {
