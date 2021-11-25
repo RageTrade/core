@@ -49,7 +49,7 @@ library Account {
     event AccountCreated(address ownerAddress, uint256 accountNo);
     event DepositMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
     event WithdrawMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
-    event WithdrawProfit(uint256 accountNo, int256 amount);
+    event WithdrawProfit(uint256 accountNo, uint256 amount);
 
     event TokenPositionChange(uint256 accountNo, address vTokenAddress, int256 tokenAmountOut, int256 baseAmountOut);
 

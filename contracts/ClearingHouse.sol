@@ -64,6 +64,19 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }
 
+    function removeProfit(
+        uint256 accountNo,
+        uint256 amount
+    ) external {
+        Account.Info storage account = accounts[accountNo];
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
+
+        account.removeProfit(amount, vTokenAddresses, constants);
+        IERC20(realBase).transfer(msg.sender, amount);
+
+        emit Account.WithdrawProfit(accountNo, amount);
+    }
+
     function swapTokenAmount(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
