@@ -143,6 +143,8 @@ library LiquidityPositionSet {
 
     function liquidityChange(
         Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
@@ -154,20 +156,55 @@ library LiquidityPositionSet {
 
         position.limitOrderType = liquidityChangeParams.limitOrderType;
 
-        set.liquidityChange(position, liquidityChangeParams.liquidityDelta, wrapper, balanceAdjustments);
+        set.liquidityChange(
+            accountNo,
+            vTokenAddress,
+            position,
+            liquidityChangeParams.liquidityDelta,
+            wrapper,
+            balanceAdjustments
+        );
     }
 
     function liquidityChange(
         Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
         LiquidityPosition.Info storage position,
         int128 liquidity,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        position.liquidityChange(liquidity, wrapper, balanceAdjustments);
+        position.liquidityChange(accountNo, vTokenAddress, liquidity, wrapper, balanceAdjustments);
+
+        emit Account.LiquidityTokenPositionChange(
+            accountNo,
+            vTokenAddress,
+            position.tickLower,
+            position.tickUpper,
+            balanceAdjustments.vTokenIncrease
+        );
 
         if (position.liquidity == 0) {
             set.deactivate(position);
         }
+    }
+
+    function closeLiquidityPosition(
+        Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
+        LiquidityPosition.Info storage position,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        set.liquidityChange(
+            accountNo,
+            vTokenAddress,
+            position,
+            -int128(position.liquidity),
+            wrapper,
+            balanceAdjustments
+        );
     }
 }

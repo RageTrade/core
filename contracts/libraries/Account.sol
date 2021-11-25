@@ -577,7 +577,6 @@ library Account {
     /// @param vTokenAddress address of token to swap
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param constants platform constants
     function removeLimitOrder(
         Info storage account,
@@ -585,7 +584,6 @@ library Account {
         int24 tickLower,
         int24 tickUpper,
         uint256 limitOrderFee,
-        mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal {
         account.removeLimitOrder(
@@ -594,7 +592,6 @@ library Account {
             tickUpper,
             VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants),
             limitOrderFee,
-            vTokenAddresses,
             VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
             constants
         );
@@ -605,7 +602,6 @@ library Account {
     /// @param vTokenAddress address of token to swap
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param wrapper poolwrapper for token
     /// @param constants platform constants
     function removeLimitOrder(
@@ -615,7 +611,6 @@ library Account {
         int24 tickUpper,
         int24 currentTick,
         uint256 limitOrderFee,
-        mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal {
@@ -630,13 +625,7 @@ library Account {
             (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
         ) {
             // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-            account.tokenPositions.liquidityChange(
-                vTokenAddress,
-                position,
-                -1 * int128(position.liquidity),
-                wrapper,
-                constants
-            );
+            account.tokenPositions.closeLiquidityPosition(vTokenAddress, position, wrapper, constants);
         } else {
             revert IneligibleLimitOrderRemoval();
         }

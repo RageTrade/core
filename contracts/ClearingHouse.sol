@@ -21,6 +21,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     function createAccount() external {
         Account.Info storage newAccount = accounts[numAccounts];
         newAccount.owner = msg.sender;
+        newAccount.tokenPositions.accountNo = numAccounts;
 
         emit Account.AccountCreated(msg.sender, numAccounts++);
     }
