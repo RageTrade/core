@@ -25,7 +25,6 @@ library DepositTokenSet {
     }
 
     // add overrides that accept vToken or truncated
-    // TODO remove return val if it is not useful
     function increaseBalance(
         Info storage info,
         address vTokenAddress,

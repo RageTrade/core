@@ -161,7 +161,6 @@ library VTokenPositionSet {
         if (vTokenAddress != constants.VBASE_ADDRESS) {
             set.active.include(truncate(vTokenAddress)); // TODO : We can do truncate at once at the top and save it in mem
         }
-        //TODO: Add realize funding payment and event
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncate(vTokenAddress)];
         _VTokenPosition.balance += balanceAdjustments.vTokenIncrease;
         _VTokenPosition.netTraderPosition += balanceAdjustments.traderPositionIncrease;
