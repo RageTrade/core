@@ -165,8 +165,7 @@ describe('AccountTest Library', () => {
   });
 
   describe('#Liquidation', () => {
-    it('Liquidate Liquidity Positions'
-    , async () => {
+    it('Liquidate Liquidity Positions', async () => {
       await test.liquidateLiquidityPositions(15, constants); // feeFraction=15/10=1.5
     });
     it('Liquidate Token Positions');
