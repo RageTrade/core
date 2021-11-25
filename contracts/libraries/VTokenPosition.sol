@@ -65,7 +65,7 @@ library VTokenPosition {
     }
 
     function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
-        int256 extrapolatedSumA = wrapper.getExtrapolatedSumA();
+        int256 extrapolatedSumA = wrapper.getSumAX128();
         int256 unrealizedFP = position.netTraderPosition * (extrapolatedSumA - position.sumAChkpt);
         return unrealizedFP;
     }

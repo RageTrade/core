@@ -27,7 +27,7 @@ interface IVPoolWrapper {
         int128 liquidity
     ) external returns (int256 vBaseAmount, int256 vTokenAmount);
 
-    function getExtrapolatedSumA() external pure returns (int256);
+    function getSumAX128() external view returns (int256);
 
     function swapTokenNotional(int256 vBaseAmount) external returns (int256);
 

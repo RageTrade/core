@@ -333,7 +333,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // }
     }
 
-    function getExtrapolatedSumA() external pure returns (int256) {
-        return 0;
+    function getSumAX128() external view returns (int256) {
+        return fpGlobal.sumAX128;
     }
 }
