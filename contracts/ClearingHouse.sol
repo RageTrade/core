@@ -6,10 +6,13 @@ import { Account, LiquidityChangeParams, LiquidationParams } from './libraries/A
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseState } from './ClearingHouseState.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 
 contract ClearingHouse is ClearingHouseState, IClearingHouse {
     LiquidationParams public liquidationParams;
     using Account for Account.Info;
+    using VTokenLib for VTokenAddress;
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
     address public immutable realBase;
@@ -37,6 +40,8 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         if (!supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
+        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
+
         account.addMargin(vTokenAddress, amount, constants);
 
         emit Account.DepositMargin(accountNo, vTokenAddress, amount);
@@ -54,6 +59,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (!supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
+        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
 
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }

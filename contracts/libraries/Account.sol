@@ -126,7 +126,7 @@ library Account {
         Constants memory constants
     ) internal {
         // collect
-        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
+        // IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
         // vBASE should be an immutable constant
         account.tokenDeposits.increaseBalance(vTokenAddress, amount, constants);
     }
@@ -148,7 +148,7 @@ library Account {
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
 
         // process real token withdrawal
-        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
+        // IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
     }
 
     /// @notice removes 'amount' of profit generated in base token
