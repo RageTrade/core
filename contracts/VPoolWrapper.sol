@@ -78,8 +78,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         vToken = VTokenAddress.wrap(vTokenAddress);
         vPool = IUniswapV3Pool(vPoolAddress);
         uniswapFee = vPool.fee();
-        // protocolFee = uniswapFee; // TODO get from parameters
-        // extendedFee = uniswapFee; // TODO get from parameters
         isToken0 = vToken.isToken0(constants);
         // console.log('isToken0', isToken0 ? 'true' : 'false');
     }
@@ -87,6 +85,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     // TODO restrict this to governance
     function setOracle(address oracle_) external {
         oracle = IOracle(oracle_);
+    }
+
+    // TODO restrict this to governance
+    function setExtendedFee(uint24 extendedFee_) external {
+        extendedFee = extendedFee_;
     }
 
     // TODO restrict this to governance
@@ -170,10 +173,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         if (buyVToken) {
             /// @dev trader is buying vtoken then exact output
-            amountSpecified = -amountSpecified;
+            if (amountSpecified > 0) {
+                amountSpecified = -amountSpecified;
+            } else {
+                amountSpecified = (-amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
+            }
         } else {
             /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
-            amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee);
+            amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee - extendedFee);
         }
 
         {
@@ -206,10 +213,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             (vBaseIn, vTokenIn) = vToken.flip(amount0, amount1, constants);
         }
 
-        /// @dev de-inflate
-        if (!buyVToken) {
-            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee)) / 1e6 - 1; // negative
-            vTokenIn = (vTokenIn * int24(1e6 - uniswapFee)) / 1e6 + 1; // positive
+        if (buyVToken) {
+            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee)) / int24(1e6 - uniswapFee - extendedFee); // negative
+        } else {
+            /// @dev de-inflate
+            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 - 1; // negative
+            vTokenIn = (vTokenIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 + 1; // positive
         }
 
         /// @dev if specified vtoken then apply the protocol fee after swap
@@ -268,11 +277,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 vTokenAmount.mulDiv(FixedPoint128.Q128, vBaseAmount) // TODO change to TWAP
             );
             //
-            if (!buyVToken) {
-                extendedFeeGrowthGlobalX128 += vBaseAmount.mulDiv(uniswapFee, 1e6 - uniswapFee).mulDiv(
+            if (buyVToken) {
+                extendedFeeGrowthGlobalX128 += vBaseAmount.mulDiv(extendedFee, 1e6 - extendedFee).mulDiv(
                     FixedPoint128.Q128,
                     state.liquidity
                 );
+            } else {
+                extendedFeeGrowthGlobalX128 += vBaseAmount
+                    .mulDiv(uniswapFee + extendedFee, 1e6 - uniswapFee - extendedFee)
+                    .mulDiv(FixedPoint128.Q128, state.liquidity);
             }
         }
 

@@ -21,6 +21,7 @@ export interface SetupArgs {
   rPriceInitial: number;
   vBaseDecimals?: number;
   vTokenDecimals?: number;
+  uniswapFee?: number;
   extendedFee?: number;
   protocolFee?: number;
   signer?: SignerWithAddress;
@@ -32,11 +33,13 @@ export async function setupVPool({
   rPriceInitial,
   vBaseDecimals,
   vTokenDecimals,
+  uniswapFee,
   signer,
   vBase,
 }: SetupArgs) {
   vBaseDecimals = vBaseDecimals ?? 6;
   vTokenDecimals = vTokenDecimals ?? 18;
+  uniswapFee = uniswapFee ?? 500;
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
@@ -73,7 +76,7 @@ export async function setupVPool({
   const isToken0 = BigNumber.from(vBase.address).gt(vToken.address);
   const token0 = isToken0 ? vToken.address : vBase.address;
   const token1 = isToken0 ? vBase.address : vToken.address;
-  const fee = 500;
+  const fee = uniswapFee;
   const tickSpacing = 10;
   v3Deployer.parameters.returns([signer.address, token0, token1, fee, tickSpacing]);
 
