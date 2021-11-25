@@ -207,4 +207,26 @@ library LiquidityPositionSet {
             balanceAdjustments
         );
     }
+
+    function closeAllLiquidityPositions(
+        Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        LiquidityPosition.Info storage position;
+
+        while (set.active[0] != 0) {
+            Account.BalanceAdjustments memory balanceAdjustmentsCurrent;
+
+            position = set.positions[set.active[0]];
+
+            set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustments);
+
+            balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;
+            balanceAdjustments.traderPositionIncrease += balanceAdjustmentsCurrent.traderPositionIncrease;
+        }
+    }
 }

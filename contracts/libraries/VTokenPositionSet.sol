@@ -415,38 +415,21 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
-        Account.BalanceAdjustments memory balanceAdjustmentsTotal;
+        Account.BalanceAdjustments memory balanceAdjustments;
 
-        LiquidityPositionSet.Info storage liquidityPositions = set
-            .getTokenPosition(vTokenAddress, constants)
-            .liquidityPositions;
+        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.closeAllLiquidityPositions(
+            set.accountNo,
+            vTokenAddress,
+            wrapper,
+            balanceAdjustments
+        );
 
-        LiquidityPosition.Info storage position;
-
-        while (liquidityPositions.active[0] != 0) {
-            Account.BalanceAdjustments memory balanceAdjustments;
-
-            position = liquidityPositions.positions[liquidityPositions.active[0]];
-
-            liquidityPositions.closeLiquidityPosition(
-                set.accountNo,
-                vTokenAddress,
-                position,
-                wrapper,
-                balanceAdjustments
-            );
-
-            balanceAdjustmentsTotal.vBaseIncrease += balanceAdjustments.vBaseIncrease;
-            balanceAdjustmentsTotal.vTokenIncrease += balanceAdjustments.vTokenIncrease;
-            balanceAdjustmentsTotal.traderPositionIncrease += balanceAdjustments.traderPositionIncrease;
-        }
-
-        set.update(balanceAdjustmentsTotal, vTokenAddress, constants);
+        set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustmentsTotal.vTokenIncrease *
+            balanceAdjustments.vTokenIncrease *
             VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustmentsTotal.vBaseIncrease;
+            balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(
