@@ -32,4 +32,6 @@ interface IVPoolWrapper {
     function swapTokenNotional(int256 vBaseAmount) external returns (int256);
 
     function swapTokenAmount(int256 vTokenAmount) external returns (int256);
+
+    function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
 }

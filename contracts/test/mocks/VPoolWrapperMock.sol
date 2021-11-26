@@ -79,11 +79,15 @@ contract VPoolWrapperMock is IVPoolWrapper {
         return 20;
     }
 
-    function swapTokenAmount(int256 vTokenAmount) external returns (int256) {
+    function swapTokenAmount(int256 vTokenAmount) external pure returns (int256) {
         return vTokenAmount * (-4000);
     }
 
-    function swapTokenNotional(int256 vTokenNotional) external returns (int256) {
+    function swapTokenNotional(int256 vTokenNotional) external pure returns (int256) {
         return vTokenNotional / (4000);
+    }
+
+    function collectAccruedProtocolFee() external pure returns (uint256 accruedProtocolFeeLast) {
+        accruedProtocolFeeLast = 0;
     }
 }

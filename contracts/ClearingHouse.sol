@@ -9,7 +9,7 @@ import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
-import { VPoolWrapper } from './VPoolWrapper.sol';
+import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 
 contract ClearingHouse is ClearingHouseState, IClearingHouse {
     LiquidationParams public liquidationParams;
@@ -43,8 +43,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
-            totalProtocolFee += VPoolWrapper(wrapperAddresses[i]).accruedProtocolFee();
-            //TODO: make the accruedProtocolFee = 0
+            totalProtocolFee += IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
         }
         IERC20(realBase).transfer(teamMultisig(), totalProtocolFee);
     }
