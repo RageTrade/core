@@ -10,10 +10,12 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
+import { SignedMath } from './libraries/SignedMath.sol';
 
 contract ClearingHouse is ClearingHouseState, IClearingHouse {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
+    using SignedMath for int256;
 
     address public immutable realBase;
     address public immutable insuranceFundAddress;
@@ -123,7 +125,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         (, int256 vBaseAmount) = account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
 
-        uint256 vBaseAmountAbs = uint256(Account.abs(vBaseAmount));
+        uint256 vBaseAmountAbs = uint256(vBaseAmount.abs());
         if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);
     }
 
@@ -140,7 +142,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
 
-        uint256 vBaseAmountAbs = uint256(Account.abs(vBaseAmount));
+        uint256 vBaseAmountAbs = uint256(vBaseAmount.abs());
         if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);
     }
 
@@ -165,7 +167,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             constants
         );
 
-        uint256 notionalValueAbs = uint256(Account.abs(notionalValue));
+        uint256 notionalValueAbs = uint256(notionalValue.abs());
         if (notionalValueAbs != 0 && notionalValueAbs < minNotionalValue) revert LowNotionalValue(notionalValueAbs);
     }
 
