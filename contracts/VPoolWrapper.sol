@@ -85,6 +85,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         protocolFee = protocolFee_;
     }
 
+    function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast) {
+        accruedProtocolFeeLast = accruedProtocolFee - 1;
+        accruedProtocolFee = 1;
+    }
+
     function getValuesInside(int24 tickLower, int24 tickUpper)
         external
         view
@@ -333,7 +338,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // }
     }
 
-    function getExtrapolatedSumA() external pure returns (int256) {
-        return 0;
+    function getSumAX128() external view returns (int256) {
+        return fpGlobal.sumAX128;
     }
 }

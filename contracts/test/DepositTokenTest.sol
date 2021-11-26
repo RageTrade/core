@@ -31,6 +31,19 @@ contract DepositTokenSetTest {
         vTokenAddresses[VTokenPositionSet.truncate(vTokenAddress)] = vTokenAddress;
     }
 
+    function cleanDeposits(Constants memory constants) external {
+        for (uint256 i = 0; i < depositTokenSet.active.length; i++) {
+            uint32 truncatedAddress = depositTokenSet.active[i];
+            if (truncatedAddress == 0) break;
+
+            depositTokenSet.decreaseBalance(
+                vTokenAddresses[truncatedAddress],
+                depositTokenSet.deposits[truncatedAddress],
+                constants
+            );
+        }
+    }
+
     function increaseBalance(
         address vTokenAddress,
         uint256 amount,
@@ -47,8 +60,8 @@ contract DepositTokenSetTest {
         depositTokenSet.decreaseBalance(vTokenAddress, amount, constants);
     }
 
-    function getAllDepositAccountMarketValue(Constants memory constants) external view {
-        depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses, constants);
+    function getAllDepositAccountMarketValue(Constants memory constants) external view returns (int256 depositValue) {
+        return depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses, constants);
     }
 
     function getBalance(address vTokenAddress) external view returns (uint256 balance) {

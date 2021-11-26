@@ -6,10 +6,14 @@ import { FullMath } from './FullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Constants } from '../utils/Constants.sol';
+import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
+
+import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
     using VTokenLib for VTokenAddress;
     using Uint32L8ArrayLib for uint32[8];
+    using FullMath for int256;
     int256 internal constant Q96 = 0x1000000000000000000000000;
 
     struct Info {
@@ -21,7 +25,6 @@ library DepositTokenSet {
     }
 
     // add overrides that accept vToken or truncated
-    // TODO remove return val if it is not useful
     function increaseBalance(
         Info storage info,
         address vTokenAddress,
@@ -66,7 +69,10 @@ library DepositTokenSet {
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
 
-            accountMarketValue += int256(set.deposits[truncated] * vToken.getRealTwapPriceX128(constants));
+            accountMarketValue += int256(set.deposits[truncated]).mulDiv(
+                vToken.getRealTwapPriceX128(constants),
+                FixedPoint128.Q128
+            );
         }
 
         accountMarketValue += int256(set.deposits[truncate(constants.VBASE_ADDRESS)]);

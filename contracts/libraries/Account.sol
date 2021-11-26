@@ -46,11 +46,56 @@ library Account {
     error InvalidTokenTradeAmount(int256 balance, int256 tokensToTrade);
     error InvalidLiquidationWrongSide(int256 totalRequiredMarginFinal, int256 totalRequiredMargin);
 
-    // @dev some functions in token position and liquidity position want to
-    //  change user's balances. pointer to this memory struct is passed and
-    //  the inner methods update values. after the function exec these can
-    //  be applied to user's virtual balance.
-    //  example: see liquidityChange in LiquidityPosition
+    event AccountCreated(address ownerAddress, uint256 accountNo);
+    event DepositMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
+    event WithdrawProfit(uint256 accountNo, uint256 amount);
+
+    event TokenPositionChange(uint256 accountNo, address vTokenAddress, int256 tokenAmountOut, int256 baseAmountOut);
+
+    event LiquidityTokenPositionChange(
+        uint256 accountNo,
+        address vTokenAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        int256 tokenAmountOut
+    );
+
+    event LiquidityChange(
+        uint256 accountNo,
+        address vTokenAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta,
+        LimitOrderType limitOrderType,
+        int256 tokenAmountOut,
+        int256 baseAmountOut
+    );
+
+    event FundingPayment(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
+    event LiquidityFee(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
+
+    event LiquidateRanges(
+        uint256 accountNo,
+        address keeperAddress,
+        int256 liquidationFee,
+        int256 keeperFee,
+        int256 insuranceFundFee
+    );
+    event LiquidateTokenPosition(
+        uint256 accountNo,
+        address vTokenAddress,
+        address keeperAddress,
+        int256 liquidationFee,
+        int256 keeperFee,
+        int256 insuranceFundFee
+    );
+
+    /// @dev some functions in token position and liquidity position want to
+    ///  change user's balances. pointer to this memory struct is passed and
+    ///  the inner methods update values. after the function exec these can
+    ///  be applied to user's virtual balance.
+    ///  example: see liquidityChange in LiquidityPosition
     struct BalanceAdjustments {
         int256 vBaseIncrease;
         int256 vTokenIncrease;
@@ -63,10 +108,17 @@ library Account {
         DepositTokenSet.Info tokenDeposits;
     }
 
+    /// @notice checks if 'account' is initialized
+    /// @param account pointer to 'account' struct
     function isInitialized(Info storage account) internal view returns (bool) {
         return account.owner != address(0);
     }
 
+    /// @notice increases deposit balance of 'vTokenAddress' by 'amount'
+    /// @param account account to deposit balance into
+    /// @param vTokenAddress address of token to deposit
+    /// @param amount amount of token to deposit
+    /// @param constants platform constants
     function addMargin(
         Info storage account,
         address vTokenAddress,
@@ -74,11 +126,16 @@ library Account {
         Constants memory constants
     ) internal {
         // collect
-        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
+        // IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
         // vBASE should be an immutable constant
         account.tokenDeposits.increaseBalance(vTokenAddress, amount, constants);
     }
 
+    /// @notice reduces deposit balance of 'vTokenAddress' by 'amount'
+    /// @param account account to deposit balance into
+    /// @param vTokenAddress address of token to remove
+    /// @param amount amount of token to remove
+    /// @param constants platform constants
     function removeMargin(
         Info storage account,
         address vTokenAddress,
@@ -91,9 +148,14 @@ library Account {
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
 
         // process real token withdrawal
-        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
+        // IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
     }
 
+    /// @notice removes 'amount' of profit generated in base token
+    /// @param account account to remove profit from
+    /// @param amount amount of profit(base token) to remove
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function removeProfit(
         Info storage account,
         uint256 amount,
@@ -112,25 +174,45 @@ library Account {
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
     }
 
+    function chargeFee(
+        Info storage account,
+        uint256 amount,
+        Constants memory constants
+    ) internal {
+        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+            constants.VBASE_ADDRESS,
+            constants
+        );
+        vTokenPosition.balance -= int256(amount);
+    }
+
+    /// @notice returns market value and required margin for the account based on current market conditions
+    /// @param account account to check
+    /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
+    /// @return accountMarketValue total market value of all the positions and deposits
+    /// @return totalRequiredMargin total margin required to keep the account above selected margin requirement (intial/maintainance)
     function getAccountValueAndRequiredMargin(
         Info storage account,
         bool isInitialMargin,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal view returns (int256, int256) {
+    ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         // (int256 accountMarketValue, int256 totalRequiredMargin) = account
         //     .tokenPositions
         //     .getAllTokenPositionValueAndMargin(isInitialMargin, vTokenAddresses, constants);
-        int256 accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
-        int256 totalRequiredMargin = account.tokenPositions.getRequiredMargin(
-            isInitialMargin,
-            vTokenAddresses,
-            constants
-        );
+        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+        totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
         return (accountMarketValue, totalRequiredMargin);
     }
 
+    /// @notice checks if market value > required margin
+    /// @param account account to check
+    /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function checkIfMarginAvailable(
         Info storage account,
         bool isInitialMargin,
@@ -146,6 +228,10 @@ library Account {
             revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
     }
 
+    /// @notice checks if profit is available to withdraw base token (token value of all positions > 0)
+    /// @param account account to check
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function checkIfProfitAvailable(
         Info storage account,
         mapping(uint32 => address) storage vTokenAddresses,
@@ -155,6 +241,14 @@ library Account {
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
+    /// @notice swaps 'vTokenAddress' of token amount equal to 'vTokenAmount'
+    /// @notice if vTokenAmount>0 then the swap is a long or close short and if vTokenAmount<0 then swap is a short or close long
+    /// @param account account to swap tokens for
+    /// @param vTokenAddress address of token to swap
+    /// @param vTokenAmount amount of token to swap
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param wrapper poolwrapper for token
+    /// @param constants platform constants
     function swapTokenAmount(
         Info storage account,
         address vTokenAddress,
@@ -162,19 +256,31 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. an  d send to the pool
-        account.tokenPositions.swapTokenAmount(vTokenAddress, vTokenAmount, wrapper, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapTokenAmount(
+            vTokenAddress,
+            vTokenAmount,
+            wrapper,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
     }
 
-    //vTokenNotional > 0 => long in token
+    /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
+    /// @notice if vTokenNotional>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
+    /// @param account account to swap tokens for
+    /// @param vTokenAddress address of token to swap
+    /// @param vTokenNotional notional value of token to swap (>0 => long or close short and <0 => short or close long)
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param wrapper poolwrapper for token
+    /// @param constants platform constants
     function swapTokenNotional(
         Info storage account,
         address vTokenAddress,
@@ -182,52 +288,79 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. and send to the pool
-        account.tokenPositions.swapTokenNotional(vTokenAddress, vTokenNotional, wrapper, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapTokenNotional(
+            vTokenAddress,
+            vTokenNotional,
+            wrapper,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
     }
 
-    //vTokenAmount > 0 => long in token
+    /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
+    /// @notice if vTokenNotional>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
+    /// @param account account to swap tokens for
+    /// @param vTokenAddress address of token to swap
+    /// @param vTokenAmount amount of token to swap (>0 => long or close short and <0 => short or close long)
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function swapTokenAmount(
         Info storage account,
         address vTokenAddress,
         int256 vTokenAmount,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal {
-        account.swapTokenAmount(
-            vTokenAddress,
-            vTokenAmount,
-            vTokenAddresses,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-            constants
-        );
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+        return
+            account.swapTokenAmount(
+                vTokenAddress,
+                vTokenAmount,
+                vTokenAddresses,
+                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                constants
+            );
     }
 
-    //vTokenNotional > 0 => long in token
+    /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
+    /// @notice if vTokenNotional>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
+    /// @param account account to swap tokens for
+    /// @param vTokenAddress address of token to swap
+    /// @param vTokenNotional notional value of token to swap (>0 => long or close short and <0 => short or close long)
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function swapTokenNotional(
         Info storage account,
         address vTokenAddress,
         int256 vTokenNotional,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal {
-        account.swapTokenNotional(
-            vTokenAddress,
-            vTokenNotional,
-            vTokenAddresses,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-            constants
-        );
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+        return
+            account.swapTokenNotional(
+                vTokenAddress,
+                vTokenNotional,
+                vTokenAddresses,
+                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                constants
+            );
     }
 
+    /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
+    /// @notice if liquidityDelta>0 then liquidity is added and if liquidityChange<0 then liquidity is removed
+    /// @param account account to change liquidity for
+    /// @param vTokenAddress address of token to swap
+    /// @param liquidityChangeParams parameters including lower tick, upper tick, liquidity delta and limit order type
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param wrapper poolwrapper for token
+    /// @param constants platform constants
     function liquidityChange(
         Info storage account,
         address vTokenAddress,
@@ -235,24 +368,36 @@ library Account {
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal {
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
+    ) internal returns (int256 notionalValue) {
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
 
         // mint/burn tokens + fee + funding payment
-        account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
+        notionalValue = account.tokenPositions.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            wrapper,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, constants);
     }
 
+    /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
+    /// @notice if liquidityDelta>0 then liquidity is added and if liquidityChange<0 then liquidity is removed
+    /// @param account account to swap tokenschange liquidity for
+    /// @param vTokenAddress address of token to swap
+    /// @param liquidityChangeParams parameters including lower tick, upper tick, liquidity delta and limit order type
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function liquidityChange(
         Info storage account,
         address vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal {
-        account.liquidityChange(
+    ) internal returns (int256 notionalValue) {
+        notionalValue = account.liquidityChange(
             vTokenAddress,
             liquidityChangeParams,
             vTokenAddresses,
@@ -261,6 +406,13 @@ library Account {
         );
     }
 
+    /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
+    /// @notice if liquidity>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
+    /// @param accountMarketValue market value of account
+    /// @param fixFee fixed fees to be paid
+    /// @param liquidationFeeHalf parameters including lower tick, upper tick, liquidity delta and limit order type
+    /// @return keeperFees map of vTokenAddresses allowed on the platform
+    /// @return insuranceFundFees poolwrapper for token
     function computeLiquidationFees(
         int256 accountMarketValue,
         int256 fixFee,
@@ -274,8 +426,12 @@ library Account {
         }
     }
 
-    //Fee Fraction * e6 is input
-    //Fee can be positive and negative (in case of negative fee insurance fund is to take care of the whole thing
+    /// @notice liquidates all range positions in case the account is under water
+    /// @param account account to liquidate
+    /// @param liquidationFeeFraction fraction of notional closed to be liquidated
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param wrapper poolwrapper for token
+    /// @param constants platform constants
     function liquidateLiquidityPositions(
         Info storage account,
         uint16 liquidationFeeFraction,
@@ -297,15 +453,20 @@ library Account {
         if (accountMarketValue < totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-        return computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+
+        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
-    //Fee Fraction * e6 is input
-    //Fee can be positive and negative (in case of negative fee insurance fund is to take care of the whole thing
+    /// @notice liquidates all range positions in case the account is under water
+    /// @param account account to liquidate
+    /// @param liquidationFeeFraction fraction of notional closed to be liquidated
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function liquidateLiquidityPositions(
         Info storage account,
         uint16 liquidationFeeFraction,
@@ -326,11 +487,13 @@ library Account {
         if (accountMarketValue < totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
         int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-        return computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+
+        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
     function abs(int256 value) internal pure returns (int256) {
@@ -341,6 +504,12 @@ library Account {
         return value > 0 ? int256(1) : int256(-1);
     }
 
+    /// @notice liquidates all range positions in case the account is under water
+    /// @param account account to liquidate
+    /// @param vTokenAddress address of token to swap
+    /// @param liquidationParams parameters including liquidation fee fraction, target margin ratio, minimum liquidation amount and fix fee
+    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    /// @param constants platform constants
     function liquidateTokenPosition(
         Info storage account,
         address vTokenAddress,
@@ -380,7 +549,7 @@ library Account {
             if (abs(tokensToTrade) > abs(vTokenPosition.balance)) {
                 tokensToTrade = -1 * vTokenPosition.balance;
             }
-            account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
             account.tokenPositions.swapTokenAmount(vTokenAddress, tokensToTrade, constants);
 
             int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(
@@ -400,15 +569,26 @@ library Account {
                 1e5
             ) / 2;
 
-        return computeLiquidationFees(accountMarketValue, liquidationParams.fixFee.toInt256(), liquidationFeeHalf);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(
+            accountMarketValue,
+            liquidationParams.fixFee.toInt256(),
+            liquidationFeeHalf
+        );
+        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
+    /// @notice removes limit order based on the current price position (keeper call)
+    /// @param account account to liquidate
+    /// @param vTokenAddress address of token to swap
+    /// @param tickLower lower tick index for the range
+    /// @param tickUpper upper tick index for the range
+    /// @param constants platform constants
     function removeLimitOrder(
         Info storage account,
         address vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
-        mapping(uint32 => address) storage vTokenAddresses,
+        uint256 limitOrderFee,
         Constants memory constants
     ) internal {
         account.removeLimitOrder(
@@ -416,46 +596,45 @@ library Account {
             tickLower,
             tickUpper,
             VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants),
-            vTokenAddresses,
+            limitOrderFee,
             VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
             constants
         );
     }
 
+    /// @notice removes limit order based on the current price position (keeper call)
+    /// @param account account to liquidate
+    /// @param vTokenAddress address of token to swap
+    /// @param tickLower lower tick index for the range
+    /// @param tickUpper upper tick index for the range
+    /// @param wrapper poolwrapper for token
+    /// @param constants platform constants
     function removeLimitOrder(
         Info storage account,
         address vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int24 currentTick,
-        mapping(uint32 => address) storage vTokenAddresses,
+        uint256 limitOrderFee,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            vTokenAddress,
-            constants
-        );
-
-        LiquidityPosition.Info storage position = vTokenPosition.liquidityPositions.getLiquidityPosition(
-            tickLower,
-            tickUpper
-        );
+        LiquidityPosition.Info storage position = account
+            .tokenPositions
+            .getTokenPosition(vTokenAddress, constants)
+            .liquidityPositions
+            .getLiquidityPosition(tickLower, tickUpper);
 
         if (
             (currentTick >= tickUpper && position.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
             (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
         ) {
-            account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-            account.tokenPositions.liquidityChange(
-                vTokenAddress,
-                position,
-                -1 * int128(position.liquidity),
-                wrapper,
-                constants
-            );
+            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+            account.tokenPositions.closeLiquidityPosition(vTokenAddress, position, wrapper, constants);
         } else {
             revert IneligibleLimitOrderRemoval();
         }
+
+        account.chargeFee(limitOrderFee, constants);
     }
 }

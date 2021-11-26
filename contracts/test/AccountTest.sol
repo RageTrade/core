@@ -97,6 +97,7 @@ contract AccountTest {
             tickLower,
             tickUpper,
             liquidity,
+            false,
             limitOrderType
         );
 
@@ -131,15 +132,7 @@ contract AccountTest {
         int24 currentTick,
         Constants memory constants
     ) external {
-        testAccount.removeLimitOrder(
-            vTokenAddress,
-            tickLower,
-            tickUpper,
-            currentTick,
-            testVTokenAddresses,
-            wrapper,
-            constants
-        );
+        testAccount.removeLimitOrder(vTokenAddress, tickLower, tickUpper, currentTick, 0, wrapper, constants);
     }
 
     function getAccountDepositBalance(address vTokenAddress) external view returns (uint256) {

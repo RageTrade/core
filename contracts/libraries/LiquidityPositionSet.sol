@@ -15,7 +15,8 @@ import { Constants } from '../utils/Constants.sol';
 struct LiquidityChangeParams {
     int24 tickLower;
     int24 tickUpper;
-    int128 liquidity;
+    int128 liquidityDelta;
+    bool closeTokenPosition;
     LimitOrderType limitOrderType;
 }
 
@@ -48,7 +49,7 @@ library LiquidityPositionSet {
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
         Constants memory constants
-    ) internal view returns (uint256 baseValue_) {
+    ) internal view returns (int256 baseValue_) {
         baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
     }
 
@@ -58,7 +59,7 @@ library LiquidityPositionSet {
         VTokenAddress vToken,
         IVPoolWrapper wrapper, // TODO refactor this
         Constants memory constants
-    ) internal view returns (uint256 baseValue_) {
+    ) internal view returns (int256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
             baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
@@ -143,6 +144,8 @@ library LiquidityPositionSet {
 
     function liquidityChange(
         Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
@@ -154,20 +157,77 @@ library LiquidityPositionSet {
 
         position.limitOrderType = liquidityChangeParams.limitOrderType;
 
-        set.liquidityChange(position, liquidityChangeParams.liquidity, wrapper, balanceAdjustments);
+        set.liquidityChange(
+            accountNo,
+            vTokenAddress,
+            position,
+            liquidityChangeParams.liquidityDelta,
+            wrapper,
+            balanceAdjustments
+        );
     }
 
     function liquidityChange(
         Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
         LiquidityPosition.Info storage position,
         int128 liquidity,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        position.liquidityChange(liquidity, wrapper, balanceAdjustments);
+        position.liquidityChange(accountNo, vTokenAddress, liquidity, wrapper, balanceAdjustments);
+
+        emit Account.LiquidityTokenPositionChange(
+            accountNo,
+            vTokenAddress,
+            position.tickLower,
+            position.tickUpper,
+            balanceAdjustments.vTokenIncrease
+        );
 
         if (position.liquidity == 0) {
             set.deactivate(position);
+        }
+    }
+
+    function closeLiquidityPosition(
+        Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
+        LiquidityPosition.Info storage position,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        set.liquidityChange(
+            accountNo,
+            vTokenAddress,
+            position,
+            -int128(position.liquidity),
+            wrapper,
+            balanceAdjustments
+        );
+    }
+
+    function closeAllLiquidityPositions(
+        Info storage set,
+        uint256 accountNo,
+        address vTokenAddress,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        LiquidityPosition.Info storage position;
+
+        while (set.active[0] != 0) {
+            Account.BalanceAdjustments memory balanceAdjustmentsCurrent;
+
+            position = set.positions[set.active[0]];
+
+            set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustments);
+
+            balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;
+            balanceAdjustments.traderPositionIncrease += balanceAdjustmentsCurrent.traderPositionIncrease;
         }
     }
 }

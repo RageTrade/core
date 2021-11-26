@@ -13,7 +13,7 @@ describe('ClearingHouseState', () => {
     signers = await hre.ethers.getSigners();
     state = await (
       await hre.ethers.getContractFactory('ClearingHouse')
-    ).deploy(await signers[0].getAddress(), REAL_BASE);
+    ).deploy(await signers[0].getAddress(), REAL_BASE, dummyAdd);
   });
 
   describe('Functions', () => {
