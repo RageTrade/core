@@ -157,4 +157,63 @@ describe('Clearing House Library', () => {
       expect(await rBase.balanceOf(user2.address)).to.eq(tokenAmount('10000', 6));
     });
   });
+
+  describe('#AccountCreation', () => {
+    it('Create Account - 1', async () => {
+      await clearingHouseTest.connect(user1).createAccount();
+      expect(await clearingHouseTest.numAccounts()).to.eq(1);
+      expect(await clearingHouseTest.getAccountOwner(0)).to.eq(user1.address);
+      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(0)).to.eq(0);
+    });
+    it('Create Account - 1', async () => {
+      await clearingHouseTest.connect(user2).createAccount();
+      expect(await clearingHouseTest.numAccounts()).to.eq(2);
+      expect(await clearingHouseTest.getAccountOwner(1)).to.eq(user2.address);
+      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(1)).to.eq(1);
+    });
+  });
+
+  describe('#InitializeToken', () => {
+    it('vToken Intialized', async () => {
+      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vTokenAddress)).to.eq(vTokenAddress);
+    });
+    it('Other Address Not Intialized', async () => {
+      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(dummyTokenAddress)).to.eq(ADDRESS_ZERO);
+    });
+  });
+
+  describe('#TokenSupport', () => {
+    before(async () => {
+      expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.false;
+      expect(await clearingHouseTest.supportedDeposits(vTokenAddress)).to.be.false;
+      expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
+      expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.false;
+    });
+    it('Add Token Position Support - Fail - Unauthorized', async () => {
+      expect(clearingHouseTest.connect(user1).updateSupportedVTokens(vTokenAddress, true)).to.be.revertedWith(
+        'Unauthorised()',
+      );
+    });
+    it('Add Token Position Support - Pass', async () => {
+      await clearingHouseTest.connect(admin).updateSupportedVTokens(vTokenAddress, true);
+      expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.true;
+    });
+    it('Add Token Deposit Support - Fail - Unauthorized', async () => {
+      expect(clearingHouseTest.connect(user1).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
+        'Unauthorised()',
+      );
+    });
+    it('Add Token Deposit Support  - Pass', async () => {
+      await clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true);
+      expect(await clearingHouseTest.supportedDeposits(vTokenAddress)).to.be.true;
+    });
+    it('Remove Token Deposit Support  - Pass', async () => {
+      await clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, false);
+      expect(await clearingHouseTest.supportedDeposits(vTokenAddress)).to.be.false;
+    });
+    it('Add Base Deposit Support  - Pass', async () => {
+      await clearingHouseTest.connect(admin).updateSupportedDeposits(vBaseAddress, true);
+      expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.true;
+    });
+  });
 });
