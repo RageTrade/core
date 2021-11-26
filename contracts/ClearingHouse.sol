@@ -9,6 +9,7 @@ import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
+import { VPoolWrapper } from './VPoolWrapper.sol';
 
 contract ClearingHouse is ClearingHouseState, IClearingHouse {
     LiquidationParams public liquidationParams;
@@ -37,6 +38,15 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         newAccount.tokenPositions.accountNo = numAccounts;
 
         emit Account.AccountCreated(msg.sender, numAccounts++);
+    }
+
+    function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
+        uint256 totalProtocolFee;
+        for (uint256 i = 0; i < wrapperAddresses.length; i++) {
+            totalProtocolFee += VPoolWrapper(wrapperAddresses[i]).accruedProtocolFee();
+            //TODO: make the accruedProtocolFee = 0
+        }
+        IERC20(realBase).transfer(teamMultisig(), totalProtocolFee);
     }
 
     function addMargin(
@@ -140,7 +150,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         );
 
         uint256 notionalValueAbs = uint256(Account.abs(notionalValue));
-        if (notionalValueAbs!=0 && notionalValueAbs < minNotionalValue) revert LowNotionalValue(notionalValueAbs);
+        if (notionalValueAbs != 0 && notionalValueAbs < minNotionalValue) revert LowNotionalValue(notionalValueAbs);
     }
 
     function removeLimitOrder(
