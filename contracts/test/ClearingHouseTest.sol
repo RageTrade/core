@@ -1,0 +1,44 @@
+//SPDX-License-Identifier: UNLICENSED
+
+pragma solidity ^0.8.9;
+
+import { ClearingHouse } from '../ClearingHouse.sol';
+import { Account } from '../libraries/Account.sol';
+
+contract ClearingHouseTest is ClearingHouse {
+    using Account for Account.Info;
+
+    constructor(
+        address VPoolFactory,
+        address _realBase,
+        address _insuranceFundAddress
+    ) ClearingHouse(VPoolFactory, _realBase, _insuranceFundAddress) {}
+
+    function getTruncatedTokenAddress(address vTokenAddress) external pure returns (uint32 vTokenTruncatedAddress) {
+        return uint32(uint160(vTokenAddress));
+    }
+
+    function getTokenAddressInVTokenAddresses(address vTokenAddress)
+        external
+        view
+        returns (address vTokenAddressInVTokenAddresses)
+    {
+        return vTokenAddresses[uint32(uint160(vTokenAddress))];
+    }
+
+    function getAccountOwner(uint256 accountNo) external view returns (address owner) {
+        return accounts[accountNo].owner;
+    }
+
+    function getAccountNumInTokenPositionSet(uint256 accountNo) external view returns (uint256 accountNoInTokenSet) {
+        return accounts[accountNo].tokenPositions.accountNo;
+    }
+
+    function getAccountValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+        external
+        view
+        returns (int256 accountMarketValue, int256 requiredMargin)
+    {
+        return accounts[accountNo].getAccountValueAndRequiredMargin(isInitialMargin, vTokenAddresses, constants);
+    }
+}
