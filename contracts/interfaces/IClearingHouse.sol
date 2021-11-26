@@ -8,7 +8,7 @@ import { LiquidityChangeParams } from '../libraries/Account.sol';
 interface IClearingHouse {
     error AccessDenied(address senderAddress);
     error UnsupportedToken(address vTokenAddress);
-    error InvalidNotionalValue(int256 notionalValue);
+    error LowNotionalValue(uint256 notionalValue);
     error InvalidLiquidityChangeParameters();
 
     function createAccount() external;

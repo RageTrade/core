@@ -20,7 +20,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     address public immutable insuranceFundAddress;
 
     uint256 public removeLimitOrderFee;
-    uint256 public minTradeNotionalValue;
+    uint256 public minNotionalValue;
 
     constructor(
         address VPoolFactory,
@@ -95,7 +95,10 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
         if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
-        account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
+        (, int256 vBaseAmount) = account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
+
+        uint256 vBaseAmountAbs = uint256(Account.abs(vBaseAmount));
+        if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);
     }
 
     function swapTokenNotional(
@@ -110,6 +113,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
 
         account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
+
+        uint256 vBaseAmountAbs = uint256(Account.abs(vBaseAmount));
+        if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);
     }
 
     function updateRangeOrder(
@@ -126,7 +132,15 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
             revert InvalidLiquidityChangeParameters();
 
-        account.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddresses, constants);
+        int256 notionalValue = account.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            vTokenAddresses,
+            constants
+        );
+
+        uint256 notionalValueAbs = uint256(Account.abs(notionalValue));
+        if (notionalValueAbs!=0 && notionalValueAbs < minNotionalValue) revert LowNotionalValue(notionalValueAbs);
     }
 
     function removeLimitOrder(
