@@ -36,6 +36,17 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         insuranceFundAddress = _insuranceFundAddress;
     }
 
+    function getTokenAddressWithChecks(uint32 vTokenTruncatedAddress, bool isDepositCheck)
+        internal
+        view
+        returns (address vTokenAddress)
+    {
+        vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
+        if (vTokenAddress == address(0)) revert UninitializedToken(vTokenTruncatedAddress);
+        if (isDepositCheck && !supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        if (!isDepositCheck && !supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+    }
+
     function setLiquidationParameters(LiquidationParams calldata _liquidationParams)
         external
         onlyGovernanceOrTeamMultisig
@@ -75,8 +86,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
         IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
 
@@ -93,8 +103,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
         account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
         IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
@@ -120,8 +129,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
         (, int256 vBaseAmount) = account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
 
@@ -137,8 +145,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
         account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
 
@@ -154,8 +161,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
         if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
             revert InvalidLiquidityChangeParameters();
@@ -179,8 +185,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     ) external {
         Account.Info storage account = accounts[accountNo];
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
         account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, removeLimitOrderFee, constants);
 
@@ -207,8 +212,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     function liquidateTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddress) external {
         Account.Info storage account = accounts[accountNo];
 
-        address vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
         (int256 keeperFee, int256 insuranceFundFee) = account.liquidateTokenPosition(
             vTokenAddress,
