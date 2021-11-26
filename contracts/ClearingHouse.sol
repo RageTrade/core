@@ -12,14 +12,16 @@ import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 
 contract ClearingHouse is ClearingHouseState, IClearingHouse {
-    LiquidationParams public liquidationParams;
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
-    uint256 public numAccounts;
-    mapping(uint256 => Account.Info) accounts;
+
     address public immutable realBase;
     address public immutable insuranceFundAddress;
 
+    uint256 public numAccounts;
+    mapping(uint256 => Account.Info) accounts;
+
+    LiquidationParams public liquidationParams;
     uint256 public removeLimitOrderFee;
     uint256 public minNotionalValue;
 
@@ -30,6 +32,21 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     ) ClearingHouseState(VPoolFactory) {
         realBase = _realBase;
         insuranceFundAddress = _insuranceFundAddress;
+    }
+
+    function setLiquidationParameters(LiquidationParams calldata _liquidationParams)
+        external
+        onlyGovernanceOrTeamMultisig
+    {
+        liquidationParams = _liquidationParams;
+    }
+
+    function setRemoveLimitOrderFee(uint256 _removeLimitOrderFee) external onlyGovernanceOrTeamMultisig {
+        removeLimitOrderFee = _removeLimitOrderFee;
+    }
+
+    function setMinNotionalValue(uint256 _minNotionalValue) external onlyGovernanceOrTeamMultisig {
+        minNotionalValue = _minNotionalValue;
     }
 
     function createAccount() external {
