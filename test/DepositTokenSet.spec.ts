@@ -133,19 +133,19 @@ describe('DepositTokenSet Library', () => {
       test.init(vTokenAddress);
     });
     it('Add Margin', async () => {
-      test.increaseBalance(vTokenAddress, 100, constants);
-      const balance = await test.getBalance(vTokenAddress);
+      test.increaseBalance(constants.VBASE_ADDRESS, 100, constants);
+      const balance = await test.getBalance(constants.VBASE_ADDRESS);
       expect(balance).to.eq(100);
     });
     it('Remove Margin', async () => {
-      test.decreaseBalance(vTokenAddress, 50, constants);
-      const balance = await test.getBalance(vTokenAddress);
+      test.decreaseBalance(constants.VBASE_ADDRESS, 50, constants);
+      const balance = await test.getBalance(constants.VBASE_ADDRESS);
       expect(balance).to.eq(50);
     });
     it('Deposit Market Value', async () => {
-      await oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
+      // await oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
       const marketValue = await test.getAllDepositAccountMarketValue(constants);
-      expect(marketValue).to.eq(20000);
+      expect(marketValue).to.eq(50);
     });
   });
 
@@ -155,8 +155,8 @@ describe('DepositTokenSet Library', () => {
       test.cleanDeposits(constants);
     });
     it('Add Margin', async () => {
-      test.increaseBalance(vTokenAddress, 50, constants);
-      let balance = await test.getBalance(vTokenAddress);
+      test.increaseBalance(constants.VBASE_ADDRESS, 50, constants);
+      let balance = await test.getBalance(constants.VBASE_ADDRESS);
       expect(balance).to.eq(50);
 
       test.increaseBalance(vTokenAddress1, 100, constants);
@@ -164,18 +164,16 @@ describe('DepositTokenSet Library', () => {
       expect(balance).to.eq(100);
     });
     it('Deposit Market Value (Price1)', async () => {
-      await oracle.setSqrtPrice(BigNumber.from(40).mul(BigNumber.from(2).pow(96)));
       await oracle1.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
 
       const marketValue = await test.getAllDepositAccountMarketValue(constants);
-      expect(marketValue).to.eq(120000);
+      expect(marketValue).to.eq(40050);
     });
     it('Deposit Market Value (Price2)', async () => {
-      await oracle.setSqrtPrice(BigNumber.from(10).mul(BigNumber.from(2).pow(96)));
-      await oracle1.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
+      await oracle1.setSqrtPrice(BigNumber.from(10).mul(BigNumber.from(2).pow(96)));
 
       const marketValue = await test.getAllDepositAccountMarketValue(constants);
-      expect(marketValue).to.eq(45000);
+      expect(marketValue).to.eq(10050);
     });
   });
 });

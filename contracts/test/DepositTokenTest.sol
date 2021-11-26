@@ -42,6 +42,11 @@ contract DepositTokenSetTest {
                 constants
             );
         }
+        depositTokenSet.decreaseBalance(
+            constants.VBASE_ADDRESS,
+            depositTokenSet.deposits[uint32(uint160(constants.VBASE_ADDRESS))],
+            constants
+        );
     }
 
     function increaseBalance(
