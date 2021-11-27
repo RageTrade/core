@@ -62,6 +62,7 @@ library LiquidityPositionSet {
     ) internal view returns (int256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
+            // Todo Break
             baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
         }
     }

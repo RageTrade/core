@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 import { FullMath } from './FullMath.sol';
 import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
+import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { Account, LiquidationParams } from './Account.sol';
@@ -47,7 +48,6 @@ library VTokenPositionSet {
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
             VTokenPosition.Position storage position = set.positions[truncated];
-
             accountMarketValue += position.marketValue(vToken, constants);
 
             uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(constants);
@@ -55,7 +55,6 @@ library VTokenPositionSet {
         }
 
         accountMarketValue += set.positions[truncate(constants.VBASE_ADDRESS)].balance;
-
         return (accountMarketValue);
     }
 
@@ -75,16 +74,14 @@ library VTokenPositionSet {
 
         uint256 price = vToken.getVirtualTwapPriceX128(constants);
         uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
-
         int256 tokenPosition = position.balance;
         int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition(vToken, constants));
 
         longSideRisk =
             (max(tokenPosition + liquidityMaxTokenPosition, 0) * int256(price)).mulDiv(marginRatio, 1e5) /
-            int256(FixedPoint96.Q96);
+            int256(FixedPoint128.Q128);
 
-        shortSideRisk = (max(-tokenPosition, 0) * int256(price)).mulDiv(marginRatio, 1e5) / int256(FixedPoint96.Q96);
-
+        shortSideRisk = (max(-tokenPosition, 0) * int256(price)).mulDiv(marginRatio, 1e5) / int256(FixedPoint128.Q128);
         return (longSideRisk, shortSideRisk);
     }
 
@@ -115,10 +112,9 @@ library VTokenPositionSet {
         requiredMarginOther = max(longSideRiskTotal, shortSideRiskTotal);
         if (vTokenAddressToSkip != address(0)) {
             (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vTokenAddressToSkip, constants);
+            longSideRiskTotal += longSideRisk;
+            shortSideRiskTotal += shortSideRisk;
         }
-
-        longSideRiskTotal += longSideRisk;
-        shortSideRiskTotal += shortSideRisk;
 
         requiredMargin = max(longSideRiskTotal, shortSideRiskTotal);
         return (requiredMargin, requiredMarginOther);
