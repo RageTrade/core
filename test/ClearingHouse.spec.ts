@@ -282,4 +282,92 @@ describe('Clearing House Library', () => {
     //   expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo,vBaseAddress)).to.eq(tokenAmount('9000',6));
     // });
   });
+  describe('#SwapTokenAmout', () => {
+    it('Fail - Access Denied', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      expect(
+        clearingHouseTest.connect(user2).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
+    });
+    it('Fail - Uninitialized Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      expect(
+        clearingHouseTest.connect(user1).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
+    });
+    it('Fail - Unsupported Token');
+    // , async () => {
+    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+    //   expect(
+    //     clearingHouseTest.connect(user1).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+    //   ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
+    // });
+    it('Fail - Low Notional Value');
+    it('Pass');
+    // , async () => {
+    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+    //   await clearingHouseTest.connect(user1).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('1000', 6));
+    // });
+  });
+  describe('#SwapTokenNotional', () => {
+    it('Fail - Access Denied', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      expect(
+        clearingHouseTest.connect(user2).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
+    });
+    it('Fail - Uninitialized Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      expect(
+        clearingHouseTest.connect(user1).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
+    });
+    it('Fail - Unsupported Token');
+    // , async () => {
+    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+    //   expect(
+    //     clearingHouseTest.connect(user1).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+    //   ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
+    // });
+    it('Fail - Low Notional Value');
+
+    it('Pass');
+    // , async () => {
+    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+    //   await clearingHouseTest.connect(user1).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('1000', 6));
+    // });
+  });
+  describe('#LiquidityChange', () => {
+    it('Fail - Access Denied', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const liquidityChangeParams = {
+        tickLower: -100,
+        tickUpper: 100,
+        liquidityDelta: 5,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+      };
+      expect(
+        clearingHouseTest.connect(user2).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
+      ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
+    });
+    it('Fail - Uninitialized Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      const liquidityChangeParams = {
+        tickLower: -100,
+        tickUpper: 100,
+        liquidityDelta: 5,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+      };
+      expect(
+        clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
+      ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
+    });
+    it('Fail - Unsupported Token');
+
+    it('Fail - Low Notional Value');
+
+    it('Pass');
+  });
 });
