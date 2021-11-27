@@ -88,7 +88,11 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
+        if (vTokenAddress != constants.VBASE_ADDRESS) {
+            IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
+        } else {
+            IERC20(realBase).transferFrom(msg.sender, address(this), amount);
+        }
 
         account.addMargin(vTokenAddress, amount, constants);
 
@@ -106,7 +110,12 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
         account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
-        IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
+
+        if (vTokenAddress != constants.VBASE_ADDRESS) {
+            IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
+        } else {
+            IERC20(realBase).transferFrom(msg.sender, address(this), amount);
+        }
 
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }
