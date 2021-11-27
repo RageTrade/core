@@ -2,13 +2,11 @@
 
 pragma solidity ^0.8.9;
 import { FullMath } from './FullMath.sol';
-import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Constants } from '../utils/Constants.sol';
 

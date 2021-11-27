@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.9;
 import { FullMath } from './FullMath.sol';
-import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
@@ -48,6 +47,7 @@ library VTokenPositionSet {
             if (truncated == 0) break;
             VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
             VTokenPosition.Position storage position = set.positions[truncated];
+
             accountMarketValue += position.marketValue(vToken, constants);
 
             uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(constants);
@@ -55,6 +55,7 @@ library VTokenPositionSet {
         }
 
         accountMarketValue += set.positions[truncate(constants.VBASE_ADDRESS)].balance;
+
         return (accountMarketValue);
     }
 
@@ -74,6 +75,7 @@ library VTokenPositionSet {
 
         uint256 price = vToken.getVirtualTwapPriceX128(constants);
         uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, constants);
+
         int256 tokenPosition = position.balance;
         int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition(vToken, constants));
 

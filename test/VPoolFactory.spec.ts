@@ -56,7 +56,6 @@ describe('VPoolFactory', () => {
 
     await VBase.transferOwnership(VPoolFactory.address);
 
-    console.log(await VPoolFactory.constants());
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
     VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
