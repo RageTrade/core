@@ -45,6 +45,7 @@ library Account {
     error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
     error InvalidTokenTradeAmount(int256 balance, int256 tokensToTrade);
     error InvalidLiquidationWrongSide(int256 totalRequiredMarginFinal, int256 totalRequiredMargin);
+    error InvalidLiquidationActiveRangePresent(address vTokenAddress);
 
     event AccountCreated(address ownerAddress, uint256 accountNo);
     event DepositMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
@@ -464,6 +465,9 @@ library Account {
         );
         int256 tokensToTrade;
         int256 accountMarketValue;
+
+        if (vTokenPosition.liquidityPositions.active[0] != 0)
+            revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
             int256 totalRequiredMargin;
