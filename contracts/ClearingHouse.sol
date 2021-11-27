@@ -23,10 +23,6 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
 
-    LiquidationParams public liquidationParams;
-    uint256 public removeLimitOrderFee;
-    uint256 public minNotionalValue;
-
     constructor(
         address VPoolFactory,
         address _realBase,
@@ -45,21 +41,6 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (vTokenAddress == address(0)) revert UninitializedToken(vTokenTruncatedAddress);
         if (isDepositCheck && !supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
         if (!isDepositCheck && !supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
-    }
-
-    function setLiquidationParameters(LiquidationParams calldata _liquidationParams)
-        external
-        onlyGovernanceOrTeamMultisig
-    {
-        liquidationParams = _liquidationParams;
-    }
-
-    function setRemoveLimitOrderFee(uint256 _removeLimitOrderFee) external onlyGovernanceOrTeamMultisig {
-        removeLimitOrderFee = _removeLimitOrderFee;
-    }
-
-    function setMinNotionalValue(uint256 _minNotionalValue) external onlyGovernanceOrTeamMultisig {
-        minNotionalValue = _minNotionalValue;
     }
 
     function createAccount() external {
