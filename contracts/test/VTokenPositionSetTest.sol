@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
+import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from '../libraries/VTokenPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
@@ -60,7 +60,7 @@ contract VTokenPositionSetTest {
         int256 vTokenAmount,
         Constants memory constants
     ) external {
-        dummy.swapTokenAmount(vTokenAddress, vTokenAmount, wrapper, constants);
+        dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false), wrapper, constants);
     }
 
     function swapTokenNotional(
@@ -68,7 +68,7 @@ contract VTokenPositionSetTest {
         int256 vTokenNotional,
         Constants memory constants
     ) external {
-        dummy.swapTokenNotional(vTokenAddress, vTokenNotional, wrapper, constants);
+        dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true), wrapper, constants);
     }
 
     function liquidityChange1(address vTokenAddress, Constants memory constants) external {

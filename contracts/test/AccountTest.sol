@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { Account, LiquidationParams } from '../libraries/Account.sol';
+import { Account, LiquidationParams, SwapParams } from '../libraries/Account.sol';
 import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
@@ -31,9 +31,9 @@ contract AccountTest {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
-            testAccount.swapTokenAmount(
+            testAccount.swapToken(
                 testVTokenAddresses[truncatedAddress],
-                -set.positions[truncatedAddress].balance,
+                SwapParams(-set.positions[truncatedAddress].balance, 0, false),
                 testVTokenAddresses,
                 wrapper,
                 constants
@@ -74,7 +74,7 @@ contract AccountTest {
         int256 amount,
         Constants memory constants
     ) external {
-        testAccount.swapTokenAmount(vTokenAddress, amount, testVTokenAddresses, wrapper, constants);
+        testAccount.swapToken(vTokenAddress, SwapParams(amount, 0, false), testVTokenAddresses, wrapper, constants);
     }
 
     function swapTokenNotional(
@@ -82,7 +82,7 @@ contract AccountTest {
         int256 amount,
         Constants memory constants
     ) external {
-        testAccount.swapTokenNotional(vTokenAddress, amount, testVTokenAddresses, wrapper, constants);
+        testAccount.swapToken(vTokenAddress, SwapParams(amount, 0, true), testVTokenAddresses, wrapper, constants);
     }
 
     function liquidityChange(

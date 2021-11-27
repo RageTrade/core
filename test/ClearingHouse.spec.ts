@@ -282,17 +282,19 @@ describe('Clearing House Library', () => {
     //   expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo,vBaseAddress)).to.eq(tokenAmount('9000',6));
     // });
   });
-  describe('#SwapTokenAmout', () => {
+  describe('#SwapTokenAmout - Without Limit', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const swapParams = { amount: tokenAmount('10000', 6), sqrtPriceLimit: 0, isNotional: false };
       expect(
-        clearingHouseTest.connect(user2).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+        clearingHouseTest.connect(user2).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      const swapParams = { amount: tokenAmount('10000', 6), sqrtPriceLimit: 0, isNotional: false };
       expect(
-        clearingHouseTest.connect(user1).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token');
@@ -306,20 +308,25 @@ describe('Clearing House Library', () => {
     it('Pass');
     // , async () => {
     //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
-    //   await clearingHouseTest.connect(user1).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('1000', 6));
+    //   const swapParams = {amount:tokenAmount('10000', 6), sqrtPriceLimit:0, isNotional:false};
+    //   await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
     // });
   });
-  describe('#SwapTokenNotional', () => {
+  describe('#SwapTokenNotional - Without Limit', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const swapParams = { amount: tokenAmount('10000', 6), sqrtPriceLimit: 0, isNotional: true };
+
       expect(
-        clearingHouseTest.connect(user2).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+        clearingHouseTest.connect(user2).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      const swapParams = { amount: tokenAmount('10000', 6), sqrtPriceLimit: 0, isNotional: true };
+
       expect(
-        clearingHouseTest.connect(user1).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token');
@@ -337,7 +344,7 @@ describe('Clearing House Library', () => {
     //   await clearingHouseTest.connect(user1).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('1000', 6));
     // });
   });
-  describe('#LiquidityChange', () => {
+  describe('#LiquidityChange - Without Limit', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
       const liquidityChangeParams = {

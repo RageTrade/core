@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { Account, LiquidityChangeParams, LiquidationParams } from './libraries/Account.sol';
+import { Account, LiquidityChangeParams, LiquidationParams, SwapParams } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseState } from './ClearingHouseState.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
@@ -121,33 +121,17 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         emit Account.WithdrawProfit(accountNo, amount);
     }
 
-    function swapTokenAmount(
+    function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        int256 vTokenAmount
+        SwapParams memory swapParams
     ) external {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        (, int256 vBaseAmount) = account.swapTokenAmount(vTokenAddress, vTokenAmount, vTokenAddresses, constants);
-
-        uint256 vBaseAmountAbs = uint256(vBaseAmount.abs());
-        if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);
-    }
-
-    function swapTokenNotional(
-        uint256 accountNo,
-        uint32 vTokenTruncatedAddress,
-        int256 vBaseAmount
-    ) external {
-        Account.Info storage account = accounts[accountNo];
-        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
-
-        address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
-
-        account.swapTokenNotional(vTokenAddress, vBaseAmount, vTokenAddresses, constants);
+        (, int256 vBaseAmount) = account.swapToken(vTokenAddress, swapParams, vTokenAddresses, constants);
 
         uint256 vBaseAmountAbs = uint256(vBaseAmount.abs());
         if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);

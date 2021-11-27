@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet, LiquidityChangeParams } from './VTokenPositionSet.sol';
+import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from './VTokenPositionSet.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
@@ -244,15 +244,13 @@ library Account {
     /// @notice swaps 'vTokenAddress' of token amount equal to 'vTokenAmount'
     /// @notice if vTokenAmount>0 then the swap is a long or close short and if vTokenAmount<0 then swap is a short or close long
     /// @param account account to swap tokens for
-    /// @param vTokenAddress address of token to swap
-    /// @param vTokenAmount amount of token to swap
     /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param wrapper poolwrapper for token
     /// @param constants platform constants
-    function swapTokenAmount(
+    function swapToken(
         Info storage account,
         address vTokenAddress,
-        int256 vTokenAmount,
+        SwapParams memory swapParams,
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
@@ -262,9 +260,9 @@ library Account {
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. an  d send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapTokenAmount(
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(
             vTokenAddress,
-            vTokenAmount,
+            swapParams,
             wrapper,
             constants
         );
@@ -276,77 +274,19 @@ library Account {
     /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
     /// @notice if vTokenNotional>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
     /// @param account account to swap tokens for
-    /// @param vTokenAddress address of token to swap
-    /// @param vTokenNotional notional value of token to swap (>0 => long or close short and <0 => short or close long)
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param wrapper poolwrapper for token
-    /// @param constants platform constants
-    function swapTokenNotional(
-        Info storage account,
-        address vTokenAddress,
-        int256 vTokenNotional,
-        mapping(uint32 => address) storage vTokenAddresses,
-        IVPoolWrapper wrapper,
-        Constants memory constants
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        // account fp bill
-        // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-
-        // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
-        // mints erc20 tokens in callback. and send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapTokenNotional(
-            vTokenAddress,
-            vTokenNotional,
-            wrapper,
-            constants
-        );
-
-        // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
-    }
-
-    /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
-    /// @notice if vTokenNotional>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
-    /// @param account account to swap tokens for
-    /// @param vTokenAddress address of token to swap
-    /// @param vTokenAmount amount of token to swap (>0 => long or close short and <0 => short or close long)
     /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param constants platform constants
-    function swapTokenAmount(
+    function swapToken(
         Info storage account,
         address vTokenAddress,
-        int256 vTokenAmount,
+        SwapParams memory swapParams,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
-            account.swapTokenAmount(
+            account.swapToken(
                 vTokenAddress,
-                vTokenAmount,
-                vTokenAddresses,
-                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-                constants
-            );
-    }
-
-    /// @notice swaps 'vTokenAddress' of market value equal to 'vTokenNotional'
-    /// @notice if vTokenNotional>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
-    /// @param account account to swap tokens for
-    /// @param vTokenAddress address of token to swap
-    /// @param vTokenNotional notional value of token to swap (>0 => long or close short and <0 => short or close long)
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param constants platform constants
-    function swapTokenNotional(
-        Info storage account,
-        address vTokenAddress,
-        int256 vTokenNotional,
-        mapping(uint32 => address) storage vTokenAddresses,
-        Constants memory constants
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        return
-            account.swapTokenNotional(
-                vTokenAddress,
-                vTokenNotional,
+                swapParams,
                 vTokenAddresses,
                 VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
                 constants
