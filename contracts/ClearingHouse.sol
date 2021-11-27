@@ -54,7 +54,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
     function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
-            totalProtocolFee += IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
+            uint256 wrapperFee = IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
+            emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
+            totalProtocolFee += wrapperFee;
         }
         IERC20(realBase).transfer(teamMultisig(), totalProtocolFee);
     }

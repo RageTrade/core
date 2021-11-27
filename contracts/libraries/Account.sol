@@ -74,6 +74,7 @@ library Account {
 
     event FundingPayment(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
     event LiquidityFee(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
+    event ProtocolFeeWithdrawm(address wrapperAddress, uint256 feeAmount);
 
     event LiquidateRanges(
         uint256 accountNo,
