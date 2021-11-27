@@ -231,64 +231,55 @@ describe('VTokenPositionSet Library', () => {
     });
   });
 
-  describe('Liquidity Change - 1', () => {
+  describe('Liquidity Change', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
     });
 
-    it('Add Liquidity');
-    // , async () => {
-    //   await VTokenPositionSet.liquidityChange1(vTokenAddress, 100);
-    //   const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-    //   const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+    it('Add Liquidity', async () => {
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100, constants);
+      const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
 
-    //   expect(resultVToken.balance).to.eq(-100);
-    //   // expect(resultVToken.netTraderPosition).to.eq(-100);
-    //   expect(resultVBase.balance).to.eq(-400000);
-    // });
+      expect(resultVToken.balance).to.eq(-100);
+      // expect(resultVToken.netTraderPosition).to.eq(-100);
+      expect(resultVBase.balance).to.eq(-400000);
+    });
 
-    it('Remove Liquidity');
-    // , async () => {
-    //   await VTokenPositionSet.liquidityChange1(vTokenAddress, -50);
-    //   const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-    //   const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+    it('Remove Liquidity', async () => {
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, -50, constants);
+      const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
 
-    //   expect(resultVToken.balance).to.eq(-50);
-    //   // expect(resultVToken.netTraderPosition).to.eq(-50);
-    //   expect(resultVBase.balance).to.eq(-200000);
-    // });
+      expect(resultVToken.balance).to.eq(-50);
+      // expect(resultVToken.netTraderPosition).to.eq(-50);
+      expect(resultVBase.balance).to.eq(-200000);
+    });
   });
 
-  describe('Liquidity Change - 2', () => {
+  describe('Close Liquidity Position', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -100, 100, 100, constants);
+      const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+
+      expect(resultVToken.balance).to.eq(-100);
+      expect(resultVBase.balance).to.eq(-400000);
     });
 
-    it('Add Liquidity');
-    // , async () => {
-    //   await VTokenPositionSet.liquidityChange2(vTokenAddress, -50, 50, 100);
-    //   const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-    //   const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+    it('Remove Liquidity', async () => {
+      await VTokenPositionSet.closeLiquidityPosition(vTokenAddress, constants);
+      const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
 
-    //   expect(resultVToken.balance).to.eq(-100);
-    //   // expect(resultVToken.netTraderPosition).to.eq(-100);
-    //   expect(resultVBase.balance).to.eq(-400000);
-    // });
-
-    it('Remove Liquidity');
-    // , async () => {
-    //   await VTokenPositionSet.liquidityChange2(vTokenAddress, -50, 50, -50);
-    //   const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-    //   const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
-
-    //   expect(resultVToken.balance).to.eq(-50);
-    //   // expect(resultVToken.netTraderPosition).to.eq(-50);
-    //   expect(resultVBase.balance).to.eq(-200000);
-    // });
+      expect(resultVToken.balance).to.eq(0);
+      expect(resultVBase.balance).to.eq(0);
+    });
   });
 
   describe('Liquididate Liquidity Positions (For a token)', () => {
@@ -296,8 +287,8 @@ describe('VTokenPositionSet Library', () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
-      await VTokenPositionSet.liquidityChange2(vTokenAddress, -100, 100, 100, constants);
-      await VTokenPositionSet.liquidityChange2(vTokenAddress, -50, 50, 100, constants);
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -100, 100, 100, constants);
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100, constants);
     });
 
     it('Liquidate Liquidity Position', async () => {
