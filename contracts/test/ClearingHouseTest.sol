@@ -14,7 +14,7 @@ contract ClearingHouseTest is ClearingHouse {
         address _insuranceFundAddress
     ) ClearingHouse(VPoolFactory, _realBase, _insuranceFundAddress) {}
 
-    function getTruncatedTokenAddress(address vTokenAddress) external pure returns (uint32 vTokenTruncatedAddress) {
+    function getTruncatedTokenAddress(address vTokenAddress) public pure returns (uint32 vTokenTruncatedAddress) {
         return uint32(uint160(vTokenAddress));
     }
 
@@ -23,7 +23,7 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (address vTokenAddressInVTokenAddresses)
     {
-        return vTokenAddresses[uint32(uint160(vTokenAddress))];
+        return vTokenAddresses[getTruncatedTokenAddress(vTokenAddress)];
     }
 
     function getAccountOwner(uint256 accountNo) external view returns (address owner) {
@@ -32,6 +32,14 @@ contract ClearingHouseTest is ClearingHouse {
 
     function getAccountNumInTokenPositionSet(uint256 accountNo) external view returns (uint256 accountNoInTokenSet) {
         return accounts[accountNo].tokenPositions.accountNo;
+    }
+
+    function getAccountDepositBalance(uint256 accountNo, address vTokenAddress)
+        external
+        view
+        returns (uint256 balance)
+    {
+        balance = accounts[accountNo].tokenDeposits.deposits[getTruncatedTokenAddress(vTokenAddress)];
     }
 
     function getAccountValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)

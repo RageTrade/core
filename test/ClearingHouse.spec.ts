@@ -46,6 +46,8 @@ describe('Clearing House Library', () => {
   let admin: SignerWithAddress;
   let user1: SignerWithAddress;
   let user2: SignerWithAddress;
+  let user1AccountNo: BigNumberish;
+  let user2AccountNo: BigNumberish;
 
   let rBase: IERC20;
 
@@ -93,7 +95,7 @@ describe('Clearing House Library', () => {
   before(async () => {
     await activateMainnetFork();
 
-    dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
+    dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
     const vBaseFactory = await hre.ethers.getContractFactory('VBase');
     const vBase = await vBaseFactory.deploy(REAL_BASE);
@@ -161,15 +163,17 @@ describe('Clearing House Library', () => {
   describe('#AccountCreation', () => {
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user1).createAccount();
+      user1AccountNo = 0;
       expect(await clearingHouseTest.numAccounts()).to.eq(1);
-      expect(await clearingHouseTest.getAccountOwner(0)).to.eq(user1.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(0)).to.eq(0);
+      expect(await clearingHouseTest.getAccountOwner(user1AccountNo)).to.eq(user1.address);
+      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user1AccountNo)).to.eq(user1AccountNo);
     });
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user2).createAccount();
+      user2AccountNo = 1;
       expect(await clearingHouseTest.numAccounts()).to.eq(2);
-      expect(await clearingHouseTest.getAccountOwner(1)).to.eq(user2.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(1)).to.eq(1);
+      expect(await clearingHouseTest.getAccountOwner(user2AccountNo)).to.eq(user2.address);
+      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user2AccountNo)).to.eq(user2AccountNo);
     });
   });
 
@@ -177,6 +181,10 @@ describe('Clearing House Library', () => {
     it('vToken Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vTokenAddress)).to.eq(vTokenAddress);
     });
+    it('vBase Intialized');
+    // , async () => {
+    //   expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vBaseAddress)).to.eq(vBaseAddress);
+    // });
     it('Other Address Not Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(dummyTokenAddress)).to.eq(ADDRESS_ZERO);
     });
@@ -215,5 +223,63 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(admin).updateSupportedDeposits(vBaseAddress, true);
       expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.true;
     });
+  });
+
+  describe('#Deposit', () => {
+    it('Fail - Access Denied', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      expect(
+        clearingHouseTest.connect(user2).addMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
+    });
+    it('Fail - Uninitialized Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      expect(
+        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
+    });
+    it('Fail - Unsupported Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      expect(
+        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('UnsupportedToken("' + vTokenAddress + '")');
+    });
+    it('Pass');
+    // , async () => {
+    //   await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('10000', 6));
+    //   const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+    //   await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedVBaseAddress, tokenAmount('10000', 6));
+    //   expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('0', 6));
+    //   expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('10000', 6));
+    //   expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo,vBaseAddress)).to.eq(tokenAmount('10000',6));
+    // });
+  });
+  describe('#Withdraw', () => {
+    it('Fail - Access Denied', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      expect(
+        clearingHouseTest.connect(user2).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
+    });
+    it('Fail - Uninitialized Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
+      expect(
+        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
+    });
+    it('Fail - Unsupported Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      expect(
+        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
+      ).to.be.revertedWith('UnsupportedToken("' + vTokenAddress + '")');
+    });
+    it('Pass');
+    // , async () => {
+    //   const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+    //   await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedVBaseAddress, tokenAmount('1000', 6));
+    //   expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('1000', 6));
+    //   expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('9000', 6));
+    //   expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo,vBaseAddress)).to.eq(tokenAmount('9000',6));
+    // });
   });
 });
