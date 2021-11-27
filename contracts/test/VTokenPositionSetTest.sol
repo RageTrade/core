@@ -91,6 +91,8 @@ contract VTokenPositionSetTest {
             tickLower,
             tickUpper,
             liquidity,
+            0,
+            0,
             false,
             LimitOrderType.NONE
         );

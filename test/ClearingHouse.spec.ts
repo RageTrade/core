@@ -353,6 +353,8 @@ describe('Clearing House Library', () => {
         liquidityDelta: 5,
         closeTokenPosition: false,
         limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageTolerance: 0,
       };
       expect(
         clearingHouseTest.connect(user2).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -366,6 +368,8 @@ describe('Clearing House Library', () => {
         liquidityDelta: 5,
         closeTokenPosition: false,
         limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageTolerance: 0,
       };
       expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
