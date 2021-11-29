@@ -6,6 +6,7 @@ import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
+import 'solidity-coverage';
 import '@nomiclabs/hardhat-etherscan';
 import { ethers } from 'ethers';
 config();

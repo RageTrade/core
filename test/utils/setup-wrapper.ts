@@ -3,21 +3,12 @@ import { smock } from '@defi-wonderland/smock';
 import { constants } from './dummyConstants';
 import { ethers } from 'ethers';
 import { VPoolFactory, VPoolWrapperDeployer } from '../../typechain-types';
-import { setupVPool } from './setup-vPool';
+import { setupVPool, SetupArgs } from './setup-vPool';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-export async function setupWrapper({
-  vPriceInitial,
-  rPriceInitial,
-  signer,
-}: {
-  vPriceInitial: number;
-  rPriceInitial: number;
-  signer?: SignerWithAddress;
-}) {
-  signer = signer ?? (await hre.ethers.getSigners())[0];
-
-  const { vPool, vBase, vToken, oracle, isToken0 } = await setupVPool({ vPriceInitial, rPriceInitial });
+export async function setupWrapper(setupArgs: SetupArgs) {
+  const signer = setupArgs.signer ?? (await hre.ethers.getSigners())[0];
+  const { vPool, vBase, vToken, oracle, isToken0 } = await setupVPool(setupArgs);
 
   const wrapperDeployer = await smock.fake<VPoolWrapperDeployer>('VPoolWrapperDeployer', {
     address: signer.address,
@@ -27,6 +18,8 @@ export async function setupWrapper({
   wrapperDeployer.parameters.returns([
     vToken.address,
     vPool.address,
+    setupArgs.extendedFee ?? 500,
+    setupArgs.protocolFee ?? 500,
     2, // initialMargin
     3, // maintainanceMargin
     60, // twapDuration

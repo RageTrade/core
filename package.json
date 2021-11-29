@@ -6,16 +6,17 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "size": "hardhat size-contracts",
-    "typechain": "hardhat typechain",
-    "test": "hardhat test",
-    "format": "prettier --check contracts test",
-    "format:fix": "prettier --write contracts test",
+    "coverage": "hardhat coverage",
     "deploy": "hardhat deploy",
-    "etherscan": "hardhat etherscan-verify",
     "deploy:goerli": "hardhat deploy --network goerli && yarn etherscan --network goerli",
     "deploy:rinkeby": "hardhat deploy --network rinkeby && yarn etherscan --network rinkeby",
-    "deploy:localhost": "hardhat --network localhost deploy"
+    "deploy:localhost": "hardhat --network localhost deploy",
+    "etherscan": "hardhat etherscan-verify",
+    "format": "prettier --check contracts test",
+    "format:fix": "prettier --write contracts test",
+    "size": "hardhat size-contracts",
+    "test": "hardhat test",
+    "typechain": "hardhat typechain"
   },
   "peerDependencies": {
     "ethers": "5.x",
@@ -44,6 +45,7 @@
     "hardhat-gas-reporter": "^1.0.4",
     "hardhat-tracer": "^1.0.0-alpha.6",
     "prettier": "^2.2.1",
+    "solidity-coverage": "^0.7.17",
     "ts-node": "^9.1.1",
     "typechain": "^6.0.2",
     "typescript": "^4.2.4"
@@ -54,5 +56,8 @@
     "@uniswap/v3-core": "^1.0.0",
     "@uniswap/v3-periphery": "^1.2.1",
     "ethers": "^5.4.6"
+  },
+  "resolutions": {
+    "solidity-coverage/@solidity-parser/parser": "^0.14.0"
   }
 }

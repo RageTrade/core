@@ -1,8 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
 
-// pragma solidity ^0.7.6;
-
-// if importing uniswap v3 libraries this might not work
 pragma solidity ^0.8.9;
 import './libraries/uniswap/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
@@ -24,6 +21,7 @@ import { Tick } from './libraries/Tick.sol';
 import { TickMath } from './libraries/uniswap/TickMath.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
+import { Oracle } from './libraries/Oracle.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -33,7 +31,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using SignedMath for int256;
     using PriceMath for uint160;
     using SafeCast for uint256;
+    using Oracle for IUniswapV3Pool;
     using SimulateSwap for IUniswapV3Pool;
+    using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
     using VTokenLib for VTokenAddress;
 
@@ -43,7 +43,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     VTokenAddress public immutable vToken;
     IUniswapV3Pool public immutable vPool;
     bool public immutable isToken0;
-    uint24 public immutable fee;
+
+    // fee collected by Uniswap from traders and given to LPs
+    uint24 public immutable uniswapFee;
+
+    // extra fee collected here from traders and given to LPs
+    // useful when pool wants LP fees 0.1% desired instead of 0.05% or 0.3%
+    uint24 public extendedFee;
+
+    // fee collected here from traders and given to Protocol/DAO
     uint24 public protocolFee;
     uint256 public accruedProtocolFee;
 
@@ -51,7 +59,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     IOracle public oracle;
 
     FundingPayment.Info public fpGlobal;
-    uint256 public extendedFeeGrowthOutsideX128;
+    uint256 public extendedFeeGrowthGlobalX128;
     mapping(int24 => Tick.Info) public extendedTicks;
 
     Constants public constants;
@@ -62,6 +70,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         (
             vTokenAddress,
             vPoolAddress,
+            extendedFee,
+            protocolFee,
             initialMarginRatio,
             maintainanceMarginRatio,
             timeHorizon,
@@ -69,8 +79,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         ) = IVPoolWrapperDeployer(msg.sender).parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);
         vPool = IUniswapV3Pool(vPoolAddress);
-        fee = vPool.fee();
-        protocolFee = fee;
+        uniswapFee = vPool.fee();
         isToken0 = vToken.isToken0(constants);
         // console.log('isToken0', isToken0 ? 'true' : 'false');
     }
@@ -78,6 +87,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     // TODO restrict this to governance
     function setOracle(address oracle_) external {
         oracle = IOracle(oracle_);
+    }
+
+    // TODO restrict this to governance
+    function setExtendedFee(uint24 extendedFee_) external {
+        extendedFee = extendedFee_;
     }
 
     // TODO restrict this to governance
@@ -94,28 +108,39 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         external
         view
         returns (
-            int256 sumA,
-            int256 sumBInside,
-            int256 sumFpInside,
-            uint256 uniswapFeeInside,
-            uint256 extendedFeeInside
+            int256 sumAX128,
+            int256 sumBInsideX128,
+            int256 sumFpInsideX128,
+            uint256 uniswapFeeInsideX128,
+            uint256 extendedFeeInsideX128
         )
-    {}
-
-    function swapTokenNotional(int256 vBaseAmount) external returns (int256 vTokenAmount) {
-        (, vTokenAmount) = swap(
-            vBaseAmount > 0,
-            -vBaseAmount.abs(),
-            ((vBaseAmount > 0) == isToken0) ? TickMath.MIN_SQRT_RATIO : TickMath.MAX_SQRT_RATIO
+    {
+        (, int24 currentTick, , , , , ) = vPool.slot0();
+        FundingPayment.Info memory _fpGlobal = fpGlobal;
+        sumAX128 = _fpGlobal.sumAX128;
+        sumBInsideX128 = extendedTicks.getNetPositionInside(tickLower, tickUpper, currentTick, _fpGlobal.sumBX128);
+        sumFpInsideX128 = extendedTicks.getFundingPaymentGrowthInside(
+            tickLower,
+            tickUpper,
+            currentTick,
+            _fpGlobal.sumAX128,
+            _fpGlobal.sumFpX128
+        );
+        uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
+        extendedFeeInsideX128 = extendedTicks.getExtendedFeeGrowthInside(
+            tickLower,
+            tickUpper,
+            currentTick,
+            extendedFeeGrowthGlobalX128
         );
     }
 
+    function swapTokenNotional(int256 vBaseAmount) external returns (int256 vTokenAmount) {
+        (, vTokenAmount) = swap(vBaseAmount > 0, -vBaseAmount.abs(), 0);
+    }
+
     function swapTokenAmount(int256 vTokenAmount) external returns (int256 vBaseAmount) {
-        (vBaseAmount, ) = swap(
-            vTokenAmount > 0,
-            vTokenAmount.abs(),
-            ((vTokenAmount > 0) == isToken0) ? TickMath.MIN_SQRT_RATIO : TickMath.MAX_SQRT_RATIO
-        );
+        (vBaseAmount, ) = swap(vTokenAmount > 0, vTokenAmount.abs(), 0);
     }
 
     /// @notice swaps token
@@ -127,7 +152,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
-        bool zeroForOne = vToken.isToken0(constants) != buyVToken; // this is correct
+        bool zeroForOne = isToken0 != buyVToken;
+
+        if (sqrtPriceLimitX96 == 0) {
+            sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+        }
 
         bool isVTokenSpecified = amountSpecified > 0;
 
@@ -146,10 +175,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         if (buyVToken) {
             /// @dev trader is buying vtoken then exact output
-            amountSpecified = -amountSpecified;
+            if (amountSpecified > 0) {
+                amountSpecified = -amountSpecified;
+            } else {
+                amountSpecified = (-amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
+            }
         } else {
             /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
-            amountSpecified = (amountSpecified * 1e6) / int24(1e6 - fee);
+            amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee - extendedFee);
         }
 
         {
@@ -182,10 +215,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             (vBaseIn, vTokenIn) = vToken.flip(amount0, amount1, constants);
         }
 
-        /// @dev de-inflate
-        if (!buyVToken) {
-            vBaseIn = (vBaseIn * int24(1e6 - fee)) / 1e6 - 1; // negative
-            vTokenIn = (vTokenIn * int24(1e6 - fee)) / 1e6 + 1; // positive
+        if (buyVToken) {
+            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee)) / int24(1e6 - uniswapFee - extendedFee); // negative
+        } else {
+            /// @dev de-inflate
+            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 - 1; // negative
+            vTokenIn = (vTokenIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 + 1; // positive
         }
 
         /// @dev if specified vtoken then apply the protocol fee after swap
@@ -212,7 +247,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         bool buyVToken = isToken0 != zeroForOne;
         (uint256 vBaseAmount, uint256 vTokenAmount) = buyVToken
             ? (step.amountIn, step.amountOut)
-            : (step.amountIn, step.amountOut);
+            : (step.amountOut, step.amountIn);
 
         // TODO: remove this after testing
         // console.log('');
@@ -222,6 +257,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         //     console.log('state.amountSpecifiedRemaining -', uint256(-state.amountSpecifiedRemaining));
         // }
         // console.log('step.sqrtPriceNextX96', uint256(step.sqrtPriceNextX96));
+        // if (state.tick > 0) {
+        //     console.log('state.tick', uint24(state.tick));
+        // } else {
+        //     console.log('state.tick -', uint24(-state.tick));
+        // }
         // if (step.tickNext > 0) {
         //     console.log('state.tickNext', uint24(step.tickNext));
         // } else {
@@ -229,25 +269,32 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // }
         // console.log('step vBaseAmount', vBaseAmount);
         // console.log('step vTokenAmount', vTokenAmount);
-        if (state.liquidity > 0) {
+        if (state.liquidity > 0 && vBaseAmount > 0) {
             uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
             fpGlobal.update(
                 buyVToken ? int256(vTokenAmount) : -int256(vTokenAmount),
                 state.liquidity,
                 cache.blockTimestamp,
-                isToken0 ? FixedPoint128.Q128.mulDiv(FixedPoint128.Q128, priceX128) : priceX128,
-                vTokenAmount.mulDiv(FixedPoint128.Q128, vBaseAmount)
+                priceX128,
+                vTokenAmount.mulDiv(FixedPoint128.Q128, vBaseAmount) // TODO change to TWAP
             );
-
-            if (!buyVToken) {
-                extendedFeeGrowthOutsideX128 += step.amountIn.mulDiv(FixedPoint128.Q128, state.liquidity);
+            //
+            if (buyVToken) {
+                extendedFeeGrowthGlobalX128 += vBaseAmount.mulDiv(extendedFee, 1e6 - extendedFee).mulDiv(
+                    FixedPoint128.Q128,
+                    state.liquidity
+                );
+            } else {
+                extendedFeeGrowthGlobalX128 += vBaseAmount
+                    .mulDiv(uniswapFee + extendedFee, 1e6 - uniswapFee - extendedFee)
+                    .mulDiv(FixedPoint128.Q128, state.liquidity);
             }
         }
 
         if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
             // if the tick is initialized, run the tick transition
             if (step.initialized) {
-                extendedTicks.cross(step.tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
+                extendedTicks.cross(step.tickNext, fpGlobal, extendedFeeGrowthGlobalX128);
             }
         }
     }
@@ -264,6 +311,18 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (amount1Delta > 0) {
             IVToken(vPool.token1()).mint(address(vPool), uint256(amount1Delta));
         }
+    }
+
+    // for updating global funding payment
+    function zeroSwap() external {
+        uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
+        fpGlobal.update(
+            0,
+            1,
+            uint48(block.timestamp),
+            priceX128,
+            vPool.getTwapSqrtPrice(1 hours).toPriceX128(isToken0)
+        );
     }
 
     function liquidityChange(
@@ -319,23 +378,18 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             amount1Requested: type(uint128).max
         });
 
-        // (uint256 basePrincipalPlusLongFees, uint256 vTokenPrincipalPlusShortFees) = vToken.flip(amount0, amount1, constants);
-
-        // burn ERC20 tokens sent by uniswap and fwd accounting to perp state
-        // IVBase(constants.VBASE_ADDRESS).burn(address(this), basePrincipalPlusLongFees);
-        // vToken.iface().burn(address(this), vTokenPrincipalPlusShortFees);
         _vBurn();
     }
 
     function _vBurn() internal {
         uint256 vBaseBal = IVBase(constants.VBASE_ADDRESS).balanceOf(address(this));
-        // if (vBaseBal > 0) {
-        IVBase(constants.VBASE_ADDRESS).burn(vBaseBal);
-        // }
-        uint256 vTokenBal = IVBase(constants.VBASE_ADDRESS).balanceOf(address(this));
-        // if (vTokenBal > 0) {
-        vToken.iface().burn(vTokenBal);
-        // }
+        if (vBaseBal > 0) {
+            IVBase(constants.VBASE_ADDRESS).burn(vBaseBal);
+        }
+        uint256 vTokenBal = vToken.iface().balanceOf(address(this));
+        if (vTokenBal > 0) {
+            vToken.iface().burn(vTokenBal);
+        }
     }
 
     function getSumAX128() external view returns (int256) {

@@ -52,6 +52,8 @@ contract VPoolFactory {
         string calldata vTokenSymbol,
         address realToken,
         address oracleAddress,
+        uint24 extendedLpFee,
+        uint24 protocolFee,
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration
@@ -66,6 +68,8 @@ contract VPoolFactory {
         address vPoolWrapper = VPoolWrapperDeployer.deployVPoolWrapper(
             vTokenAddress,
             vPool,
+            extendedLpFee,
+            protocolFee,
             initialMargin,
             maintainanceMargin,
             twapDuration,

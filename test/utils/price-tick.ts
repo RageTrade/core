@@ -6,7 +6,7 @@ import JSBI from 'jsbi';
 import { VBase, VToken } from '../../typechain-types';
 import { fromQ128, fromQ96, Q96, toQ128, toQ96 } from './fixed-point';
 
-declare type ContractOrSmock<C extends Contract> = C | MockContract<C> | FakeContract<C>;
+export declare type ContractOrSmock<C extends Contract> = C | MockContract<C> | FakeContract<C>;
 
 export async function priceToTick(
   price: number,
@@ -46,7 +46,7 @@ export async function tickToPrice(
   price /= 10 ** (vBaseDecimals - vTokenDecimals);
   return price;
 }
-export async function tickToSqrtPriceX96(tick: number): Promise<BigNumber> {
+export function tickToSqrtPriceX96(tick: number): BigNumber {
   let sqrtPriceX96 = BigNumber.from(TickMath.getSqrtRatioAtTick(tick).toString());
   return sqrtPriceX96;
 }

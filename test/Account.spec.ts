@@ -41,6 +41,8 @@ describe('AccountTest Library', () => {
       'vWETH',
       realToken.address,
       oracleAddress,
+      500,
+      500,
       initialMargin,
       maintainanceMargin,
       twapDuration,

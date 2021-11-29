@@ -15,6 +15,7 @@ contract TickTest {
     using FundingPayment for FundingPayment.Info;
     using Tick for mapping(int24 => Tick.Info);
     using Tick for IUniswapV3Pool;
+    using VTokenLib for VTokenAddress;
 
     mapping(int24 => Tick.Info) public extendedTicks;
 
@@ -56,7 +57,7 @@ contract TickTest {
         VTokenAddress vToken,
         Constants memory constants
     ) public view returns (uint256 uniswapFeeGrowthInside) {
-        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent, vToken, constants);
+        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent, vToken.isToken0(constants));
     }
 
     function getExtendedFeeGrowthInside(

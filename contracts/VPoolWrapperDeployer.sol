@@ -13,6 +13,8 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
     struct Parameters {
         address vTokenAddress;
         address vPoolAddress;
+        uint24 extendedLpFee;
+        uint24 protocolFee;
         uint16 initialMargin;
         uint16 maintainanceMargin;
         uint32 twapDuration;
@@ -28,6 +30,8 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
     function deployVPoolWrapper(
         address vTokenAddress,
         address vPool,
+        uint24 extendedLpFee,
+        uint24 protocolFee,
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration,
@@ -36,7 +40,16 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         if (msg.sender != VPoolFactory) revert NotVPoolFactory();
         bytes32 salt = keccak256(abi.encode(vTokenAddress, constants.VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;
-        parameters = Parameters(vTokenAddress, vPool, initialMargin, maintainanceMargin, twapDuration, constants);
+        parameters = Parameters(
+            vTokenAddress,
+            vPool,
+            extendedLpFee,
+            protocolFee,
+            initialMargin,
+            maintainanceMargin,
+            twapDuration,
+            constants
+        );
         address deployedAddress = Create2.deploy(0, salt, bytecode);
         delete parameters;
         return deployedAddress;
