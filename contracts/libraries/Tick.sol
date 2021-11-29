@@ -74,15 +74,14 @@ library Tick {
         int24 tickLower,
         int24 tickUpper,
         int24 tickCurrent,
-        VTokenAddress vToken,
-        Constants memory constants
+        bool isToken0
     ) internal view returns (uint256 uniswapFeeGrowthInsideX128) {
         uint256 uniswapFeeGrowthLowerX128;
         uint256 uniswapFeeGrowthUpperX128;
         {
             (, , uint256 fee0LowerX128, uint256 fee1LowerX128, , , , ) = vPool.ticks(tickLower);
             (, , uint256 fee0UpperX128, uint256 fee1UpperX128, , , , ) = vPool.ticks(tickUpper);
-            if (vToken.isToken0(constants)) {
+            if (isToken0) {
                 uniswapFeeGrowthLowerX128 = fee1LowerX128;
                 uniswapFeeGrowthUpperX128 = fee1UpperX128;
             } else {
@@ -94,9 +93,7 @@ library Tick {
         if (tickCurrent < tickLower) {
             uniswapFeeGrowthInsideX128 = uniswapFeeGrowthLowerX128 - uniswapFeeGrowthUpperX128;
         } else if (tickCurrent < tickUpper) {
-            uniswapFeeGrowthInsideX128 = (
-                vToken.isToken0(constants) ? vPool.feeGrowthGlobal1X128() : vPool.feeGrowthGlobal0X128()
-            );
+            uniswapFeeGrowthInsideX128 = (isToken0 ? vPool.feeGrowthGlobal1X128() : vPool.feeGrowthGlobal0X128());
             uniswapFeeGrowthInsideX128 -= (uniswapFeeGrowthLowerX128 + uniswapFeeGrowthUpperX128);
         } else {
             uniswapFeeGrowthInsideX128 = uniswapFeeGrowthUpperX128 - uniswapFeeGrowthLowerX128;
@@ -109,18 +106,18 @@ library Tick {
         int24 tickUpper,
         int24 tickCurrent,
         uint256 extendedFeeGrowthGlobalX128
-    ) internal view returns (uint256 extendedFeeGrowthInside) {
+    ) internal view returns (uint256 extendedFeeGrowthInsideX128) {
         if (tickCurrent < tickLower) {
-            extendedFeeGrowthInside =
+            extendedFeeGrowthInsideX128 =
                 self[tickLower].extendedFeeGrowthOutsideX128 -
                 self[tickUpper].extendedFeeGrowthOutsideX128;
         } else if (tickCurrent < tickUpper) {
-            extendedFeeGrowthInside =
+            extendedFeeGrowthInsideX128 =
                 extendedFeeGrowthGlobalX128 -
                 self[tickLower].extendedFeeGrowthOutsideX128 -
                 self[tickUpper].extendedFeeGrowthOutsideX128;
         } else {
-            extendedFeeGrowthInside =
+            extendedFeeGrowthInsideX128 =
                 self[tickUpper].extendedFeeGrowthOutsideX128 -
                 self[tickLower].extendedFeeGrowthOutsideX128;
         }

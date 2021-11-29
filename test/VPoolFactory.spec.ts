@@ -66,7 +66,7 @@ describe('VPoolFactory', () => {
 
   describe('Initilize', () => {
     it('Deployments', async () => {
-      await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 2, 3, 60);
+      await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 500, 500, 2, 3, 60);
       const eventFilter = VPoolFactory.filters.poolInitlized();
       const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
       const vPool = events[0].args[0];

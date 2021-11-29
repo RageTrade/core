@@ -49,6 +49,8 @@ describe('DepositTokenSet Library', () => {
       'vWETH',
       realToken.address,
       oracle.address,
+      500,
+      500,
       initialMargin,
       maintainanceMargin,
       twapDuration,
