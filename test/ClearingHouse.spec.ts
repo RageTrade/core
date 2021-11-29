@@ -244,15 +244,16 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
       ).to.be.revertedWith('UnsupportedToken("' + vTokenAddress + '")');
     });
-    it('Pass');
-    // , async () => {
-    //   await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('10000', 6));
-    //   const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
-    //   await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedVBaseAddress, tokenAmount('10000', 6));
-    //   expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('0', 6));
-    //   expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('10000', 6));
-    //   expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo,vBaseAddress)).to.eq(tokenAmount('10000',6));
-    // });
+    it('Pass', async () => {
+      await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('10000', 6));
+      const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedVBaseAddress, tokenAmount('10000', 6));
+      expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('0', 6));
+      expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('10000', 6));
+      expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, vBaseAddress)).to.eq(
+        tokenAmount('10000', 6),
+      );
+    });
   });
   describe('#Withdraw', () => {
     it('Fail - Access Denied', async () => {
@@ -273,14 +274,17 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
       ).to.be.revertedWith('UnsupportedToken("' + vTokenAddress + '")');
     });
-    it('Pass');
-    // , async () => {
-    //   const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
-    //   await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedVBaseAddress, tokenAmount('1000', 6));
-    //   expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('1000', 6));
-    //   expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('9000', 6));
-    //   expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo,vBaseAddress)).to.eq(tokenAmount('9000',6));
-    // });
+    it('Pass', async () => {
+      const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      await clearingHouseTest
+        .connect(user1)
+        .removeMargin(user1AccountNo, truncatedVBaseAddress, tokenAmount('1000', 6));
+      expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('1000', 6));
+      expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('9000', 6));
+      expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, vBaseAddress)).to.eq(
+        tokenAmount('9000', 6),
+      );
+    });
   });
   describe('#SwapTokenAmout - Without Limit', () => {
     it('Fail - Access Denied', async () => {
@@ -297,13 +301,13 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
-    it('Fail - Unsupported Token');
-    // , async () => {
-    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
-    //   expect(
-    //     clearingHouseTest.connect(user1).swapTokenAmount(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
-    //   ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
-    // });
+    it('Fail - Unsupported Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const swapParams = { amount: tokenAmount('10000', 6), sqrtPriceLimit: 0, isNotional: false };
+      expect(
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
+      ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
+    });
     it('Fail - Low Notional Value');
     it('Pass');
     // , async () => {
@@ -329,13 +333,13 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
-    it('Fail - Unsupported Token');
-    // , async () => {
-    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
-    //   expect(
-    //     clearingHouseTest.connect(user1).swapTokenNotional(user1AccountNo, truncatedAddress, tokenAmount('10000', 6)),
-    //   ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
-    // });
+    it('Fail - Unsupported Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const swapParams = { amount: tokenAmount('10000', 6), sqrtPriceLimit: 0, isNotional: true };
+      expect(
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
+      ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
+    });
     it('Fail - Low Notional Value');
 
     it('Pass');
@@ -375,7 +379,21 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
-    it('Fail - Unsupported Token');
+    it('Fail - Unsupported Token', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const liquidityChangeParams = {
+        tickLower: -100,
+        tickUpper: 100,
+        liquidityDelta: 5,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageTolerance: 0,
+      };
+      expect(
+        clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
+      ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
+    });
 
     it('Fail - Low Notional Value');
 
