@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.9;
 import { FullMath } from './FullMath.sol';
+import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
@@ -14,6 +15,8 @@ import { FullMath } from './FullMath.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Constants } from '../utils/Constants.sol';
+
+import { console } from 'hardhat/console.sol';
 
 struct SwapParams {
     int256 amount;
@@ -469,14 +472,50 @@ library VTokenPositionSet {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, constants);
 
         VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
-        tokensToTrade = (accountMarketValue -
-            liquidationParams.fixFee.toInt256() -
-            (totalRequiredMarginOther +
-                (vToken.getVirtualTwapPriceX128(constants).toInt256() * vTokenPosition.balance).mulDiv(
-                    vToken.getMarginRatio(false, constants),
-                    1e5
-                )).mulDiv(liquidationParams.targetMarginRatio, 1e1));
+        tokensToTrade = getTokensToLiquidateNumerator(
+            vTokenPosition,
+            vToken,
+            accountMarketValue,
+            totalRequiredMarginOther,
+            liquidationParams,
+            constants
+        );
+
+        tokensToTrade = tokensToTrade.mulDiv(
+            int256(FixedPoint128.Q128),
+            getTokensToLiquidateDenominatorX128(vToken, liquidationParams, constants)
+        );
 
         return (tokensToTrade, accountMarketValue, totalRequiredMargin);
+    }
+
+    function getTokensToLiquidateNumerator(
+        VTokenPosition.Position storage vTokenPosition,
+        VTokenAddress vToken,
+        int256 accountMarketValue,
+        int256 totalRequiredMarginOther,
+        LiquidationParams memory liquidationParams,
+        Constants memory constants
+    ) internal view returns (int256 numerator) {
+        return (accountMarketValue -
+            liquidationParams.fixFee.toInt256() -
+            (totalRequiredMarginOther +
+                vTokenPosition.balance.mulDiv(vToken.getMarginRatio(false, constants), 1e5).mulDiv(
+                    vToken.getVirtualTwapPriceX128(constants),
+                    FixedPoint128.Q128
+                )).mulDiv(liquidationParams.targetMarginRatio, 1e1));
+    }
+
+    function getTokensToLiquidateDenominatorX128(
+        VTokenAddress vToken,
+        LiquidationParams memory liquidationParams,
+        Constants memory constants
+    ) internal view returns (int256 denominator) {
+        denominator = (vToken
+            .getVirtualTwapPriceX128(constants)
+            .toInt256()
+            .mulDiv(vToken.getMarginRatio(false, constants), 1e5)
+            .mulDiv(liquidationParams.targetMarginRatio, 1e1) -
+            vToken.getVirtualTwapPriceX128(constants).toInt256().mulDiv(liquidationParams.liquidationFeeFraction, 1e5));
     }
 }
