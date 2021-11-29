@@ -25,13 +25,12 @@ export async function testSetup({
   //VBase
   const VBase__factory = await smock.mock<VBase__factory>('VBase', signer); // await hre.ethers.getContractFactory('VBase');
   const vBase = await VBase__factory.deploy(realBase.address);
-  hre.tracer.nameTags[vBase.address] = 'vBase';
 
   //Oracle
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
   // ClearingHouse, VPoolFactory
-  const realToken = await smock.fake<ERC20>('ERC20');
+  const realToken = await smock.fake<ERC20>('ERC20', { address: ethers.constants.AddressZero });
   realToken.decimals.returns(18);
 
   const futureVPoolFactoryAddress = await calculateAddressFor(signer, 2);
@@ -61,6 +60,8 @@ export async function testSetup({
     'vTest',
     realToken.address,
     oracle.address,
+    500,
+    500,
     initialMarginRatio,
     maintainanceMarginRatio,
     twapDuration,
