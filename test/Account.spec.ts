@@ -123,24 +123,24 @@ describe('AccountTest Library', () => {
     });
 
     it('Mint', async () => {
-      await realToken.mint(ownerAddress, '10000');
-      await realToken.approve(testContractAddress, '10000');
+      await realToken.mint(ownerAddress, '10000000000');
+      await realToken.approve(testContractAddress, '1000000000');
     });
   });
 
   describe('#Margin', () => {
     it('Add Margin', async () => {
-      await test.addMargin(vTokenAddress, '100', constants);
+      await test.addMargin(vTokenAddress, '10000000000', constants);
       // expect(await realToken.balanceOf(ownerAddress)).to.eq('9900');
       // expect(await realToken.balanceOf(testContractAddress)).to.eq('100');
-      expect(await test.getAccountDepositBalance(vTokenAddress)).to.eq('100');
+      expect(await test.getAccountDepositBalance(vTokenAddress)).to.eq('10000000000');
     });
 
     it('Remove Margin', async () => {
       await test.removeMargin(vTokenAddress, '50', constants);
       // expect(await realToken.balanceOf(ownerAddress)).to.eq('9950');
       // expect(await realToken.balanceOf(testContractAddress)).to.eq('50');
-      expect(await test.getAccountDepositBalance(vTokenAddress)).to.eq('50');
+      expect(await test.getAccountDepositBalance(vTokenAddress)).to.eq('9999999950');
     });
   });
 

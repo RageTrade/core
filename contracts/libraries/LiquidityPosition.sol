@@ -173,13 +173,13 @@ library LiquidityPosition {
         VTokenAddress vToken,
         Constants memory constants
     ) internal view returns (uint256) {
-        uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
-        uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
+        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
+        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
         if (vToken.isToken0(constants)) {
-            return SqrtPriceMath.getAmount0Delta(priceLower, priceUpper, position.liquidity, true);
+            return SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true);
         } else {
-            return SqrtPriceMath.getAmount1Delta(priceLower, priceUpper, position.liquidity, true);
+            return SqrtPriceMath.getAmount1Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true);
         }
     }
 
@@ -200,33 +200,33 @@ library LiquidityPosition {
         Constants memory constants
     ) internal view returns (int256 baseValue_) {
         {
-            uint160 priceLower = TickMath.getSqrtRatioAtTick(position.tickLower);
-            uint160 priceUpper = TickMath.getSqrtRatioAtTick(position.tickUpper);
+            uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
+            uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
             // If price is outside the range, then consider it at the ends
             // for calculation of amounts
-            uint160 sqrtPriceMiddle = sqrtPriceCurrent;
-            if (sqrtPriceCurrent < priceLower) {
-                sqrtPriceMiddle = priceLower;
-            } else if (sqrtPriceCurrent > priceUpper) {
-                sqrtPriceMiddle = priceUpper;
+            uint160 sqrtPriceMiddleX96 = sqrtPriceCurrent;
+            if (sqrtPriceCurrent < sqrtPriceLowerX96) {
+                sqrtPriceMiddleX96 = sqrtPriceLowerX96;
+            } else if (sqrtPriceCurrent > sqrtPriceUpperX96) {
+                sqrtPriceMiddleX96 = sqrtPriceUpperX96;
             }
 
             int256 vTokenAmount;
             bool isVTokenToken0 = vToken.isToken0(constants);
             if (isVTokenToken0) {
                 vTokenAmount = SqrtPriceMath
-                    .getAmount0Delta(sqrtPriceMiddle, priceUpper, position.liquidity, false)
+                    .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
                     .toInt256();
                 baseValue_ = SqrtPriceMath
-                    .getAmount1Delta(priceLower, sqrtPriceMiddle, position.liquidity, false)
+                    .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
                     .toInt256();
             } else {
                 vTokenAmount = SqrtPriceMath
-                    .getAmount1Delta(priceLower, sqrtPriceMiddle, position.liquidity, false)
+                    .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
                     .toInt256();
                 baseValue_ = SqrtPriceMath
-                    .getAmount0Delta(sqrtPriceMiddle, priceUpper, position.liquidity, false)
+                    .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
                     .toInt256();
             }
             uint256 priceX128 = sqrtPriceCurrent.toPriceX128(isVTokenToken0);

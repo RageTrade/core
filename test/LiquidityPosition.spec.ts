@@ -5,6 +5,7 @@ import hre from 'hardhat';
 import { SqrtPriceMath, TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_ } from '@uniswap/v3-sdk';
 import { constants } from './utils/dummyConstants';
 import { LiquidityPositionTest } from '../typechain-types';
+import JSBI from 'jsbi';
 
 describe('LiquidityPosition Library', () => {
   let test: LiquidityPositionTest;
@@ -241,9 +242,16 @@ describe('LiquidityPosition Library', () => {
 
           await test.initialize(tickLower, tickUpper);
           await test.liquidityChange(liquidity);
-
+          //ethers.constants.One.shl(96).mul(ethers.constants.One.shl(96)).div(sqrtPrice);
+          let priceX128;
+          if (!isToken0) {
+            let sqrtX96 = inversex96(sqrtPriceCurrent);
+            priceX128 = sqrtX96.mul(sqrtX96).div(ethers.constants.One.shl(64));
+          } else {
+            priceX128 = sqrtPriceCurrent.mul(sqrtPriceCurrent).div(ethers.constants.One.shl(64));
+          }
           expect(await test.baseValue(sqrtPriceCurrent, vToken, constants)).to.eq(
-            baseActual.add(mulPrice(vTokenActual, isToken0 ? inversex96(sqrtPriceCurrent) : sqrtPriceCurrent)),
+            baseActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
           );
         });
       }
@@ -340,7 +348,6 @@ describe('LiquidityPosition Library', () => {
       BigNumber.from(amount1).toString(),
       true,
     );
-
     let sqrtPriceMiddle = sqrtPriceCurrent;
     if (toBigNumber(sqrtPriceCurrent).lt(toBigNumber(sqrtPriceLower))) {
       sqrtPriceMiddle = sqrtPriceLower;
@@ -348,18 +355,26 @@ describe('LiquidityPosition Library', () => {
       sqrtPriceMiddle = sqrtPriceUpper;
     }
 
-    const amount0Actual = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
-    const amount1Actual = SqrtPriceMath.getAmount1Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
+    let vTokenActual: JSBI;
+    let baseActual: JSBI;
+    let maxNetPosition: JSBI;
 
-    const amount0Max = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
-    const amount1Max = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
+    if (isToken1) {
+      vTokenActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
+      baseActual = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
+      maxNetPosition = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
+    } else {
+      baseActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
+      vTokenActual = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
+      maxNetPosition = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
+    }
 
     return {
       liquidity: BigNumber.from(liquidity.toString()),
-      baseActual: BigNumber.from((isToken1 ? amount0Actual : amount1Actual).toString()),
-      vTokenActual: BigNumber.from((isToken1 ? amount1Actual : amount0Actual).toString()),
+      baseActual: BigNumber.from(baseActual.toString()),
+      vTokenActual: BigNumber.from(vTokenActual.toString()),
       sqrtPriceCurrent: BigNumber.from(sqrtPriceCurrent.toString()),
-      maxNetPosition: isToken1 ? amount1Max : amount0Max,
+      maxNetPosition: BigNumber.from(maxNetPosition.toString()),
     };
   }
 
