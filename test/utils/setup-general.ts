@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
-import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
-import { ERC20, VBase__factory } from '../../typechain-types';
+import { smock } from '@defi-wonderland/smock';
+import { ERC20, VBase } from '../../typechain-types';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { calculateAddressFor } from './create-addresses';
@@ -10,11 +10,13 @@ export async function testSetup({
   initialMarginRatio,
   maintainanceMarginRatio,
   twapDuration,
+  isVTokenToken0,
 }: {
   signer?: SignerWithAddress;
   initialMarginRatio: number;
   maintainanceMarginRatio: number;
   twapDuration: number;
+  isVTokenToken0: boolean;
 }) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
@@ -23,8 +25,11 @@ export async function testSetup({
   realBase.decimals.returns(6);
 
   //VBase
-  const VBase__factory = await smock.mock<VBase__factory>('VBase', signer); // await hre.ethers.getContractFactory('VBase');
-  const vBase = await VBase__factory.deploy(realBase.address);
+  let vBaseAddress;
+  if (isVTokenToken0) vBaseAddress = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF';
+  else vBaseAddress = '0x0000000000000000000000000000000000000001'; // Uniswap reverts on 0
+  const vBase = await smock.fake<VBase>('VBase', { address: vBaseAddress });
+  vBase.decimals.returns(6);
 
   //Oracle
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
@@ -54,7 +59,7 @@ export async function testSetup({
     DEFAULT_FEE_TIER,
     POOL_BYTE_CODE_HASH,
   );
-  await vBase.transferOwnership(vPoolFactory.address);
+
   await vPoolFactory.initializePool(
     'vTest',
     'vTest',

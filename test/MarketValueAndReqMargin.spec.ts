@@ -48,8 +48,8 @@ describe('VTokenPositionSet Library', () => {
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
       twapDuration: 60,
+      isVTokenToken0: false,
     }));
-
     vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
       address: vPoolAddress,
     });
