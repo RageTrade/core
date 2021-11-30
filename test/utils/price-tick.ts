@@ -26,7 +26,7 @@ export async function priceToTick(
   return tick;
 }
 
-export async function sqrtPriceX96ToTick(sqrtPriceX96: BigNumberish): Promise<number> {
+export function sqrtPriceX96ToTick(sqrtPriceX96: BigNumberish): number {
   sqrtPriceX96 = BigNumber.from(sqrtPriceX96);
   const tick = TickMath.getTickAtSqrtRatio(JSBI.BigInt(sqrtPriceX96.toHexString()));
   return tick;
