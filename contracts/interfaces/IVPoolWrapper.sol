@@ -36,4 +36,6 @@ interface IVPoolWrapper {
     ) external returns (int256 vTokenAmount, int256 vBaseAmount);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
+
+    function setOracle(address oracle_) external;
 }

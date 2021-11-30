@@ -104,4 +104,8 @@ contract VPoolWrapperMock is IVPoolWrapper {
     function collectAccruedProtocolFee() external pure returns (uint256 accruedProtocolFeeLast) {
         accruedProtocolFeeLast = 0;
     }
+
+    function setOracle(address _oracle) external pure {
+        //Do nothing
+    }
 }
