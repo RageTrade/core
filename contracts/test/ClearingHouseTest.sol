@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { ClearingHouse } from '../ClearingHouse.sol';
-import { Account } from '../libraries/Account.sol';
+import { Account, VTokenPosition } from '../libraries/Account.sol';
 
 contract ClearingHouseTest is ClearingHouse {
     using Account for Account.Info;
@@ -40,6 +40,18 @@ contract ClearingHouseTest is ClearingHouse {
         returns (uint256 balance)
     {
         balance = accounts[accountNo].tokenDeposits.deposits[getTruncatedTokenAddress(vTokenAddress)];
+    }
+
+    function getAccountOpenTokenPosition(uint256 accountNo, address vTokenAddress)
+        external
+        view
+        returns (int256 balance, int256 netTraderPosition)
+    {
+        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
+            getTruncatedTokenAddress(vTokenAddress)
+        ];
+        balance = vTokenPosition.balance;
+        netTraderPosition = vTokenPosition.netTraderPosition;
     }
 
     function getAccountValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
