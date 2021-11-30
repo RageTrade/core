@@ -160,6 +160,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
+        // TODO: remove this after testing
+        // console.log("buyVToken");
+        // console.log(buyVToken);
+        // console.log("amountSpecified");
+        // console.logInt(amountSpecified);
+
+        // console.log("sqrtPriceLimitX96");
+        // console.log(sqrtPriceLimitX96);
+
         bool zeroForOne = isToken0 != buyVToken;
 
         if (sqrtPriceLimitX96 == 0) {

@@ -329,12 +329,24 @@ library VTokenPositionSet {
         Constants memory constants
     ) internal returns (int256, int256) {
         set.realizeFundingPayment(vTokenAddress, constants);
+        // TODO: remove this after testing
+        // console.log('Amount In:');
+        // console.logInt(swapParams.amount);
+
+        // console.log('Is Notional:');
+        // console.log(swapParams.isNotional);
 
         (int256 vTokenAmount, int256 vBaseAmount) = wrapper.swapToken(
             swapParams.amount,
             swapParams.sqrtPriceLimit,
             swapParams.isNotional
         );
+        // TODO: remove this after testing
+        // console.log('Token Amount Out:');
+        // console.logInt(vTokenAmount);
+
+        // console.log('VBase Amount Out:');
+        // console.logInt(vBaseAmount);
         Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
             vBaseAmount,
             vTokenAmount,
@@ -364,6 +376,12 @@ library VTokenPositionSet {
             wrapper,
             balanceAdjustments
         );
+        // TODO: remove this after testing
+        // console.log('Token Amount Out:');
+        // console.logInt(balanceAdjustments.vTokenIncrease);
+
+        // console.log('VBase Amount Out:');
+        // console.logInt(balanceAdjustments.vBaseIncrease);
 
         if (liquidityChangeParams.closeTokenPosition && balanceAdjustments.vTokenIncrease > 0) {
             set.swapTokenAmount(vTokenAddress, -balanceAdjustments.vTokenIncrease, constants);
