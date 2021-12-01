@@ -112,7 +112,6 @@ library VTokenLib {
         view
         returns (uint160 sqrtPriceX96)
     {
-        // console.log(VTokenAddress.unwrap(vToken), address(vToken.vPoolWrapper()));
         return Oracle.getTwapSqrtPrice(vToken.vPool(constants), vToken.vPoolWrapper(constants).timeHorizon());
     }
 

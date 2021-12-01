@@ -2,15 +2,12 @@
 
 pragma solidity ^0.8.9;
 import { FullMath } from './FullMath.sol';
-import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
-
+import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { Account } from './Account.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-
 import { Constants } from '../utils/Constants.sol';
 
 library VTokenPosition {
@@ -38,7 +35,7 @@ library VTokenPosition {
         uint256 price,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
-        value = (position.balance * int256(price)) / int256(FixedPoint96.Q96);
+        value = (position.balance * int256(price)) / int256(FixedPoint128.Q128);
         value -= unrealizedFundingPayment(position, wrapper);
     }
 

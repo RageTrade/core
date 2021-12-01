@@ -1,16 +1,10 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionTest, ClearingHouse } from '../typechain-types';
-import { config } from 'dotenv';
-config();
-const { ALCHEMY_KEY } = process.env;
+import { VTokenPositionTest } from '../typechain-types';
 
 describe('VTokenPosition Library', () => {
   let VTokenPosition: VTokenPositionTest;
-  const vTokenAddress = utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
-  const Q96: BigNumber = BigNumber.from('0x1000000000000000000000000');
   const priceX96 = BigNumber.from('242445728302062693925');
   const balance = BigNumber.from('10').pow(18);
 
@@ -26,8 +20,14 @@ describe('VTokenPosition Library', () => {
       expect(result).to.eq(-100);
     });
     it('marketValue', async () => {
-      const result = await VTokenPosition.marketValue(priceX96);
-      expect(result).to.eq(balance.mul(priceX96).div(Q96).add(100));
+      const priceX128 = priceX96.mul(priceX96).div(1n << 64n);
+      const result = await VTokenPosition.marketValue(priceX128);
+      expect(result).to.eq(
+        balance
+          .mul(priceX128)
+          .div(1n << 128n)
+          .add(100),
+      );
     });
     it('riskSide', async () => {
       const result = await VTokenPosition.riskSide();
