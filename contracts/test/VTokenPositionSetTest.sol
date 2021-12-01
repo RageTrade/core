@@ -103,22 +103,22 @@ contract VTokenPositionSetTest {
         dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, constants);
     }
 
-    function liquidateTokenPosition(
-        address vTokenAddress,
-        uint16 liquidationFeeFraction,
-        uint256 liquidationMinSizeBaseAmount,
-        uint8 targetMarginRation,
-        uint256 fixFee,
-        Constants memory constants
-    ) external {
-        LiquidationParams memory liquidationParams = LiquidationParams(
-            liquidationFeeFraction,
-            liquidationMinSizeBaseAmount,
-            targetMarginRation,
-            fixFee
-        );
-        dummy.getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
-    }
+    // function liquidateTokenPosition(
+    //     address vTokenAddress,
+    //     uint16 liquidationFeeFraction,
+    //     uint256 liquidationMinSizeBaseAmount,
+    //     uint8 targetMarginRation,
+    //     uint256 fixFee,
+    //     Constants memory constants
+    // ) external {
+    //     LiquidationParams memory liquidationParams = LiquidationParams(
+    //         liquidationFeeFraction,
+    //         liquidationMinSizeBaseAmount,
+    //         targetMarginRation,
+    //         fixFee
+    //     );
+    //     dummy.getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
+    // }
 
     function getIsActive(address vTokenAddress) external view returns (bool) {
         return dummy.active.exists(uint32(uint160(vTokenAddress)));

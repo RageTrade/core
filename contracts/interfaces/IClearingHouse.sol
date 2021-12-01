@@ -47,5 +47,10 @@ interface IClearingHouse {
 
     function liquidateLiquidityPositions(uint256 accountNo) external;
 
-    function liquidateTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddress) external;
+    function liquidateTokenPosition(
+        uint256 liquidatorAccountNo,
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        uint16 liquidationBps
+    ) external;
 }

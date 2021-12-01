@@ -185,30 +185,30 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
-    function liquidateTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddress) external {
+    function liquidateTokenPosition(
+        uint256 liquidatorAccountNo,
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        uint16 liquidationBps
+    ) external {
         Account.Info storage account = accounts[accountNo];
 
         address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        (int256 keeperFee, int256 insuranceFundFee) = account.liquidateTokenPosition(
+        int256 insuranceFundFee = account.liquidateTokenPosition(
+            accounts[liquidatorAccountNo],
+            liquidationBps,
             vTokenAddress,
             liquidationParams,
             vTokenAddresses,
             constants
         );
-        int256 accountFee = keeperFee + insuranceFundFee;
+        // int256 accountFee = keeperFee + insuranceFundFee;
 
-        IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
+        // IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
         transferInsuranceFundFee(insuranceFundFee);
 
-        emit Account.LiquidateTokenPosition(
-            accountNo,
-            vTokenAddress,
-            msg.sender,
-            accountFee,
-            keeperFee,
-            insuranceFundFee
-        );
+        emit Account.LiquidateTokenPosition(accountNo, vTokenAddress, msg.sender, 0, 0, insuranceFundFee);
     }
 
     function transferInsuranceFundFee(int256 insuranceFundFee) internal {

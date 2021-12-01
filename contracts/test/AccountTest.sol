@@ -16,6 +16,7 @@ contract AccountTest {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
 
     Account.Info testAccount;
+    Account.Info testLiquidatorAccount;
     mapping(uint32 => address) testVTokenAddresses;
     VPoolWrapperMock public wrapper;
 
@@ -124,7 +125,14 @@ contract AccountTest {
             targetMarginRation,
             fixFee
         );
-        testAccount.liquidateTokenPosition(vTokenAddress, liquidationParams, testVTokenAddresses, constants);
+        testAccount.liquidateTokenPosition(
+            testLiquidatorAccount,
+            10000,
+            vTokenAddress,
+            liquidationParams,
+            testVTokenAddresses,
+            constants
+        );
     }
 
     function removeLimitOrder(
