@@ -79,11 +79,12 @@ library VTokenPositionSet {
         int256 tokenPosition = position.balance;
         int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition(vToken, constants));
 
-        longSideRisk =
-            (max(tokenPosition + liquidityMaxTokenPosition, 0) * int256(price)).mulDiv(marginRatio, 1e5) /
-            int256(FixedPoint128.Q128);
+        longSideRisk = max(tokenPosition + liquidityMaxTokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(
+            marginRatio,
+            1e5
+        );
 
-        shortSideRisk = (max(-tokenPosition, 0) * int256(price)).mulDiv(marginRatio, 1e5) / int256(FixedPoint128.Q128);
+        shortSideRisk = max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e5);
         return (longSideRisk, shortSideRisk);
     }
 
