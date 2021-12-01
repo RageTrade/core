@@ -203,12 +203,8 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             vTokenAddresses,
             constants
         );
-        // int256 accountFee = keeperFee + insuranceFundFee;
 
-        // IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
         transferInsuranceFundFee(insuranceFundFee);
-
-        emit Account.LiquidateTokenPosition(accountNo, vTokenAddress, msg.sender, 0, 0, insuranceFundFee);
     }
 
     function transferInsuranceFundFee(int256 insuranceFundFee) internal {

@@ -88,10 +88,11 @@ library Account {
     );
     event LiquidateTokenPosition(
         uint256 accountNo,
+        uint256 liquidatorAccountNo,
         address vTokenAddress,
-        address keeperAddress,
-        int256 liquidationFee,
-        int256 keeperFee,
+        uint16 liquidationBps,
+        uint256 liquidationPriceX128,
+        uint256 liquidatorPriceX128,
         int256 insuranceFundFee
     );
 
@@ -557,6 +558,12 @@ library Account {
         );
 
         account.tokenPositions.update(balanceAdjustments, vTokenAddress, constants);
+        emit Account.TokenPositionChange(
+            account.tokenPositions.accountNo,
+            vTokenAddress,
+            balanceAdjustments.vTokenIncrease,
+            balanceAdjustments.vBaseIncrease
+        );
 
         balanceAdjustments = BalanceAdjustments(
             -tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128),
@@ -565,6 +572,12 @@ library Account {
         );
 
         liquidatorAccount.tokenPositions.update(balanceAdjustments, vTokenAddress, constants);
+        emit Account.TokenPositionChange(
+            liquidatorAccount.tokenPositions.accountNo,
+            vTokenAddress,
+            balanceAdjustments.vTokenIncrease,
+            balanceAdjustments.vBaseIncrease
+        );
     }
 
     /// @notice liquidates all range positions in case the account is under water
@@ -619,6 +632,15 @@ library Account {
                 liquidationPriceX128,
                 liquidatorPriceX128,
                 constants
+            );
+            emit Account.LiquidateTokenPosition(
+                account.tokenPositions.accountNo,
+                liquidatorAccount.tokenPositions.accountNo,
+                vTokenAddress,
+                liquidationBps,
+                liquidationPriceX128,
+                liquidatorPriceX128,
+                insuranceFundFee
             );
         }
         int256 accountMarketValueFinal = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
