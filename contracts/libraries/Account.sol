@@ -395,7 +395,7 @@ library Account {
             vTokenAddresses,
             constants
         );
-        if (accountMarketValue < totalRequiredMargin) {
+        if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
@@ -433,7 +433,7 @@ library Account {
             vTokenAddresses,
             constants
         );
-        if (accountMarketValue < totalRequiredMargin) {
+        if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
@@ -623,7 +623,7 @@ library Account {
                 constants
             );
 
-            if (accountMarketValue < totalRequiredMargin) {
+            if (accountMarketValue > totalRequiredMargin) {
                 revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
             }
 
