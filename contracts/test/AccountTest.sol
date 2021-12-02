@@ -124,10 +124,10 @@ contract AccountTest {
 
     function liquidateTokenPosition(
         address vTokenAddress,
+        uint256 fixFee,
         uint16 liquidationFeeFraction,
         uint16 tokenLiquidationPriceDeltaBps,
         uint16 insuranceFundFeeShareBps,
-        uint256 fixFee,
         Constants memory constants
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
