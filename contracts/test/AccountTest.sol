@@ -107,23 +107,34 @@ contract AccountTest {
         testAccount.liquidityChange(vTokenAddress, liquidityChangeParams, testVTokenAddresses, wrapper, constants);
     }
 
-    function liquidateLiquidityPositions(uint16 liquidationFeeFraction, Constants memory constants) external {
-        testAccount.liquidateLiquidityPositions(liquidationFeeFraction, testVTokenAddresses, wrapper, constants);
+    function liquidateLiquidityPositions(
+        uint256 fixFee,
+        uint16 liquidationFeeFraction,
+        uint16 insuranceFundFeeShareBps,
+        Constants memory constants
+    ) external {
+        LiquidationParams memory liquidationParams = LiquidationParams(
+            fixFee,
+            liquidationFeeFraction,
+            0,
+            insuranceFundFeeShareBps
+        );
+        testAccount.liquidateLiquidityPositions(testVTokenAddresses, wrapper, liquidationParams, constants);
     }
 
     function liquidateTokenPosition(
         address vTokenAddress,
         uint16 liquidationFeeFraction,
-        uint256 liquidationMinSizeBaseAmount,
-        uint8 targetMarginRation,
+        uint16 tokenLiquidationPriceDeltaBps,
+        uint16 insuranceFundFeeShareBps,
         uint256 fixFee,
         Constants memory constants
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
+            fixFee,
             liquidationFeeFraction,
-            liquidationMinSizeBaseAmount,
-            targetMarginRation,
-            fixFee
+            tokenLiquidationPriceDeltaBps,
+            insuranceFundFeeShareBps
         );
         testAccount.liquidateTokenPosition(
             testLiquidatorAccount,

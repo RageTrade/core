@@ -10,6 +10,7 @@ interface IClearingHouse {
     error UnsupportedToken(address vTokenAddress);
     error LowNotionalValue(uint256 notionalValue);
     error InvalidLiquidityChangeParameters();
+    error InvalidTokenLiquidationParameters();
     error UninitializedToken(uint32 vTokenTruncatedAddress);
 
     function createAccount() external;

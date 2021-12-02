@@ -173,8 +173,8 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
 
         (int256 keeperFee, int256 insuranceFundFee) = account.liquidateLiquidityPositions(
-            liquidationParams.liquidationFeeFraction,
             vTokenAddresses,
+            liquidationParams,
             constants
         );
         int256 accountFee = keeperFee + insuranceFundFee;
