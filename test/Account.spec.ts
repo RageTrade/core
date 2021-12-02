@@ -9,6 +9,7 @@ import { calculateAddressFor } from './utils/create-addresses';
 import { AccountTest, VPoolFactory, ClearingHouse, ERC20, RealTokenMock } from '../typechain-types';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
+import { tokenAmount } from './utils/stealFunds';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -173,13 +174,12 @@ describe('AccountTest Library', () => {
   });
 
   describe('#Liquidation', () => {
-    it('Liquidate Liquidity Positions', async () => {
-      await test.liquidateLiquidityPositions(15, constants); // feeFraction=15/10=1.5
+    it('Liquidate Liquidity Positions - Fail', async () => {
+      expect(test.liquidateLiquidityPositions(tokenAmount(10, 6), 150, 5000, constants)).to.be.reverted; // feeFraction=15/10=1.5
     });
-    it('Liquidate Token Positions');
-    // , async () => {
-    //   await test.liquidateTokenPosition(vTokenAddress, 5000, 50, 15, 5);
-    // });
+    it('Liquidate Token Positions - Fail', async () => {
+      expect(test.liquidateTokenPosition(vTokenAddress, tokenAmount(10, 6), 5000, 150, 5000, constants)).to.be.reverted;
+    });
   });
 
   describe('#Remove Limit Order', () => {

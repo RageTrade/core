@@ -10,6 +10,7 @@ interface IClearingHouse {
     error UnsupportedToken(address vTokenAddress);
     error LowNotionalValue(uint256 notionalValue);
     error InvalidLiquidityChangeParameters();
+    error InvalidTokenLiquidationParameters();
     error UninitializedToken(uint32 vTokenTruncatedAddress);
 
     function createAccount() external;
@@ -47,5 +48,10 @@ interface IClearingHouse {
 
     function liquidateLiquidityPositions(uint256 accountNo) external;
 
-    function liquidateTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddress) external;
+    function liquidateTokenPosition(
+        uint256 liquidatorAccountNo,
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        uint16 liquidationBps
+    ) external;
 }

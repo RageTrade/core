@@ -16,6 +16,7 @@ contract AccountTest {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
 
     Account.Info testAccount;
+    Account.Info testLiquidatorAccount;
     mapping(uint32 => address) testVTokenAddresses;
     VPoolWrapperMock public wrapper;
 
@@ -106,25 +107,43 @@ contract AccountTest {
         testAccount.liquidityChange(vTokenAddress, liquidityChangeParams, testVTokenAddresses, wrapper, constants);
     }
 
-    function liquidateLiquidityPositions(uint16 liquidationFeeFraction, Constants memory constants) external {
-        testAccount.liquidateLiquidityPositions(liquidationFeeFraction, testVTokenAddresses, wrapper, constants);
+    function liquidateLiquidityPositions(
+        uint256 fixFee,
+        uint16 liquidationFeeFraction,
+        uint16 insuranceFundFeeShareBps,
+        Constants memory constants
+    ) external {
+        LiquidationParams memory liquidationParams = LiquidationParams(
+            fixFee,
+            liquidationFeeFraction,
+            0,
+            insuranceFundFeeShareBps
+        );
+        testAccount.liquidateLiquidityPositions(testVTokenAddresses, wrapper, liquidationParams, constants);
     }
 
     function liquidateTokenPosition(
         address vTokenAddress,
-        uint16 liquidationFeeFraction,
-        uint256 liquidationMinSizeBaseAmount,
-        uint8 targetMarginRation,
         uint256 fixFee,
+        uint16 liquidationFeeFraction,
+        uint16 tokenLiquidationPriceDeltaBps,
+        uint16 insuranceFundFeeShareBps,
         Constants memory constants
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
+            fixFee,
             liquidationFeeFraction,
-            liquidationMinSizeBaseAmount,
-            targetMarginRation,
-            fixFee
+            tokenLiquidationPriceDeltaBps,
+            insuranceFundFeeShareBps
         );
-        testAccount.liquidateTokenPosition(vTokenAddress, liquidationParams, testVTokenAddresses, constants);
+        testAccount.liquidateTokenPosition(
+            testLiquidatorAccount,
+            10000,
+            vTokenAddress,
+            liquidationParams,
+            testVTokenAddresses,
+            constants
+        );
     }
 
     function removeLimitOrder(

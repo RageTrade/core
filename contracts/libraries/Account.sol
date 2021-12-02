@@ -14,18 +14,20 @@ import { VPoolWrapper } from '../VPoolWrapper.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { SafeCast } from './uniswap/SafeCast.sol';
 import { FullMath } from './FullMath.sol';
+import { SignedMath } from './SignedMath.sol';
 
 import { TickUtilLib } from './TickUtilLib.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { Constants } from '../utils/Constants.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 struct LiquidationParams {
-    uint16 liquidationFeeFraction; //*e5
-    uint256 liquidationMinSizeBaseAmount; // Same number of decimals as in accountMarketValue
-    uint8 targetMarginRatio; //*e1
     uint256 fixFee; //Same number of decimals as accountMarketValue
+    uint16 liquidationFeeFraction;
+    uint16 tokenLiquidationPriceDeltaBps;
+    uint16 insuranceFundFeeShareBps;
 }
 
 library Account {
@@ -36,7 +38,7 @@ library Account {
     using VTokenLib for VTokenAddress;
     using SafeCast for uint256;
     using FullMath for int256;
-
+    using SignedMath for int256;
     using Account for Account.Info;
 
     error IneligibleLimitOrderRemoval();
@@ -86,10 +88,11 @@ library Account {
     );
     event LiquidateTokenPosition(
         uint256 accountNo,
+        uint256 liquidatorAccountNo,
         address vTokenAddress,
-        address keeperAddress,
-        int256 liquidationFee,
-        int256 keeperFee,
+        uint16 liquidationBps,
+        uint256 liquidationPriceX128,
+        uint256 liquidatorPriceX128,
         int256 insuranceFundFee
     );
 
@@ -352,33 +355,33 @@ library Account {
     /// @notice if liquidity>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
     /// @param accountMarketValue market value of account
     /// @param fixFee fixed fees to be paid
-    /// @param liquidationFeeHalf parameters including lower tick, upper tick, liquidity delta and limit order type
-    /// @return keeperFees map of vTokenAddresses allowed on the platform
-    /// @return insuranceFundFees poolwrapper for token
+    /// @param liquidationFee parameters including lower tick, upper tick, liquidity delta and limit order type
+    /// @return keeperFee map of vTokenAddresses allowed on the platform
+    /// @return insuranceFundFee poolwrapper for token
     function computeLiquidationFees(
         int256 accountMarketValue,
         int256 fixFee,
-        int256 liquidationFeeHalf
-    ) internal pure returns (int256 keeperFees, int256 insuranceFundFees) {
-        keeperFees = liquidationFeeHalf + fixFee;
-        if (accountMarketValue - fixFee - 2 * liquidationFeeHalf < 0) {
-            insuranceFundFees = accountMarketValue - fixFee - liquidationFeeHalf;
+        int256 liquidationFee,
+        LiquidationParams memory liquidationParams
+    ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
+        keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFee;
+        if (accountMarketValue - fixFee - liquidationFee < 0) {
+            insuranceFundFee = accountMarketValue - fixFee - liquidationFee + keeperFee;
         } else {
-            insuranceFundFees = liquidationFeeHalf;
+            insuranceFundFee = liquidationFee - keeperFee;
         }
     }
 
     /// @notice liquidates all range positions in case the account is under water
     /// @param account account to liquidate
-    /// @param liquidationFeeFraction fraction of notional closed to be liquidated
     /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param wrapper poolwrapper for token
     /// @param constants platform constants
     function liquidateLiquidityPositions(
         Info storage account,
-        uint16 liquidationFeeFraction,
         mapping(uint32 => address) storage vTokenAddresses,
         IVPoolWrapper wrapper,
+        LiquidationParams memory liquidationParams,
         Constants memory constants
     ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
@@ -392,27 +395,31 @@ library Account {
             vTokenAddresses,
             constants
         );
-        if (accountMarketValue < totalRequiredMargin) {
+        if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, wrapper, constants);
 
-        int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+        int256 liquidationFee = (notionalAmountClosed * int256(int16(liquidationParams.liquidationFeeFraction)));
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(
+            accountMarketValue,
+            fixFee,
+            liquidationFee,
+            liquidationParams
+        );
 
         account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
     /// @notice liquidates all range positions in case the account is under water
     /// @param account account to liquidate
-    /// @param liquidationFeeFraction fraction of notional closed to be liquidated
     /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param constants platform constants
     function liquidateLiquidityPositions(
         Info storage account,
-        uint16 liquidationFeeFraction,
         mapping(uint32 => address) storage vTokenAddresses,
+        LiquidationParams memory liquidationParams,
         Constants memory constants
     ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
@@ -426,100 +433,237 @@ library Account {
             vTokenAddresses,
             constants
         );
-        if (accountMarketValue < totalRequiredMargin) {
+        if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
-        int256 liquidationFeeHalf = (notionalAmountClosed * int256(int16(liquidationFeeFraction))) / 2;
-        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, fixFee, liquidationFeeHalf);
+        int256 liquidationFee = (notionalAmountClosed * int256(int16(liquidationParams.liquidationFeeFraction)));
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(
+            accountMarketValue,
+            fixFee,
+            liquidationFee,
+            liquidationParams
+        );
 
         account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
-    function abs(int256 value) internal pure returns (int256) {
-        return value > 0 ? value : -value;
+    // /// @notice liquidates all range positions in case the account is under water
+    // /// @param account account to liquidate
+    // /// @param vTokenAddress address of token to swap
+    // /// @param liquidationParams parameters including liquidation fee fraction, target margin ratio, minimum liquidation amount and fix fee
+    // /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
+    // /// @param constants platform constants
+    // function liquidateTokenPosition(
+    //     Info storage account,
+    //     Info storage liquidatorAccount,
+    //     uint16 liquidationBps,
+    //     address vTokenAddress,
+    //     LiquidationParams memory liquidationParams,
+    //     mapping(uint32 => address) storage vTokenAddresses,
+    //     Constants memory constants
+    // ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
+    //     VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+    //         vTokenAddress,
+    //         constants
+    //     );
+    //     int256 tokensToTrade;
+    //     int256 accountMarketValue;
+
+    //     if (vTokenPosition.liquidityPositions.active[0] != 0)
+    //         revert InvalidLiquidationActiveRangePresent(vTokenAddress);
+
+    //     {
+    //         int256 totalRequiredMargin;
+
+    //         (tokensToTrade, accountMarketValue, totalRequiredMargin) = account
+    //             .tokenPositions
+    //             .getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
+
+    //         if (accountMarketValue < totalRequiredMargin) {
+    //             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+    //         }
+
+    //         if (sign(vTokenPosition.balance) * sign(tokensToTrade) > 0)
+    //             revert InvalidTokenTradeAmount(vTokenPosition.balance, tokensToTrade);
+
+    //         if (
+    //             (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants))) <
+    //             liquidationParams.liquidationMinSizeBaseAmount.toInt256()
+    //         ) {
+    //             tokensToTrade = (-1 *
+    //                 sign(vTokenPosition.balance) *
+    //                 liquidationParams.liquidationMinSizeBaseAmount.toInt256());
+    //         }
+    //         if (abs(tokensToTrade) > abs(vTokenPosition.balance)) {
+    //             tokensToTrade = -1 * vTokenPosition.balance;
+    //         }
+    //         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
+    //         account.tokenPositions.swapTokenAmount(vTokenAddress, tokensToTrade, constants);
+
+    //         int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(
+    //             false,
+    //             vTokenAddresses,
+    //             constants
+    //         );
+
+    //         if (totalRequiredMarginFinal < totalRequiredMargin)
+    //             revert InvalidLiquidationWrongSide(totalRequiredMarginFinal, totalRequiredMargin);
+    //     }
+    //     accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+
+    //     int256 liquidationFeeHalf = (abs(tokensToTrade) *
+    //         int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants))).mulDiv(
+    //             liquidationParams.liquidationFeeFraction,
+    //             1e5
+    //         ) / 2;
+
+    //     (keeperFee, insuranceFundFee) = computeLiquidationFees(
+    //         accountMarketValue,
+    //         liquidationParams.fixFee.toInt256(),
+    //         liquidationFeeHalf
+    //     );
+    //     account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
+    // }
+
+    function getLiquidationPriceX128(
+        int256 accountMarketValue,
+        int256 totalRequiredMargin,
+        int256 tokenBalance,
+        address vTokenAddress,
+        LiquidationParams memory liquidationParams,
+        Constants memory constants
+    ) internal view returns (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) {
+        VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
+        uint16 maintainanceMarginFactor = vToken.getMarginRatio(false, constants);
+        int256 priceX128 = vToken.getVirtualTwapPriceX128(constants).toInt256();
+        int256 priceDeltaX128 = priceX128.mulDiv(accountMarketValue, totalRequiredMargin).mulDiv(
+            liquidationParams.tokenLiquidationPriceDeltaBps * maintainanceMarginFactor,
+            1e4 * 1e5
+        );
+        if (tokenBalance > 0) {
+            liquidationPriceX128 = uint256(priceX128 - priceDeltaX128);
+            liquidatorPriceX128 = uint256(
+                priceX128 - priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4)
+            );
+        } else {
+            liquidationPriceX128 = uint256(priceX128 + priceDeltaX128);
+            liquidatorPriceX128 = uint256(
+                priceX128 + priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4)
+            );
+        }
     }
 
-    function sign(int256 value) internal pure returns (int256) {
-        return value > 0 ? int256(1) : int256(-1);
+    function updateLiquidationAccounts(
+        Info storage account,
+        Info storage liquidatorAccount,
+        address vTokenAddress,
+        int256 tokensToTrade,
+        uint256 liquidationPriceX128,
+        uint256 liquidatorPriceX128,
+        Constants memory constants
+    ) internal {
+        BalanceAdjustments memory balanceAdjustments = BalanceAdjustments(
+            tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128),
+            tokensToTrade,
+            tokensToTrade
+        );
+
+        account.tokenPositions.update(balanceAdjustments, vTokenAddress, constants);
+        emit Account.TokenPositionChange(
+            account.tokenPositions.accountNo,
+            vTokenAddress,
+            balanceAdjustments.vTokenIncrease,
+            balanceAdjustments.vBaseIncrease
+        );
+
+        balanceAdjustments = BalanceAdjustments(
+            -tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128),
+            -tokensToTrade,
+            -tokensToTrade
+        );
+
+        liquidatorAccount.tokenPositions.update(balanceAdjustments, vTokenAddress, constants);
+        emit Account.TokenPositionChange(
+            liquidatorAccount.tokenPositions.accountNo,
+            vTokenAddress,
+            balanceAdjustments.vTokenIncrease,
+            balanceAdjustments.vBaseIncrease
+        );
     }
 
     /// @notice liquidates all range positions in case the account is under water
     /// @param account account to liquidate
     /// @param vTokenAddress address of token to swap
-    /// @param liquidationParams parameters including liquidation fee fraction, target margin ratio, minimum liquidation amount and fix fee
     /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
     /// @param constants platform constants
     function liquidateTokenPosition(
         Info storage account,
+        Info storage liquidatorAccount,
+        uint16 liquidationBps,
         address vTokenAddress,
         LiquidationParams memory liquidationParams,
         mapping(uint32 => address) storage vTokenAddresses,
         Constants memory constants
-    ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
+    ) internal returns (int256 insuranceFundFee) {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             vTokenAddress,
             constants
         );
-        int256 tokensToTrade;
-        int256 accountMarketValue;
 
         if (vTokenPosition.liquidityPositions.active[0] != 0)
             revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
-            int256 totalRequiredMargin;
-
-            (tokensToTrade, accountMarketValue, totalRequiredMargin) = account
-                .tokenPositions
-                .getTokenPositionToLiquidate(vTokenAddress, liquidationParams, vTokenAddresses, constants);
-
-            if (accountMarketValue < totalRequiredMargin) {
-                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
-            }
-
-            if (sign(vTokenPosition.balance) * sign(tokensToTrade) > 0)
-                revert InvalidTokenTradeAmount(vTokenPosition.balance, tokensToTrade);
-
-            if (
-                (abs(tokensToTrade) * int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants))) <
-                liquidationParams.liquidationMinSizeBaseAmount.toInt256()
-            ) {
-                tokensToTrade = (-1 *
-                    sign(vTokenPosition.balance) *
-                    liquidationParams.liquidationMinSizeBaseAmount.toInt256());
-            }
-            if (abs(tokensToTrade) > abs(vTokenPosition.balance)) {
-                tokensToTrade = -1 * vTokenPosition.balance;
-            }
-            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-            account.tokenPositions.swapTokenAmount(vTokenAddress, tokensToTrade, constants);
-
-            int256 totalRequiredMarginFinal = account.tokenPositions.getRequiredMargin(
+            (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
                 false,
                 vTokenAddresses,
                 constants
             );
 
-            if (totalRequiredMarginFinal < totalRequiredMargin)
-                revert InvalidLiquidationWrongSide(totalRequiredMarginFinal, totalRequiredMargin);
+            if (accountMarketValue > totalRequiredMargin) {
+                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+            }
+
+            int256 tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
+
+            (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) = getLiquidationPriceX128(
+                accountMarketValue,
+                totalRequiredMargin,
+                vTokenPosition.balance,
+                vTokenAddress,
+                liquidationParams,
+                constants
+            );
+
+            insuranceFundFee = tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
+            updateLiquidationAccounts(
+                account,
+                liquidatorAccount,
+                vTokenAddress,
+                tokensToTrade,
+                liquidationPriceX128,
+                liquidatorPriceX128,
+                constants
+            );
+            emit Account.LiquidateTokenPosition(
+                account.tokenPositions.accountNo,
+                liquidatorAccount.tokenPositions.accountNo,
+                vTokenAddress,
+                liquidationBps,
+                liquidationPriceX128,
+                liquidatorPriceX128,
+                insuranceFundFee
+            );
         }
-        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+        int256 accountMarketValueFinal = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
 
-        int256 liquidationFeeHalf = (abs(tokensToTrade) *
-            int256(VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants))).mulDiv(
-                liquidationParams.liquidationFeeFraction,
-                1e5
-            ) / 2;
-
-        (keeperFee, insuranceFundFee) = computeLiquidationFees(
-            accountMarketValue,
-            liquidationParams.fixFee.toInt256(),
-            liquidationFeeHalf
-        );
-        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
+        if (accountMarketValueFinal < 0) {
+            insuranceFundFee = accountMarketValueFinal.abs();
+        }
+        liquidatorAccount.checkIfMarginAvailable(false, vTokenAddresses, constants);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)
