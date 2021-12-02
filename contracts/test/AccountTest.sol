@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 import { Account, LiquidationParams, SwapParams } from '../libraries/Account.sol';
 import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
-import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
+import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
@@ -166,12 +166,59 @@ contract AccountTest {
         external
         view
         returns (
-            int256,
-            int256,
-            int256
+            int256 balance,
+            int256 netTraderPosition,
+            int256 sumACkpt
         )
     {
         VTokenPosition.Position storage vTokenPosition = testAccount.tokenPositions.positions[truncate(vTokenAddress)];
         return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAChkpt);
+    }
+
+    function getAccountLiquidityPositionNum(address vTokenAddress) external view returns (uint8 num) {
+        LiquidityPositionSet.Info storage liquidityPositionSet = testAccount
+            .tokenPositions
+            .positions[truncate(vTokenAddress)]
+            .liquidityPositions;
+
+        for (num = 0; num < liquidityPositionSet.active.length; num++) {
+            if (liquidityPositionSet.active[num] == 0) break;
+        }
+    }
+
+    function getAccountLiquidityPositionDetails(address vTokenAddress, uint8 num)
+        external
+        view
+        returns (
+            int24 tickLower,
+            int24 tickUpper,
+            LimitOrderType limitOrderType,
+            uint128 liquidity,
+            int256 sumALast,
+            int256 sumBInsideLast,
+            int256 sumFpInsideLast,
+            uint256 longsFeeGrowthInsideLast,
+            uint256 shortsFeeGrowthInsideLast
+        )
+    {
+        LiquidityPositionSet.Info storage liquidityPositionSet = testAccount
+            .tokenPositions
+            .positions[truncate(vTokenAddress)]
+            .liquidityPositions;
+        LiquidityPosition.Info storage liquidityPosition = liquidityPositionSet.positions[
+            liquidityPositionSet.active[num]
+        ];
+
+        return (
+            liquidityPosition.tickLower,
+            liquidityPosition.tickUpper,
+            liquidityPosition.limitOrderType,
+            liquidityPosition.liquidity,
+            liquidityPosition.sumALast,
+            liquidityPosition.sumBInsideLast,
+            liquidityPosition.sumFpInsideLast,
+            liquidityPosition.longsFeeGrowthInsideLast,
+            liquidityPosition.shortsFeeGrowthInsideLast
+        );
     }
 }
