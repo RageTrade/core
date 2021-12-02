@@ -191,6 +191,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
     ) external {
+        if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.Info storage account = accounts[accountNo];
 
         address vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
