@@ -29,9 +29,13 @@ interface IVPoolWrapper {
 
     function getSumAX128() external view returns (int256);
 
-    function swapTokenNotional(int256 vBaseAmount) external returns (int256);
-
-    function swapTokenAmount(int256 vTokenAmount) external returns (int256);
+    function swapToken(
+        int256 amount,
+        uint160 sqrtPriceLimit,
+        bool isNotional
+    ) external returns (int256 vTokenAmount, int256 vBaseAmount);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
+
+    function setOracle(address oracle_) external;
 }

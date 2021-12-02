@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.9;
 import { FullMath } from './FullMath.sol';
+import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
 import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
@@ -14,6 +15,14 @@ import { FullMath } from './FullMath.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Constants } from '../utils/Constants.sol';
+
+import { console } from 'hardhat/console.sol';
+
+struct SwapParams {
+    int256 amount;
+    uint160 sqrtPriceLimit;
+    bool isNotional;
+}
 
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
@@ -221,6 +230,21 @@ library VTokenPositionSet {
         return position;
     }
 
+    function swapToken(
+        Set storage set,
+        address vTokenAddress,
+        SwapParams memory swapParams,
+        Constants memory constants
+    ) internal returns (int256, int256) {
+        return
+            set.swapToken(
+                vTokenAddress,
+                swapParams,
+                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                constants
+            );
+    }
+
     function swapTokenAmount(
         Set storage set,
         address vTokenAddress,
@@ -228,24 +252,10 @@ library VTokenPositionSet {
         Constants memory constants
     ) internal returns (int256, int256) {
         return
-            set.swapTokenAmount(
+            set.swapToken(
                 vTokenAddress,
-                vTokenAmount,
-                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
-                constants
-            );
-    }
-
-    function swapTokenNotional(
-        Set storage set,
-        address vTokenAddress,
-        int256 vTokenNotional,
-        Constants memory constants
-    ) internal returns (int256, int256) {
-        return
-            set.swapTokenNotional(
-                vTokenAddress,
-                vTokenNotional,
+                ///@dev 0 means no price limit and false means amount mentioned is token amount
+                SwapParams(vTokenAmount, 0, false),
                 VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
                 constants
             );
@@ -311,16 +321,32 @@ library VTokenPositionSet {
         return notionalAmountClosed;
     }
 
-    function swapTokenAmount(
+    function swapToken(
         Set storage set,
         address vTokenAddress,
-        int256 vTokenAmount,
+        SwapParams memory swapParams,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256, int256) {
         set.realizeFundingPayment(vTokenAddress, constants);
+        // TODO: remove this after testing
+        // console.log('Amount In:');
+        // console.logInt(swapParams.amount);
 
-        int256 vBaseAmount = wrapper.swapTokenAmount(vTokenAmount);
+        // console.log('Is Notional:');
+        // console.log(swapParams.isNotional);
+
+        (int256 vTokenAmount, int256 vBaseAmount) = wrapper.swapToken(
+            swapParams.amount,
+            swapParams.sqrtPriceLimit,
+            swapParams.isNotional
+        );
+        // TODO: remove this after testing
+        // console.log('Token Amount Out:');
+        // console.logInt(vTokenAmount);
+
+        // console.log('VBase Amount Out:');
+        // console.logInt(vBaseAmount);
         Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
             vBaseAmount,
             vTokenAmount,
@@ -332,29 +358,6 @@ library VTokenPositionSet {
         emit Account.TokenPositionChange(set.accountNo, vTokenAddress, vTokenAmount, vBaseAmount);
 
         return (vTokenAmount, vBaseAmount);
-    }
-
-    function swapTokenNotional(
-        Set storage set,
-        address vTokenAddress,
-        int256 vTokenNotional,
-        IVPoolWrapper wrapper,
-        Constants memory constants
-    ) internal returns (int256, int256) {
-        set.realizeFundingPayment(vTokenAddress, constants);
-
-        int256 vTokenAmount = wrapper.swapTokenNotional(vTokenNotional);
-
-        Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
-            -vTokenNotional,
-            vTokenAmount,
-            vTokenAmount
-        );
-
-        set.update(balanceAdjustments, vTokenAddress, constants);
-        emit Account.TokenPositionChange(set.accountNo, vTokenAddress, vTokenAmount, -vTokenNotional);
-
-        return (vTokenAmount, -vTokenNotional);
     }
 
     function liquidityChange(
@@ -373,6 +376,12 @@ library VTokenPositionSet {
             wrapper,
             balanceAdjustments
         );
+        // TODO: remove this after testing
+        // console.log('Token Amount Out:');
+        // console.logInt(balanceAdjustments.vTokenIncrease);
+
+        // console.log('VBase Amount Out:');
+        // console.logInt(balanceAdjustments.vBaseIncrease);
 
         if (liquidityChangeParams.closeTokenPosition && balanceAdjustments.vTokenIncrease > 0) {
             set.swapTokenAmount(vTokenAddress, -balanceAdjustments.vTokenIncrease, constants);
@@ -481,14 +490,50 @@ library VTokenPositionSet {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, constants);
 
         VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
-        tokensToTrade = (accountMarketValue -
-            liquidationParams.fixFee.toInt256() -
-            (totalRequiredMarginOther +
-                (vToken.getVirtualTwapPriceX128(constants).toInt256() * vTokenPosition.balance).mulDiv(
-                    vToken.getMarginRatio(false, constants),
-                    1e5
-                )).mulDiv(liquidationParams.targetMarginRatio, 1e1));
+        tokensToTrade = getTokensToLiquidateNumerator(
+            vTokenPosition,
+            vToken,
+            accountMarketValue,
+            totalRequiredMarginOther,
+            liquidationParams,
+            constants
+        );
+
+        tokensToTrade = tokensToTrade.mulDiv(
+            int256(FixedPoint128.Q128),
+            getTokensToLiquidateDenominatorX128(vToken, liquidationParams, constants)
+        );
 
         return (tokensToTrade, accountMarketValue, totalRequiredMargin);
+    }
+
+    function getTokensToLiquidateNumerator(
+        VTokenPosition.Position storage vTokenPosition,
+        VTokenAddress vToken,
+        int256 accountMarketValue,
+        int256 totalRequiredMarginOther,
+        LiquidationParams memory liquidationParams,
+        Constants memory constants
+    ) internal view returns (int256 numerator) {
+        return (accountMarketValue -
+            liquidationParams.fixFee.toInt256() -
+            (totalRequiredMarginOther +
+                vTokenPosition.balance.mulDiv(vToken.getMarginRatio(false, constants), 1e5).mulDiv(
+                    vToken.getVirtualTwapPriceX128(constants),
+                    FixedPoint128.Q128
+                )).mulDiv(liquidationParams.targetMarginRatio, 1e1));
+    }
+
+    function getTokensToLiquidateDenominatorX128(
+        VTokenAddress vToken,
+        LiquidationParams memory liquidationParams,
+        Constants memory constants
+    ) internal view returns (int256 denominator) {
+        denominator = (vToken
+            .getVirtualTwapPriceX128(constants)
+            .toInt256()
+            .mulDiv(vToken.getMarginRatio(false, constants), 1e5)
+            .mulDiv(liquidationParams.targetMarginRatio, 1e1) -
+            vToken.getVirtualTwapPriceX128(constants).toInt256().mulDiv(liquidationParams.liquidationFeeFraction, 1e5));
     }
 }

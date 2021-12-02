@@ -11,6 +11,7 @@ import { IVBase } from './interfaces/IVBase.sol';
 import { VToken, IVToken } from './tokens/VToken.sol';
 import { IVPoolWrapperDeployer } from './interfaces/IVPoolWrapperDeployer.sol';
 import { IClearingHouseState } from './interfaces/IClearingHouseState.sol';
+import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 
 contract VPoolFactory {
     Constants public constants;
@@ -43,6 +44,7 @@ contract VPoolFactory {
         );
         ClearingHouse = IClearingHouseState(ClearingHouseAddress);
         ClearingHouse.setConstants(constants);
+        ClearingHouse.addKey(uint32(uint160(VBASE_ADDRESS)), VBASE_ADDRESS);
     }
 
     event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
@@ -75,6 +77,7 @@ contract VPoolFactory {
             twapDuration,
             constants
         );
+        IVPoolWrapper(vPoolWrapper).setOracle(oracleAddress);
         IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
         IVToken(vTokenAddress).setOwner(vPoolWrapper); // TODO remove this
         emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);

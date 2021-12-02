@@ -30,6 +30,8 @@ describe('VTokenPositionSet Library', () => {
         liquidityDelta: BigNumber.from(liq).mul(BigNumber.from(10).pow(12)),
         closeTokenPosition: false,
         limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageTolerance: 0,
       },
       constants,
     );

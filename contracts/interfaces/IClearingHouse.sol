@@ -3,13 +3,14 @@
 pragma solidity ^0.8.9;
 
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { LiquidityChangeParams } from '../libraries/Account.sol';
+import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
 
 interface IClearingHouse {
     error AccessDenied(address senderAddress);
     error UnsupportedToken(address vTokenAddress);
     error LowNotionalValue(uint256 notionalValue);
     error InvalidLiquidityChangeParameters();
+    error UninitializedToken(uint32 vTokenTruncatedAddress);
 
     function createAccount() external;
 
@@ -25,16 +26,10 @@ interface IClearingHouse {
         uint256 amount
     ) external;
 
-    function swapTokenAmount(
+    function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        int256 vTokenAmount
-    ) external;
-
-    function swapTokenNotional(
-        uint256 accountNo,
-        uint32 vTokenTruncatedAddress,
-        int256 vBaseAmount
+        SwapParams memory swapParams
     ) external;
 
     function updateRangeOrder(

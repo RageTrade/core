@@ -83,11 +83,29 @@ contract VPoolWrapperMock is IVPoolWrapper {
         return vTokenAmount * (-4000);
     }
 
+    function swapToken(
+        int256 amount,
+        uint160 sqrtPriceLimit,
+        bool isNotional
+    ) external pure returns (int256 vTokenAmount, int256 vBaseAmount) {
+        if (isNotional) {
+            vTokenAmount = amount / 4000;
+            vBaseAmount = -amount;
+        } else {
+            vTokenAmount = amount;
+            vBaseAmount = -amount * 4000;
+        }
+    }
+
     function swapTokenNotional(int256 vTokenNotional) external pure returns (int256) {
         return vTokenNotional / (4000);
     }
 
     function collectAccruedProtocolFee() external pure returns (uint256 accruedProtocolFeeLast) {
         accruedProtocolFeeLast = 0;
+    }
+
+    function setOracle(address _oracle) external pure {
+        //Do nothing
     }
 }

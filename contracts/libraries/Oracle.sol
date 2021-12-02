@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import { TickMath } from './uniswap/TickMath.sol';
+import { console } from 'hardhat/console.sol';
 
 library Oracle {
     using Oracle for IUniswapV3Pool;
@@ -16,7 +17,7 @@ library Oracle {
         sqrtPriceX96 = TickMath.getSqrtRatioAtTick(twapTick);
     }
 
-    function getTwapTick(IUniswapV3Pool pool, uint32 twapDuration) internal view returns (int24) {
+    function getTwapTick(IUniswapV3Pool pool, uint32 twapDuration) internal view returns (int24 twapTick) {
         if (twapDuration == 0) {
             revert IllegalTwapDuration(0);
         }
@@ -36,7 +37,7 @@ library Oracle {
             }
             return timeWeightedAverageTick;
         } catch {
-            revert OracleConsultFailed();
+            (, twapTick, , , , , ) = pool.slot0();
         }
     }
 }

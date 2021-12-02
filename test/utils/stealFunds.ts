@@ -1,11 +1,11 @@
 const hre = require('hardhat');
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 const stealFunds = async (
   tokenAddress: string,
   tokenDecimals: number,
   receiverAddress: string,
-  amount: string,
+  amount: BigNumberish,
   whaleAddress: string,
 ) => {
   await hre.network.provider.request({
@@ -18,7 +18,7 @@ const stealFunds = async (
   await token.transfer(receiverAddress, tokenAmount(amount, tokenDecimals));
 };
 
-const tokenAmount = (value: string, decimals: number) =>
+const tokenAmount = (value: BigNumberish, decimals: number) =>
   BigNumber.from(value).mul(BigNumber.from(10).pow(BigNumber.from(decimals)));
 
 export { stealFunds, tokenAmount };

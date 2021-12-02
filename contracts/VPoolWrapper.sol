@@ -143,6 +143,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         (vBaseAmount, ) = swap(vTokenAmount > 0, vTokenAmount.abs(), 0);
     }
 
+    function swapToken(
+        int256 amount,
+        uint160 sqrtPriceLimit,
+        bool isNotional
+    ) external returns (int256 vTokenAmount, int256 vBaseAmount) {
+        (vBaseAmount, vTokenAmount) = swap(amount > 0, (isNotional ? -amount.abs() : amount.abs()), sqrtPriceLimit);
+    }
+
     /// @notice swaps token
     /// @param buyVToken: true for long or close short. false for short or close long.
     /// @param amountSpecified: vtoken amount as positive or usdc amount as negative.
@@ -152,6 +160,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
+        // TODO: remove this after testing
+        // console.log("buyVToken");
+        // console.log(buyVToken);
+        // console.log("amountSpecified");
+        // console.logInt(amountSpecified);
+
+        // console.log("sqrtPriceLimitX96");
+        // console.log(sqrtPriceLimitX96);
+
         bool zeroForOne = isToken0 != buyVToken;
 
         if (sqrtPriceLimitX96 == 0) {
