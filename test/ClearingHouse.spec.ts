@@ -76,6 +76,7 @@ describe('Clearing House Library', () => {
 
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
+    oracle.setSqrtPrice(initialPrice);
 
     await VPoolFactory.initializePool(
       'vWETH',
@@ -148,9 +149,8 @@ describe('Clearing House Library', () => {
       20_000,
       10_000,
       1,
-      BigNumber.from(1)
-        .mul(BigNumber.from(2).pow(96))
-        .div(60 * 10 ** 6),
+      BigNumber.from(1).mul(BigNumber.from(2).pow(96)),
+      // .div(60 * 10 ** 6),
     );
     vTokenAddress = out.vTokenAddress;
     oracle = out.oracle;
