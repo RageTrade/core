@@ -4,7 +4,7 @@ import {
   VTokenPositionSetTest2,
   VPoolWrapper,
   UniswapV3Pool,
-  AccountTestNew,
+  AccountTest,
   RealTokenMock,
   ERC20,
   VBase,
@@ -39,7 +39,7 @@ describe('Account Library Test - 2', () => {
   let clearingHouse: ClearingHouse;
   let vPoolFactory: VPoolFactory;
 
-  let test: AccountTestNew;
+  let test: AccountTest;
   let realBase: FakeContract<ERC20>;
   let vBase: FakeContract<VBase>;
   let oracle: OracleMock;
@@ -157,7 +157,7 @@ describe('Account Library Test - 2', () => {
     vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
     vPoolWrapperFake.initialMarginRatio.returns(20000);
 
-    const factory = await hre.ethers.getContractFactory('AccountTestNew');
+    const factory = await hre.ethers.getContractFactory('AccountTest');
     test = await factory.deploy();
 
     price = await priceToNearestPriceX128(4000, vBase, vToken);
