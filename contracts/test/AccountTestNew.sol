@@ -214,4 +214,20 @@ contract AccountTestNew {
             liquidityPosition.shortsFeeGrowthInsideLast
         );
     }
+
+    function getAccountValueAndRequiredMargin(bool isInitialMargin, Constants memory constants)
+        external
+        view
+        returns (int256 accountMarketValue, int256 requiredMargin)
+    {
+        (accountMarketValue, requiredMargin) = testAccount.getAccountValueAndRequiredMargin(
+            isInitialMargin,
+            testVTokenAddresses,
+            constants
+        );
+    }
+
+    function getAccountProfit(Constants memory constants) external view returns (int256 profit) {
+        return testAccount.tokenPositions.getAccountMarketValue(testVTokenAddresses, constants);
+    }
 }
