@@ -184,8 +184,8 @@ library Account {
         );
         vTokenPosition.balance -= int256(amount);
 
-        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
         account.checkIfProfitAvailable(vTokenAddresses, constants);
+        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
 
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
     }
