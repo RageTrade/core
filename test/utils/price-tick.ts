@@ -155,6 +155,14 @@ export function initializableTick(tick: number, tickSpacing: number) {
   return Math.floor(tick / tickSpacing) * tickSpacing;
 }
 
+export async function priceToNearestPriceX128(
+  price: BigNumberish,
+  vBase: ContractOrSmock<VBase>,
+  vToken: ContractOrSmock<VToken>,
+): Promise<BigNumber> {
+  return sqrtPriceX96ToPriceX128(tickToSqrtPriceX96(await priceToTick(4000, vBase, vToken)), vBase, vToken);
+}
+
 const ONE = BigNumber.from(1);
 const TWO = BigNumber.from(2);
 
