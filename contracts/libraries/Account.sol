@@ -23,6 +23,8 @@ import { Constants } from '../utils/Constants.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
+import { console } from 'hardhat/console.sol';
+
 struct LiquidationParams {
     uint256 fixFee; //Same number of decimals as accountMarketValue
     uint16 liquidationFeeFraction;
@@ -219,8 +221,15 @@ library Account {
         //     .tokenPositions
         //     .getAllTokenPositionValueAndMargin(isInitialMargin, vTokenAddresses, constants);
         accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+        //TODO: Remove logs
+        // console.log('accountMarketValue w/o deposits');
+        // console.logInt(accountMarketValue);
         totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
+        // console.log('totalRequiredMargin');
+        // console.logInt(totalRequiredMargin);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
+        // console.log('accountMarketValue with deposits');
+        // console.logInt(accountMarketValue);
         return (accountMarketValue, totalRequiredMargin);
     }
 

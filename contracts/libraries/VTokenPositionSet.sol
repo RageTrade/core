@@ -62,7 +62,9 @@ library VTokenPositionSet {
             uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(constants);
             accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPriceX96, vToken, constants));
         }
-
+        //TODO: Remove logs
+        // console.log('Base value:');
+        // console.logInt(set.positions[truncate(constants.VBASE_ADDRESS)].balance);
         accountMarketValue += set.positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()].balance;
 
         return (accountMarketValue);
