@@ -45,17 +45,17 @@ describe('Account Library Test - 2', () => {
   let signers: SignerWithAddress[];
 
   async function checkTokenBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
-    const vTokenPosition = await test.getAccountTokenDetails(vTokenAddress);
+    const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
     expect(vTokenPosition.balance).to.eq(vTokenBalance);
   }
 
   async function checkDepositBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
-    const balance = await test.getAccountDepositBalance(vTokenAddress);
+    const balance = await test.getAccountDepositBalance(0, vTokenAddress);
     expect(balance).to.eq(vTokenBalance);
   }
 
   async function checkLiquidityPositionNum(vTokenAddress: string, num: BigNumberish) {
-    const outNum = await test.getAccountLiquidityPositionNum(vTokenAddress);
+    const outNum = await test.getAccountLiquidityPositionNum(0, vTokenAddress);
     expect(outNum).to.eq(num);
   }
 
@@ -72,7 +72,7 @@ describe('Account Library Test - 2', () => {
     longsFeeGrowthInsideLast?: BigNumberish,
     shortsFeeGrowthInsideLast?: BigNumberish,
   ) {
-    const out = await test.getAccountLiquidityPositionDetails(vTokenAddress, num);
+    const out = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, num);
     if (typeof tickLower !== 'undefined') expect(out.tickLower).to.eq(tickLower);
     if (typeof tickUpper !== 'undefined') expect(out.tickUpper).to.eq(tickUpper);
     if (typeof limitOrderType !== 'undefined') expect(out.limitOrderType).to.eq(limitOrderType);
@@ -152,12 +152,12 @@ describe('Account Library Test - 2', () => {
 
   describe('#Margin', () => {
     it('Add Margin', async () => {
-      await test.addMargin(vBaseAddress, '10000000000', constants);
+      await test.addMargin(0, vBaseAddress, '10000000000', constants);
       await checkDepositBalance(vBaseAddress, '10000000000');
     });
 
     it('Remove Margin', async () => {
-      await test.removeMargin(vBaseAddress, '50', 0, constants);
+      await test.removeMargin(0, vBaseAddress, '50', 0, constants);
       await checkDepositBalance(vBaseAddress, '9999999950');
     });
   });
@@ -165,22 +165,31 @@ describe('Account Library Test - 2', () => {
   describe('#Trades', () => {
     before(async () => {});
     it('Swap Token (Token Amount)', async () => {
-      await test.swapTokenAmount(vTokenAddress, '10', 0, constants);
+      await test.swapTokenAmount(0, vTokenAddress, '10', 0, constants);
       await checkTokenBalance(vTokenAddress, '10');
       await checkTokenBalance(vBaseAddress, -40000);
     });
 
     it('Swap Token (Token Notional)', async () => {
-      await test.swapTokenNotional(vTokenAddress, '40000', 0, constants);
+      await test.swapTokenNotional(0, vTokenAddress, '40000', 0, constants);
       await checkTokenBalance(vTokenAddress, '20');
       await checkTokenBalance(vBaseAddress, -80000);
     });
 
     it('Liqudity Change', async () => {
-      await test.cleanPositions(constants);
+      await test.cleanPositions(0, constants);
       await checkTokenBalance(vTokenAddress, '0');
 
-      await test.liquidityChange(vTokenAddress, -100, 100, 5, 0, 0, constants);
+      const liquidityChangeParams = {
+        tickLower: -100,
+        tickUpper: 100,
+        liquidityDelta: 5,
+        sqrtPriceCurrent: 0,
+        slippageTolerance: 0,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+      };
+      await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, 0, constants);
       await checkTokenBalance(vTokenAddress, '-5');
       await checkTokenBalance(vBaseAddress, -20000);
       await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -191,8 +200,18 @@ describe('Account Library Test - 2', () => {
   describe('#Remove Limit Order', () => {
     describe('Not limit order', () => {
       before(async () => {
-        await test.cleanPositions(constants);
-        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 0, 0, constants);
+        await test.cleanPositions(0, constants);
+        const liquidityChangeParams = {
+          tickLower: 194000,
+          tickUpper: 195000,
+          liquidityDelta: 5,
+          sqrtPriceCurrent: 0,
+          slippageTolerance: 0,
+          closeTokenPosition: false,
+          limitOrderType: 0,
+        };
+
+        await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, 0, constants);
         await checkTokenBalance(vTokenAddress, '-5');
         await checkTokenBalance(vBaseAddress, -20000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -200,27 +219,37 @@ describe('Account Library Test - 2', () => {
       });
       it('Remove Failure - Inside Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, 90, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Below Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, -110, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Above Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, 110, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
     });
     describe('Lower limit order', () => {
       before(async () => {
-        await test.cleanPositions(constants);
-        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 1, 0, constants);
+        await test.cleanPositions(0, constants);
+        const liquidityChangeParams = {
+          tickLower: 194000,
+          tickUpper: 195000,
+          liquidityDelta: 5,
+          sqrtPriceCurrent: 0,
+          slippageTolerance: 0,
+          closeTokenPosition: false,
+          limitOrderType: 1,
+        };
+
+        await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, 0, constants);
         await checkTokenBalance(vTokenAddress, '-5');
         await checkTokenBalance(vBaseAddress, -20000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -228,19 +257,19 @@ describe('Account Library Test - 2', () => {
       });
       it('Remove Failure - Inside Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, 90, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Above Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, 110, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Success - Below Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
-        test.removeLimitOrder(vTokenAddress, 194000, 195000, -110, constants);
+        test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants);
         await checkTokenBalance(vTokenAddress, 0);
         await checkTokenBalance(vBaseAddress, 0);
         await checkLiquidityPositionNum(vTokenAddress, 0);
@@ -248,8 +277,18 @@ describe('Account Library Test - 2', () => {
     });
     describe('Upper limit order', () => {
       before(async () => {
-        await test.cleanPositions(constants);
-        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 2, 0, constants);
+        await test.cleanPositions(0, constants);
+        const liquidityChangeParams = {
+          tickLower: 194000,
+          tickUpper: 195000,
+          liquidityDelta: 5,
+          sqrtPriceCurrent: 0,
+          slippageTolerance: 0,
+          closeTokenPosition: false,
+          limitOrderType: 2,
+        };
+
+        await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, 0, constants);
         await checkTokenBalance(vTokenAddress, '-5');
         await checkTokenBalance(vBaseAddress, -20000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -259,21 +298,21 @@ describe('Account Library Test - 2', () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
 
         vPoolFake.observe.returns([[0, 194430 * 60], []]);
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, 90, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Below Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
 
-        expect(test.removeLimitOrder(vTokenAddress, 194000, 195000, -110, constants)).to.be.revertedWith(
+        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Success - Above Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
 
-        test.removeLimitOrder(vTokenAddress, 194000, 195000, 110, constants);
+        test.removeLimitOrder(0, vTokenAddress, 194000, 195000, constants);
         await checkTokenBalance(vTokenAddress, 0);
         await checkTokenBalance(vBaseAddress, 0);
         await checkLiquidityPositionNum(vTokenAddress, 0);
@@ -283,11 +322,17 @@ describe('Account Library Test - 2', () => {
 
   describe('#Liquidation', () => {
     it('Liquidate Liquidity Positions - Fail', async () => {
-      expect(test.liquidateLiquidityPositions(tokenAmount(10, 6), 150, 5000, 0, constants)).to.be.reverted; // feeFraction=15/10=1.5
+      expect(test.liquidateLiquidityPositions(0, tokenAmount(10, 6), 150, 5000, 0, constants)).to.be.reverted; // feeFraction=15/10=1.5
     });
     it('Liquidate Token Positions - Fail', async () => {
-      expect(test.liquidateTokenPosition(vTokenAddress, tokenAmount(10, 6), 5000, 150, 5000, 0, constants)).to.be
-        .reverted;
+      const liquidationParams = {
+        fixFee: tokenAmount(10, 6),
+        minRequiredMargin: tokenAmount(20, 6),
+        liquidationFeeFraction: 150,
+        tokenLiquidationPriceDeltaBps: 300,
+        insuranceFundFeeShareBps: 5000,
+      };
+      expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.reverted;
     });
   });
 });
