@@ -372,9 +372,10 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease *
-            vTokenAddress.getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustments.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease.mulDiv(
+                VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants),
+                FixedPoint128.Q128
+            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function closeLiquidityPosition(
@@ -397,9 +398,10 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease *
-            vTokenAddress.getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustments.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease.mulDiv(
+                VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants),
+                FixedPoint128.Q128
+            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(
@@ -420,9 +422,10 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease *
-            vTokenAddress.getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustments.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease.mulDiv(
+                VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants),
+                FixedPoint128.Q128
+            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(
