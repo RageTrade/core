@@ -46,6 +46,7 @@ describe('Account Library Test - 2', () => {
   let price: any;
   let vBaseAddress: string;
   let vToken: VToken;
+  let minRequiredMargin: BigNumberish;
 
   let ownerAddress: string;
   let testContractAddress: string;
@@ -76,6 +77,7 @@ describe('Account Library Test - 2', () => {
   ) {
     const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(
       isInitialMargin,
+      minRequiredMargin,
       constants,
     );
     if (typeof accountMarketValue !== 'undefined') expect(accountMarketValue).to.eq(expectedAccountMarketValue);
@@ -177,8 +179,10 @@ describe('Account Library Test - 2', () => {
     });
 
     vPoolWrapperFake.liquidityChange.returns((input: any) => {
-      return [-input.liquidity * price, -input.liquidity];
+      return [-input.liquidity.mul(price).div(1n << 128n), -input.liquidity];
     });
+
+    minRequiredMargin = tokenAmount(20, 6);
   });
   after(deactivateMainnetFork);
   describe('#Initialize', () => {
@@ -191,55 +195,135 @@ describe('Account Library Test - 2', () => {
     it('Add Margin', async () => {
       await test.addMargin(vBaseAddress, tokenAmount(100, 6), constants);
       await checkDepositBalance(vBaseAddress, tokenAmount(100, 6));
-      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), 0);
+      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), minRequiredMargin);
     });
     it('Remove Margin - Fail', async () => {
       await changeVPoolPriceToNearestTick(4000);
 
-      await test.swapTokenAmount(vTokenAddress, tokenAmount(1, 18).div(10), constants);
+      await test.swapTokenAmount(vTokenAddress, tokenAmount(1, 18).div(10), minRequiredMargin, constants);
 
-      let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(true, constants);
+      let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(
+        true,
+        minRequiredMargin,
+        constants,
+      );
       accountMarketValue = accountMarketValue.sub(tokenAmount(50, 6));
 
-      expect(test.removeMargin(vBaseAddress, tokenAmount(50, 6), constants)).to.be.revertedWith(
+      expect(test.removeMargin(vBaseAddress, tokenAmount(50, 6), minRequiredMargin, constants)).to.be.revertedWith(
         'InvalidTransactionNotEnoughMargin(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
     it('Remove Margin - Pass', async () => {
       test.cleanPositions(constants);
-      await test.removeMargin(vBaseAddress, tokenAmount(50, 6), constants);
+      await test.removeMargin(vBaseAddress, tokenAmount(50, 6), minRequiredMargin, constants);
       await checkDepositBalance(vBaseAddress, tokenAmount(50, 6));
-      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(50, 6), 0);
+      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(50, 6), minRequiredMargin);
+    });
+  });
+
+  describe('#Trade - Swap Token Amount', () => {
+    before(async () => {
+      await changeVPoolPriceToNearestTick(4000);
+      await test.cleanPositions(constants);
+    });
+    it('Successful Trade', async () => {
+      const tokenBalance = tokenAmount(1, 18).div(10 ** 2);
+      const baseBalance = tokenBalance
+        .mul(price)
+        .mul(-1)
+        .div(1n << 128n);
+
+      await test.swapTokenAmount(vTokenAddress, tokenBalance, minRequiredMargin, constants);
+      await checkTokenBalance(vTokenAddress, tokenBalance);
+      await checkTokenBalance(vBaseAddress, baseBalance);
+    });
+  });
+
+  describe('#Trade - Swap Token Notional', () => {
+    before(async () => {
+      await changeVPoolPriceToNearestTick(4000);
+      await test.cleanPositions(constants);
+    });
+    it('Successful Trade', async () => {
+      const baseBalance = tokenAmount(50, 6);
+      const tokenBalance = baseBalance.mul(1n << 128n).div(price);
+
+      await test.swapTokenNotional(vTokenAddress, baseBalance, minRequiredMargin, constants);
+      await checkTokenBalance(vTokenAddress, tokenBalance);
+      await checkTokenBalance(vBaseAddress, baseBalance.mul(-1));
     });
   });
 
   describe('#Profit', () => {
     describe('#Token Position Profit', () => {
       before(async () => {
+        await changeVPoolPriceToNearestTick(4000);
+        await test.cleanPositions(constants);
         await test.addMargin(vBaseAddress, tokenAmount(50, 6), constants);
-        await test.swapTokenAmount(vTokenAddress, tokenAmount(1, 18).div(10), constants);
+        await test.swapTokenAmount(vTokenAddress, tokenAmount(1, 18).div(10), minRequiredMargin, constants);
       });
       it('Remove Profit - Fail (No Profit | Enough Margin)', async () => {
         let profit = (await test.getAccountProfit(constants)).sub(tokenAmount(1, 6));
-        expect(test.removeProfit(tokenAmount(1, 6), constants)).to.be.revertedWith(
+        expect(test.removeProfit(tokenAmount(1, 6), minRequiredMargin, constants)).to.be.revertedWith(
           'InvalidTransactionNotEnoughProfit(' + profit + ')',
         );
       });
       it('Remove Profit - Fail (Profit Available | Not Enough Margin)', async () => {
         await changeVPoolPriceToNearestTick(4020);
-        await test.removeMargin(vBaseAddress, tokenAmount(21, 6), constants);
-        let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(true, constants);
+        await test.removeMargin(vBaseAddress, tokenAmount(21, 6), minRequiredMargin, constants);
+        let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(
+          true,
+          minRequiredMargin,
+          constants,
+        );
         accountMarketValue = accountMarketValue.sub(tokenAmount(1, 6));
-        expect(test.removeProfit(tokenAmount(1, 6), constants)).to.be.revertedWith(
+        expect(test.removeProfit(tokenAmount(1, 6), minRequiredMargin, constants)).to.be.revertedWith(
           'InvalidTransactionNotEnoughMargin(' + accountMarketValue + ', ' + requiredMargin + ')',
         );
       });
       it('Remove Profit - Pass', async () => {
         await changeVPoolPriceToNearestTick(4050);
         const baseDetails = await test.getAccountTokenDetails(vBaseAddress);
-        await test.removeProfit(tokenAmount(1, 6), constants);
+        await test.removeProfit(tokenAmount(1, 6), minRequiredMargin, constants);
         checkTokenBalance(vBaseAddress, baseDetails.balance.sub(tokenAmount(1, 6)));
       });
     });
+  });
+  // it('Liqudity Change', async () => {
+  //   await test.cleanPositions(constants);
+  //   await checkTokenBalance(vTokenAddress, '0');
+
+  //   await test.liquidityChange(vTokenAddress, -100, 100, 5, 0, tokenAmount(20,6), constants);
+  //   await checkTokenBalance(vTokenAddress, '-5');
+  //   await checkTokenBalance(vBaseAddress, -20000);
+  //   await checkLiquidityPositionNum(vTokenAddress, 1);
+  //   await checkLiquidityPositionDetails(vTokenAddress, 0, -100, 100, 0, 5);
+  // });
+
+  describe('#Liquidation', () => {
+    // describe('#Range Position Liquidation', () => {
+    //   before(async () => {
+    //     await changeVPoolPriceToNearestTick(4000);
+    //     await test.cleanPositions(constants);
+    //     const tickLower = await priceToTick(3500, vBase, vToken);
+    //     const tickUpper = await priceToTick(4500, vBase, vToken);
+    //     await test.liquidityChange(vTokenAddress, tickLower, tickUpper, 100, 0, tokenAmount(20,6), constants);
+    //     let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(false, tokenAmount(20,6), constants);
+    //     console.log(accountMarketValue, requiredMargin);
+    //   });
+    //   it('Liquidation - Fail (Account Above Water)');
+    //   it('Liquidation - Success');
+    // });
+    // describe('#Token Position Liquidation', () => {
+    //   before(async () => {
+    //     await changeVPoolPriceToNearestTick(4000);
+    //     await test.cleanPositions(constants);
+    //     await test.swapTokenNotional(vTokenAddress,tokenAmount())
+    //     let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(false, tokenAmount(20,6), constants);
+    //     console.log(accountMarketValue, requiredMargin);
+    //   });
+    //   it('Liquidation - Fail (Account Above Water)');
+    //   it('Liquidation - Success');
+    // });
   });
 });

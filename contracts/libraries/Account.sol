@@ -27,6 +27,7 @@ import { console } from 'hardhat/console.sol';
 
 struct LiquidationParams {
     uint256 fixFee; //Same number of decimals as accountMarketValue
+    uint256 minRequiredMargin;
     uint16 liquidationFeeFraction;
     uint16 tokenLiquidationPriceDeltaBps;
     uint16 insuranceFundFeeShareBps;
@@ -159,11 +160,12 @@ library Account {
         VTokenAddress vTokenAddress,
         uint256 amount,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal {
         account.tokenDeposits.decreaseBalance(vTokenAddress, amount, constants);
 
-        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
+        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
 
         // process real token withdrawal
         // IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transfer(msg.sender, amount);
@@ -178,6 +180,7 @@ library Account {
         Info storage account,
         uint256 amount,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
@@ -187,7 +190,7 @@ library Account {
         vTokenPosition.balance -= int256(amount);
 
         account.checkIfProfitAvailable(vTokenAddresses, constants);
-        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
+        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
 
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
     }
@@ -215,6 +218,7 @@ library Account {
         Info storage account,
         bool isInitialMargin,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         // (int256 accountMarketValue, int256 totalRequiredMargin) = account
@@ -230,6 +234,9 @@ library Account {
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
         // console.log('accountMarketValue with deposits');
         // console.logInt(accountMarketValue);
+        totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
+            ? int256(minRequiredMargin)
+            : totalRequiredMargin;
         return (accountMarketValue, totalRequiredMargin);
     }
 
@@ -242,11 +249,13 @@ library Account {
         Info storage account,
         bool isInitialMargin,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal view {
         (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
             isInitialMargin,
             vTokenAddresses,
+            minRequiredMargin,
             constants
         );
         if (accountMarketValue < totalRequiredMargin)
@@ -276,6 +285,7 @@ library Account {
         VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
@@ -286,7 +296,7 @@ library Account {
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vTokenAddress, swapParams, constants);
 
         // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
+        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
     }
 
     /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
@@ -301,6 +311,7 @@ library Account {
         VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal returns (int256 notionalValue) {
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
@@ -309,7 +320,7 @@ library Account {
         notionalValue = account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, constants);
 
         // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, vTokenAddresses, constants);
+        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
     }
 
     /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
@@ -341,6 +352,7 @@ library Account {
         Info storage account,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         LiquidationParams memory liquidationParams,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
@@ -352,6 +364,7 @@ library Account {
         (accountMarketValue, totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
             false,
             vTokenAddresses,
+            minRequiredMargin,
             constants
         );
         if (accountMarketValue > totalRequiredMargin) {
@@ -462,6 +475,7 @@ library Account {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
                 false,
                 vTokenAddresses,
+                liquidationParams.minRequiredMargin,
                 constants
             );
 
@@ -505,7 +519,12 @@ library Account {
         if (accountMarketValueFinal < 0) {
             insuranceFundFee = accountMarketValueFinal.abs();
         }
-        liquidatorAccount.checkIfMarginAvailable(false, vTokenAddresses, constants);
+        liquidatorAccount.checkIfMarginAvailable(
+            false,
+            vTokenAddresses,
+            liquidationParams.minRequiredMargin,
+            constants
+        );
     }
 
     /// @notice removes limit order based on the current price position (keeper call)

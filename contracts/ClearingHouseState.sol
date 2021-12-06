@@ -19,7 +19,6 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
     Constants public constants;
     LiquidationParams public liquidationParams;
     uint256 public removeLimitOrderFee;
-    uint256 public minNotionalValue;
     uint256 public fixedFee;
 
     error NotVPoolFactory();
@@ -60,12 +59,11 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
         LiquidationParams calldata _liquidationParams,
         uint256 _fixedFee,
         uint256 _removeLimitOrderFee,
-        uint256 _minNotionalValue
+        uint256 _minRequiredMargin
     ) external onlyGovernanceOrTeamMultisig {
         liquidationParams = _liquidationParams;
         fixedFee = _fixedFee;
         removeLimitOrderFee = _removeLimitOrderFee;
-        minNotionalValue = _minNotionalValue;
     }
 
     modifier onlyVPoolFactory() {

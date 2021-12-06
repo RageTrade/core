@@ -32,6 +32,7 @@ contract AccountTest {
                 testVTokenAddresses[truncatedAddress],
                 SwapParams(-set.positions[truncatedAddress].balance, 0, false),
                 testVTokenAddresses,
+                0,
                 constants
             );
         }
@@ -56,29 +57,48 @@ contract AccountTest {
     function removeMargin(
         address vTokenAddress,
         uint256 amount,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) external {
-        testAccount.removeMargin(vTokenAddress, amount, testVTokenAddresses, constants);
+        testAccount.removeMargin(vTokenAddress, amount, testVTokenAddresses, minRequiredMargin, constants);
     }
 
-    function removeProfit(uint256 amount, Constants memory constants) external {
-        testAccount.removeProfit(amount, testVTokenAddresses, constants);
+    function removeProfit(
+        uint256 amount,
+        uint256 minRequiredMargin,
+        Constants memory constants
+    ) external {
+        testAccount.removeProfit(amount, testVTokenAddresses, minRequiredMargin, constants);
     }
 
     function swapTokenAmount(
         address vTokenAddress,
         int256 amount,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) external {
-        testAccount.swapToken(vTokenAddress, SwapParams(amount, 0, false), testVTokenAddresses, constants);
+        testAccount.swapToken(
+            vTokenAddress,
+            SwapParams(amount, 0, false),
+            testVTokenAddresses,
+            minRequiredMargin,
+            constants
+        );
     }
 
     function swapTokenNotional(
         address vTokenAddress,
         int256 amount,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) external {
-        testAccount.swapToken(vTokenAddress, SwapParams(amount, 0, true), testVTokenAddresses, constants);
+        testAccount.swapToken(
+            vTokenAddress,
+            SwapParams(amount, 0, true),
+            testVTokenAddresses,
+            minRequiredMargin,
+            constants
+        );
     }
 
     function liquidityChange(
@@ -87,6 +107,7 @@ contract AccountTest {
         int24 tickUpper,
         int128 liquidity,
         LimitOrderType limitOrderType,
+        uint256 minRequiredMargin,
         Constants memory constants
     ) external {
         LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
@@ -99,27 +120,36 @@ contract AccountTest {
             limitOrderType
         );
 
-        testAccount.liquidityChange(vTokenAddress, liquidityChangeParams, testVTokenAddresses, constants);
+        testAccount.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            testVTokenAddresses,
+            minRequiredMargin,
+            constants
+        );
     }
 
     function liquidateLiquidityPositions(
         uint256 fixFee,
+        uint256 minRequiredMargin,
         uint16 liquidationFeeFraction,
         uint16 insuranceFundFeeShareBps,
         Constants memory constants
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
             fixFee,
+            minRequiredMargin,
             liquidationFeeFraction,
             0,
             insuranceFundFeeShareBps
         );
-        testAccount.liquidateLiquidityPositions(testVTokenAddresses, liquidationParams, constants);
+        testAccount.liquidateLiquidityPositions(testVTokenAddresses, liquidationParams, minRequiredMargin, constants);
     }
 
     function liquidateTokenPosition(
         address vTokenAddress,
         uint256 fixFee,
+        uint256 minRequiredMargin,
         uint16 liquidationFeeFraction,
         uint16 tokenLiquidationPriceDeltaBps,
         uint16 insuranceFundFeeShareBps,
@@ -127,6 +157,7 @@ contract AccountTest {
     ) external {
         LiquidationParams memory liquidationParams = LiquidationParams(
             fixFee,
+            minRequiredMargin,
             liquidationFeeFraction,
             tokenLiquidationPriceDeltaBps,
             insuranceFundFeeShareBps
@@ -215,14 +246,15 @@ contract AccountTest {
         );
     }
 
-    function getAccountValueAndRequiredMargin(bool isInitialMargin, Constants memory constants)
-        external
-        view
-        returns (int256 accountMarketValue, int256 requiredMargin)
-    {
+    function getAccountValueAndRequiredMargin(
+        bool isInitialMargin,
+        uint256 minRequiredMargin,
+        Constants memory constants
+    ) external view returns (int256 accountMarketValue, int256 requiredMargin) {
         (accountMarketValue, requiredMargin) = testAccount.getAccountValueAndRequiredMargin(
             isInitialMargin,
             testVTokenAddresses,
+            minRequiredMargin,
             constants
         );
     }

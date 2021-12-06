@@ -157,7 +157,7 @@ describe('Account Library Test - 2', () => {
     });
 
     it('Remove Margin', async () => {
-      await test.removeMargin(vBaseAddress, '50', constants);
+      await test.removeMargin(vBaseAddress, '50', 0, constants);
       await checkDepositBalance(vBaseAddress, '9999999950');
     });
   });
@@ -165,13 +165,13 @@ describe('Account Library Test - 2', () => {
   describe('#Trades', () => {
     before(async () => {});
     it('Swap Token (Token Amount)', async () => {
-      await test.swapTokenAmount(vTokenAddress, '10', constants);
+      await test.swapTokenAmount(vTokenAddress, '10', 0, constants);
       await checkTokenBalance(vTokenAddress, '10');
       await checkTokenBalance(vBaseAddress, -40000);
     });
 
     it('Swap Token (Token Notional)', async () => {
-      await test.swapTokenNotional(vTokenAddress, '40000', constants);
+      await test.swapTokenNotional(vTokenAddress, '40000', 0, constants);
       await checkTokenBalance(vTokenAddress, '20');
       await checkTokenBalance(vBaseAddress, -80000);
     });
@@ -180,7 +180,7 @@ describe('Account Library Test - 2', () => {
       await test.cleanPositions(constants);
       await checkTokenBalance(vTokenAddress, '0');
 
-      await test.liquidityChange(vTokenAddress, -100, 100, 5, 0, constants);
+      await test.liquidityChange(vTokenAddress, -100, 100, 5, 0, 0, constants);
       await checkTokenBalance(vTokenAddress, '-5');
       await checkTokenBalance(vBaseAddress, -20000);
       await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -192,7 +192,7 @@ describe('Account Library Test - 2', () => {
     describe('Not limit order', () => {
       before(async () => {
         await test.cleanPositions(constants);
-        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 0, constants);
+        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 0, 0, constants);
         await checkTokenBalance(vTokenAddress, '-5');
         await checkTokenBalance(vBaseAddress, -20000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -220,7 +220,7 @@ describe('Account Library Test - 2', () => {
     describe('Lower limit order', () => {
       before(async () => {
         await test.cleanPositions(constants);
-        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 1, constants);
+        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 1, 0, constants);
         await checkTokenBalance(vTokenAddress, '-5');
         await checkTokenBalance(vBaseAddress, -20000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -249,7 +249,7 @@ describe('Account Library Test - 2', () => {
     describe('Upper limit order', () => {
       before(async () => {
         await test.cleanPositions(constants);
-        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 2, constants);
+        await test.liquidityChange(vTokenAddress, 194000, 195000, 5, 2, 0, constants);
         await checkTokenBalance(vTokenAddress, '-5');
         await checkTokenBalance(vBaseAddress, -20000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -283,10 +283,11 @@ describe('Account Library Test - 2', () => {
 
   describe('#Liquidation', () => {
     it('Liquidate Liquidity Positions - Fail', async () => {
-      expect(test.liquidateLiquidityPositions(tokenAmount(10, 6), 150, 5000, constants)).to.be.reverted; // feeFraction=15/10=1.5
+      expect(test.liquidateLiquidityPositions(tokenAmount(10, 6), 150, 5000, 0, constants)).to.be.reverted; // feeFraction=15/10=1.5
     });
     it('Liquidate Token Positions - Fail', async () => {
-      expect(test.liquidateTokenPosition(vTokenAddress, tokenAmount(10, 6), 5000, 150, 5000, constants)).to.be.reverted;
+      expect(test.liquidateTokenPosition(vTokenAddress, tokenAmount(10, 6), 5000, 150, 5000, 0, constants)).to.be
+        .reverted;
     });
   });
 });
