@@ -187,6 +187,7 @@ library Account {
     ) internal {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             VTokenAddress.wrap(constants.VBASE_ADDRESS),
+            true,
             constants
         );
         vTokenPosition.balance -= int256(amount);
@@ -204,6 +205,7 @@ library Account {
     ) internal {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             VTokenAddress.wrap(constants.VBASE_ADDRESS),
+            true,
             constants
         );
         vTokenPosition.balance -= int256(amount);
@@ -501,6 +503,7 @@ library Account {
     ) internal returns (int256 insuranceFundFee) {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             vTokenAddress,
+            false,
             constants
         );
 
@@ -601,7 +604,7 @@ library Account {
         int24 currentTick = VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants);
         LiquidityPosition.Info storage position = account
             .tokenPositions
-            .getTokenPosition(vTokenAddress, constants)
+            .getTokenPosition(vTokenAddress, false, constants)
             .liquidityPositions
             .getLiquidityPosition(tickLower, tickUpper);
 

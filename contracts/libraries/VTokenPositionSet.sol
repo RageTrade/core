@@ -36,6 +36,7 @@ library VTokenPositionSet {
 
     error IncorrectUpdate();
     error DeactivationFailed(VTokenAddress);
+    error TokenInactive(address vTokenAddress);
 
     struct Set {
         // fixed length array of truncate(tokenAddress)
@@ -222,10 +223,15 @@ library VTokenPositionSet {
     function getTokenPosition(
         Set storage set,
         VTokenAddress vTokenAddress,
+        bool createNew,
         Constants memory constants
     ) internal returns (VTokenPosition.Position storage) {
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
-            set.activate(vTokenAddress);
+            if (createNew) {
+                set.activate(vTokenAddress);
+            } else if (set.positions[truncate(vTokenAddress)].balance == 0) {
+                revert TokenInactive(vTokenAddress);
+            }
         }
 
         VTokenPosition.Position storage position = set.positions[vTokenAddress.truncate()];
@@ -348,9 +354,11 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, constants);
+
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.liquidityChange(
+        vTokenPosition.liquidityPositions.liquidityChange(
             set.accountNo,
             vTokenAddress,
             liquidityChangeParams,
@@ -385,9 +393,11 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
+
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.closeLiquidityPosition(
+        vTokenPosition.liquidityPositions.closeLiquidityPosition(
             set.accountNo,
             vTokenAddress,
             position,
@@ -412,7 +422,7 @@ library VTokenPositionSet {
     ) internal returns (int256) {
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.closeAllLiquidityPositions(
+        set.getTokenPosition(vTokenAddress, false, constants).liquidityPositions.closeAllLiquidityPositions(
             set.accountNo,
             vTokenAddress,
             wrapper,
