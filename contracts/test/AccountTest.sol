@@ -175,13 +175,21 @@ contract AccountTest {
         );
     }
 
-    function getLiquidationPriceX128(
-        int256 tokenBalance,
+    function getLiquidationPriceX128AndFee(
+        int256 tokensToTrade,
         address vTokenAddress,
         LiquidationParams memory liquidationParams,
         Constants memory constants
-    ) external view returns (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) {
-        return Account.getLiquidationPriceX128(tokenBalance, vTokenAddress, liquidationParams, constants);
+    )
+        external
+        view
+        returns (
+            uint256 liquidationPriceX128,
+            uint256 liquidatorPriceX128,
+            int256 insuranceFundFee
+        )
+    {
+        return Account.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress, liquidationParams, constants);
     }
 
     function liquidateTokenPosition(
