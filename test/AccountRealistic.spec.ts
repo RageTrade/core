@@ -461,12 +461,13 @@ describe('Account Library Test - 2', () => {
         // );
         expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.reverted;
       });
-      // it('Liquidation Fail (No Token Position)', async() => {
-      //   await changeVPoolPriceToNearestTick(3500);
+      it('Liquidation Fail (No Token Position)', async () => {
+        await changeVPoolPriceToNearestTick(3500);
 
-      //   expect(test.liquidateTokenPosition(0, 1, vTokenAddress1, liquidationParams, constants)).to.be.revertedWith(
-      //     'NoTokenPosition()' );
-      // });
+        expect(test.liquidateTokenPosition(0, 1, vTokenAddress1, liquidationParams, constants)).to.be.revertedWith(
+          'TokenInactive("' + vTokenAddress1 + '")',
+        );
+      });
       it('Liquidation - Success', async () => {
         await changeVPoolPriceToNearestTick(3500);
 
