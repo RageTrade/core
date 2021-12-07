@@ -15,6 +15,7 @@ library VTokenPosition {
     error AlreadyInitialized();
     using VTokenLib for VTokenAddress;
     using FullMath for uint256;
+    using FullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
 
     enum RISK_SIDE {
@@ -41,7 +42,7 @@ library VTokenPosition {
         // console.logInt(position.balance);
         // console.log('Token PriceX128:');
         // console.logInt(int256(price));
-        value = (position.balance * int256(price)) / int256(FixedPoint128.Q128);
+        value = position.balance.mulDiv(price, FixedPoint128.Q128);
         // console.log('Token Value:');
         // console.logInt(value);
         value -= unrealizedFundingPayment(position, wrapper);
