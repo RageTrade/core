@@ -156,11 +156,11 @@ export function initializableTick(tick: number, tickSpacing: number) {
 }
 
 export async function priceToNearestPriceX128(
-  price: BigNumberish,
+  price: number,
   vBase: ContractOrSmock<VBase>,
   vToken: ContractOrSmock<VToken>,
 ): Promise<BigNumber> {
-  return sqrtPriceX96ToPriceX128(tickToSqrtPriceX96(await priceToTick(4000, vBase, vToken)), vBase, vToken);
+  return sqrtPriceX96ToPriceX128(tickToSqrtPriceX96(await priceToTick(price, vBase, vToken)), vBase, vToken);
 }
 
 const ONE = BigNumber.from(1);
