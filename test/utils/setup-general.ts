@@ -167,7 +167,7 @@ export async function testSetupToken({
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
   // ClearingHouse, VPoolFactory
-  const realToken = await smock.fake<ERC20>('ERC20', { address: ethers.constants.AddressZero });
+  const realToken = await smock.fake<ERC20>('ERC20');
   realToken.decimals.returns(decimals);
 
   await vPoolFactory.initializePool(
