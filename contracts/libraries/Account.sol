@@ -41,6 +41,8 @@ library Account {
     using VTokenLib for VTokenAddress;
     using SafeCast for uint256;
     using FullMath for int256;
+    using FullMath for uint256;
+
     using SignedMath for int256;
     using Account for Account.Info;
 
@@ -385,29 +387,27 @@ library Account {
     }
 
     function getLiquidationPriceX128(
-        int256 accountMarketValue,
-        int256 totalRequiredMargin,
         int256 tokenBalance,
         VTokenAddress vTokenAddress,
         LiquidationParams memory liquidationParams,
         Constants memory constants
     ) internal view returns (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) {
         uint16 maintainanceMarginFactor = vTokenAddress.getMarginRatio(false, constants);
-        int256 priceX128 = vTokenAddress.getVirtualTwapPriceX128(constants).toInt256();
-        int256 priceDeltaX128 = priceX128.mulDiv(accountMarketValue, totalRequiredMargin).mulDiv(
-            liquidationParams.tokenLiquidationPriceDeltaBps * maintainanceMarginFactor,
-            1e4 * 1e5
+        uint256 priceX128 = vTokenAddress.getVirtualTwapPriceX128(constants);
+        uint256 priceDeltaX128 = priceX128.mulDiv(liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
+            maintainanceMarginFactor,
+            1e5
         );
         if (tokenBalance > 0) {
-            liquidationPriceX128 = uint256(priceX128 - priceDeltaX128);
-            liquidatorPriceX128 = uint256(
-                priceX128 - priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4)
-            );
+            liquidationPriceX128 = priceX128 - priceDeltaX128;
+            liquidatorPriceX128 =
+                priceX128 -
+                priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
         } else {
-            liquidationPriceX128 = uint256(priceX128 + priceDeltaX128);
-            liquidatorPriceX128 = uint256(
-                priceX128 + priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4)
-            );
+            liquidationPriceX128 = priceX128 + priceDeltaX128;
+            liquidatorPriceX128 =
+                priceX128 +
+                priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
         }
     }
 
@@ -421,7 +421,7 @@ library Account {
         Constants memory constants
     ) internal {
         BalanceAdjustments memory balanceAdjustments = BalanceAdjustments(
-            tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128),
+            -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128),
             tokensToTrade,
             tokensToTrade
         );
@@ -435,7 +435,7 @@ library Account {
         );
 
         balanceAdjustments = BalanceAdjustments(
-            -tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128),
+            tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128),
             -tokensToTrade,
             -tokensToTrade
         );
@@ -472,22 +472,22 @@ library Account {
             revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
-            (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
-                false,
-                vTokenAddresses,
-                liquidationParams.minRequiredMargin,
-                constants
-            );
+            {
+                (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
+                    false,
+                    vTokenAddresses,
+                    liquidationParams.minRequiredMargin,
+                    constants
+                );
 
-            if (accountMarketValue > totalRequiredMargin) {
-                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+                if (accountMarketValue > totalRequiredMargin) {
+                    revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+                }
             }
 
             int256 tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
 
             (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) = getLiquidationPriceX128(
-                accountMarketValue,
-                totalRequiredMargin,
                 vTokenPosition.balance,
                 vTokenAddress,
                 liquidationParams,
@@ -495,6 +495,7 @@ library Account {
             );
 
             insuranceFundFee = tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
+
             updateLiquidationAccounts(
                 account,
                 liquidatorAccount,

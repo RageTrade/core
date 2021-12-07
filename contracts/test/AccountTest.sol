@@ -178,20 +178,9 @@ contract AccountTest {
     function getLiquidationPriceX128(
         int256 tokenBalance,
         address vTokenAddress,
-        uint256 fixFee,
-        uint256 minRequiredMargin,
-        uint16 liquidationFeeFraction,
-        uint16 tokenLiquidationPriceDeltaBps,
-        uint16 insuranceFundFeeShareBps,
+        LiquidationParams memory liquidationParams,
         Constants memory constants
     ) external view returns (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) {
-        LiquidationParams memory liquidationParams = LiquidationParams(
-            fixFee,
-            minRequiredMargin,
-            liquidationFeeFraction,
-            tokenLiquidationPriceDeltaBps,
-            insuranceFundFeeShareBps
-        );
         return Account.getLiquidationPriceX128(tokenBalance, vTokenAddress, liquidationParams, constants);
     }
 
