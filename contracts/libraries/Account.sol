@@ -426,10 +426,11 @@ library Account {
         int256 tokensToTrade,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
+        int256 fixFee,
         Constants memory constants
     ) internal {
         BalanceAdjustments memory balanceAdjustments = BalanceAdjustments(
-            -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128),
+            -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
             tokensToTrade,
             tokensToTrade
         );
@@ -448,7 +449,7 @@ library Account {
         );
 
         balanceAdjustments = BalanceAdjustments(
-            tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128),
+            tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
             -tokensToTrade,
             -tokensToTrade
         );
@@ -533,6 +534,7 @@ library Account {
                 tokensToTrade,
                 liquidationPriceX128,
                 liquidatorPriceX128,
+                int256(liquidationParams.fixFee),
                 constants
             );
             emit Account.LiquidateTokenPosition(
