@@ -223,23 +223,30 @@ library Account {
         uint256 minRequiredMargin,
         Constants memory constants
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
-        // (int256 accountMarketValue, int256 totalRequiredMargin) = account
-        //     .tokenPositions
-        //     .getAllTokenPositionValueAndMargin(isInitialMargin, vTokenAddresses, constants);
-        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
-        //TODO: Remove logs
-        // console.log('accountMarketValue w/o deposits');
-        // console.logInt(accountMarketValue);
+        accountMarketValue = account.getAccountValue(vTokenAddresses, constants);
+
         totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
         // console.log('totalRequiredMargin');
         // console.logInt(totalRequiredMargin);
-        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
-        // console.log('accountMarketValue with deposits');
-        // console.logInt(accountMarketValue);
         totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
             ? int256(minRequiredMargin)
             : totalRequiredMargin;
         return (accountMarketValue, totalRequiredMargin);
+    }
+
+    function getAccountValue(
+        Info storage account,
+        mapping(uint32 => address) storage vTokenAddresses,
+        Constants memory constants
+    ) internal view returns (int256 accountMarketValue) {
+        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+        //TODO: Remove logs
+        // console.log('accountMarketValue w/o deposits');
+        // console.logInt(accountMarketValue);
+        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
+        // console.log('accountMarketValue with deposits');
+        // console.logInt(accountMarketValue);
+        return (accountMarketValue);
     }
 
     /// @notice checks if market value > required margin
@@ -386,12 +393,20 @@ library Account {
         account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
 
-    function getLiquidationPriceX128(
-        int256 tokenBalance,
+    function getLiquidationPriceX128AndFee(
+        int256 tokensToTrade,
         VTokenAddress vTokenAddress,
         LiquidationParams memory liquidationParams,
         Constants memory constants
-    ) internal view returns (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) {
+    )
+        internal
+        view
+        returns (
+            uint256 liquidationPriceX128,
+            uint256 liquidatorPriceX128,
+            int256 insuranceFundFee
+        )
+    {
         uint16 maintainanceMarginFactor = vTokenAddress.getMarginRatio(false, constants);
         uint256 priceX128 = vTokenAddress.getVirtualTwapPriceX128(constants);
         // console.log('PriceX128');
@@ -406,16 +421,18 @@ library Account {
             maintainanceMarginFactor,
             1e5
         );
-        if (tokenBalance > 0) {
+        if (tokensToTrade < 0) {
             liquidationPriceX128 = priceX128 - priceDeltaX128;
             liquidatorPriceX128 =
                 priceX128 -
                 priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
+            insuranceFundFee = -tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
         } else {
             liquidationPriceX128 = priceX128 + priceDeltaX128;
             liquidatorPriceX128 =
                 priceX128 +
                 priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
+            insuranceFundFee = tokensToTrade.mulDiv(liquidationPriceX128 - liquidatorPriceX128, FixedPoint128.Q128);
         }
     }
 
@@ -491,29 +508,32 @@ library Account {
             revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
-            {
-                (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
-                    false,
-                    vTokenAddresses,
-                    liquidationParams.minRequiredMargin,
-                    constants
-                );
-                // console.log('########## Beginning of Liquidation ##############');
-                // console.log('Account Market Value');
-                // console.logInt(accountMarketValue);
-                // console.log('Required Margin');
-                // console.logInt(totalRequiredMargin);
+            (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
+                false,
+                vTokenAddresses,
+                liquidationParams.minRequiredMargin,
+                constants
+            );
+            // console.log('########## Beginning of Liquidation ##############');
+            // console.log('Account Market Value');
+            // console.logInt(accountMarketValue);
+            // console.log('Required Margin');
+            // console.logInt(totalRequiredMargin);
 
-                if (accountMarketValue > totalRequiredMargin) {
-                    revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
-                }
+            if (accountMarketValue > totalRequiredMargin) {
+                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
             }
+        }
 
+        uint256 liquidationPriceX128;
+        uint256 liquidatorPriceX128;
+        {
             int256 tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
             // console.log('Tokens To Trade');
             // console.logInt(tokensToTrade);
-            (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) = getLiquidationPriceX128(
-                vTokenPosition.balance,
+
+            (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = getLiquidationPriceX128AndFee(
+                tokensToTrade,
                 vTokenAddress,
                 liquidationParams,
                 constants
@@ -523,8 +543,6 @@ library Account {
             // console.log(liquidationPriceX128);
             // console.log('LiquidatorPriceX128');
             // console.log(liquidatorPriceX128);
-
-            insuranceFundFee = tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
             // console.log('Insurnace Fund Fee');
             // console.logInt(insuranceFundFee);
             updateLiquidationAccounts(
@@ -537,26 +555,32 @@ library Account {
                 int256(liquidationParams.fixFee),
                 constants
             );
-            emit Account.LiquidateTokenPosition(
-                account.tokenPositions.accountNo,
-                liquidatorAccount.tokenPositions.accountNo,
-                vTokenAddress,
-                liquidationBps,
-                liquidationPriceX128,
-                liquidatorPriceX128,
-                insuranceFundFee
-            );
         }
-        int256 accountMarketValueFinal = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+        int256 accountMarketValueFinal = account.getAccountValue(vTokenAddresses, constants);
 
         if (accountMarketValueFinal < 0) {
-            insuranceFundFee = accountMarketValueFinal.abs();
+            insuranceFundFee = accountMarketValueFinal;
+            account
+                .tokenPositions
+                .positions[VTokenPositionSet.truncate(constants.VBASE_ADDRESS)]
+                .balance -= accountMarketValueFinal;
         }
+        console.log('#############  Insurance Fund Fee  ##################');
+        console.logInt(insuranceFundFee);
         liquidatorAccount.checkIfMarginAvailable(
             false,
             vTokenAddresses,
             liquidationParams.minRequiredMargin,
             constants
+        );
+        emit Account.LiquidateTokenPosition(
+            account.tokenPositions.accountNo,
+            liquidatorAccount.tokenPositions.accountNo,
+            vTokenAddress,
+            liquidationBps,
+            liquidationPriceX128,
+            liquidatorPriceX128,
+            insuranceFundFee
         );
     }
 
