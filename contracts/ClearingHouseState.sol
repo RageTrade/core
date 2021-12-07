@@ -58,8 +58,7 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
     function setPlatformParameters(
         LiquidationParams calldata _liquidationParams,
         uint256 _fixedFee,
-        uint256 _removeLimitOrderFee,
-        uint256 _minRequiredMargin
+        uint256 _removeLimitOrderFee
     ) external onlyGovernanceOrTeamMultisig {
         liquidationParams = _liquidationParams;
         fixedFee = _fixedFee;
