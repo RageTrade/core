@@ -214,9 +214,10 @@ contract AccountTest {
         address vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
+        uint256 removeLimitOrderFee,
         Constants memory constants
     ) external {
-        accounts[accountNo].removeLimitOrder(vTokenAddress, tickLower, tickUpper, 0, constants);
+        accounts[accountNo].removeLimitOrder(vTokenAddress, tickLower, tickUpper, removeLimitOrderFee, constants);
     }
 
     function getAccountDepositBalance(uint256 accountNo, address vTokenAddress) external view returns (uint256) {
