@@ -61,6 +61,7 @@ describe('Account Library Test Realistic', () => {
   async function changeVPoolPriceToNearestTick(price: number) {
     const tick = await priceToTick(price, vBase, vToken);
     vPoolFake.observe.returns([[0, tick * 60], []]);
+    vPoolFake.slot0.returns([0, tick, 0, 0, 0, 0, 0]);
   }
 
   async function changeVPoolWrapperFakePrice(price: number) {
@@ -697,10 +698,10 @@ describe('Account Library Test Realistic', () => {
   });
 
   describe('Limit Order Removal', () => {
-    before(async() => {
+    before(async () => {
       await test.cleanDeposits(0, constants);
       await test.cleanPositions(0, constants);
-      await test.addMargin(0,vTokenAddress, tokenAmount(10000,6),constants);
+      await test.addMargin(0, vTokenAddress, tokenAmount(10000, 6), constants);
 
       let liquidityChangeParams = {
         tickLower: 194000,
@@ -712,13 +713,13 @@ describe('Account Library Test Realistic', () => {
         limitOrderType: 2,
       };
       vPoolFake.observe.returns([[0, 195500 * 60], []]);
-      await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, minRequiredMargin, constants); 
-    })
-    it('Limit Order Removal with Fee', async() => {
-      test.removeLimitOrder(0, vTokenAddress, 194000, 195000, tokenAmount(5,6), constants);
+      await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, minRequiredMargin, constants);
+    });
+    it('Limit Order Removal with Fee', async () => {
+      test.removeLimitOrder(0, vTokenAddress, 194000, 195000, tokenAmount(5, 6), constants);
       await checkTokenBalance(vTokenAddress, 0);
-      await checkTokenBalance(vBaseAddress, tokenAmount(-5,6));
+      await checkTokenBalance(vBaseAddress, tokenAmount(-5, 6));
       await checkLiquidityPositionNum(vTokenAddress, 0);
-    })
-  })
+    });
+  });
 });

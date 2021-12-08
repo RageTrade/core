@@ -17,6 +17,15 @@ library Oracle {
         sqrtPriceX96 = TickMath.getSqrtRatioAtTick(twapTick);
     }
 
+    function getCurrentSqrtPrice(IUniswapV3Pool pool) internal view returns (uint160 sqrtPriceX96) {
+        int24 twapTick = getCurrentTick(pool);
+        sqrtPriceX96 = TickMath.getSqrtRatioAtTick(twapTick);
+    }
+
+    function getCurrentTick(IUniswapV3Pool pool) internal view returns (int24 twapTick) {
+        (, twapTick, , , , , ) = pool.slot0();
+    }
+
     function getTwapTick(IUniswapV3Pool pool, uint32 twapDuration) internal view returns (int24 twapTick) {
         if (twapDuration == 0) {
             revert IllegalTwapDuration(0);

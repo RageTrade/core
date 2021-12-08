@@ -412,7 +412,7 @@ library Account {
         )
     {
         uint16 maintainanceMarginFactor = vTokenAddress.getMarginRatio(false, constants);
-        uint256 priceX128 = vTokenAddress.getVirtualTwapPriceX128(constants);
+        uint256 priceX128 = vTokenAddress.getVirtualCurrentPriceX128(constants);
         // console.log('PriceX128');
         // console.log(priceX128);
         // console.log(
