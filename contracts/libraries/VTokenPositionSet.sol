@@ -171,6 +171,7 @@ library VTokenPositionSet {
     ) internal {
         uint32 truncated = vTokenAddress.truncate();
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+			set.realizeFundingPayment(vTokenAddress, constants);
             set.active.include(truncated);
         }
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncated];
@@ -315,7 +316,6 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256, int256) {
-        set.realizeFundingPayment(vTokenAddress, constants);
         // TODO: remove this after testing
         // console.log('Amount In:');
         // console.logInt(swapParams.amount);
