@@ -9,7 +9,7 @@ import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { calculateAddressFor } from './utils/create-addresses';
+import { getCreateAddressFor } from './utils/create-addresses';
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 
@@ -33,8 +33,8 @@ describe('VTokenPositionSet Library', () => {
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     signers = await hre.ethers.getSigners();
-    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
-    const futureInsurnaceFundAddress = await calculateAddressFor(signers[0], 3);
+    const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 2);
+    const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 3);
 
     const VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
@@ -61,7 +61,7 @@ describe('VTokenPositionSet Library', () => {
 
     await VPoolFactory.initializePool('vWETH', 'vWETH', realToken0, oracleAddress, 500, 500, 2, 3, 2);
 
-    const eventFilter = VPoolFactory.filters.poolInitlized();
+    const eventFilter = VPoolFactory.filters.PoolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
     vTokenAddress = events[0].args[1];
     // console.log('vTokenAddres', vTokenAddress);
@@ -72,7 +72,7 @@ describe('VTokenPositionSet Library', () => {
 
     await VPoolFactory.initializePool('vWETH', 'vWETH', realToken1, oracleAddress, 500, 500, 2, 3, 2);
 
-    const eventFilter1 = VPoolFactory.filters.poolInitlized();
+    const eventFilter1 = VPoolFactory.filters.PoolInitlized();
     const events1 = await VPoolFactory.queryFilter(eventFilter1, 'latest');
     vTokenAddress1 = events1[0].args[1];
     // console.log('vTokenAddres1', vTokenAddress);

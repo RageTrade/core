@@ -4,16 +4,17 @@ pragma solidity ^0.8.9;
 
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
+import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 interface IClearingHouse {
     error AccessDenied(address senderAddress);
-    error UnsupportedToken(address vTokenAddress);
+    error UnsupportedToken(VTokenAddress vTokenAddress);
     error LowNotionalValue(uint256 notionalValue);
     error InvalidLiquidityChangeParameters();
     error InvalidTokenLiquidationParameters();
     error UninitializedToken(uint32 vTokenTruncatedAddress);
 
-    function createAccount() external;
+    function createAccount() external returns (uint256 newAccountId);
 
     function addMargin(
         uint256 accountNo,

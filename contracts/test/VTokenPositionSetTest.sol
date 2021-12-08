@@ -6,16 +6,19 @@ import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from '../librari
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { Constants } from '../utils/Constants.sol';
 
 contract VTokenPositionSetTest {
-    using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using VTokenLib for VTokenAddress;
+    using VTokenPositionSet for VTokenPositionSet.Set;
     using Uint32L8ArrayLib for uint32[8];
-    mapping(uint32 => address) vTokenAddresses;
+
+    mapping(uint32 => VTokenAddress) vTokenAddresses;
     VTokenPositionSet.Set dummy;
 
     VPoolWrapperMock public wrapper;
@@ -24,16 +27,16 @@ contract VTokenPositionSetTest {
         wrapper = new VPoolWrapperMock();
     }
 
-    function init(address vTokenAddress) external {
+    function init(VTokenAddress vTokenAddress) external {
         VTokenPositionSet.activate(dummy, vTokenAddress);
-        vTokenAddresses[VTokenPositionSet.truncate(vTokenAddress)] = vTokenAddress;
+        vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
         wrapper.setLiquidityRates(-100, 100, 4000, 1);
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
     function update(
         Account.BalanceAdjustments memory balanceAdjustments,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         Constants memory constants
     ) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
@@ -47,7 +50,7 @@ contract VTokenPositionSetTest {
     //     return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
     // }
 
-    function realizeFundingPaymentToAccount(address vTokenAddress, Constants memory constants) external {
+    function realizeFundingPaymentToAccount(VTokenAddress vTokenAddress, Constants memory constants) external {
         VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, constants);
     }
 
@@ -56,7 +59,7 @@ contract VTokenPositionSetTest {
     // }
 
     function swapTokenAmount(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int256 vTokenAmount,
         Constants memory constants
     ) external {
@@ -64,14 +67,14 @@ contract VTokenPositionSetTest {
     }
 
     function swapTokenNotional(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int256 vTokenNotional,
         Constants memory constants
     ) external {
         dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true), wrapper, constants);
     }
 
-    function closeLiquidityPosition(address vTokenAddress, Constants memory constants) external {
+    function closeLiquidityPosition(VTokenAddress vTokenAddress, Constants memory constants) external {
         dummy.closeLiquidityPosition(
             vTokenAddress,
             dummy.getTokenPosition(vTokenAddress, constants).liquidityPositions.activate(-100, 100),
@@ -81,7 +84,7 @@ contract VTokenPositionSetTest {
     }
 
     function liquidityChange(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int128 liquidity,
@@ -99,12 +102,12 @@ contract VTokenPositionSetTest {
         dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
     }
 
-    function liquidateLiquidityPositions(address vTokenAddress, Constants memory constants) external {
+    function liquidateLiquidityPositions(VTokenAddress vTokenAddress, Constants memory constants) external {
         dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, constants);
     }
 
     // function liquidateTokenPosition(
-    //     address vTokenAddress,
+    //     VTokenAddress vTokenAddress,
     //     uint16 liquidationFeeFraction,
     //     uint256 liquidationMinSizeBaseAmount,
     //     uint8 targetMarginRation,
@@ -124,7 +127,7 @@ contract VTokenPositionSetTest {
         return dummy.active.exists(uint32(uint160(vTokenAddress)));
     }
 
-    function getPositionDetails(address vTokenAddress)
+    function getPositionDetails(VTokenAddress vTokenAddress)
         external
         view
         returns (
@@ -133,7 +136,7 @@ contract VTokenPositionSetTest {
             int256 netTraderPosition
         )
     {
-        VTokenPosition.Position storage pos = dummy.positions[VTokenPositionSet.truncate(vTokenAddress)];
+        VTokenPosition.Position storage pos = dummy.positions[vTokenAddress.truncate()];
         return (pos.balance, pos.sumAChkpt, pos.netTraderPosition);
     }
 

@@ -23,6 +23,18 @@ library VTokenLib {
     using FullMath for uint256;
     using PriceMath for uint160;
 
+    function eq(VTokenAddress a, VTokenAddress b) internal pure returns (bool) {
+        return VTokenAddress.unwrap(a) == VTokenAddress.unwrap(b);
+    }
+
+    function eq(VTokenAddress a, address b) internal pure returns (bool) {
+        return VTokenAddress.unwrap(a) == b;
+    }
+
+    function truncate(VTokenAddress vToken) internal pure returns (uint32) {
+        return uint32(uint160(VTokenAddress.unwrap(vToken)));
+    }
+
     function iface(VTokenAddress vToken) internal pure returns (IVToken) {
         return IVToken(VTokenAddress.unwrap(vToken));
     }

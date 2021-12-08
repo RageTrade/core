@@ -4,14 +4,17 @@ import { IClearingHouseState } from './interfaces/IClearingHouseState.sol';
 import { Constants } from './utils/Constants.sol';
 import { Governable } from './utils/Governable.sol';
 import { LiquidationParams } from './libraries/Account.sol';
+import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 
 abstract contract ClearingHouseState is IClearingHouseState, Governable {
+    using VTokenLib for VTokenAddress;
+
     address public immutable VPoolFactory;
 
-    mapping(uint32 => address) vTokenAddresses;
+    mapping(uint32 => VTokenAddress) vTokenAddresses;
     mapping(address => bool) public realTokenInitilized;
-    mapping(address => bool) public supportedVTokens;
-    mapping(address => bool) public supportedDeposits;
+    mapping(VTokenAddress => bool) public supportedVTokens;
+    mapping(VTokenAddress => bool) public supportedDeposits;
 
     Constants public constants;
     LiquidationParams public liquidationParams;
@@ -25,17 +28,16 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
         VPoolFactory = _VPoolFactory;
     }
 
-    function isKeyAvailable(uint32 key) external view returns (bool) {
-        if (vTokenAddresses[key] == address(0)) return true;
-        else return false;
+    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
+        return vTokenAddresses[truncated].eq(address(0));
     }
 
     function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
         return realTokenInitilized[realToken];
     }
 
-    function addKey(uint32 key, address add) external onlyVPoolFactory {
-        vTokenAddresses[key] = add;
+    function addVTokenAddress(uint32 truncated, address full) external onlyVPoolFactory {
+        vTokenAddresses[truncated] = VTokenAddress.wrap(full);
     }
 
     function initRealToken(address realToken) external onlyVPoolFactory {
@@ -46,11 +48,11 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
         constants = _constants;
     }
 
-    function updateSupportedVTokens(address add, bool status) external onlyGovernanceOrTeamMultisig {
+    function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;
     }
 
-    function updateSupportedDeposits(address add, bool status) external onlyGovernanceOrTeamMultisig {
+    function updateSupportedDeposits(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedDeposits[add] = status;
     }
 

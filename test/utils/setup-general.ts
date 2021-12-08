@@ -3,7 +3,7 @@ import { smock } from '@defi-wonderland/smock';
 import { ERC20, VBase } from '../../typechain-types';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { calculateAddressFor } from './create-addresses';
+import { getCreateAddressFor } from './create-addresses';
 
 export async function testSetup({
   signer,
@@ -38,8 +38,8 @@ export async function testSetup({
   const realToken = await smock.fake<ERC20>('ERC20', { address: ethers.constants.AddressZero });
   realToken.decimals.returns(18);
 
-  const futureVPoolFactoryAddress = await calculateAddressFor(signer, 2);
-  const futureInsurnaceFundAddress = await calculateAddressFor(signer, 3);
+  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 2);
+  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 3);
 
   const vPoolWrapperDeployer = await (
     await hre.ethers.getContractFactory('VPoolWrapperDeployer')
@@ -72,7 +72,7 @@ export async function testSetup({
     twapDuration,
   );
 
-  const eventFilter = vPoolFactory.filters.poolInitlized();
+  const eventFilter = vPoolFactory.filters.PoolInitlized();
   const events = await vPoolFactory.queryFilter(eventFilter, 'latest');
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];

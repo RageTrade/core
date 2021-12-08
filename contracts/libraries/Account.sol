@@ -47,18 +47,23 @@ library Account {
     error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
     error InvalidTokenTradeAmount(int256 balance, int256 tokensToTrade);
     error InvalidLiquidationWrongSide(int256 totalRequiredMarginFinal, int256 totalRequiredMargin);
-    error InvalidLiquidationActiveRangePresent(address vTokenAddress);
+    error InvalidLiquidationActiveRangePresent(VTokenAddress vTokenAddress);
 
     event AccountCreated(address ownerAddress, uint256 accountNo);
-    event DepositMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
-    event WithdrawMargin(uint256 accountNo, address vTokenAddress, uint256 amount);
+    event DepositMargin(uint256 accountNo, VTokenAddress vTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 accountNo, VTokenAddress vTokenAddress, uint256 amount);
     event WithdrawProfit(uint256 accountNo, uint256 amount);
 
-    event TokenPositionChange(uint256 accountNo, address vTokenAddress, int256 tokenAmountOut, int256 baseAmountOut);
+    event TokenPositionChange(
+        uint256 accountNo,
+        VTokenAddress vTokenAddress,
+        int256 tokenAmountOut,
+        int256 baseAmountOut
+    );
 
     event LiquidityTokenPositionChange(
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int256 tokenAmountOut
@@ -66,7 +71,7 @@ library Account {
 
     event LiquidityChange(
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int128 liquidityDelta,
@@ -75,8 +80,14 @@ library Account {
         int256 baseAmountOut
     );
 
-    event FundingPayment(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
-    event LiquidityFee(uint256 accountNo, address vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
+    event FundingPayment(
+        uint256 accountNo,
+        VTokenAddress vTokenAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        int256 amount
+    );
+    event LiquidityFee(uint256 accountNo, VTokenAddress vTokenAddress, int24 tickLower, int24 tickUpper, int256 amount);
     event ProtocolFeeWithdrawm(address wrapperAddress, uint256 feeAmount);
 
     event LiquidateRanges(
@@ -89,7 +100,7 @@ library Account {
     event LiquidateTokenPosition(
         uint256 accountNo,
         uint256 liquidatorAccountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint16 liquidationBps,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
@@ -126,7 +137,7 @@ library Account {
     /// @param constants platform constants
     function addMargin(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 amount,
         Constants memory constants
     ) internal {
@@ -143,9 +154,9 @@ library Account {
     /// @param constants platform constants
     function removeMargin(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 amount,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal {
         account.tokenDeposits.decreaseBalance(vTokenAddress, amount, constants);
@@ -164,11 +175,11 @@ library Account {
     function removeProfit(
         Info storage account,
         uint256 amount,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            constants.VBASE_ADDRESS,
+            VTokenAddress.wrap(constants.VBASE_ADDRESS),
             constants
         );
         vTokenPosition.balance -= int256(amount);
@@ -185,7 +196,7 @@ library Account {
         Constants memory constants
     ) internal {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            constants.VBASE_ADDRESS,
+            VTokenAddress.wrap(constants.VBASE_ADDRESS),
             constants
         );
         vTokenPosition.balance -= int256(amount);
@@ -201,7 +212,7 @@ library Account {
     function getAccountValueAndRequiredMargin(
         Info storage account,
         bool isInitialMargin,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         // (int256 accountMarketValue, int256 totalRequiredMargin) = account
@@ -221,7 +232,7 @@ library Account {
     function checkIfMarginAvailable(
         Info storage account,
         bool isInitialMargin,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal view {
         (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
@@ -239,7 +250,7 @@ library Account {
     /// @param constants platform constants
     function checkIfProfitAvailable(
         Info storage account,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal view {
         int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
@@ -254,9 +265,9 @@ library Account {
     /// @param constants platform constants
     function swapToken(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
@@ -283,9 +294,9 @@ library Account {
     /// @param constants platform constants
     function swapToken(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
@@ -293,7 +304,7 @@ library Account {
                 vTokenAddress,
                 swapParams,
                 vTokenAddresses,
-                VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+                vTokenAddress.vPoolWrapper(constants),
                 constants
             );
     }
@@ -308,9 +319,9 @@ library Account {
     /// @param constants platform constants
     function liquidityChange(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256 notionalValue) {
@@ -337,16 +348,16 @@ library Account {
     /// @param constants platform constants
     function liquidityChange(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal returns (int256 notionalValue) {
         notionalValue = account.liquidityChange(
             vTokenAddress,
             liquidityChangeParams,
             vTokenAddresses,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+            vTokenAddress.vPoolWrapper(constants),
             constants
         );
     }
@@ -379,7 +390,7 @@ library Account {
     /// @param constants platform constants
     function liquidateLiquidityPositions(
         Info storage account,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         LiquidationParams memory liquidationParams,
         Constants memory constants
@@ -418,7 +429,7 @@ library Account {
     /// @param constants platform constants
     function liquidateLiquidityPositions(
         Info storage account,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         LiquidationParams memory liquidationParams,
         Constants memory constants
     ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
@@ -532,13 +543,12 @@ library Account {
         int256 accountMarketValue,
         int256 totalRequiredMargin,
         int256 tokenBalance,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidationParams memory liquidationParams,
         Constants memory constants
     ) internal view returns (uint256 liquidationPriceX128, uint256 liquidatorPriceX128) {
-        VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
-        uint16 maintainanceMarginFactor = vToken.getMarginRatio(false, constants);
-        int256 priceX128 = vToken.getVirtualTwapPriceX128(constants).toInt256();
+        uint16 maintainanceMarginFactor = vTokenAddress.getMarginRatio(false, constants);
+        int256 priceX128 = vTokenAddress.getVirtualTwapPriceX128(constants).toInt256();
         int256 priceDeltaX128 = priceX128.mulDiv(accountMarketValue, totalRequiredMargin).mulDiv(
             liquidationParams.tokenLiquidationPriceDeltaBps * maintainanceMarginFactor,
             1e4 * 1e5
@@ -559,7 +569,7 @@ library Account {
     function updateLiquidationAccounts(
         Info storage account,
         Info storage liquidatorAccount,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int256 tokensToTrade,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
@@ -603,9 +613,9 @@ library Account {
         Info storage account,
         Info storage liquidatorAccount,
         uint16 liquidationBps,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidationParams memory liquidationParams,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal returns (int256 insuranceFundFee) {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
@@ -674,7 +684,7 @@ library Account {
     /// @param constants platform constants
     function removeLimitOrder(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         uint256 limitOrderFee,
@@ -684,9 +694,9 @@ library Account {
             vTokenAddress,
             tickLower,
             tickUpper,
-            VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants),
+            vTokenAddress.getVirtualTwapTick(constants),
             limitOrderFee,
-            VTokenAddress.wrap(vTokenAddress).vPoolWrapper(constants),
+            vTokenAddress.vPoolWrapper(constants),
             constants
         );
     }
@@ -700,7 +710,7 @@ library Account {
     /// @param constants platform constants
     function removeLimitOrder(
         Info storage account,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int24 currentTick,

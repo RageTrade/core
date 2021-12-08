@@ -27,39 +27,37 @@ library DepositTokenSet {
     // add overrides that accept vToken or truncated
     function increaseBalance(
         Info storage info,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 amount,
         Constants memory constants
     ) internal {
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (vTokenAddress != constants.VBASE_ADDRESS) {
-            info.active.include(truncate(vTokenAddress));
+        if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+            info.active.include(vTokenAddress.truncate());
         }
-        info.deposits[truncate(vTokenAddress)] += amount;
+        info.deposits[vTokenAddress.truncate()] += amount;
     }
 
     function decreaseBalance(
         Info storage info,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 amount,
         Constants memory constants
     ) internal {
+        uint32 truncated = vTokenAddress.truncate();
+
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (vTokenAddress != constants.VBASE_ADDRESS) {
-            info.active.include(truncate(vTokenAddress));
+        if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+            info.active.include(truncated);
         }
 
-        require(info.deposits[truncate(vTokenAddress)] >= amount);
-        info.deposits[truncate(vTokenAddress)] -= amount;
-    }
-
-    function truncate(address _add) internal pure returns (uint32) {
-        return uint32(uint160(_add));
+        require(info.deposits[truncated] >= amount);
+        info.deposits[truncated] -= amount;
     }
 
     function getAllDepositAccountMarketValue(
         Info storage set,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal view returns (int256) {
         int256 accountMarketValue;
@@ -67,15 +65,15 @@ library DepositTokenSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            VTokenAddress vToken = VTokenAddress.wrap(vTokenAddresses[truncated]);
+            VTokenAddress vTokenAddress = vTokenAddresses[truncated];
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
-                vToken.getRealTwapPriceX128(constants),
+                vTokenAddress.getRealTwapPriceX128(constants),
                 FixedPoint128.Q128
             );
         }
 
-        accountMarketValue += int256(set.deposits[truncate(constants.VBASE_ADDRESS)]);
+        accountMarketValue += int256(set.deposits[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]);
 
         return accountMarketValue;
     }

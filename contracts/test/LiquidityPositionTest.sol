@@ -6,6 +6,7 @@ import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 import { VPoolFactory } from '../VPoolFactory.sol';
 
@@ -29,7 +30,7 @@ contract LiquidityPositionTest {
     }
 
     function updateCheckpoints() external {
-        lp.update(0, address(0), wrapper, balanceAdjustments);
+        lp.update(0, VTokenAddress.wrap(address(0)), wrapper, balanceAdjustments);
     }
 
     function netPosition() public view returns (int256) {
@@ -37,7 +38,7 @@ contract LiquidityPositionTest {
     }
 
     function liquidityChange(int128 liquidity) public {
-        lp.liquidityChange(0, address(0), liquidity, wrapper, balanceAdjustments);
+        lp.liquidityChange(0, VTokenAddress.wrap(address(0)), liquidity, wrapper, balanceAdjustments);
     }
 
     function maxNetPosition(VTokenAddress vToken, Constants memory constants) public view returns (uint256) {
