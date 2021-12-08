@@ -230,9 +230,11 @@ library Account {
         totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
         // console.log('totalRequiredMargin');
         // console.logInt(totalRequiredMargin);
-        totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
-            ? int256(minRequiredMargin)
-            : totalRequiredMargin;
+        if (account.tokenPositions.active[0] != 0) {
+            totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
+                ? int256(minRequiredMargin)
+                : totalRequiredMargin;
+        }
         return (accountMarketValue, totalRequiredMargin);
     }
 
@@ -568,8 +570,8 @@ library Account {
                 .positions[VTokenPositionSet.truncate(constants.VBASE_ADDRESS)]
                 .balance -= accountMarketValueFinal;
         }
-        console.log('#############  Insurance Fund Fee  ##################');
-        console.logInt(insuranceFundFee);
+        // console.log('#############  Insurance Fund Fee  ##################');
+        // console.logInt(insuranceFundFee);
         liquidatorAccount.checkIfMarginAvailable(
             false,
             vTokenAddresses,
