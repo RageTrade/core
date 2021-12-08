@@ -113,8 +113,8 @@ export async function testSetupBase({
   const vBase = await smock.fake<VBase>('VBase', { address: vBaseAddress });
   vBase.decimals.returns(6);
 
-  const futureVPoolFactoryAddress = await calculateAddressFor(signer, 2);
-  const futureInsurnaceFundAddress = await calculateAddressFor(signer, 3);
+  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 2);
+  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 3);
 
   const vPoolWrapperDeployer = await (
     await hre.ethers.getContractFactory('VPoolWrapperDeployer')
@@ -182,7 +182,7 @@ export async function testSetupToken({
     twapDuration,
   );
 
-  const eventFilter = vPoolFactory.filters.poolInitlized();
+  const eventFilter = vPoolFactory.filters.PoolInitlized();
   const events = await vPoolFactory.queryFilter(eventFilter, 'latest');
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];

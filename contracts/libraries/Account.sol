@@ -240,7 +240,7 @@ library Account {
 
     function getAccountValue(
         Info storage account,
-        mapping(uint32 => address) storage vTokenAddresses,
+        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal view returns (int256 accountMarketValue) {
         accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
@@ -567,7 +567,7 @@ library Account {
             insuranceFundFee = accountMarketValueFinal;
             account
                 .tokenPositions
-                .positions[VTokenPositionSet.truncate(constants.VBASE_ADDRESS)]
+                .positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]
                 .balance -= accountMarketValueFinal;
         }
         // console.log('#############  Insurance Fund Fee  ##################');
@@ -603,7 +603,7 @@ library Account {
         uint256 limitOrderFee,
         Constants memory constants
     ) internal {
-        int24 currentTick = VTokenAddress.wrap(vTokenAddress).getVirtualTwapTick(constants);
+        int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
         LiquidityPosition.Info storage position = account
             .tokenPositions
             .getTokenPosition(vTokenAddress, false, constants)

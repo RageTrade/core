@@ -36,7 +36,7 @@ library VTokenPositionSet {
 
     error IncorrectUpdate();
     error DeactivationFailed(VTokenAddress);
-    error TokenInactive(address vTokenAddress);
+    error TokenInactive(VTokenAddress vTokenAddress);
 
     struct Set {
         // fixed length array of truncate(tokenAddress)
@@ -171,7 +171,7 @@ library VTokenPositionSet {
     ) internal {
         uint32 truncated = vTokenAddress.truncate();
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
-			set.realizeFundingPayment(vTokenAddress, constants);
+            set.realizeFundingPayment(vTokenAddress, constants);
             set.active.include(truncated);
         }
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncated];
@@ -230,7 +230,7 @@ library VTokenPositionSet {
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
             if (createNew) {
                 set.activate(vTokenAddress);
-            } else if (set.positions[truncate(vTokenAddress)].balance == 0) {
+            } else if (set.positions[vTokenAddress.truncate()].balance == 0) {
                 revert TokenInactive(vTokenAddress);
             }
         }
@@ -381,7 +381,7 @@ library VTokenPositionSet {
 
         return
             balanceAdjustments.vTokenIncrease.mulDiv(
-                VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants),
+                vTokenAddress.getVirtualTwapPriceX128(constants),
                 FixedPoint128.Q128
             ) + balanceAdjustments.vBaseIncrease;
     }
@@ -409,7 +409,7 @@ library VTokenPositionSet {
 
         return
             balanceAdjustments.vTokenIncrease.mulDiv(
-                VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants),
+                vTokenAddress.getVirtualTwapPriceX128(constants),
                 FixedPoint128.Q128
             ) + balanceAdjustments.vBaseIncrease;
     }
@@ -433,7 +433,7 @@ library VTokenPositionSet {
 
         return
             balanceAdjustments.vTokenIncrease.mulDiv(
-                VTokenAddress.wrap(vTokenAddress).getVirtualTwapPriceX128(constants),
+                vTokenAddress.getVirtualTwapPriceX128(constants),
                 FixedPoint128.Q128
             ) + balanceAdjustments.vBaseIncrease;
     }

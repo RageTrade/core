@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { Account, DepositTokenSet, LiquidationParams, SwapParams } from '../libraries/Account.sol';
+import { Account, DepositTokenSet, LiquidationParams, SwapParams, VTokenAddress } from '../libraries/Account.sol';
 import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
@@ -17,7 +17,7 @@ contract AccountTest {
     using DepositTokenSet for DepositTokenSet.Info;
 
     mapping(uint256 => Account.Info) accounts;
-    mapping(uint32 => address) testVTokenAddresses;
+    mapping(uint32 => VTokenAddress) testVTokenAddresses;
     uint256 public numAccounts;
 
     constructor() {}
@@ -37,7 +37,7 @@ contract AccountTest {
 
         tokenPosition = set.positions[uint32(uint160(constants.VBASE_ADDRESS))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, constants.VBASE_ADDRESS, constants);
+        set.update(balanceAdjustments, VTokenAddress.wrap(constants.VBASE_ADDRESS), constants);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -58,7 +58,7 @@ contract AccountTest {
         uint256 deposit;
 
         deposit = set.deposits[uint32(uint160(constants.VBASE_ADDRESS))];
-        set.decreaseBalance(constants.VBASE_ADDRESS, deposit, constants);
+        set.decreaseBalance(VTokenAddress.wrap(constants.VBASE_ADDRESS), deposit, constants);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -73,7 +73,7 @@ contract AccountTest {
     }
 
     function initToken(address vTokenAddress) external {
-        testVTokenAddresses[truncate(vTokenAddress)] = vTokenAddress;
+        testVTokenAddresses[truncate(vTokenAddress)] = VTokenAddress.wrap(vTokenAddress);
     }
 
     function addMargin(
@@ -82,7 +82,7 @@ contract AccountTest {
         uint256 amount,
         Constants memory constants
     ) external {
-        accounts[accountNo].addMargin(vTokenAddress, amount, constants);
+        accounts[accountNo].addMargin(VTokenAddress.wrap(vTokenAddress), amount, constants);
     }
 
     function removeMargin(
@@ -92,7 +92,13 @@ contract AccountTest {
         uint256 minRequiredMargin,
         Constants memory constants
     ) external {
-        accounts[accountNo].removeMargin(vTokenAddress, amount, testVTokenAddresses, minRequiredMargin, constants);
+        accounts[accountNo].removeMargin(
+            VTokenAddress.wrap(vTokenAddress),
+            amount,
+            testVTokenAddresses,
+            minRequiredMargin,
+            constants
+        );
     }
 
     function removeProfit(
@@ -112,7 +118,7 @@ contract AccountTest {
         Constants memory constants
     ) external {
         accounts[accountNo].swapToken(
-            vTokenAddress,
+            VTokenAddress.wrap(vTokenAddress),
             SwapParams(amount, 0, false),
             testVTokenAddresses,
             minRequiredMargin,
@@ -128,7 +134,7 @@ contract AccountTest {
         Constants memory constants
     ) external {
         accounts[accountNo].swapToken(
-            vTokenAddress,
+            VTokenAddress.wrap(vTokenAddress),
             SwapParams(amount, 0, true),
             testVTokenAddresses,
             minRequiredMargin,
@@ -144,7 +150,7 @@ contract AccountTest {
         Constants memory constants
     ) external {
         accounts[accountNo].liquidityChange(
-            vTokenAddress,
+            VTokenAddress.wrap(vTokenAddress),
             liquidityChangeParams,
             testVTokenAddresses,
             minRequiredMargin,
@@ -189,7 +195,13 @@ contract AccountTest {
             int256 insuranceFundFee
         )
     {
-        return Account.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress, liquidationParams, constants);
+        return
+            Account.getLiquidationPriceX128AndFee(
+                tokensToTrade,
+                VTokenAddress.wrap(vTokenAddress),
+                liquidationParams,
+                constants
+            );
     }
 
     function liquidateTokenPosition(
@@ -202,7 +214,7 @@ contract AccountTest {
         accounts[accountNo].liquidateTokenPosition(
             accounts[liquidatorAccountNo],
             10000,
-            vTokenAddress,
+            VTokenAddress.wrap(vTokenAddress),
             liquidationParams,
             testVTokenAddresses,
             constants
@@ -217,7 +229,13 @@ contract AccountTest {
         uint256 removeLimitOrderFee,
         Constants memory constants
     ) external {
-        accounts[accountNo].removeLimitOrder(vTokenAddress, tickLower, tickUpper, removeLimitOrderFee, constants);
+        accounts[accountNo].removeLimitOrder(
+            VTokenAddress.wrap(vTokenAddress),
+            tickLower,
+            tickUpper,
+            removeLimitOrderFee,
+            constants
+        );
     }
 
     function getAccountDepositBalance(uint256 accountNo, address vTokenAddress) external view returns (uint256) {
