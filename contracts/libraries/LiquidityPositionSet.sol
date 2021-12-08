@@ -148,7 +148,7 @@ library LiquidityPositionSet {
     function liquidityChange(
         Info storage set,
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
@@ -173,7 +173,7 @@ library LiquidityPositionSet {
     function liquidityChange(
         Info storage set,
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidityPosition.Info storage position,
         int128 liquidity,
         IVPoolWrapper wrapper,
@@ -197,7 +197,7 @@ library LiquidityPositionSet {
     function closeLiquidityPosition(
         Info storage set,
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidityPosition.Info storage position,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
@@ -215,7 +215,7 @@ library LiquidityPositionSet {
     function closeAllLiquidityPositions(
         Info storage set,
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {

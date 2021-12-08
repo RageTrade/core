@@ -7,17 +7,19 @@ import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Constants } from '../utils/Constants.sol';
 
 contract AccountTest {
     using Account for Account.Info;
+    using VTokenLib for VTokenAddress;
     using VTokenPosition for VTokenPosition.Position;
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
 
     Account.Info testAccount;
     Account.Info testLiquidatorAccount;
-    mapping(uint32 => address) testVTokenAddresses;
+    mapping(uint32 => VTokenAddress) testVTokenAddresses;
     VPoolWrapperMock public wrapper;
 
     constructor() {
@@ -46,12 +48,12 @@ contract AccountTest {
         return uint32(uint160(vTokenAddress));
     }
 
-    function initToken(address vTokenAddress) external {
-        testVTokenAddresses[truncate(vTokenAddress)] = vTokenAddress;
+    function initToken(VTokenAddress vTokenAddress) external {
+        testVTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
     }
 
     function addMargin(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 amount,
         Constants memory constants
     ) external {
@@ -59,7 +61,7 @@ contract AccountTest {
     }
 
     function removeMargin(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 amount,
         Constants memory constants
     ) external {
@@ -71,7 +73,7 @@ contract AccountTest {
     }
 
     function swapTokenAmount(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int256 amount,
         Constants memory constants
     ) external {
@@ -79,7 +81,7 @@ contract AccountTest {
     }
 
     function swapTokenNotional(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int256 amount,
         Constants memory constants
     ) external {
@@ -87,7 +89,7 @@ contract AccountTest {
     }
 
     function liquidityChange(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int128 liquidity,
@@ -123,7 +125,7 @@ contract AccountTest {
     }
 
     function liquidateTokenPosition(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         uint256 fixFee,
         uint16 liquidationFeeFraction,
         uint16 tokenLiquidationPriceDeltaBps,
@@ -147,7 +149,7 @@ contract AccountTest {
     }
 
     function removeLimitOrder(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         int24 currentTick,

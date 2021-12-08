@@ -12,8 +12,11 @@ import { VToken, IVToken } from './tokens/VToken.sol';
 import { IVPoolWrapperDeployer } from './interfaces/IVPoolWrapperDeployer.sol';
 import { IClearingHouseState } from './interfaces/IClearingHouseState.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
+import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 
 contract VPoolFactory {
+    using VTokenLib for VTokenAddress;
+
     Constants public constants;
 
     address public immutable owner;
@@ -44,10 +47,10 @@ contract VPoolFactory {
         );
         ClearingHouse = IClearingHouseState(ClearingHouseAddress);
         ClearingHouse.setConstants(constants);
-        ClearingHouse.addKey(uint32(uint160(VBASE_ADDRESS)), VBASE_ADDRESS);
+        ClearingHouse.addVTokenAddress(VTokenAddress.wrap(VBASE_ADDRESS).truncate(), VBASE_ADDRESS);
     }
 
-    event poolInitlized(address vPool, address vTokenAddress, address vPoolWrapper);
+    event PoolInitlized(address vPoolAddress, address vTokenAddress, address vPoolWrapperAddress);
 
     function initializePool(
         string calldata vTokenName,
@@ -80,7 +83,7 @@ contract VPoolFactory {
         IVPoolWrapper(vPoolWrapper).setOracle(oracleAddress);
         IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
         IVToken(vTokenAddress).setOwner(vPoolWrapper); // TODO remove this
-        emit poolInitlized(vPool, vTokenAddress, vPoolWrapper);
+        emit PoolInitlized(vPool, vTokenAddress, vPoolWrapper);
     }
 
     function _deployVToken(
@@ -100,19 +103,19 @@ contract VPoolFactory {
             abi.encode(vTokenName, vTokenSymbol, realToken, oracleAddress, address(this))
         );
         bytes32 byteCodeHash = keccak256(bytecode);
-        uint32 key;
+        uint32 truncated;
         address vTokenAddress;
         while (true) {
             vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
-            key = uint32(uint160(vTokenAddress));
-            if (ClearingHouse.isKeyAvailable(key)) {
+            truncated = uint32(uint160(vTokenAddress));
+            if (ClearingHouse.isVTokenAddressAvailable(truncated)) {
                 break;
             }
             salt++; // using a different salt
         }
         address deployedAddress = Create2.deploy(0, keccak256(abi.encode(salt)), bytecode);
         require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
-        ClearingHouse.addKey(key, deployedAddress);
+        ClearingHouse.addVTokenAddress(truncated, deployedAddress);
         ClearingHouse.initRealToken(realToken);
         return deployedAddress;
     }

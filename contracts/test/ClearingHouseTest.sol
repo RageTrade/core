@@ -4,9 +4,11 @@ pragma solidity ^0.8.9;
 
 import { ClearingHouse } from '../ClearingHouse.sol';
 import { Account, VTokenPosition } from '../libraries/Account.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 contract ClearingHouseTest is ClearingHouse {
     using Account for Account.Info;
+    using VTokenLib for VTokenAddress;
 
     constructor(
         address VPoolFactory,
@@ -14,16 +16,17 @@ contract ClearingHouseTest is ClearingHouse {
         address _insuranceFundAddress
     ) ClearingHouse(VPoolFactory, _realBase, _insuranceFundAddress) {}
 
-    function getTruncatedTokenAddress(address vTokenAddress) public pure returns (uint32 vTokenTruncatedAddress) {
-        return uint32(uint160(vTokenAddress));
+    // TODO remove
+    function getTruncatedTokenAddress(VTokenAddress vTokenAddress) external pure returns (uint32) {
+        return vTokenAddress.truncate();
     }
 
-    function getTokenAddressInVTokenAddresses(address vTokenAddress)
+    function getTokenAddressInVTokenAddresses(VTokenAddress vTokenAddress)
         external
         view
-        returns (address vTokenAddressInVTokenAddresses)
+        returns (VTokenAddress vTokenAddressInVTokenAddresses)
     {
-        return vTokenAddresses[getTruncatedTokenAddress(vTokenAddress)];
+        return vTokenAddresses[vTokenAddress.truncate()];
     }
 
     function getAccountOwner(uint256 accountNo) external view returns (address owner) {
@@ -34,21 +37,21 @@ contract ClearingHouseTest is ClearingHouse {
         return accounts[accountNo].tokenPositions.accountNo;
     }
 
-    function getAccountDepositBalance(uint256 accountNo, address vTokenAddress)
+    function getAccountDepositBalance(uint256 accountNo, VTokenAddress vTokenAddress)
         external
         view
         returns (uint256 balance)
     {
-        balance = accounts[accountNo].tokenDeposits.deposits[getTruncatedTokenAddress(vTokenAddress)];
+        balance = accounts[accountNo].tokenDeposits.deposits[vTokenAddress.truncate()];
     }
 
-    function getAccountOpenTokenPosition(uint256 accountNo, address vTokenAddress)
+    function getAccountOpenTokenPosition(uint256 accountNo, VTokenAddress vTokenAddress)
         external
         view
         returns (int256 balance, int256 netTraderPosition)
     {
         VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
-            getTruncatedTokenAddress(vTokenAddress)
+            vTokenAddress.truncate()
         ];
         balance = vTokenPosition.balance;
         netTraderPosition = vTokenPosition.netTraderPosition;

@@ -70,7 +70,7 @@ library LiquidityPosition {
     function liquidityChange(
         Info storage position,
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         int128 liquidity,
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
@@ -106,7 +106,7 @@ library LiquidityPosition {
     function update(
         Info storage position,
         uint256 accountNo,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper, // TODO use vTokenLib
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-import { calculateAddressFor } from './utils/create-addresses';
+import { getCreateAddressFor } from './utils/create-addresses';
 import { DepositTokenSetTest, VPoolFactory, ClearingHouse, OracleMock, RealTokenMock, ERC20 } from '../typechain-types';
 
 import { utils } from 'ethers';
@@ -56,7 +56,7 @@ describe('DepositTokenSet Library', () => {
       twapDuration,
     );
 
-    const eventFilter = VPoolFactory.filters.poolInitlized();
+    const eventFilter = VPoolFactory.filters.PoolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
@@ -79,8 +79,8 @@ describe('DepositTokenSet Library', () => {
 
     signers = await hre.ethers.getSigners();
 
-    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
-    const futureInsurnaceFundAddress = await calculateAddressFor(signers[0], 3);
+    const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 2);
+    const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 3);
 
     const VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')

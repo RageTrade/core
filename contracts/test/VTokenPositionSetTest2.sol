@@ -9,29 +9,32 @@ import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { Constants } from '../utils/Constants.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 contract VTokenPositionSetTest2 {
-    using VTokenPositionSet for VTokenPositionSet.Set;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
     using Uint32L8ArrayLib for uint32[8];
-    mapping(uint32 => address) vTokenAddresses;
+    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using VTokenLib for VTokenAddress;
+    using VTokenPositionSet for VTokenPositionSet.Set;
+
+    mapping(uint32 => VTokenAddress) vTokenAddresses;
     VTokenPositionSet.Set dummy;
 
-    function init(address vTokenAddress) external {
+    function init(VTokenAddress vTokenAddress) external {
         VTokenPositionSet.activate(dummy, vTokenAddress);
-        vTokenAddresses[VTokenPositionSet.truncate(vTokenAddress)] = vTokenAddress;
+        vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
     }
 
     function update(
         Account.BalanceAdjustments memory balanceAdjustments,
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         Constants memory constants
     ) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
     }
 
     function liquidityChange(
-        address vTokenAddress,
+        VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         Constants memory constants
     ) external {

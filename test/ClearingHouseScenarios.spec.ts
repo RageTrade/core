@@ -8,7 +8,7 @@ import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject
 import { initializableTick, priceToSqrtPriceX96, priceToTick, tickToPrice } from './utils/price-tick';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-import { calculateAddressFor } from './utils/create-addresses';
+import { getCreateAddressFor } from './utils/create-addresses';
 import {
   AccountTest,
   VPoolFactory,
@@ -89,7 +89,7 @@ describe('Clearing House Library', () => {
       twapDuration,
     );
 
-    const eventFilter = VPoolFactory.filters.poolInitlized();
+    const eventFilter = VPoolFactory.filters.PoolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
@@ -113,8 +113,8 @@ describe('Clearing House Library', () => {
     user1 = signers[1];
     user2 = signers[2];
 
-    const futureVPoolFactoryAddress = await calculateAddressFor(admin, 2);
-    const futureInsurnaceFundAddress = await calculateAddressFor(admin, 3);
+    const futureVPoolFactoryAddress = await getCreateAddressFor(admin, 2);
+    const futureInsurnaceFundAddress = await getCreateAddressFor(admin, 3);
 
     const VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')

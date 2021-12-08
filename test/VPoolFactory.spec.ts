@@ -6,7 +6,7 @@ import { getCreate2Address, getCreate2Address2 } from './utils/create2';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { utils } from 'ethers';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-import { calculateAddressFor } from './utils/create-addresses';
+import { getCreateAddressFor } from './utils/create-addresses';
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
@@ -30,8 +30,8 @@ describe('VPoolFactory', () => {
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     signers = await hre.ethers.getSigners();
-    const futureVPoolFactoryAddress = await calculateAddressFor(signers[0], 2);
-    const futureInsurnaceFundAddress = await calculateAddressFor(signers[0], 3);
+    const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 2);
+    const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 3);
 
     VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
@@ -67,7 +67,7 @@ describe('VPoolFactory', () => {
   describe('Initilize', () => {
     it('Deployments', async () => {
       await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 500, 500, 2, 3, 60);
-      const eventFilter = VPoolFactory.filters.poolInitlized();
+      const eventFilter = VPoolFactory.filters.PoolInitlized();
       const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
       const vPool = events[0].args[0];
       const vTokenAddress = events[0].args[1];
