@@ -30,7 +30,7 @@ import {
   priceToNearestPriceX128,
 } from './utils/price-tick';
 
-describe('Account Library Test - 2', () => {
+describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
@@ -226,11 +226,30 @@ describe('Account Library Test - 2', () => {
     });
   });
 
+  describe('Account Market Value and Required Margin', async () => {
+    before(async () => {
+      await test.addMargin(0, vBaseAddress, tokenAmount(100, 6), constants);
+      await checkDepositBalance(vBaseAddress, tokenAmount(100, 6));
+    });
+    it('No Position', async () => {
+      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), 0);
+    });
+    it('Single Position', async () => {
+      await changeVPoolPriceToNearestTick(4000);
+      await test.swapTokenAmount(0, vTokenAddress, tokenAmount(1, 18).div(100), minRequiredMargin, constants);
+      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), minRequiredMargin);
+    });
+    after(async () => {
+      await test.cleanPositions(0, constants);
+      await test.cleanDeposits(0, constants);
+    });
+  });
+
   describe('#Margin', () => {
     it('Add Margin', async () => {
       await test.addMargin(0, vBaseAddress, tokenAmount(100, 6), constants);
       await checkDepositBalance(vBaseAddress, tokenAmount(100, 6));
-      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), minRequiredMargin);
+      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), 0);
     });
     it('Remove Margin - Fail', async () => {
       await changeVPoolPriceToNearestTick(4000);
@@ -253,7 +272,7 @@ describe('Account Library Test - 2', () => {
       test.cleanPositions(0, constants);
       await test.removeMargin(0, vBaseAddress, tokenAmount(50, 6), minRequiredMargin, constants);
       await checkDepositBalance(vBaseAddress, tokenAmount(50, 6));
-      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(50, 6), minRequiredMargin);
+      await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(50, 6), 0);
     });
   });
 
@@ -385,19 +404,6 @@ describe('Account Library Test - 2', () => {
       });
     });
 
-    // describe('#Token Position Liquidation Without TokenPosition', () => {
-    //   before(async()=> {
-    //     await test.cleanDeposits(0, constants);
-    //     await test.cleanPositions(0, constants);
-    //     await test.cleanDeposits(1, constants);
-    //     await test.cleanPositions(1, constants);
-    //     await changeVPoolPriceToNearestTick(4000);
-    //     await test.addMargin(0, vBaseAddress, tokenAmount(100, 6), constants);
-    //     await test.addMargin(1, vBaseAddress, tokenAmount(1000, 6), constants);
-    //   })
-
-    // })
-
     describe('#Token Position Liquidation Scenarios', () => {
       beforeEach(async () => {
         await test.cleanDeposits(0, constants);
@@ -453,7 +459,7 @@ describe('Account Library Test - 2', () => {
         );
       });
       it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
-        await test.removeMargin(1, vBaseAddress, tokenAmount(980, 6), minRequiredMargin, constants);
+        await test.removeMargin(1, vBaseAddress, tokenAmount(1000, 6), minRequiredMargin, constants);
 
         await changeVPoolPriceToNearestTick(3500);
         // expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.revertedWith(
@@ -602,7 +608,7 @@ describe('Account Library Test - 2', () => {
         );
       });
       it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
-        await test.removeMargin(1, vBaseAddress, tokenAmount(980, 6), minRequiredMargin, constants);
+        await test.removeMargin(1, vBaseAddress, tokenAmount(1000, 6), minRequiredMargin, constants);
 
         await changeVPoolPriceToNearestTick(3500);
         // expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.revertedWith(
@@ -689,4 +695,30 @@ describe('Account Library Test - 2', () => {
       });
     });
   });
+
+  describe('Limit Order Removal', () => {
+    before(async() => {
+      await test.cleanDeposits(0, constants);
+      await test.cleanPositions(0, constants);
+      await test.addMargin(0,vTokenAddress, tokenAmount(10000,6),constants);
+
+      let liquidityChangeParams = {
+        tickLower: 194000,
+        tickUpper: 195000,
+        liquidityDelta: tokenAmount(1, 18),
+        sqrtPriceCurrent: 0,
+        slippageTolerance: 0,
+        closeTokenPosition: false,
+        limitOrderType: 2,
+      };
+      vPoolFake.observe.returns([[0, 195500 * 60], []]);
+      await test.liquidityChange(0, vTokenAddress, liquidityChangeParams, minRequiredMargin, constants); 
+    })
+    it('Limit Order Removal with Fee', async() => {
+      test.removeLimitOrder(0, vTokenAddress, 194000, 195000, tokenAmount(5,6), constants);
+      await checkTokenBalance(vTokenAddress, 0);
+      await checkTokenBalance(vBaseAddress, tokenAmount(-5,6));
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+    })
+  })
 });
