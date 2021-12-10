@@ -321,17 +321,17 @@ describe('Account Library Test Basic', () => {
   });
 
   describe('#Liquidation', () => {
+    const liquidationParams = {
+      fixFee: tokenAmount(10, 6),
+      minRequiredMargin: tokenAmount(20, 6),
+      liquidationFeeFraction: 150,
+      tokenLiquidationPriceDeltaBps: 300,
+      insuranceFundFeeShareBps: 5000,
+    };
     it('Liquidate Liquidity Positions - Fail', async () => {
-      expect(test.liquidateLiquidityPositions(0, tokenAmount(10, 6), 150, 5000, 0, constants)).to.be.reverted; // feeFraction=15/10=1.5
+      expect(test.liquidateLiquidityPositions(0, liquidationParams, constants)).to.be.reverted; // feeFraction=15/10=1.5
     });
     it('Liquidate Token Positions - Fail', async () => {
-      const liquidationParams = {
-        fixFee: tokenAmount(10, 6),
-        minRequiredMargin: tokenAmount(20, 6),
-        liquidationFeeFraction: 150,
-        tokenLiquidationPriceDeltaBps: 300,
-        insuranceFundFeeShareBps: 5000,
-      };
       expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.reverted;
     });
   });

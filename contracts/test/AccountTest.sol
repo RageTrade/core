@@ -160,25 +160,10 @@ contract AccountTest {
 
     function liquidateLiquidityPositions(
         uint256 accountNo,
-        uint256 fixFee,
-        uint256 minRequiredMargin,
-        uint16 liquidationFeeFraction,
-        uint16 insuranceFundFeeShareBps,
+        LiquidationParams memory liquidationParams,
         Constants memory constants
-    ) external {
-        LiquidationParams memory liquidationParams = LiquidationParams(
-            fixFee,
-            minRequiredMargin,
-            liquidationFeeFraction,
-            0,
-            insuranceFundFeeShareBps
-        );
-        accounts[accountNo].liquidateLiquidityPositions(
-            testVTokenAddresses,
-            liquidationParams,
-            minRequiredMargin,
-            constants
-        );
+    ) external returns (int256 keeperFee, int256 insuranceFundFee) {
+        return accounts[accountNo].liquidateLiquidityPositions(testVTokenAddresses, liquidationParams, constants);
     }
 
     function getLiquidationPriceX128AndFee(
