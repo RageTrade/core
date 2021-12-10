@@ -235,7 +235,12 @@ describe('Account Library Test Realistic', () => {
     vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
     vPoolWrapperFake.initialMarginRatio.returns(20000);
 
-    const factory = await hre.ethers.getContractFactory('AccountTest');
+    const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
+    const factory = await hre.ethers.getContractFactory('AccountTest', {
+      libraries: {
+        Account: accountLib.address,
+      },
+    });
     test = await factory.deploy();
 
     await changeVPoolWrapperFakePrice(4000);

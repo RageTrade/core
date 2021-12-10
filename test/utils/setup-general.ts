@@ -39,15 +39,20 @@ export async function testSetup({
   const realToken = await smock.fake<ERC20>('ERC20', { address: ethers.constants.AddressZero });
   realToken.decimals.returns(18);
 
-  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 2);
-  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 3);
+  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 3);
+  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 4);
 
   const vPoolWrapperDeployer = await (
     await hre.ethers.getContractFactory('VPoolWrapperDeployer')
   ).deploy(futureVPoolFactoryAddress);
 
+  const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
   const clearingHouse = await (
-    await hre.ethers.getContractFactory('ClearingHouse')
+    await hre.ethers.getContractFactory('ClearingHouse', {
+      libraries: {
+        Account: accountLib.address,
+      },
+    })
   ).deploy(futureVPoolFactoryAddress, realBase.address, futureInsurnaceFundAddress);
 
   const vPoolFactory = await (
@@ -113,15 +118,20 @@ export async function testSetupBase({
   const vBase = await smock.fake<VBase>('VBase', { address: vBaseAddress });
   vBase.decimals.returns(6);
 
-  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 2);
-  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 3);
+  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 3);
+  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 4);
 
   const vPoolWrapperDeployer = await (
     await hre.ethers.getContractFactory('VPoolWrapperDeployer')
   ).deploy(futureVPoolFactoryAddress);
 
+  const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
   const clearingHouse = await (
-    await hre.ethers.getContractFactory('ClearingHouse')
+    await hre.ethers.getContractFactory('ClearingHouse', {
+      libraries: {
+        Account: accountLib.address,
+      },
+    })
   ).deploy(futureVPoolFactoryAddress, realBase.address, futureInsurnaceFundAddress);
 
   const vPoolFactory = await (

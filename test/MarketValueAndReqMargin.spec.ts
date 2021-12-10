@@ -8,7 +8,7 @@ import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { testSetup } from './utils/setup-general';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 
-describe('VTokenPositionSet Library', () => {
+describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
