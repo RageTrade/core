@@ -26,6 +26,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     uint16 public immutable override initialMarginRatio;
     uint16 public immutable override maintainanceMarginRatio;
     uint32 public immutable override timeHorizon;
+    bool public override whitelisted;
 
     constructor() {
         (initialMarginRatio, maintainanceMarginRatio, timeHorizon) = (0, 0, 0);

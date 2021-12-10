@@ -99,55 +99,30 @@ library VTokenPositionSet {
         return (longSideRisk, shortSideRisk);
     }
 
-    function getRequiredMarginWithExclusion(
-        Set storage set,
-        bool isInitialMargin,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        VTokenAddress vTokenAddressToSkip,
-        Constants memory constants
-    ) internal view returns (int256 requiredMargin, int256 requiredMarginOther) {
-        int256 longSideRiskTotal;
-        int256 shortSideRiskTotal;
-        int256 longSideRisk;
-        int256 shortSideRisk;
-        for (uint8 i = 0; i < set.active.length; i++) {
-            if (set.active[i] == 0) break;
-            if (vTokenAddresses[set.active[i]].eq(vTokenAddressToSkip)) continue;
-            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(
-                isInitialMargin,
-                vTokenAddresses[set.active[i]],
-                constants
-            );
-
-            longSideRiskTotal += longSideRisk;
-            shortSideRiskTotal += shortSideRisk;
-        }
-
-        requiredMarginOther = max(longSideRiskTotal, shortSideRiskTotal);
-        if (!vTokenAddressToSkip.eq(address(0))) {
-            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vTokenAddressToSkip, constants);
-            longSideRiskTotal += longSideRisk;
-            shortSideRiskTotal += shortSideRisk;
-        }
-
-        requiredMargin = max(longSideRiskTotal, shortSideRiskTotal);
-        return (requiredMargin, requiredMarginOther);
-    }
-
     function getRequiredMargin(
         Set storage set,
         bool isInitialMargin,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
     ) internal view returns (int256 requiredMargin) {
-        int256 requiredMarginOther;
-        (requiredMargin, requiredMarginOther) = set.getRequiredMarginWithExclusion(
-            isInitialMargin,
-            vTokenAddresses,
-            VTokenAddress.wrap(address(0)),
-            constants
-        );
-        return requiredMargin;
+        int256 longSideRiskTotal;
+        int256 shortSideRiskTotal;
+        int256 longSideRisk;
+        int256 shortSideRisk;
+        for (uint8 i = 0; i < set.active.length; i++) {
+            if (set.active[i] == 0) break;
+            VTokenAddress vTokenAddress = vTokenAddresses[set.active[i]];
+            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vTokenAddress, constants);
+
+            if (vTokenAddress.getWhitelisted(constants)) {
+                longSideRiskTotal += longSideRisk;
+                shortSideRiskTotal += shortSideRisk;
+            } else {
+                requiredMargin += max(longSideRisk, shortSideRisk);
+            }
+        }
+
+        requiredMargin += max(longSideRiskTotal, shortSideRiskTotal);
     }
 
     function activate(Set storage set, VTokenAddress vTokenAddress) internal {
