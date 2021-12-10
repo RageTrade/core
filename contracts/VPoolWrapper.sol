@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import './libraries/uniswap/SafeCast.sol';
+import '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
 import './interfaces/IVPoolWrapperDeployer.sol';
 import { VTokenAddress, VTokenLib, IUniswapV3Pool, Constants } from './libraries/VTokenLib.sol';
@@ -13,12 +13,12 @@ import { IOracle } from './interfaces/IOracle.sol';
 import { IVToken } from './interfaces/IVToken.sol';
 import { IUniswapV3PoolDeployer } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3PoolDeployer.sol';
 
-import { FixedPoint128 } from './libraries/uniswap/FixedPoint128.sol';
-import { FullMath } from './libraries/FullMath.sol';
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { FundingPayment } from './libraries/FundingPayment.sol';
 import { SimulateSwap } from './libraries/SimulateSwap.sol';
 import { Tick } from './libraries/Tick.sol';
-import { TickMath } from './libraries/uniswap/TickMath.sol';
+import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
 import { Oracle } from './libraries/Oracle.sol';

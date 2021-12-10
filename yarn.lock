@@ -14,6 +14,11 @@
     solidity-comments-extractor "^0.0.7"
     string-width "^4.2.2"
 
+"@134dd3v/uniswap-v3-core-0.8-support@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@134dd3v/uniswap-v3-core-0.8-support/-/uniswap-v3-core-0.8-support-1.0.1.tgz#5d4a8ab24f1a4e856740deb88c630d05a1c4db17"
+  integrity sha512-fcSjTuGglHPjIueZwvRo+7EDjnhGondMph0X/ZIcffY/g82sHu4rHYi50wbKQAK96NqqIg0rkeoJMaoOc/CCPQ==
+
 "@defi-wonderland/smock@^2.0.7":
   version "2.0.7"
   resolved "https://registry.yarnpkg.com/@defi-wonderland/smock/-/smock-2.0.7.tgz#59d5fc93e175ad120c5dcdd8294e07525606c855"

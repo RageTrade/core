@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.9;
 
+import { Account } from './Account.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { Account } from './Account.sol';
 
 import { Constants } from '../utils/Constants.sol';
 

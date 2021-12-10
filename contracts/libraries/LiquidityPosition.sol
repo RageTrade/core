@@ -2,17 +2,20 @@
 
 pragma solidity ^0.8.9;
 
-import { SqrtPriceMath } from './uniswap/SqrtPriceMath.sol';
-import { TickMath } from './uniswap/TickMath.sol';
-import { Account } from './Account.sol';
-import { FullMath } from './FullMath.sol';
-import { SafeCast } from './uniswap/SafeCast.sol';
-import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
-import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
-import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { Constants } from '../utils/Constants.sol';
+import { SqrtPriceMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SqrtPriceMath.sol';
+import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { SafeCast } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
+import { SignedFullMath } from './SignedFullMath.sol';
+import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
+import { Constants } from '../utils/Constants.sol';
+
 import { console } from 'hardhat/console.sol';
 
 enum LimitOrderType {
@@ -23,7 +26,7 @@ enum LimitOrderType {
 
 library LiquidityPosition {
     using PriceMath for uint160;
-    using FullMath for int256;
+    using SignedFullMath for int256;
     using FullMath for uint256;
     using SafeCast for uint256;
     using LiquidityPosition for Info;

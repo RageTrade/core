@@ -2,8 +2,10 @@
 
 pragma solidity ^0.8.9;
 
+import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
+
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import { TickMath } from './uniswap/TickMath.sol';
+
 import { console } from 'hardhat/console.sol';
 
 library Oracle {

@@ -1,13 +1,17 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { FullMath } from './FullMath.sol';
-import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
+
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { Account } from './Account.sol';
-import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
+import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
+import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
 import { Constants } from '../utils/Constants.sol';
 import { console } from 'hardhat/console.sol';
 
@@ -15,7 +19,7 @@ library VTokenPosition {
     error AlreadyInitialized();
     using VTokenLib for VTokenAddress;
     using FullMath for uint256;
-    using FullMath for int256;
+    using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
 
     enum RISK_SIDE {

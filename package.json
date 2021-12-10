@@ -51,6 +51,7 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
+    "@134dd3v/uniswap-v3-core-0.8-support": "^1.0.1",
     "@openzeppelin/contracts": "^4.0.0",
     "@openzeppelin/contracts-upgradeable": "^4.1.0",
     "@uniswap/v3-core": "^1.0.0",

@@ -1,19 +1,21 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { VTokenPosition } from './VTokenPosition.sol';
-import { FullMath } from './FullMath.sol';
+
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { VTokenPosition } from './VTokenPosition.sol';
+
 import { Constants } from '../utils/Constants.sol';
-import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
     using VTokenLib for VTokenAddress;
     using Uint32L8ArrayLib for uint32[8];
-    using FullMath for int256;
+    using SignedFullMath for int256;
     int256 internal constant Q96 = 0x1000000000000000000000000;
 
     struct Info {
