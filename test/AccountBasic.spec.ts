@@ -140,7 +140,7 @@ describe('Account Library Test Basic', () => {
     });
 
     vPoolWrapperFake.liquidityChange.returns((input: any) => {
-      return [-input.liquidity * 4000, -input.liquidity];
+      return [input.liquidity * 4000, input.liquidity];
     });
   });
   after(deactivateMainnetFork);

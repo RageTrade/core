@@ -97,7 +97,7 @@ describe('Account Library Test Realistic', () => {
         vToken,
       );
 
-      return [vBaseAmount.mul(-1), vTokenAmount.mul(-1)];
+      return [vBaseAmount, vTokenAmount];
     });
   }
 
