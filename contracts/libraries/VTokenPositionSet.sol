@@ -36,6 +36,7 @@ library VTokenPositionSet {
 
     error IncorrectUpdate();
     error DeactivationFailed(VTokenAddress);
+    error TokenInactive(VTokenAddress vTokenAddress);
 
     struct Set {
         // fixed length array of truncate(tokenAddress)
@@ -62,7 +63,9 @@ library VTokenPositionSet {
             uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(constants);
             accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPriceX96, vToken, constants));
         }
-
+        //TODO: Remove logs
+        // console.log('Base value:');
+        // console.logInt(set.positions[truncate(constants.VBASE_ADDRESS)].balance);
         accountMarketValue += set.positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()].balance;
 
         return (accountMarketValue);
@@ -153,7 +156,7 @@ library VTokenPositionSet {
 
     function deactivate(Set storage set, VTokenAddress vTokenAddress) internal {
         uint32 truncated = vTokenAddress.truncate();
-        if (set.positions[truncated].balance != 0) {
+        if (set.positions[truncated].balance != 0 && !set.positions[truncated].liquidityPositions.isEmpty()) {
             revert DeactivationFailed(vTokenAddress);
         }
 
@@ -168,6 +171,7 @@ library VTokenPositionSet {
     ) internal {
         uint32 truncated = vTokenAddress.truncate();
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+            set.realizeFundingPayment(vTokenAddress, constants);
             set.active.include(truncated);
         }
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncated];
@@ -179,7 +183,7 @@ library VTokenPositionSet {
         ];
         _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
 
-        if (_VTokenPosition.balance == 0) {
+        if (_VTokenPosition.balance == 0 && _VTokenPosition.liquidityPositions.active[0] == 0) {
             set.deactivate(vTokenAddress);
         }
     }
@@ -220,10 +224,15 @@ library VTokenPositionSet {
     function getTokenPosition(
         Set storage set,
         VTokenAddress vTokenAddress,
+        bool createNew,
         Constants memory constants
     ) internal returns (VTokenPosition.Position storage) {
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
-            set.activate(vTokenAddress);
+            if (createNew) {
+                set.activate(vTokenAddress);
+            } else if (!set.active.exists(vTokenAddress.truncate())) {
+                revert TokenInactive(vTokenAddress);
+            }
         }
 
         VTokenPosition.Position storage position = set.positions[vTokenAddress.truncate()];
@@ -307,7 +316,6 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256, int256) {
-        set.realizeFundingPayment(vTokenAddress, constants);
         // TODO: remove this after testing
         // console.log('Amount In:');
         // console.logInt(swapParams.amount);
@@ -346,9 +354,11 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, constants);
+
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.liquidityChange(
+        vTokenPosition.liquidityPositions.liquidityChange(
             set.accountNo,
             vTokenAddress,
             liquidityChangeParams,
@@ -370,9 +380,10 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease *
-            vTokenAddress.getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustments.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease.mulDiv(
+                vTokenAddress.getVirtualTwapPriceX128(constants),
+                FixedPoint128.Q128
+            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function closeLiquidityPosition(
@@ -382,9 +393,11 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
+
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.closeLiquidityPosition(
+        vTokenPosition.liquidityPositions.closeLiquidityPosition(
             set.accountNo,
             vTokenAddress,
             position,
@@ -395,9 +408,10 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease *
-            vTokenAddress.getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustments.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease.mulDiv(
+                vTokenAddress.getVirtualTwapPriceX128(constants),
+                FixedPoint128.Q128
+            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(
@@ -408,7 +422,7 @@ library VTokenPositionSet {
     ) internal returns (int256) {
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, constants).liquidityPositions.closeAllLiquidityPositions(
+        set.getTokenPosition(vTokenAddress, false, constants).liquidityPositions.closeAllLiquidityPositions(
             set.accountNo,
             vTokenAddress,
             wrapper,
@@ -418,9 +432,10 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease *
-            vTokenAddress.getVirtualTwapPriceX128(constants).toInt256() +
-            balanceAdjustments.vBaseIncrease;
+            balanceAdjustments.vTokenIncrease.mulDiv(
+                vTokenAddress.getVirtualTwapPriceX128(constants),
+                FixedPoint128.Q128
+            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(

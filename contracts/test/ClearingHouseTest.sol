@@ -62,6 +62,12 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 accountMarketValue, int256 requiredMargin)
     {
-        return accounts[accountNo].getAccountValueAndRequiredMargin(isInitialMargin, vTokenAddresses, constants);
+        return
+            accounts[accountNo].getAccountValueAndRequiredMargin(
+                isInitialMargin,
+                vTokenAddresses,
+                liquidationParams.minRequiredMargin,
+                constants
+            );
     }
 }

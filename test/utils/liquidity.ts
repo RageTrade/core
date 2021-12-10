@@ -34,33 +34,39 @@ export function maxLiquidityForAmounts(
 }
 
 export function amountsForLiquidity(
-  sqrtPriceLower: BigNumberish,
+  tickLower: number,
   sqrtPriceCurrent: BigNumberish,
-  sqrtPriceUpper: BigNumberish,
+  tickUpper: number,
   liquidity: BigNumberish,
   roundUp: boolean,
   vBase: ContractOrSmock<VBase>,
   vToken: ContractOrSmock<VToken>,
 ) {
-  [sqrtPriceLower, sqrtPriceCurrent, sqrtPriceUpper] = [sqrtPriceLower, sqrtPriceCurrent, sqrtPriceUpper]
-    .map(BigNumber.from)
-    .sort((a, b) => {
-      return a.gt(b) ? 1 : -1;
-    });
-
   const liquidityJSBI = JSBI.BigInt(BigNumber.from(liquidity).toString());
-  const sqrtPriceLowerJSBI = JSBI.BigInt(sqrtPriceLower.toString());
-  const sqrtPriceUpperJSBI = JSBI.BigInt(sqrtPriceUpper.toString());
+  const sqrtPriceLowerJSBI = TickMath.getSqrtRatioAtTick(tickLower);
+  const sqrtPriceUpperJSBI = TickMath.getSqrtRatioAtTick(tickUpper);
   const sqrtPriceCurrentJSBI = JSBI.BigInt(sqrtPriceCurrent.toString());
+  let sqrtPriceMiddleJSBI = sqrtPriceCurrentJSBI;
+  if (sqrtPriceMiddleJSBI < sqrtPriceLowerJSBI) {
+    sqrtPriceMiddleJSBI = sqrtPriceLowerJSBI;
+  } else if (sqrtPriceMiddleJSBI > sqrtPriceUpperJSBI) {
+    sqrtPriceMiddleJSBI = sqrtPriceUpperJSBI;
+  }
 
-  let amount0 = SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentJSBI, sqrtPriceLowerJSBI, liquidityJSBI, roundUp);
-  let amount1 = SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentJSBI, sqrtPriceUpperJSBI, liquidityJSBI, roundUp);
-  if (BigNumber.from(vBase.address).gt(vToken.address)) {
-    [amount0, amount1] = [amount1, amount0];
+  const isVTokenToken0 = BigNumber.from(vBase.address).gt(vToken.address);
+
+  let amount0 = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddleJSBI, sqrtPriceUpperJSBI, liquidityJSBI, roundUp);
+  let amount1 = SqrtPriceMath.getAmount1Delta(sqrtPriceLowerJSBI, sqrtPriceMiddleJSBI, liquidityJSBI, roundUp);
+
+  let vTokenAmount = amount0;
+  let vBaseAmount = amount1;
+  if (!isVTokenToken0) {
+    vTokenAmount = amount1;
+    vBaseAmount = amount0;
   }
 
   return {
-    vBaseAmount: BigNumber.from(amount0.toString()),
-    vTokenAmount: BigNumber.from(amount1.toString()),
+    vBaseAmount: BigNumber.from(vBaseAmount.toString()),
+    vTokenAmount: BigNumber.from(vTokenAmount.toString()),
   };
 }

@@ -13,6 +13,7 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Constants } from '../utils/Constants.sol';
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
+import { console } from 'hardhat/console.sol';
 
 enum LimitOrderType {
     NONE,
@@ -75,13 +76,13 @@ library LiquidityPosition {
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        (int256 vBaseIncrease, int256 vTokenIncrease) = wrapper.liquidityChange(
+        (int256 basePrincipal, int256 vTokenPrincipal) = wrapper.liquidityChange(
             position.tickLower,
             position.tickUpper,
             liquidity
         );
-        balanceAdjustments.vBaseIncrease += vBaseIncrease;
-        balanceAdjustments.vTokenIncrease += vTokenIncrease;
+        balanceAdjustments.vBaseIncrease -= basePrincipal;
+        balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
         emit Account.LiquidityChange(
             accountNo,
@@ -90,8 +91,8 @@ library LiquidityPosition {
             position.tickUpper,
             liquidity,
             position.limitOrderType,
-            vTokenIncrease,
-            vBaseIncrease
+            -basePrincipal,
+            -vTokenPrincipal
         );
 
         position.update(accountNo, vTokenAddress, wrapper, balanceAdjustments);

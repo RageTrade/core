@@ -195,7 +195,11 @@ describe('Clearing House Library', () => {
 
   describe('#InitializeLiquidity', async () => {
     it('#Liquidity1', async () => {
+      const truncatedBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount(1000, 6));
+      await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedBaseAddress, tokenAmount(1000, 6));
       const liquidityChangeParams = {
         tickLower: -100,
         tickUpper: 100,

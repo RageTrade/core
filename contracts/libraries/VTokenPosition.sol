@@ -9,11 +9,13 @@ import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { Constants } from '../utils/Constants.sol';
+import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
     error AlreadyInitialized();
     using VTokenLib for VTokenAddress;
     using FullMath for uint256;
+    using FullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
 
     enum RISK_SIDE {
@@ -35,7 +37,14 @@ library VTokenPosition {
         uint256 price,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
-        value = (position.balance * int256(price)) / int256(FixedPoint128.Q128);
+        //TODO: Remove logs
+        // console.log('Token Position Balance:');
+        // console.logInt(position.balance);
+        // console.log('Token PriceX128:');
+        // console.logInt(int256(price));
+        value = position.balance.mulDiv(price, FixedPoint128.Q128);
+        // console.log('Token Value:');
+        // console.logInt(value);
         value -= unrealizedFundingPayment(position, wrapper);
     }
 

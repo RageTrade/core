@@ -77,7 +77,7 @@ contract VTokenPositionSetTest {
     function closeLiquidityPosition(VTokenAddress vTokenAddress, Constants memory constants) external {
         dummy.closeLiquidityPosition(
             vTokenAddress,
-            dummy.getTokenPosition(vTokenAddress, constants).liquidityPositions.activate(-100, 100),
+            dummy.getTokenPosition(vTokenAddress, true, constants).liquidityPositions.activate(-100, 100),
             wrapper,
             constants
         );

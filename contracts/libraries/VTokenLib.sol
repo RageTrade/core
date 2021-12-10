@@ -127,6 +127,14 @@ library VTokenLib {
         return Oracle.getTwapSqrtPrice(vToken.vPool(constants), vToken.vPoolWrapper(constants).timeHorizon());
     }
 
+    function getVirtualCurrentSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
+        internal
+        view
+        returns (uint160 sqrtPriceX96)
+    {
+        return Oracle.getCurrentSqrtPrice(vToken.vPool(constants));
+    }
+
     function getVirtualTwapTick(VTokenAddress vToken, Constants memory constants) internal view returns (int24 tick) {
         return Oracle.getTwapTick(vToken.vPool(constants), vToken.vPoolWrapper(constants).timeHorizon());
     }
@@ -137,6 +145,14 @@ library VTokenLib {
         returns (uint256 priceX128)
     {
         return vToken.getVirtualTwapSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
+    }
+
+    function getVirtualCurrentPriceX128(VTokenAddress vToken, Constants memory constants)
+        internal
+        view
+        returns (uint256 priceX128)
+    {
+        return vToken.getVirtualCurrentSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
     }
 
     function getRealTwapSqrtPriceX96(VTokenAddress vToken, Constants memory constants)

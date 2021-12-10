@@ -95,7 +95,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        account.removeMargin(vTokenAddress, amount, vTokenAddresses, constants);
+        account.removeMargin(vTokenAddress, amount, vTokenAddresses, liquidationParams.minRequiredMargin, constants);
 
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
             IERC20(vTokenAddress.realToken()).transfer(msg.sender, amount);
@@ -110,7 +110,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        account.removeProfit(amount, vTokenAddresses, constants);
+        account.removeProfit(amount, vTokenAddresses, liquidationParams.minRequiredMargin, constants);
         IERC20(realBase).transfer(msg.sender, amount);
 
         emit Account.WithdrawProfit(accountNo, amount);
@@ -126,10 +126,15 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        (, int256 vBaseAmount) = account.swapToken(vTokenAddress, swapParams, vTokenAddresses, constants);
+        (, int256 vBaseAmount) = account.swapToken(
+            vTokenAddress,
+            swapParams,
+            vTokenAddresses,
+            liquidationParams.minRequiredMargin,
+            constants
+        );
 
         uint256 vBaseAmountAbs = uint256(vBaseAmount.abs());
-        if (vBaseAmountAbs < minNotionalValue) revert LowNotionalValue(vBaseAmountAbs);
     }
 
     function updateRangeOrder(
@@ -149,11 +154,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             vTokenAddress,
             liquidityChangeParams,
             vTokenAddresses,
+            liquidationParams.minRequiredMargin,
             constants
         );
-
-        uint256 notionalValueAbs = uint256(notionalValue.abs());
-        if (notionalValueAbs != 0 && notionalValueAbs < minNotionalValue) revert LowNotionalValue(notionalValueAbs);
     }
 
     function removeLimitOrder(
@@ -166,7 +169,13 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, removeLimitOrderFee, constants);
+        account.removeLimitOrder(
+            vTokenAddress,
+            tickLower,
+            tickUpper,
+            removeLimitOrderFee + liquidationParams.fixFee,
+            constants
+        );
 
         IERC20(realBase).transfer(msg.sender, removeLimitOrderFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
