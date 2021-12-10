@@ -339,21 +339,20 @@ library Account {
     /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
     /// @notice if liquidity>0 then the swap is a long or close short and if vTokenNotional<0 then swap is a short or close long
     /// @param accountMarketValue market value of account
-    /// @param fixFee fixed fees to be paid
     /// @param liquidationFee parameters including lower tick, upper tick, liquidity delta and limit order type
     /// @return keeperFee map of vTokenAddresses allowed on the platform
     /// @return insuranceFundFee poolwrapper for token
     function computeLiquidationFees(
         int256 accountMarketValue,
-        int256 fixFee,
         int256 liquidationFee,
         LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
+        int256 fixFee = int256(liquidationParams.fixFee);
         keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFee;
         if (accountMarketValue - fixFee - liquidationFee < 0) {
-            insuranceFundFee = accountMarketValue - fixFee - liquidationFee + keeperFee;
+            insuranceFundFee = accountMarketValue - keeperFee;
         } else {
-            insuranceFundFee = liquidationFee - keeperFee;
+            insuranceFundFee = liquidationFee - keeperFee + fixFee;
         }
     }
 
@@ -365,19 +364,17 @@ library Account {
         Info storage account,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         LiquidationParams memory liquidationParams,
-        uint256 minRequiredMargin,
         Constants memory constants
     ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
         int256 notionalAmountClosed;
-        int256 fixFee;
 
         (accountMarketValue, totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
             false,
             vTokenAddresses,
-            minRequiredMargin,
+            liquidationParams.minRequiredMargin,
             constants
         );
         if (accountMarketValue > totalRequiredMargin) {
@@ -386,13 +383,8 @@ library Account {
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
 
-        int256 liquidationFee = (notionalAmountClosed * int256(int16(liquidationParams.liquidationFeeFraction)));
-        (keeperFee, insuranceFundFee) = computeLiquidationFees(
-            accountMarketValue,
-            fixFee,
-            liquidationFee,
-            liquidationParams
-        );
+        int256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, liquidationFee, liquidationParams);
 
         account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
     }
@@ -600,13 +592,13 @@ library Account {
         VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
-        uint256 limitOrderFee,
+        uint256 limitOrderFeeAndFixFee,
         Constants memory constants
     ) internal {
         int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
         LiquidityPosition.Info storage position = account
             .tokenPositions
-            .getTokenPosition(vTokenAddress, false, constants)
+            .getTokenPosition(vTokenAddress, true, constants)
             .liquidityPositions
             .getLiquidityPosition(tickLower, tickUpper);
 
@@ -620,6 +612,6 @@ library Account {
             revert IneligibleLimitOrderRemoval();
         }
 
-        account.chargeFee(limitOrderFee, constants);
+        account.chargeFee(limitOrderFeeAndFixFee, constants);
     }
 }

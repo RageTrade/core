@@ -169,7 +169,13 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, removeLimitOrderFee, constants);
+        account.removeLimitOrder(
+            vTokenAddress,
+            tickLower,
+            tickUpper,
+            removeLimitOrderFee + liquidationParams.fixFee,
+            constants
+        );
 
         IERC20(realBase).transfer(msg.sender, removeLimitOrderFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
@@ -181,7 +187,6 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         (int256 keeperFee, int256 insuranceFundFee) = account.liquidateLiquidityPositions(
             vTokenAddresses,
             liquidationParams,
-            liquidationParams.minRequiredMargin,
             constants
         );
         int256 accountFee = keeperFee + insuranceFundFee;
