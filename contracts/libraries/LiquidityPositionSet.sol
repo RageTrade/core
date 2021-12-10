@@ -30,6 +30,7 @@ library LiquidityPositionSet {
 
     error IllegalTicks(int24 tickLower, int24 tickUpper);
     error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
+    error InactiveRange();
 
     struct Info {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
@@ -92,7 +93,7 @@ library LiquidityPositionSet {
         uint48 positionId = _include(set.active, tickLower, tickUpper);
         position = set.positions[positionId];
 
-        require(position.isInitialized());
+        if (!position.isInitialized()) revert InactiveRange();
         return position;
     }
 
