@@ -39,6 +39,10 @@ library LiquidityPositionSet {
         mapping(uint48 => LiquidityPosition.Info) positions;
     }
 
+    function isEmpty(Info storage set) internal view returns (bool) {
+        return set.active[0] == 0;
+    }
+
     function isPositionActive(
         Info storage set,
         int24 tickLower,

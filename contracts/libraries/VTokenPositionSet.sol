@@ -156,7 +156,7 @@ library VTokenPositionSet {
 
     function deactivate(Set storage set, VTokenAddress vTokenAddress) internal {
         uint32 truncated = vTokenAddress.truncate();
-        if (set.positions[truncated].balance != 0) {
+        if (set.positions[truncated].balance != 0 && !set.positions[truncated].liquidityPositions.isEmpty()) {
             revert DeactivationFailed(vTokenAddress);
         }
 
@@ -230,7 +230,7 @@ library VTokenPositionSet {
         if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
             if (createNew) {
                 set.activate(vTokenAddress);
-            } else if (set.positions[vTokenAddress.truncate()].balance == 0) {
+            } else if (!set.active.exists(vTokenAddress.truncate())) {
                 revert TokenInactive(vTokenAddress);
             }
         }
@@ -393,7 +393,7 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, constants);
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
 

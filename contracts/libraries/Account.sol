@@ -501,8 +501,7 @@ library Account {
             constants
         );
 
-        if (vTokenPosition.liquidityPositions.active[0] != 0)
-            revert InvalidLiquidationActiveRangePresent(vTokenAddress);
+        if (!vTokenPosition.liquidityPositions.isEmpty()) revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
@@ -598,7 +597,7 @@ library Account {
         int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
         LiquidityPosition.Info storage position = account
             .tokenPositions
-            .getTokenPosition(vTokenAddress, true, constants)
+            .getTokenPosition(vTokenAddress, false, constants)
             .liquidityPositions
             .getLiquidityPosition(tickLower, tickUpper);
 
