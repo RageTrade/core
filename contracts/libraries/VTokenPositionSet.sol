@@ -183,7 +183,7 @@ library VTokenPositionSet {
         ];
         _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
 
-        if (_VTokenPosition.balance == 0) {
+        if (_VTokenPosition.balance == 0 && _VTokenPosition.liquidityPositions.active[0] == 0) {
             set.deactivate(vTokenAddress);
         }
     }
@@ -393,7 +393,7 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
 
