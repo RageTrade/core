@@ -66,24 +66,20 @@ describe('Account Library Test Basic', () => {
     tickUpper?: BigNumberish,
     limitOrderType?: BigNumberish,
     liquidity?: BigNumberish,
-    sumALast?: BigNumberish,
-    sumBInsideLast?: BigNumberish,
-    sumFpInsideLast?: BigNumberish,
-    longsFeeGrowthInsideLast?: BigNumberish,
-    shortsFeeGrowthInsideLast?: BigNumberish,
+    sumALastX128?: BigNumberish,
+    sumBInsideLastX128?: BigNumberish,
+    sumFpInsideLastX128?: BigNumberish,
+    sumFeeInsideLastX128?: BigNumberish,
   ) {
     const out = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, num);
     if (typeof tickLower !== 'undefined') expect(out.tickLower).to.eq(tickLower);
     if (typeof tickUpper !== 'undefined') expect(out.tickUpper).to.eq(tickUpper);
     if (typeof limitOrderType !== 'undefined') expect(out.limitOrderType).to.eq(limitOrderType);
     if (typeof liquidity !== 'undefined') expect(out.liquidity).to.eq(liquidity);
-    if (typeof sumALast !== 'undefined') expect(out.sumALast).to.eq(sumALast);
-    if (typeof sumBInsideLast !== 'undefined') expect(out.sumBInsideLast).to.eq(sumBInsideLast);
-    if (typeof sumFpInsideLast !== 'undefined') expect(out.sumFpInsideLast).to.eq(sumFpInsideLast);
-    if (typeof longsFeeGrowthInsideLast !== 'undefined')
-      expect(out.longsFeeGrowthInsideLast).to.eq(longsFeeGrowthInsideLast);
-    if (typeof shortsFeeGrowthInsideLast !== 'undefined')
-      expect(out.shortsFeeGrowthInsideLast).to.eq(shortsFeeGrowthInsideLast);
+    if (typeof sumALastX128 !== 'undefined') expect(out.sumALastX128).to.eq(sumALastX128);
+    if (typeof sumBInsideLastX128 !== 'undefined') expect(out.sumBInsideLastX128).to.eq(sumBInsideLastX128);
+    if (typeof sumFpInsideLastX128 !== 'undefined') expect(out.sumFpInsideLastX128).to.eq(sumFpInsideLastX128);
+    if (typeof sumFeeInsideLastX128 !== 'undefined') expect(out.sumFeeInsideLastX128).to.eq(sumFeeInsideLastX128);
   }
 
   before(async () => {

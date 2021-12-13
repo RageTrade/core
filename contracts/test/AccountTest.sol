@@ -260,7 +260,7 @@ contract AccountTest {
     function getAccountLiquidityPositionDetails(
         uint256 accountNo,
         address vTokenAddress,
-        uint8 num
+        uint8 num // TODO change to fetch by ticks
     )
         external
         view
@@ -269,11 +269,10 @@ contract AccountTest {
             int24 tickUpper,
             LimitOrderType limitOrderType,
             uint128 liquidity,
-            int256 sumALast,
-            int256 sumBInsideLast,
-            int256 sumFpInsideLast,
-            uint256 longsFeeGrowthInsideLast,
-            uint256 shortsFeeGrowthInsideLast
+            int256 sumALastX128,
+            int256 sumBInsideLastX128,
+            int256 sumFpInsideLastX128,
+            uint256 sumFeeInsideLastX128
         )
     {
         LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
@@ -289,11 +288,10 @@ contract AccountTest {
             liquidityPosition.tickUpper,
             liquidityPosition.limitOrderType,
             liquidityPosition.liquidity,
-            liquidityPosition.sumALast,
-            liquidityPosition.sumBInsideLast,
-            liquidityPosition.sumFpInsideLast,
-            liquidityPosition.longsFeeGrowthInsideLast,
-            liquidityPosition.shortsFeeGrowthInsideLast
+            liquidityPosition.sumALastX128,
+            liquidityPosition.sumBInsideLastX128,
+            liquidityPosition.sumFpInsideLastX128,
+            liquidityPosition.sumFeeInsideLastX128
         );
     }
 

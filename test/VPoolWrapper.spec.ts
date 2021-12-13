@@ -348,24 +348,22 @@ describe('PoolWrapper', () => {
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(global.uniswapFeeX128);
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(global.extendedFeeX128);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(global.sumFeeGlobalX128);
 
         // if buy then uniswap fee will increase
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(
-          tradeAmount
-            .abs()
-            // removing protocol fee
-            .mul(1e6 - protocolFee)
-            .div(1e6)
-            // calculating uniswap fee
-            .mul(uniswapFee)
-            .div(1e6)
-            // taking per liquidity
-            .mul(Q128)
-            .div(liquidity1),
-        );
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(0);
+        const expectedUniswapFeeIncrease = tradeAmount
+          .abs()
+          // removing protocol fee
+          .mul(1e6 - protocolFee)
+          .div(1e6)
+          // calculating uniswap fee
+          .mul(uniswapFee)
+          .div(1e6)
+          // taking per liquidity
+          .mul(Q128)
+          .div(liquidity1);
+        const expectedExtendedFeeIncrease = 0;
+        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedUniswapFeeIncrease.add(expectedExtendedFeeIncrease));
       });
 
       it('sell: no tick cross', async () => {
@@ -377,25 +375,22 @@ describe('PoolWrapper', () => {
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(global.uniswapFeeX128);
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(global.extendedFeeX128);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(global.sumFeeGlobalX128);
 
         // if buy then uniswap fee will increase
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(0);
-
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(
-          tradeAmount
-            .abs()
-            // adjusting protocol fee and inflation
-            .mul(1e6 + protocolFee)
-            .div(1e6 - uniswapFee)
-            // calculating uniswap fee
-            .mul(uniswapFee)
-            .div(1e6 - uniswapFee)
-            // taking per liquidity
-            .mul(Q128)
-            .div(liquidity1),
-        );
+        const expectedUniswapFeeIncrease = BigNumber.from(0);
+        const expectedExtendedFeeIncrease = tradeAmount
+          .abs()
+          // adjusting protocol fee and inflation
+          .mul(1e6 + protocolFee)
+          .div(1e6 - uniswapFee)
+          // calculating uniswap fee
+          .mul(uniswapFee)
+          .div(1e6 - uniswapFee)
+          // taking per liquidity
+          .mul(Q128)
+          .div(liquidity1);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedUniswapFeeIncrease.add(expectedExtendedFeeIncrease));
       });
 
       it('buy: single tick cross');
@@ -457,13 +452,12 @@ describe('PoolWrapper', () => {
     sumBX128: BigNumber;
     sumFpX128: BigNumber;
     timestampLast: number;
-    uniswapFeeX128: BigNumber;
-    extendedFeeX128: BigNumber;
+    sumFeeGlobalX128: BigNumber;
   }> {
     const fpGlobal = await vPoolWrapper.fpGlobal();
     const uniswapFeeX128 = isToken0 ? await vPool.feeGrowthGlobal1X128() : await vPool.feeGrowthGlobal0X128();
-    const extendedFeeX128 = await vPoolWrapper.extendedFeeGrowthGlobalX128();
-    return { ...fpGlobal, uniswapFeeX128, extendedFeeX128 };
+    const sumExFeeGlobalX128 = await vPoolWrapper.sumExFeeGlobalX128();
+    return { ...fpGlobal, sumFeeGlobalX128: uniswapFeeX128.add(sumExFeeGlobalX128) };
   }
 
   function parseUsdc(str: string): BigNumber {

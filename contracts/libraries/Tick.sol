@@ -19,54 +19,59 @@ library Tick {
         int256 sumALastX128;
         int256 sumBOutsideX128;
         int256 sumFpOutsideX128;
-        uint256 extendedFeeGrowthOutsideX128; // extended fee for buys + sells
+        uint256 sumExFeeOutsideX128; // extended fee
     }
 
-    function getNetPositionInside(
+    function getExtendedTickStateInside(
         mapping(int24 => Tick.Info) storage self,
         int24 tickLower,
         int24 tickUpper,
         int24 tickCurrent,
-        int256 sumBGlobalX128
-    ) internal view returns (int256 netPositionGrowthX128) {
-        if (tickCurrent < tickLower) {
-            netPositionGrowthX128 = self[tickLower].sumBOutsideX128 - self[tickUpper].sumBOutsideX128;
-        } else if (tickCurrent < tickUpper) {
-            netPositionGrowthX128 = sumBGlobalX128 - self[tickLower].sumBOutsideX128 - self[tickUpper].sumBOutsideX128;
-        } else {
-            netPositionGrowthX128 = self[tickUpper].sumBOutsideX128 - self[tickLower].sumBOutsideX128;
-        }
-    }
+        FundingPayment.Info memory fpGlobal,
+        uint256 sumExFeeGlobalX128
+    )
+        internal
+        view
+        returns (
+            int256 sumBInsideX128,
+            int256 sumFpInsideX128,
+            uint256 sumExFeeInsideX128
+        )
+    {
+        Info storage lower = self[tickLower];
+        Info storage upper = self[tickUpper];
 
-    function getFundingPaymentGrowthInside(
-        mapping(int24 => Tick.Info) storage self,
-        int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent,
-        int256 sumAGlobalX128,
-        int256 sumFpGlobalX128
-    ) internal view returns (int256 fundingPaymentGrowthX128) {
-        int256 fpOutsideLowerX128 = FundingPayment.extrapolatedSumFpX128(
-            self[tickLower].sumALastX128,
-            self[tickLower].sumBOutsideX128,
-            self[tickLower].sumFpOutsideX128,
-            sumAGlobalX128
+        int256 sumBBelowX128 = lower.sumBOutsideX128;
+        int256 sumFpBelowX128 = FundingPayment.extrapolatedSumFpX128(
+            lower.sumALastX128,
+            sumBBelowX128, // lower.sumBOutsideX128,
+            lower.sumFpOutsideX128,
+            fpGlobal.sumAX128
         );
-
-        int256 fpOutsideUpperX128 = FundingPayment.extrapolatedSumFpX128(
-            self[tickUpper].sumALastX128,
-            self[tickUpper].sumBOutsideX128,
-            self[tickUpper].sumFpOutsideX128,
-            sumAGlobalX128
-        );
-
+        uint256 sumExFeeBelowX128 = lower.sumExFeeOutsideX128;
         if (tickCurrent < tickLower) {
-            fundingPaymentGrowthX128 = fpOutsideLowerX128 - fpOutsideUpperX128;
-        } else if (tickCurrent < tickUpper) {
-            fundingPaymentGrowthX128 = sumFpGlobalX128 - fpOutsideLowerX128 - fpOutsideUpperX128;
-        } else {
-            fundingPaymentGrowthX128 = fpOutsideUpperX128 - fpOutsideLowerX128;
+            sumBBelowX128 = fpGlobal.sumBX128 - sumBBelowX128;
+            sumFpBelowX128 = fpGlobal.sumFpX128 - sumFpBelowX128;
+            sumExFeeBelowX128 = sumExFeeGlobalX128 - sumExFeeBelowX128;
         }
+
+        int256 sumBAboveX128 = upper.sumBOutsideX128;
+        int256 sumFpAboveX128 = FundingPayment.extrapolatedSumFpX128(
+            upper.sumALastX128,
+            sumBAboveX128, // upper.sumBOutsideX128,
+            upper.sumFpOutsideX128,
+            fpGlobal.sumAX128
+        );
+        uint256 sumExFeeAboveX128 = upper.sumExFeeOutsideX128;
+        if (tickCurrent >= tickUpper) {
+            sumBAboveX128 = fpGlobal.sumBX128 - sumBAboveX128;
+            sumFpAboveX128 = fpGlobal.sumFpX128 - sumFpAboveX128;
+            sumExFeeAboveX128 = sumExFeeGlobalX128 - sumExFeeAboveX128;
+        }
+
+        sumBInsideX128 = fpGlobal.sumBX128 - sumBBelowX128 - sumBAboveX128;
+        sumFpInsideX128 = fpGlobal.sumFpX128 - sumFpBelowX128 - sumFpAboveX128;
+        sumExFeeInsideX128 = sumExFeeGlobalX128 - sumExFeeBelowX128 - sumExFeeAboveX128;
     }
 
     function getUniswapFeeGrowthInside(
@@ -100,34 +105,11 @@ library Tick {
         }
     }
 
-    function getExtendedFeeGrowthInside(
-        mapping(int24 => Tick.Info) storage self,
-        int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent,
-        uint256 extendedFeeGrowthGlobalX128
-    ) internal view returns (uint256 extendedFeeGrowthInsideX128) {
-        if (tickCurrent < tickLower) {
-            extendedFeeGrowthInsideX128 =
-                self[tickLower].extendedFeeGrowthOutsideX128 -
-                self[tickUpper].extendedFeeGrowthOutsideX128;
-        } else if (tickCurrent < tickUpper) {
-            extendedFeeGrowthInsideX128 =
-                extendedFeeGrowthGlobalX128 -
-                self[tickLower].extendedFeeGrowthOutsideX128 -
-                self[tickUpper].extendedFeeGrowthOutsideX128;
-        } else {
-            extendedFeeGrowthInsideX128 =
-                self[tickUpper].extendedFeeGrowthOutsideX128 -
-                self[tickLower].extendedFeeGrowthOutsideX128;
-        }
-    }
-
     // function update(
     //     mapping(int24 => Tick.Info) storage self,
     //     int24 tick,
     //     int24 tickCurrent,
-    //     uint256 extendedFeeGrowthGlobal0X128
+    //     uint256 sumExFeeGlobal0X128
     // ) internal returns (bool flipped) {
     //     // TODO if tick is flipped (when changing liquidity) then handle that case
     // }
@@ -136,7 +118,7 @@ library Tick {
         mapping(int24 => Tick.Info) storage self,
         int24 tick,
         FundingPayment.Info memory fpGlobal,
-        uint256 extendedFeeGrowthOutsideX128
+        uint256 sumExFeeOutsideX128
     ) internal {
         Tick.Info storage info = self[tick];
         int256 sumFpOutsideX128 = FundingPayment.extrapolatedSumFpX128(
@@ -148,6 +130,6 @@ library Tick {
         info.sumALastX128 = fpGlobal.sumAX128;
         info.sumBOutsideX128 = fpGlobal.sumBX128 - info.sumBOutsideX128;
         info.sumFpOutsideX128 = fpGlobal.sumFpX128 - sumFpOutsideX128;
-        info.extendedFeeGrowthOutsideX128 = extendedFeeGrowthOutsideX128 - info.extendedFeeGrowthOutsideX128;
+        info.sumExFeeOutsideX128 = sumExFeeOutsideX128 - info.sumExFeeOutsideX128;
     }
 }

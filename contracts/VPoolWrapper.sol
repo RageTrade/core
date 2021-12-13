@@ -65,7 +65,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     IOracle public oracle;
 
     FundingPayment.Info public fpGlobal;
-    uint256 public extendedFeeGrowthGlobalX128;
+    uint256 public sumExFeeGlobalX128; // extendedFeeGrowthGlobalX128;
     mapping(int24 => Tick.Info) public extendedTicks;
 
     Constants public constants;
@@ -123,28 +123,24 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             int256 sumAX128,
             int256 sumBInsideX128,
             int256 sumFpInsideX128,
-            uint256 uniswapFeeInsideX128,
-            uint256 extendedFeeInsideX128
+            uint256 sumFeeInsideX128
         )
     {
         (, int24 currentTick, , , , , ) = vPool.slot0();
         FundingPayment.Info memory _fpGlobal = fpGlobal;
         sumAX128 = _fpGlobal.sumAX128;
-        sumBInsideX128 = extendedTicks.getNetPositionInside(tickLower, tickUpper, currentTick, _fpGlobal.sumBX128);
-        sumFpInsideX128 = extendedTicks.getFundingPaymentGrowthInside(
+
+        uint256 sumExFeeInsideX128;
+        (sumBInsideX128, sumFpInsideX128, sumExFeeInsideX128) = extendedTicks.getExtendedTickStateInside(
             tickLower,
             tickUpper,
             currentTick,
-            _fpGlobal.sumAX128,
-            _fpGlobal.sumFpX128
+            _fpGlobal,
+            sumExFeeGlobalX128
         );
-        uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
-        extendedFeeInsideX128 = extendedTicks.getExtendedFeeGrowthInside(
-            tickLower,
-            tickUpper,
-            currentTick,
-            extendedFeeGrowthGlobalX128
-        );
+        uint256 uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
+
+        sumFeeInsideX128 = uniswapFeeInsideX128 + sumExFeeGlobalX128;
     }
 
     function swapToken(
@@ -257,12 +253,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             );
             //
             if (buyVToken) {
-                extendedFeeGrowthGlobalX128 += vBaseAmount.mulDiv(extendedFee, 1e6 - extendedFee).mulDiv(
+                sumExFeeGlobalX128 += vBaseAmount.mulDiv(extendedFee, 1e6 - extendedFee).mulDiv(
                     FixedPoint128.Q128,
                     state.liquidity
                 );
             } else {
-                extendedFeeGrowthGlobalX128 += vBaseAmount
+                sumExFeeGlobalX128 += vBaseAmount
                     .mulDiv(uniswapFee + extendedFee, 1e6 - uniswapFee - extendedFee)
                     .mulDiv(FixedPoint128.Q128, state.liquidity);
             }
@@ -271,7 +267,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
             // if the tick is initialized, run the tick transition
             if (step.initialized) {
-                extendedTicks.cross(step.tickNext, fpGlobal, extendedFeeGrowthGlobalX128);
+                extendedTicks.cross(step.tickNext, fpGlobal, sumExFeeGlobalX128);
             }
         }
     }

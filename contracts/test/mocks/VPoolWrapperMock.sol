@@ -8,11 +8,10 @@ import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapperMock is IVPoolWrapper {
     struct ValuesInside {
-        int256 sumA;
-        int256 sumBInside;
-        int256 sumFpInside;
-        uint256 longsFeeGrowthInside;
-        uint256 shortsFeeGrowthInside;
+        int256 sumAX128;
+        int256 sumBInsideX128;
+        int256 sumFpInsideX128;
+        uint256 sumFeeInsideX128;
     }
 
     mapping(int24 => mapping(int24 => ValuesInside)) public override getValuesInside;
@@ -35,17 +34,17 @@ contract VPoolWrapperMock is IVPoolWrapper {
     function setValuesInside(
         int24 tickLower,
         int24 tickUpper,
-        int256 sumA,
-        int256 sumBInside,
-        int256 sumFpInside,
-        uint256 longsFeeGrowthInside,
-        uint256 shortsFeeGrowthInside
+        int256 sumAX128,
+        int256 sumBInsideX128,
+        int256 sumFpInsideX128,
+        uint256 sumFeeInsideX128
     ) external {
-        getValuesInside[tickLower][tickUpper].sumA = sumA;
-        getValuesInside[tickLower][tickUpper].sumBInside = sumBInside;
-        getValuesInside[tickLower][tickUpper].sumFpInside = sumFpInside;
-        getValuesInside[tickLower][tickUpper].longsFeeGrowthInside = longsFeeGrowthInside;
-        getValuesInside[tickLower][tickUpper].shortsFeeGrowthInside = shortsFeeGrowthInside;
+        getValuesInside[tickLower][tickUpper] = ValuesInside(
+            sumAX128,
+            sumBInsideX128,
+            sumFpInsideX128,
+            sumFeeInsideX128
+        );
     }
 
     int256 _liquidity;
