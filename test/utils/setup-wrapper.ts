@@ -23,6 +23,7 @@ export async function setupWrapper(setupArgs: SetupArgs) {
     2, // initialMargin
     3, // maintainanceMargin
     60, // twapDuration
+    false,
     [
       AddressZero, // VPOOL_FACTORY
       AddressZero, // VPOOL_WRAPPER_DEPLOYER

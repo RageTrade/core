@@ -54,6 +54,7 @@ describe('DepositTokenSet Library', () => {
       initialMargin,
       maintainanceMargin,
       twapDuration,
+      false,
     );
 
     const eventFilter = VPoolFactory.filters.PoolInitlized();

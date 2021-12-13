@@ -77,6 +77,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             initialMarginRatio,
             maintainanceMarginRatio,
             timeHorizon,
+            whitelisted,
             constants
         ) = IVPoolWrapperDeployer(msg.sender).parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);

@@ -16,6 +16,7 @@ interface IVPoolWrapperDeployer {
             uint16 initialMargin,
             uint16 maintainanceMargin,
             uint32 twapDuration,
+            bool whitelisted,
             Constants memory constants
         );
 
@@ -29,6 +30,7 @@ interface IVPoolWrapperDeployer {
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration,
+        bool whitelisted,
         Constants memory constants
     ) external returns (address);
 }

@@ -12,12 +12,14 @@ export async function testSetup({
   maintainanceMarginRatio,
   twapDuration,
   isVTokenToken0,
+  whitelisted,
 }: {
   signer?: SignerWithAddress;
   initialMarginRatio: number;
   maintainanceMarginRatio: number;
   twapDuration: number;
   isVTokenToken0: boolean;
+  whitelisted: boolean;
 }) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
@@ -71,6 +73,7 @@ export async function testSetup({
     initialMarginRatio,
     maintainanceMarginRatio,
     twapDuration,
+    whitelisted,
   );
 
   const eventFilter = vPoolFactory.filters.PoolInitlized();
@@ -152,6 +155,7 @@ export async function testSetupToken({
   initialMarginRatio,
   maintainanceMarginRatio,
   twapDuration,
+  whitelisted,
   vPoolFactory,
 }: {
   signer?: SignerWithAddress;
@@ -159,6 +163,7 @@ export async function testSetupToken({
   initialMarginRatio: number;
   maintainanceMarginRatio: number;
   twapDuration: number;
+  whitelisted: boolean;
   vPoolFactory: VPoolFactory;
 }) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
@@ -180,6 +185,7 @@ export async function testSetupToken({
     initialMarginRatio,
     maintainanceMarginRatio,
     twapDuration,
+    whitelisted,
   );
 
   const eventFilter = vPoolFactory.filters.PoolInitlized();
