@@ -30,14 +30,20 @@ describe('VPoolFactory', () => {
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     signers = await hre.ethers.getSigners();
-    const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 2);
-    const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 3);
+    const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 3);
+    const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 4);
 
     VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     ).deploy(futureVPoolFactoryAddress);
+
+    const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const clearingHouse = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
+      await hre.ethers.getContractFactory('ClearingHouse', {
+        libraries: {
+          Account: accountLib.address,
+        },
+      })
     ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
     VPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')

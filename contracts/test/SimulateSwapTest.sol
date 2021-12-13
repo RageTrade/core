@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.9;
 
-import { FixedPoint128 } from '../libraries/uniswap/FixedPoint128.sol';
-import { FullMath } from '../libraries/FullMath.sol';
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { FundingPayment } from '../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
 import { Tick } from '../libraries/Tick.sol';

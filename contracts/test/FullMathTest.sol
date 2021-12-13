@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.9;
 
-import { FullMath } from '../libraries/FullMath.sol';
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -20,7 +21,7 @@ contract FullMathTest {
         uint256 b,
         uint256 denominator
     ) public pure returns (int256 result) {
-        return FullMath.mulDiv(a, b, denominator);
+        return SignedFullMath.mulDiv(a, b, denominator);
     }
 
     function mulDiv(
@@ -28,7 +29,7 @@ contract FullMathTest {
         int256 b,
         int256 denominator
     ) public pure returns (int256 result) {
-        return FullMath.mulDiv(a, b, denominator);
+        return SignedFullMath.mulDiv(a, b, denominator);
     }
 
     function mulDivRoundingUp(

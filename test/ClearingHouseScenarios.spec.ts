@@ -34,7 +34,7 @@ const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Library', () => {
+describe('Clearing House Senario', () => {
   let test: AccountTest;
 
   let vBaseAddress: string;
@@ -113,15 +113,20 @@ describe('Clearing House Library', () => {
     user1 = signers[1];
     user2 = signers[2];
 
-    const futureVPoolFactoryAddress = await getCreateAddressFor(admin, 2);
-    const futureInsurnaceFundAddress = await getCreateAddressFor(admin, 3);
+    const futureVPoolFactoryAddress = await getCreateAddressFor(admin, 3);
+    const futureInsurnaceFundAddress = await getCreateAddressFor(admin, 4);
 
     const VPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     ).deploy(futureVPoolFactoryAddress);
 
+    const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     clearingHouseTest = await (
-      await hre.ethers.getContractFactory('ClearingHouseTest')
+      await hre.ethers.getContractFactory('ClearingHouseTest', {
+        libraries: {
+          Account: accountLib.address,
+        },
+      })
     ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
 
     const VPoolFactory = await (

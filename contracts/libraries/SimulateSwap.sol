@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.9;
 
-import { FullMath } from './FullMath.sol';
-import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
-import { LiquidityMath } from './uniswap/LiquidityMath.sol';
-import { SwapMath } from './uniswap/SwapMath.sol';
-import { SafeCast } from './uniswap/SafeCast.sol';
-import { TickMath } from './uniswap/TickMath.sol';
-import { TickBitmap } from './uniswap/TickBitmap.sol';
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { LiquidityMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
+import { SwapMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SwapMath.sol';
+import { SafeCast } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { TickBitmapExtended } from './TickBitmapExtended.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
@@ -16,7 +16,7 @@ import { console } from 'hardhat/console.sol';
 
 library SimulateSwap {
     using SafeCast for uint256;
-    using TickBitmap for function(int16) external view returns (uint256);
+    using TickBitmapExtended for function(int16) external view returns (uint256);
 
     struct SwapCache {
         // price at the beginning of the swap

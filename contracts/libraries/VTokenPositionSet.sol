@@ -1,19 +1,20 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { FullMath } from './FullMath.sol';
-import { FixedPoint96 } from './uniswap/FixedPoint96.sol';
-import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
-import { VTokenPosition } from './VTokenPosition.sol';
-import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
+
+import { FixedPoint96 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { SafeCast } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { Account, LiquidationParams } from './Account.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { LiquidityPositionSet, LiquidityChangeParams } from './LiquidityPositionSet.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { SafeCast } from './uniswap/SafeCast.sol';
-import { FullMath } from './FullMath.sol';
+import { SignedFullMath } from './SignedFullMath.sol';
+import { VTokenPosition } from './VTokenPosition.sol';
+import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
+import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
 import { Constants } from '../utils/Constants.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -32,7 +33,7 @@ library VTokenPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using SafeCast for uint256;
-    using FullMath for int256;
+    using SignedFullMath for int256;
 
     error IncorrectUpdate();
     error DeactivationFailed(VTokenAddress);

@@ -1,27 +1,23 @@
 //SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.10;
 
-import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from './VTokenPositionSet.sol';
-import { VTokenPosition } from './VTokenPosition.sol';
-
+import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { SafeCast } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { DepositTokenSet } from './DepositTokenSet.sol';
+import { SignedFullMath } from './SignedFullMath.sol';
+import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
-
-import { DepositTokenSet } from './DepositTokenSet.sol';
-
-import { VPoolWrapper } from '../VPoolWrapper.sol';
-import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { SafeCast } from './uniswap/SafeCast.sol';
-import { FullMath } from './FullMath.sol';
-import { SignedMath } from './SignedMath.sol';
-
-import { TickUtilLib } from './TickUtilLib.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { FixedPoint128 } from './uniswap/FixedPoint128.sol';
-import { Constants } from '../utils/Constants.sol';
+import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { VTokenPosition } from './VTokenPosition.sol';
+import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from './VTokenPositionSet.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
+import { Constants } from '../utils/Constants.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -34,17 +30,16 @@ struct LiquidationParams {
 }
 
 library Account {
+    using Account for Account.Info;
+    using DepositTokenSet for DepositTokenSet.Info;
+    using FullMath for uint256;
+    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using SafeCast for uint256;
+    using SignedFullMath for int256;
+    using SignedMath for int256;
+    using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
     using VTokenPosition for VTokenPosition.Position;
-    using DepositTokenSet for DepositTokenSet.Info;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
-    using VTokenLib for VTokenAddress;
-    using SafeCast for uint256;
-    using FullMath for int256;
-    using FullMath for uint256;
-
-    using SignedMath for int256;
-    using Account for Account.Info;
 
     error IneligibleLimitOrderRemoval();
     error InvalidTransactionNotEnoughMargin(int256 accountMarketValue, int256 totalRequiredMargin);
@@ -145,7 +140,7 @@ library Account {
         VTokenAddress vTokenAddress,
         uint256 amount,
         Constants memory constants
-    ) internal {
+    ) external {
         // collect
         // IERC20(VTokenAddress.wrap(vTokenAddress).realToken()).transferFrom(msg.sender, address(this), amount);
         // vBASE should be an immutable constant
@@ -164,7 +159,7 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         uint256 minRequiredMargin,
         Constants memory constants
-    ) internal {
+    ) external {
         account.tokenDeposits.decreaseBalance(vTokenAddress, amount, constants);
 
         account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
@@ -184,7 +179,7 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         uint256 minRequiredMargin,
         Constants memory constants
-    ) internal {
+    ) external {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             VTokenAddress.wrap(constants.VBASE_ADDRESS),
             true,
@@ -300,7 +295,7 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         uint256 minRequiredMargin,
         Constants memory constants
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
@@ -326,7 +321,7 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         uint256 minRequiredMargin,
         Constants memory constants
-    ) internal returns (int256 notionalValue) {
+    ) external returns (int256 notionalValue) {
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
 
         // mint/burn tokens + fee + funding payment
@@ -365,7 +360,7 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         LiquidationParams memory liquidationParams,
         Constants memory constants
-    ) internal returns (int256 keeperFee, int256 insuranceFundFee) {
+    ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
@@ -494,7 +489,7 @@ library Account {
         LiquidationParams memory liquidationParams,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
-    ) internal returns (int256 insuranceFundFee) {
+    ) external returns (int256 insuranceFundFee) {
         VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
             vTokenAddress,
             false,
@@ -593,7 +588,7 @@ library Account {
         int24 tickUpper,
         uint256 limitOrderFeeAndFixFee,
         Constants memory constants
-    ) internal {
+    ) external {
         int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
         LiquidityPosition.Info storage position = account
             .tokenPositions

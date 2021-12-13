@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.9;
 
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-
 import { FundingPayment } from './FundingPayment.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
-import { console } from 'hardhat/console.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { Constants } from '../utils/Constants.sol';
+
+import { console } from 'hardhat/console.sol';
 
 // extended tick state
 library Tick {

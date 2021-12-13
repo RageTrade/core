@@ -11,8 +11,13 @@ describe('ClearingHouseState', () => {
   const dummyAdd = '0xbb72710011FE06C29B9D5817952482b521812E09';
   before(async () => {
     signers = await hre.ethers.getSigners();
+    const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     state = await (
-      await hre.ethers.getContractFactory('ClearingHouse')
+      await hre.ethers.getContractFactory('ClearingHouse', {
+        libraries: {
+          Account: accountLib.address,
+        },
+      })
     ).deploy(await signers[0].getAddress(), REAL_BASE, dummyAdd);
   });
 
