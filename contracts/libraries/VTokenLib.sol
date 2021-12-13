@@ -6,7 +6,7 @@ import { FixedPoint96 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/lib
 import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { Oracle } from './Oracle.sol';
-import { PriceMath } from './PriceMath.sol'; 
+import { PriceMath } from './PriceMath.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
