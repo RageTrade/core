@@ -204,6 +204,7 @@ describe('Account Library Test Realistic', () => {
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
       twapDuration: 60,
+      whitelisted: true,
       vPoolFactory: vPoolFactory,
     }));
 
@@ -217,6 +218,7 @@ describe('Account Library Test Realistic', () => {
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
       twapDuration: 60,
+      whitelisted: true,
       vPoolFactory: vPoolFactory,
     }));
 

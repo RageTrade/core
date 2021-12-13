@@ -65,7 +65,7 @@ describe('VTokenPositionSet Library', () => {
 
     await VBase.transferOwnership(VPoolFactory.address);
 
-    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken0, oracleAddress, 500, 500, 2, 3, 2);
+    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken0, oracleAddress, 500, 500, 2, 3, 2, false);
 
     const eventFilter = VPoolFactory.filters.PoolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
@@ -76,7 +76,7 @@ describe('VTokenPositionSet Library', () => {
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
-    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken1, oracleAddress, 500, 500, 2, 3, 2);
+    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken1, oracleAddress, 500, 500, 2, 3, 2, false);
 
     const eventFilter1 = VPoolFactory.filters.PoolInitlized();
     const events1 = await VPoolFactory.queryFilter(eventFilter1, 'latest');

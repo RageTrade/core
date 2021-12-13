@@ -87,6 +87,7 @@ describe('Clearing House Senario', () => {
       initialMargin,
       maintainanceMargin,
       twapDuration,
+      false,
     );
 
     const eventFilter = VPoolFactory.filters.PoolInitlized();

@@ -10,6 +10,8 @@ interface IVPoolWrapper {
 
     function maintainanceMarginRatio() external view returns (uint16);
 
+    function whitelisted() external view returns (bool);
+
     function getValuesInside(int24 tickLower, int24 tickUpper)
         external
         view

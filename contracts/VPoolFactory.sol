@@ -61,7 +61,8 @@ contract VPoolFactory {
         uint24 protocolFee,
         uint16 initialMargin,
         uint16 maintainanceMargin,
-        uint32 twapDuration
+        uint32 twapDuration,
+        bool whitelisted
     ) external isAllowed {
         address vTokenAddress = _deployVToken(vTokenName, vTokenSymbol, realToken, oracleAddress);
         address vPool = IUniswapV3Factory(constants.UNISWAP_FACTORY_ADDRESS).createPool(
@@ -78,6 +79,7 @@ contract VPoolFactory {
             initialMargin,
             maintainanceMargin,
             twapDuration,
+            whitelisted,
             constants
         );
         IVPoolWrapper(vPoolWrapper).setOracle(oracleAddress);

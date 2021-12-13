@@ -51,6 +51,7 @@ describe('Market Value and Required Margin', () => {
       maintainanceMarginRatio: 10000,
       twapDuration: 60,
       isVTokenToken0: false,
+      whitelisted: true,
     }));
     vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
       address: vPoolAddress,

@@ -111,6 +111,7 @@ describe('Account Library Test Basic', () => {
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
       twapDuration: 60,
+      whitelisted: true,
       vPoolFactory: vPoolFactory,
     }));
 

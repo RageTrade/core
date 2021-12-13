@@ -18,6 +18,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         uint16 initialMargin;
         uint16 maintainanceMargin;
         uint32 twapDuration;
+        bool whitelisted;
         Constants constants;
     }
     Parameters public override parameters;
@@ -35,6 +36,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         uint16 initialMargin,
         uint16 maintainanceMargin,
         uint32 twapDuration,
+        bool whitelisted,
         Constants memory constants
     ) external returns (address) {
         if (msg.sender != VPoolFactory) revert NotVPoolFactory();
@@ -48,6 +50,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
             initialMargin,
             maintainanceMargin,
             twapDuration,
+            whitelisted,
             constants
         );
         address deployedAddress = Create2.deploy(0, salt, bytecode);

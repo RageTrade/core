@@ -182,4 +182,8 @@ library VTokenLib {
             return vToken.vPoolWrapper(constants).maintainanceMarginRatio();
         }
     }
+
+    function getWhitelisted(VTokenAddress vToken, Constants memory constants) internal view returns (bool) {
+        return vToken.vPoolWrapper(constants).whitelisted();
+    }
 }

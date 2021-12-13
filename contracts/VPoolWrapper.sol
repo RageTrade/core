@@ -55,6 +55,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     uint24 public protocolFee;
     uint256 public accruedProtocolFee;
 
+    bool public whitelisted;
+
     // oracle for real prices
     IOracle public oracle;
 
@@ -75,6 +77,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             initialMarginRatio,
             maintainanceMarginRatio,
             timeHorizon,
+            whitelisted,
             constants
         ) = IVPoolWrapperDeployer(msg.sender).parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);
@@ -87,6 +90,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     // TODO restrict this to governance
     function setOracle(address oracle_) external {
         oracle = IOracle(oracle_);
+    }
+
+    // TODO restrict this to governance
+    function setWhitelisted(bool whitelisted_) external {
+        whitelisted = whitelisted_;
     }
 
     // TODO restrict this to governance
