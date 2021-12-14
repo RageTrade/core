@@ -21,6 +21,8 @@ import { Tick } from './libraries/Tick.sol';
 import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
+import { SignedFullMath } from './libraries/SignedFullMath.sol';
+
 import { Oracle } from './libraries/Oracle.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -29,6 +31,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
     using SignedMath for int256;
+    using SignedFullMath for int256;
+
     using PriceMath for uint160;
     using SafeCast for uint256;
     using Oracle for IUniswapV3Pool;
@@ -143,69 +147,47 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         );
     }
 
-    function swapTokenNotional(int256 vBaseAmount) external returns (int256 vTokenAmount) {
-        (, vTokenAmount) = swap(vBaseAmount > 0, -vBaseAmount.abs(), 0);
-    }
-
-    function swapTokenAmount(int256 vTokenAmount) external returns (int256 vBaseAmount) {
-        (vBaseAmount, ) = swap(vTokenAmount > 0, vTokenAmount.abs(), 0);
-    }
-
     function swapToken(
         int256 amount,
         uint160 sqrtPriceLimit,
         bool isNotional
     ) external returns (int256 vTokenAmount, int256 vBaseAmount) {
-        (vBaseAmount, vTokenAmount) = swap(amount > 0, (isNotional ? -amount.abs() : amount.abs()), sqrtPriceLimit);
+        (vBaseAmount, vTokenAmount) = swap(isNotional, amount, sqrtPriceLimit);
     }
 
     /// @notice swaps token
-    /// @param buyVToken: true for long or close short. false for short or close long.
+    /// @param isNotional: true for long or close short. false for short or close long.
     /// @param amountSpecified: vtoken amount as positive or usdc amount as negative.
     /// @param sqrtPriceLimitX96: price limit
     function swap(
-        bool buyVToken,
+        bool isNotional,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
-        // TODO: remove this after testing
-        // console.log("buyVToken");
-        // console.log(buyVToken);
-        // console.log("amountSpecified");
-        // console.logInt(amountSpecified);
+ 
+        bool buyVToken = amountSpecified>0;
 
-        // console.log("sqrtPriceLimitX96");
-        // console.log(sqrtPriceLimitX96);
-
-        bool zeroForOne = isToken0 != buyVToken;
+        bool zeroForOne = isToken0 != (buyVToken);
 
         if (sqrtPriceLimitX96 == 0) {
             sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
         }
 
-        bool isVTokenSpecified = amountSpecified > 0;
-
         uint256 protocolFeeCollected;
         /// @dev if specified dollars then apply the protocol fee before swap
-        if (amountSpecified < 0) {
-            protocolFeeCollected = (uint256(-amountSpecified) * protocolFee) / 1e6;
-            if (buyVToken) {
-                /// @dev buy vtoken with less vbase (consumes vbase)
-                amountSpecified += int256(protocolFeeCollected);
-            } else {
-                /// @dev sell vtoken with more vbase (gives vbase)
-                amountSpecified -= int256(protocolFeeCollected);
-            }
-        }
-
-        if (buyVToken) {
-            /// @dev trader is buying vtoken then exact output
-            if (amountSpecified > 0) {
-                amountSpecified = -amountSpecified;
-            } else {
-                amountSpecified = (-amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
+        if (isNotional) {            
+            protocolFeeCollected = (uint256(amountSpecified.abs()) * protocolFee) / 1e6;
+            amountSpecified -= int256(protocolFeeCollected);
+            if(buyVToken){
+                amountSpecified = (amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
             }
         } else {
+            amountSpecified = -amountSpecified;
+        }
+
+
+
+        if(!buyVToken) {
             /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
             amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee - extendedFee);
         }
@@ -249,8 +231,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         /// @dev if specified vtoken then apply the protocol fee after swap
-        if (isVTokenSpecified) {
-            protocolFeeCollected = (uint256(vBaseIn.abs()) * protocolFee) / 1e6;
+        if (!isNotional) {
+            protocolFeeCollected =uint256(vBaseIn.abs().mulDiv(protocolFee,1e6));
         }
 
         /// @dev user pays protocol fee so add it as in
@@ -262,6 +244,119 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         /// @dev burn the tokens received from the swap
         _vBurn();
     }
+
+    // /// @notice swaps token
+    // /// @param buyVToken: true for long or close short. false for short or close long.
+    // /// @param amountSpecified: vtoken amount as positive or usdc amount as negative.
+    // /// @param sqrtPriceLimitX96: price limit
+    // function swap(
+    //     bool buyVToken,
+    //     int256 amountSpecified,
+    //     uint160 sqrtPriceLimitX96
+    // ) public returns (int256 vBaseIn, int256 vTokenIn) {
+    //     // TODO: remove this after testing
+    //     // console.log("buyVToken");
+    //     // console.log(buyVToken);
+    //     // console.log("amountSpecified");
+    //     // console.logInt(amountSpecified);
+
+    //     // console.log("sqrtPriceLimitX96");
+    //     // console.log(sqrtPriceLimitX96);
+
+    //     /// @dev - 4 cases - Exact token out (isNotional false, amount +ve) | Exact Token In (isNotional false amount -ve)
+    //     /// @dev - Exact Notional Out (isNotinal true, amount -ve) | Exact Notional In (isNotional true, amount +ve)
+
+    //     bool zeroForOne = isToken0 != buyVToken;
+
+    //     if (sqrtPriceLimitX96 == 0) {
+    //         sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+    //     }
+
+    //     bool isVTokenSpecified = amountSpecified > 0;
+
+    //     uint256 protocolFeeCollected;
+    //     /// @dev if specified dollars then apply the protocol fee before swap
+    //     if (amountSpecified < 0) {
+    //         protocolFeeCollected = (uint256(-amountSpecified) * protocolFee) / 1e6;
+    //         if (buyVToken) {
+    //             /// @dev buy vtoken with less vbase (consumes vbase)
+    //             amountSpecified += int256(protocolFeeCollected);
+    //         } else {
+    //             /// @dev sell vtoken with more vbase (gives vbase)
+    //             amountSpecified -= int256(protocolFeeCollected);
+    //         }
+    //     }
+
+    //     console.log("1");
+    //     console.logInt(amountSpecified);
+
+    //     if (buyVToken) {
+    //         /// @dev trader is buying vtoken then exact output
+    //         if (amountSpecified > 0) {
+    //             amountSpecified = -amountSpecified;
+    //         } else {
+    //             amountSpecified = (-amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
+    //         }
+    //     } else {
+    //         /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
+    //         amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee - extendedFee);
+    //     }
+
+    //     console.log("2");
+    //     console.logInt(amountSpecified);
+
+    //     {
+    //         // TODO: remove this after testing
+    //         // if (amountSpecified > 0) {
+    //         //     console.log('amountSpecified', uint256(amountSpecified));
+    //         // } else {
+    //         //     console.log('amountSpecified -', uint256(-amountSpecified));
+    //         // }
+    //         /// @dev updates global and tick states
+    //         (int256 amount0_simulated, int256 amount1_simulated) = vPool.simulateSwap(
+    //             zeroForOne,
+    //             amountSpecified,
+    //             sqrtPriceLimitX96,
+    //             _onSwapSwap
+    //         );
+
+    //         /// @dev execute trade on uniswap
+    //         (int256 amount0, int256 amount1) = vPool.swap(
+    //             address(this),
+    //             zeroForOne,
+    //             amountSpecified,
+    //             sqrtPriceLimitX96,
+    //             ''
+    //         );
+
+    //         // TODO remove this check in production
+    //         assert(amount0_simulated == amount0 && amount1_simulated == amount1);
+
+    //         (vBaseIn, vTokenIn) = vToken.flip(amount0, amount1, constants);
+    //     }
+
+    //     if (buyVToken) {
+    //         vBaseIn = (vBaseIn * int24(1e6 - uniswapFee)) / int24(1e6 - uniswapFee - extendedFee); // negative
+    //     } else {
+    //         /// @dev de-inflate
+    //         vBaseIn = (vBaseIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 - 1; // negative
+    //         vTokenIn = (vTokenIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 + 1; // positive
+    //     }
+
+    //     /// @dev if specified vtoken then apply the protocol fee after swap
+    //     if (isVTokenSpecified) {
+    //         protocolFeeCollected = (uint256(vBaseIn.abs()) * protocolFee) / 1e6;
+    //     }
+
+    //     /// @dev user pays protocol fee so add it as in
+    //     vBaseIn += int256(protocolFeeCollected);
+
+    //     /// @dev increment the accrual variable
+    //     accruedProtocolFee += protocolFeeCollected;
+
+    //     /// @dev burn the tokens received from the swap
+    //     _vBurn();
+    // }
 
     function _onSwapSwap(
         bool zeroForOne,
