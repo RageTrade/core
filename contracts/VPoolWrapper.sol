@@ -164,8 +164,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
- 
-        bool buyVToken = amountSpecified>0;
+        bool buyVToken = amountSpecified > 0;
 
         bool zeroForOne = isToken0 != (buyVToken);
 
@@ -175,25 +174,22 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         uint256 protocolFeeCollected;
         /// @dev if specified dollars then apply the protocol fee before swap
-        if (isNotional) {            
-            protocolFeeCollected = uint256(amountSpecified.abs().mulDiv(protocolFee,1e6));
+        if (isNotional) {
+            protocolFeeCollected = uint256(amountSpecified.abs().mulDiv(protocolFee, 1e6));
             amountSpecified -= int256(protocolFeeCollected);
-            if(buyVToken){
-                amountSpecified = amountSpecified.mulDiv(1e6 - uniswapFee - extendedFee,1e6 - uniswapFee);
+            if (buyVToken) {
+                amountSpecified = amountSpecified.mulDiv(1e6 - uniswapFee - extendedFee, 1e6 - uniswapFee);
             }
         } else {
             amountSpecified = -amountSpecified;
         }
 
-
-
-        if(!buyVToken) {
+        if (!buyVToken) {
             /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
-            amountSpecified = amountSpecified.mulDiv(1e6,1e6 - uniswapFee - extendedFee);
+            amountSpecified = amountSpecified.mulDiv(1e6, 1e6 - uniswapFee - extendedFee);
         }
 
         {
-
             (int256 amount0_simulated, int256 amount1_simulated) = vPool.simulateSwap(
                 zeroForOne,
                 amountSpecified,
@@ -217,16 +213,16 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         if (buyVToken) {
-            vBaseIn = vBaseIn.mulDiv(1e6 - uniswapFee,1e6 - uniswapFee - extendedFee); // negative
+            vBaseIn = vBaseIn.mulDiv(1e6 - uniswapFee, 1e6 - uniswapFee - extendedFee); // negative
         } else {
             /// @dev de-inflate
-            vBaseIn = vBaseIn.mulDiv(1e6 - uniswapFee - extendedFee,1e6) - 1; // negative
-            vTokenIn = vTokenIn.mulDiv(1e6 - uniswapFee - extendedFee,1e6) + 1; // positive
+            vBaseIn = vBaseIn.mulDiv(1e6 - uniswapFee - extendedFee, 1e6) - 1; // negative
+            vTokenIn = vTokenIn.mulDiv(1e6 - uniswapFee - extendedFee, 1e6) + 1; // positive
         }
 
         /// @dev if specified vtoken then apply the protocol fee after swap
         if (!isNotional) {
-            protocolFeeCollected =uint256(vBaseIn.abs().mulDiv(protocolFee,1e6));
+            protocolFeeCollected = uint256(vBaseIn.abs().mulDiv(protocolFee, 1e6));
         }
 
         /// @dev user pays protocol fee so add it as in
