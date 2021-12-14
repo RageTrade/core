@@ -12,6 +12,8 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { Constants } from '../utils/Constants.sol';
 
+import { console } from 'hardhat/console.sol';
+
 struct LiquidityChangeParams {
     int24 tickLower;
     int24 tickUpper;
@@ -231,7 +233,7 @@ library LiquidityPositionSet {
 
             position = set.positions[set.active[0]];
 
-            set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustments);
+            set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustmentsCurrent);
 
             balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
             balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;

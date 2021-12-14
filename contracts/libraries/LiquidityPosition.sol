@@ -147,12 +147,12 @@ library LiquidityPosition {
     }
 
     function netPosition(Info storage position, IVPoolWrapper wrapper) internal view returns (int256) {
-        (, int256 sumBInside, , , ) = wrapper.getValuesInside(position.tickLower, position.tickUpper);
-        return position.netPosition(sumBInside);
+        (, int256 sumBInsideX128, , , ) = wrapper.getValuesInside(position.tickLower, position.tickUpper);
+        return position.netPosition(sumBInsideX128);
     }
 
-    function netPosition(Info storage position, int256 sumBInside) internal view returns (int256) {
-        return (sumBInside - position.sumBInsideLast) * int128(position.liquidity);
+    function netPosition(Info storage position, int256 sumBInsideX128) internal view returns (int256) {
+        return (sumBInsideX128 - position.sumBInsideLast).mulDiv(position.liquidity, FixedPoint128.Q128);
     }
 
     function unrealizedFundingPayment(
