@@ -341,15 +341,6 @@ library VTokenPositionSet {
             wrapper,
             balanceAdjustments
         );
-        // TODO: remove this after testing
-        console.log('Token Amount Out:');
-        console.logInt(balanceAdjustments.vTokenIncrease);
-
-        console.log('VBase Amount Out:');
-        console.logInt(balanceAdjustments.vBaseIncrease);
-
-        console.log('Net Trader Position Increase:');
-        console.logInt(balanceAdjustments.traderPositionIncrease);
 
         set.update(balanceAdjustments, vTokenAddress, constants);
 
