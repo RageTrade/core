@@ -118,7 +118,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: BigNumber.from(1n<<128n),
+        sumBInside: BigNumber.from(1n << 128n),
       });
 
       expect(await test.netPosition()).to.eq(1, '1*1');
@@ -131,7 +131,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: BigNumber.from(1n<<128n).mul(-1),
+        sumBInside: BigNumber.from(1n << 128n).mul(-1),
       });
 
       expect(await test.netPosition()).to.eq(-1, '1*-1');
