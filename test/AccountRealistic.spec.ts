@@ -101,9 +101,18 @@ describe('Account Library Test Realistic', () => {
     });
   }
 
+  function setWrapperValuesInside(sumBInside: BigNumberish) {
+    vPoolWrapperFake.getValuesInside.returns([0, sumBInside, 0, 0, 0]);
+  }
+
   async function checkTokenBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
     const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
     expect(vTokenPosition.balance).to.eq(vTokenBalance);
+  }
+
+  async function checkTraderPosition(vTokenAddress: string, traderPosition: BigNumberish) {
+    const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
+    expect(vTokenPosition.netTraderPosition).to.eq(traderPosition);
   }
 
   async function checkDepositBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
@@ -124,6 +133,37 @@ describe('Account Library Test Realistic', () => {
     );
     if (typeof expectedAccountMarketValue !== 'undefined') expect(accountMarketValue).to.eq(expectedAccountMarketValue);
     if (typeof expectedRequiredMargin !== 'undefined') expect(requiredMargin).to.eq(expectedRequiredMargin);
+  }
+
+  async function calculateNotionalAmountClosed(_vTokenAddress: string, _price: number) {
+    const liquidityPositionNum = await test.getAccountLiquidityPositionNum(0, _vTokenAddress);
+    const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(_price, vBase, vToken));
+    const priceCurrentX128 = await priceToNearestPriceX128(_price, vBase, vToken);
+
+    let vBaseAmountTotal = BigNumber.from(0);
+    let vTokenAmountTotal = BigNumber.from(0);
+
+    for (let i = 0; i < liquidityPositionNum; i++) {
+      const position = await test.getAccountLiquidityPositionDetails(0, _vTokenAddress, i);
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
+        position.tickLower,
+        sqrtPriceCurrent,
+        position.tickUpper,
+        position.liquidity,
+        false,
+        vBase,
+        vToken,
+      );
+
+      vBaseAmountTotal = vBaseAmountTotal.add(vBaseAmount);
+      vTokenAmountTotal = vTokenAmountTotal.add(vTokenAmount);
+    }
+
+    let notionalAmountClosed = vTokenAmountTotal
+      .mul(priceCurrentX128)
+      .div(1n << 128n)
+      .add(vBaseAmountTotal);
+    return { vBaseAmountTotal, vTokenAmountTotal, notionalAmountClosed };
   }
 
   async function checkLiquidityPositionNum(vTokenAddress: string, num: BigNumberish) {
@@ -400,106 +440,11 @@ describe('Account Library Test Realistic', () => {
       await checkTokenBalance(vBaseAddress, baseBalance.mul(-1));
     });
   });
-  describe('#Trade- Liquidity Change', () => {
-    let tickLower:number;
-    let tickUpper:number;
-    let liquidity:BigNumber;
-    before(async () => {
-      await changeVPoolPriceToNearestTick(4000);
-      await changeVPoolWrapperFakePrice(4000);
-      tickLower = await priceToTick(4500, vBase, vToken);
-      tickLower -= tickLower % 10;
-      tickUpper = await priceToTick(3500, vBase, vToken);
-      tickUpper -= tickUpper % 10;
-    });
-
-    beforeEach(async() => {
-      liquidity = tokenAmount(100000,6);
-      await test.addMargin(0, vBaseAddress, tokenAmount(100000, 6), constants);
-      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
-    });
-
-    afterEach(async() => {
-      await test.cleanPositions(0,constants);
-      await test.cleanDeposits(0, constants);
-    })
-    it('Successful Add', async () => {
-      const tick = await priceToTick(4000, vBase, vToken);
-      const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
-
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        false,
-        vBase,
-        vToken,
-      );
-      console.log(vBaseAmount.toBigInt(), vTokenAmount.toBigInt());
-      await checkTokenBalance(vTokenAddress, vTokenAmount.mul(-1));
-      await checkTokenBalance(vBaseAddress, vBaseAmount.mul(-1));
-      await checkLiquidityPositionNum(vTokenAddress, 1);
-      await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity);
-      await checkAccountMarketValueAndRequiredMargin(false, liquidity);
-    });
-
-    it('Successful Remove (No Net Position)', async () => {
-
-      liquidity = liquidity.mul(-1);
-      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
-
-      await checkTokenBalance(vTokenAddress, 0);
-      await checkTokenBalance(vBaseAddress, 0);
-      await checkLiquidityPositionNum(vTokenAddress, 0);
-      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
-    });
-
-    it('Successful Remove And Close (No Net Position)', async () => {
-
-      liquidity = liquidity.mul(-1);
-      console.log(liquidity.toBigInt());
-      await liquidityChange(tickLower, tickUpper, liquidity, true, 0);
-      await checkTokenBalance(vTokenAddress, 0);
-      await checkTokenBalance(vBaseAddress, 0);
-      await checkLiquidityPositionNum(vTokenAddress, 0);
-      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
-    });
-
-    // it('Successful Remove', async () => {
-    //   const tick = await priceToTick(4000, vBase, vToken);
-    //   const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
-
-    //   const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-    //   const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-
-    //   liquidity = liquidity.mul(-1);
-    //   await liquidityChange(tickLower, tickUpper, liquidity, true, 0);
-    //   const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-    //     tickLower,
-    //     sqrtPriceCurrent,
-    //     tickUpper,
-    //     liquidity,
-    //     false,
-    //     vBase,
-    //     vToken,
-    //   );
-    //   await checkTokenBalance(vTokenAddress, startTokenDetails.balance);
-    //   await checkTokenBalance(vBaseAddress, startBaseDetails.balance);
-    //   await checkLiquidityPositionNum(vTokenAddress, 1);
-    //   await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity.mul(-1));
-    //   await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
-    // });
-    
-    after(async () => {
-      await test.cleanPositions(0, constants);
-      await test.cleanDeposits(0, constants);
-    });
-  });
 
   describe('#Token Liquidation', () => {
     describe('#Token Position Liquidation Helpers', () => {
       it('Liquidation at 4000 ', async () => {
+        await changeVPoolPriceToNearestTick(4000);
         const priceX128 = await priceToNearestPriceX128(4000, vBase, vToken);
         const tokensToTrade = tokenAmount(-1, 18);
         const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
@@ -1039,8 +984,334 @@ describe('Account Library Test Realistic', () => {
     });
   });
 
-  // describe('#Range Liquidation', () => {
-  //   it('Single Range Liquidation');
-  //   it('Multiple Range Liquidation');
-  // });
+  describe('#Multiple Range Position Liquidation', () => {
+    let tickLower: number;
+    let tickUpper: number;
+    let tickLower1: number;
+    let tickUpper1: number;
+    let liquidity: BigNumberish;
+    let price: number;
+    before(async () => {
+      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower -= tickLower % 10;
+      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper -= tickUpper % 10;
+      tickLower1 = tickLower - 100;
+      tickUpper1 = tickUpper + 100;
+      liquidity = tokenAmount(1, 18).div(2);
+    });
+    beforeEach(async () => {
+      await changeVPoolWrapperFakePrice(3000);
+      await changeVPoolPriceToNearestTick(3000);
+      await test.addMargin(0, vTokenAddress, tokenAmount(1250000, 6), constants);
+      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+      await liquidityChange(tickLower1, tickUpper1, liquidity, false, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 2);
+      await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity);
+      await checkLiquidityPositionDetails(vTokenAddress, 1, tickLower1, tickUpper1, 0, liquidity);
+    });
+    it('Liquidation - Fail (Account Above Water)', async () => {
+      const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(
+        0,
+        false,
+        minRequiredMargin,
+        constants,
+      );
+      expect(test.liquidateLiquidityPositions(0, liquidationParams, constants)).to.be.revertedWith(
+        'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
+      );
+    });
+    it('Liquidation - Success (Account Positive)', async () => {
+      price = 4100;
+      await changeVPoolWrapperFakePrice(price);
+      await changeVPoolPriceToNearestTick(price);
+      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+
+      const { keeperFee, insuranceFundFee } = await test.callStatic.liquidateLiquidityPositions(
+        0,
+        liquidationParams,
+        constants,
+      );
+
+      const { vBaseAmountTotal, vTokenAmountTotal, notionalAmountClosed } = await calculateNotionalAmountClosed(
+        vTokenAddress,
+        price,
+      );
+
+      await test.liquidateLiquidityPositions(0, liquidationParams, constants);
+      const liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      const expectedKeeperFee = liquidationFee
+        .mul(1e4 - liquidationParams.insuranceFundFeeShareBps)
+        .div(1e4)
+        .add(liquidationParams.fixFee);
+      const expectedInsuranceFundFee = liquidationFee.sub(keeperFee).add(liquidationParams.fixFee);
+
+      expect(keeperFee).to.eq(expectedKeeperFee);
+      expect(insuranceFundFee).to.eq(expectedInsuranceFundFee);
+      await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmountTotal));
+      await checkTokenBalance(
+        vBaseAddress,
+        startBaseDetails.balance.add(vBaseAmountTotal).sub(liquidationFee).sub(liquidationParams.fixFee),
+      );
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+    });
+
+    it('Liquidation - Success (Account Positive to Negative)', async () => {
+      price = 4550;
+      await changeVPoolWrapperFakePrice(price);
+      await changeVPoolPriceToNearestTick(price);
+      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+      let startAccountMarketValue;
+      {
+        const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(
+          0,
+          false,
+          minRequiredMargin,
+          constants,
+        );
+        startAccountMarketValue = accountMarketValue;
+      }
+
+      const { keeperFee, insuranceFundFee } = await test.callStatic.liquidateLiquidityPositions(
+        0,
+        liquidationParams,
+        constants,
+      );
+
+      const { vBaseAmountTotal, vTokenAmountTotal, notionalAmountClosed } = await calculateNotionalAmountClosed(
+        vTokenAddress,
+        price,
+      );
+
+      await test.liquidateLiquidityPositions(0, liquidationParams, constants);
+
+      const liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      const expectedKeeperFee = liquidationFee
+        .mul(1e4 - liquidationParams.insuranceFundFeeShareBps)
+        .div(1e4)
+        .add(liquidationParams.fixFee);
+      const expectedInsuranceFundFee = startAccountMarketValue.sub(keeperFee);
+
+      expect(keeperFee).to.eq(expectedKeeperFee);
+      expect(insuranceFundFee).to.eq(expectedInsuranceFundFee);
+      expect(insuranceFundFee.abs()).lt(keeperFee);
+      await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmountTotal));
+      await checkTokenBalance(
+        vBaseAddress,
+        startBaseDetails.balance.add(vBaseAmountTotal).sub(expectedInsuranceFundFee.add(expectedKeeperFee)),
+      );
+      await checkAccountMarketValueAndRequiredMargin(false, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+    });
+
+    it('Liquidation - Success (Account Negative)', async () => {
+      price = 4700;
+      await changeVPoolWrapperFakePrice(price);
+      await changeVPoolPriceToNearestTick(price);
+      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+      let startAccountMarketValue;
+      {
+        const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(
+          0,
+          false,
+          minRequiredMargin,
+          constants,
+        );
+        startAccountMarketValue = accountMarketValue;
+      }
+
+      const { keeperFee, insuranceFundFee } = await test.callStatic.liquidateLiquidityPositions(
+        0,
+        liquidationParams,
+        constants,
+      );
+
+      const { vBaseAmountTotal, vTokenAmountTotal, notionalAmountClosed } = await calculateNotionalAmountClosed(
+        vTokenAddress,
+        price,
+      );
+
+      await test.liquidateLiquidityPositions(0, liquidationParams, constants);
+
+      const liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      const expectedKeeperFee = liquidationFee
+        .mul(1e4 - liquidationParams.insuranceFundFeeShareBps)
+        .div(1e4)
+        .add(liquidationParams.fixFee);
+      const expectedInsuranceFundFee = startAccountMarketValue.sub(keeperFee);
+
+      expect(keeperFee).to.eq(expectedKeeperFee);
+      expect(insuranceFundFee).to.eq(expectedInsuranceFundFee);
+      expect(insuranceFundFee.abs()).gt(keeperFee);
+      await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmountTotal));
+      await checkTokenBalance(
+        vBaseAddress,
+        startBaseDetails.balance.add(vBaseAmountTotal).sub(expectedInsuranceFundFee.add(expectedKeeperFee)),
+      );
+      await checkAccountMarketValueAndRequiredMargin(false, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+    });
+
+    afterEach(async () => {
+      await test.cleanPositions(0, constants);
+      await test.cleanDeposits(0, constants);
+    });
+  });
+
+  describe('#Trade- Liquidity Change', () => {
+    let tickLower: number;
+    let tickUpper: number;
+    let liquidity: BigNumber;
+    let netSumB: BigNumber;
+    before(async () => {
+      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower -= tickLower % 10;
+      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper -= tickUpper % 10;
+      netSumB = BigNumber.from(0);
+    });
+
+    beforeEach(async () => {
+      await changeVPoolPriceToNearestTick(4000);
+      await changeVPoolWrapperFakePrice(4000);
+      liquidity = tokenAmount(100000, 6);
+      await test.addMargin(0, vBaseAddress, tokenAmount(100000, 6), constants);
+      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+    });
+
+    afterEach(async () => {
+      //Makes sumBInsideLast = 0
+      setWrapperValuesInside(0);
+      await liquidityChange(tickLower, tickUpper, 1, false, 0);
+
+      await test.cleanPositions(0, constants);
+      await test.cleanDeposits(0, constants);
+    });
+    it('Successful Add', async () => {
+      const tick = await priceToTick(4000, vBase, vToken);
+      const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
+
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
+        tickLower,
+        sqrtPriceCurrent,
+        tickUpper,
+        liquidity,
+        false,
+        vBase,
+        vToken,
+      );
+      await checkTokenBalance(vTokenAddress, vTokenAmount.mul(-1));
+      await checkTokenBalance(vBaseAddress, vBaseAmount.mul(-1));
+      await checkLiquidityPositionNum(vTokenAddress, 1);
+      await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity);
+      await checkAccountMarketValueAndRequiredMargin(false, liquidity);
+    });
+
+    it('Successful Remove (No Net Position)', async () => {
+      liquidity = liquidity.mul(-1);
+      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+
+      await checkTokenBalance(vTokenAddress, 0);
+      await checkTokenBalance(vBaseAddress, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    });
+
+    it('Successful Remove And Close (No Net Position)', async () => {
+      liquidity = liquidity.mul(-1);
+      await liquidityChange(tickLower, tickUpper, liquidity, true, 0);
+
+      await checkTokenBalance(vTokenAddress, 0);
+      await checkTokenBalance(vBaseAddress, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    });
+
+    it('Successful Remove (Non-Zero Net Position)', async () => {
+      const price = 4300;
+      await changeVPoolPriceToNearestTick(price);
+      await changeVPoolWrapperFakePrice(price);
+      const tick = await priceToTick(price, vBase, vToken);
+      const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
+
+      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+      const position = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, 0);
+
+      liquidity = liquidity.mul(-1);
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
+        tickLower,
+        sqrtPriceCurrent,
+        tickUpper,
+        liquidity,
+        false,
+        vBase,
+        vToken,
+      );
+      netSumB = startTokenDetails.balance
+        .sub(vTokenAmount)
+        .mul(-1)
+        .mul(1n << 128n)
+        .div(liquidity);
+      setWrapperValuesInside(netSumB);
+
+      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+
+      await checkTokenBalance(vTokenAddress, startTokenDetails.balance.sub(vTokenAmount));
+      await checkTokenBalance(vBaseAddress, startBaseDetails.balance.sub(vBaseAmount));
+      await checkTraderPosition(vTokenAddress, netSumB.mul(position.liquidity).div(1n << 128n));
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+      // await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    });
+
+    it('Successful Remove And Close (Non-Zero Net Position)', async () => {
+      const price = 4300;
+      await changeVPoolPriceToNearestTick(price);
+      await changeVPoolWrapperFakePrice(price);
+      const tick = await priceToTick(price, vBase, vToken);
+      const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
+      const priceX128Current = await priceToNearestPriceX128(price, vBase, vToken);
+
+      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+      const position = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, 0);
+
+      liquidity = liquidity.mul(-1);
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
+        tickLower,
+        sqrtPriceCurrent,
+        tickUpper,
+        liquidity,
+        false,
+        vBase,
+        vToken,
+      );
+      netSumB = startTokenDetails.balance
+        .sub(vTokenAmount)
+        .mul(-1)
+        .mul(1n << 128n)
+        .div(liquidity);
+
+      setWrapperValuesInside(netSumB);
+
+      const netTraderPosition = netSumB.mul(position.liquidity).div(1n << 128n);
+
+      await liquidityChange(tickLower, tickUpper, liquidity, true, 0);
+
+      const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
+      //TODO: !!!!! Check how to fix this !!!!!
+      expect(vTokenPosition.balance.abs()).lte(1);
+      expect(vTokenPosition.netTraderPosition.abs()).lte(1);
+
+      await checkTokenBalance(
+        vBaseAddress,
+        startBaseDetails.balance.sub(vBaseAmount).add(netTraderPosition.mul(priceX128Current).div(1n << 128n)),
+      );
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+      // await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    });
+  });
 });
