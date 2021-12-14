@@ -401,42 +401,96 @@ describe('Account Library Test Realistic', () => {
     });
   });
   describe('#Trade- Liquidity Change', () => {
+    let tickLower:number;
+    let tickUpper:number;
+    let liquidity:BigNumber;
     before(async () => {
       await changeVPoolPriceToNearestTick(4000);
       await changeVPoolWrapperFakePrice(4000);
-      await test.addMargin(0, vBaseAddress, tokenAmount(100000, 6), constants);
+      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower -= tickLower % 10;
+      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper -= tickUpper % 10;
     });
+
+    beforeEach(async() => {
+      liquidity = tokenAmount(100000,6);
+      await test.addMargin(0, vBaseAddress, tokenAmount(100000, 6), constants);
+      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+    });
+
+    afterEach(async() => {
+      await test.cleanPositions(0,constants);
+      await test.cleanDeposits(0, constants);
+    })
     it('Successful Add', async () => {
       const tick = await priceToTick(4000, vBase, vToken);
       const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
 
-      let tickLower = await priceToTick(4500, vBase, vToken);
-      tickLower -= tickLower % 10;
-      let tickUpper = await priceToTick(3500, vBase, vToken);
-      tickUpper -= tickUpper % 10;
-
-      const liquidity = maxLiquidityForAmounts(
-        sqrtPriceCurrent,
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
         tickLower,
+        sqrtPriceCurrent,
         tickUpper,
-        tokenAmount(400, 6),
-        tokenAmount(1, 18).div(10),
-        true,
+        liquidity,
+        false,
         vBase,
         vToken,
       );
-      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
-
-      // const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
-      // console.log(vTokenPosition.balance.toBigInt());
-      // const vBasePosition = await test.getAccountTokenDetails(0, vBaseAddress);
-      // console.log(vBasePosition.balance.toBigInt());
-      // await checkTokenBalance(vTokenAddress, '-5');
-      // await checkTokenBalance(vBaseAddress, -20000);
+      console.log(vBaseAmount.toBigInt(), vTokenAmount.toBigInt());
+      await checkTokenBalance(vTokenAddress, vTokenAmount.mul(-1));
+      await checkTokenBalance(vBaseAddress, vBaseAmount.mul(-1));
       await checkLiquidityPositionNum(vTokenAddress, 1);
       await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity);
-      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6), 42752433);
+      await checkAccountMarketValueAndRequiredMargin(false, liquidity);
     });
+
+    it('Successful Remove (No Net Position)', async () => {
+
+      liquidity = liquidity.mul(-1);
+      await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+
+      await checkTokenBalance(vTokenAddress, 0);
+      await checkTokenBalance(vBaseAddress, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    });
+
+    it('Successful Remove And Close (No Net Position)', async () => {
+
+      liquidity = liquidity.mul(-1);
+      console.log(liquidity.toBigInt());
+      await liquidityChange(tickLower, tickUpper, liquidity, true, 0);
+      await checkTokenBalance(vTokenAddress, 0);
+      await checkTokenBalance(vBaseAddress, 0);
+      await checkLiquidityPositionNum(vTokenAddress, 0);
+      await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    });
+
+    // it('Successful Remove', async () => {
+    //   const tick = await priceToTick(4000, vBase, vToken);
+    //   const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
+
+    //   const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+    //   const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+
+    //   liquidity = liquidity.mul(-1);
+    //   await liquidityChange(tickLower, tickUpper, liquidity, true, 0);
+    //   const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
+    //     tickLower,
+    //     sqrtPriceCurrent,
+    //     tickUpper,
+    //     liquidity,
+    //     false,
+    //     vBase,
+    //     vToken,
+    //   );
+    //   await checkTokenBalance(vTokenAddress, startTokenDetails.balance);
+    //   await checkTokenBalance(vBaseAddress, startBaseDetails.balance);
+    //   await checkLiquidityPositionNum(vTokenAddress, 1);
+    //   await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity.mul(-1));
+    //   await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
+    // });
+    
     after(async () => {
       await test.cleanPositions(0, constants);
       await test.cleanDeposits(0, constants);
@@ -802,7 +856,7 @@ describe('Account Library Test Realistic', () => {
     });
   });
 
-  describe('#Range Position Liquidation', () => {
+  describe('#Single Range Position Liquidation', () => {
     let tickLower: number;
     let tickUpper: number;
     let liquidity: BigNumberish;
