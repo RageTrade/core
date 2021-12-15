@@ -19,6 +19,16 @@ contract VBase is IVBase, ERC20('Virtual Base Token', 'vBase'), Ownable {
         _decimals = ERC20(realBase_).decimals();
     }
 
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal view override {
+        if (!(from == address(0) || to == address(0) || isAuth[from] || isAuth[to])) {
+            revert Unauthorised();
+        }
+    }
+
     function decimals() public view virtual override returns (uint8) {
         return _decimals;
     }
