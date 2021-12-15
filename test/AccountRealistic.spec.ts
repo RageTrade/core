@@ -92,7 +92,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         input.tickUpper,
         input.liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -150,7 +149,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         position.tickUpper,
         position.liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -773,7 +771,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -850,7 +847,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -899,7 +895,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -953,7 +948,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -1199,7 +1193,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -1247,7 +1240,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
@@ -1285,7 +1277,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         tickUpper,
         liquidity,
-        false,
         vBase,
         vToken,
       );
