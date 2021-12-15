@@ -175,10 +175,10 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         uint256 protocolFeeCollected;
         /// @dev if specified dollars then apply the protocol fee before swap
         if (isNotional) {
-            protocolFeeCollected = uint256(amountSpecified.abs().mulDiv(protocolFee, 1e6));
+            protocolFeeCollected = (uint256(amountSpecified.abs()) * protocolFee) / 1e6;
             amountSpecified -= int256(protocolFeeCollected);
             if (buyVToken) {
-                amountSpecified = amountSpecified.mulDiv(1e6 - uniswapFee - extendedFee, 1e6 - uniswapFee);
+                amountSpecified = (amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
             }
         } else {
             amountSpecified = -amountSpecified;
@@ -186,7 +186,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         if (!buyVToken) {
             /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
-            amountSpecified = amountSpecified.mulDiv(1e6, 1e6 - uniswapFee - extendedFee);
+            amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee - extendedFee);
         }
 
         {
@@ -213,11 +213,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         if (buyVToken) {
-            vBaseIn = vBaseIn.mulDiv(1e6 - uniswapFee, 1e6 - uniswapFee - extendedFee); // negative
+            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee)) / int24(1e6 - uniswapFee - extendedFee); // negative
         } else {
             /// @dev de-inflate
-            vBaseIn = vBaseIn.mulDiv(1e6 - uniswapFee - extendedFee, 1e6) - 1; // negative
-            vTokenIn = vTokenIn.mulDiv(1e6 - uniswapFee - extendedFee, 1e6) + 1; // positive
+            vBaseIn = (vBaseIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 - 1; // negative
+            vTokenIn = (vTokenIn * int24(1e6 - uniswapFee - extendedFee)) / 1e6 + 1; // positive
         }
 
         /// @dev if specified vtoken then apply the protocol fee after swap
