@@ -42,6 +42,7 @@ export function amountsForLiquidity(
   vToken: ContractOrSmock<VToken>,
 ) {
   let roundUp = false;
+  // TODO: uncomment this and fix rounding issues
   // if (liquidity > 0) roundUp = true;
   const liquidityJSBI = JSBI.BigInt(BigNumber.from(liquidity).toString());
   const sqrtPriceLowerJSBI = TickMath.getSqrtRatioAtTick(tickLower);
