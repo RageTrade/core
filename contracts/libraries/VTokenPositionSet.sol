@@ -341,19 +341,12 @@ library VTokenPositionSet {
             wrapper,
             balanceAdjustments
         );
-        // TODO: remove this after testing
-        // console.log('Token Amount Out:');
-        // console.logInt(balanceAdjustments.vTokenIncrease);
-
-        // console.log('VBase Amount Out:');
-        // console.logInt(balanceAdjustments.vBaseIncrease);
-
-        if (liquidityChangeParams.closeTokenPosition && balanceAdjustments.vTokenIncrease > 0) {
-            set.swapTokenAmount(vTokenAddress, -balanceAdjustments.vTokenIncrease, constants);
-            balanceAdjustments.vTokenIncrease = 0;
-        }
 
         set.update(balanceAdjustments, vTokenAddress, constants);
+
+        if (liquidityChangeParams.closeTokenPosition && balanceAdjustments.vTokenIncrease > 0) {
+            set.swapTokenAmount(vTokenAddress, -balanceAdjustments.traderPositionIncrease, constants);
+        }
 
         return
             balanceAdjustments.vTokenIncrease.mulDiv(

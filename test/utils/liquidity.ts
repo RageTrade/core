@@ -38,10 +38,12 @@ export function amountsForLiquidity(
   sqrtPriceCurrent: BigNumberish,
   tickUpper: number,
   liquidity: BigNumberish,
-  roundUp: boolean,
   vBase: ContractOrSmock<VBase>,
   vToken: ContractOrSmock<VToken>,
 ) {
+  let roundUp = false;
+  // TODO: uncomment this and fix rounding issues
+  // if (liquidity > 0) roundUp = true;
   const liquidityJSBI = JSBI.BigInt(BigNumber.from(liquidity).toString());
   const sqrtPriceLowerJSBI = TickMath.getSqrtRatioAtTick(tickLower);
   const sqrtPriceUpperJSBI = TickMath.getSqrtRatioAtTick(tickUpper);

@@ -85,10 +85,10 @@ describe('PoolWrapper', () => {
       });
 
       it('buy 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(true, parseEther('1'), 0);
+        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
         expect(vTokenIn.mul(-1)).to.eq(parseEther('1'));
 
-        const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseEther('1'), 0));
+        const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
         if (!vTokenBurnEvent) {
           throw new Error('vTokenBurnEvent not emitted');
         }
@@ -97,10 +97,10 @@ describe('PoolWrapper', () => {
       });
 
       it('buy ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
+        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('2000'), 0);
         expect(vBaseIn).to.eq(parseUsdc('2000'));
 
-        const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
+        const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('2000'), 0));
         if (!vBaseMintEvent) {
           throw new Error('vBaseMintEvent not emitted');
         }
@@ -114,10 +114,10 @@ describe('PoolWrapper', () => {
       });
 
       it('sell 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
+        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('-1'), 0);
         expect(vTokenIn).to.eq(parseEther('1'));
 
-        const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
+        const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('-1'), 0));
         if (!vTokenMintEvent) {
           throw new Error('vTokenMintEvent not emitted');
         }
@@ -130,10 +130,10 @@ describe('PoolWrapper', () => {
       });
 
       it('sell ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(false, parseUsdc('-2000'), 0);
+        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
         expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
 
-        const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseUsdc('-2000'), 0));
+        const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
         if (!vBaseBurnEvent) {
           throw new Error('vBaseMintEvent not emitted');
         }
@@ -179,10 +179,10 @@ describe('PoolWrapper', () => {
       });
 
       it('buy 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(true, parseEther('1'), 0);
+        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
         expect(vTokenIn.mul(-1)).to.eq(parseEther('1'));
 
-        const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseEther('1'), 0));
+        const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
         if (!vTokenBurnEvent) {
           throw new Error('vTokenBurnEvent not emitted');
         }
@@ -191,10 +191,10 @@ describe('PoolWrapper', () => {
       });
 
       it('buy ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
+        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('2000'), 0);
         expect(vBaseIn).to.eq(parseUsdc('2000'));
 
-        const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
+        const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('2000'), 0));
         if (!vBaseMintEvent) {
           throw new Error('vBaseMintEvent not emitted');
         }
@@ -208,10 +208,10 @@ describe('PoolWrapper', () => {
       });
 
       it('sell 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
+        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('-1'), 0);
         expect(vTokenIn).to.eq(parseEther('1'));
 
-        const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
+        const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('-1'), 0));
         if (!vTokenMintEvent) {
           throw new Error('vTokenMintEvent not emitted');
         }
@@ -224,10 +224,10 @@ describe('PoolWrapper', () => {
       });
 
       it('sell ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(false, parseUsdc('-2000'), 0);
+        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
         expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
 
-        const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseUsdc('-2000'), 0));
+        const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
         if (!vBaseBurnEvent) {
           throw new Error('vBaseMintEvent not emitted');
         }
@@ -297,7 +297,7 @@ describe('PoolWrapper', () => {
       it('no tick cross', async () => {
         // buy 50 VTokens, does not cross tick
         const tradeAmount = parseUnits('50', 18);
-        await vPoolWrapper.swap(true, tradeAmount, 0);
+        await vPoolWrapper.swap(false, tradeAmount, 0);
 
         const global = await getGlobal();
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
@@ -316,7 +316,7 @@ describe('PoolWrapper', () => {
       it('single tick cross', async () => {
         // buy 150 VTokens, crosses a tick
         const tradeAmount = parseUnits('150', 18);
-        await vPoolWrapper.swap(true, tradeAmount, 0);
+        await vPoolWrapper.swap(false, tradeAmount, 0);
 
         const global = await getGlobal();
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
@@ -341,7 +341,7 @@ describe('PoolWrapper', () => {
     describe('fee', () => {
       it('buy: no tick cross', async () => {
         // buy VToken worth 50 VBase, does not cross tick
-        const tradeAmount = parseUnits('-50', 18);
+        const tradeAmount = parseUnits('50', 18);
         await vPoolWrapper.swap(true, tradeAmount, 0);
 
         const global = await getGlobal();
@@ -371,7 +371,7 @@ describe('PoolWrapper', () => {
       it('sell: no tick cross', async () => {
         // buy VToken worth 50 VBase, does not cross tick
         const tradeAmount = parseUnits('-50', 18);
-        await vPoolWrapper.swap(false, tradeAmount, 0);
+        await vPoolWrapper.swap(true, tradeAmount, 0);
 
         const global = await getGlobal();
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);

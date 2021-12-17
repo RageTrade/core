@@ -118,7 +118,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: 1,
+        sumBInside: BigNumber.from(1n << 128n),
       });
 
       expect(await test.netPosition()).to.eq(1, '1*1');
@@ -131,7 +131,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: -1,
+        sumBInside: BigNumber.from(1n << 128n).mul(-1),
       });
 
       expect(await test.netPosition()).to.eq(-1, '1*-1');
@@ -290,13 +290,13 @@ describe('LiquidityPosition Library', () => {
   });
 
   async function setWrapperValueInside(val: {
-    tickLower: number;
-    tickUpper: number;
-    sumA?: number;
-    sumBInside?: number;
-    sumFpInside?: number;
-    longsFeeGrowthInside?: number;
-    shortsFeeGrowthInside?: number;
+    tickLower: BigNumberish;
+    tickUpper: BigNumberish;
+    sumA?: BigNumberish;
+    sumBInside?: BigNumberish;
+    sumFpInside?: BigNumberish;
+    longsFeeGrowthInside?: BigNumberish;
+    shortsFeeGrowthInside?: BigNumberish;
   }) {
     const wrapper = await hre.ethers.getContractAt('VPoolWrapperMock', await test.wrapper());
     const existingValues = await wrapper.getValuesInside(val.tickLower, val.tickUpper);

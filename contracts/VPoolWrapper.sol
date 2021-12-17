@@ -21,6 +21,8 @@ import { Tick } from './libraries/Tick.sol';
 import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
+import { SignedFullMath } from './libraries/SignedFullMath.sol';
+
 import { Oracle } from './libraries/Oracle.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -29,6 +31,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
     using SignedMath for int256;
+    using SignedFullMath for int256;
+
     using PriceMath for uint160;
     using SafeCast for uint256;
     using Oracle for IUniswapV3Pool;
@@ -143,81 +147,49 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         );
     }
 
-    function swapTokenNotional(int256 vBaseAmount) external returns (int256 vTokenAmount) {
-        (, vTokenAmount) = swap(vBaseAmount > 0, -vBaseAmount.abs(), 0);
-    }
-
-    function swapTokenAmount(int256 vTokenAmount) external returns (int256 vBaseAmount) {
-        (vBaseAmount, ) = swap(vTokenAmount > 0, vTokenAmount.abs(), 0);
-    }
-
     function swapToken(
         int256 amount,
         uint160 sqrtPriceLimit,
         bool isNotional
     ) external returns (int256 vTokenAmount, int256 vBaseAmount) {
-        (vBaseAmount, vTokenAmount) = swap(amount > 0, (isNotional ? -amount.abs() : amount.abs()), sqrtPriceLimit);
+        (vBaseAmount, vTokenAmount) = swap(isNotional, amount, sqrtPriceLimit);
     }
 
     /// @notice swaps token
-    /// @param buyVToken: true for long or close short. false for short or close long.
+    /// @param isNotional: true for long or close short. false for short or close long.
     /// @param amountSpecified: vtoken amount as positive or usdc amount as negative.
     /// @param sqrtPriceLimitX96: price limit
     function swap(
-        bool buyVToken,
+        bool isNotional,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
-        // TODO: remove this after testing
-        // console.log("buyVToken");
-        // console.log(buyVToken);
-        // console.log("amountSpecified");
-        // console.logInt(amountSpecified);
+        bool buyVToken = amountSpecified > 0;
 
-        // console.log("sqrtPriceLimitX96");
-        // console.log(sqrtPriceLimitX96);
-
-        bool zeroForOne = isToken0 != buyVToken;
+        bool zeroForOne = isToken0 != (buyVToken);
 
         if (sqrtPriceLimitX96 == 0) {
             sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
         }
 
-        bool isVTokenSpecified = amountSpecified > 0;
-
         uint256 protocolFeeCollected;
         /// @dev if specified dollars then apply the protocol fee before swap
-        if (amountSpecified < 0) {
-            protocolFeeCollected = (uint256(-amountSpecified) * protocolFee) / 1e6;
+        if (isNotional) {
+            protocolFeeCollected = (uint256(amountSpecified.abs()) * protocolFee) / 1e6;
+            amountSpecified -= int256(protocolFeeCollected);
             if (buyVToken) {
-                /// @dev buy vtoken with less vbase (consumes vbase)
-                amountSpecified += int256(protocolFeeCollected);
-            } else {
-                /// @dev sell vtoken with more vbase (gives vbase)
-                amountSpecified -= int256(protocolFeeCollected);
-            }
-        }
-
-        if (buyVToken) {
-            /// @dev trader is buying vtoken then exact output
-            if (amountSpecified > 0) {
-                amountSpecified = -amountSpecified;
-            } else {
-                amountSpecified = (-amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
+                amountSpecified = (amountSpecified * int24(1e6 - uniswapFee - extendedFee)) / int24(1e6 - uniswapFee);
             }
         } else {
+            amountSpecified = -amountSpecified;
+        }
+
+        if (!buyVToken) {
             /// @dev inflate (bcoz trader is selling then uniswap collects fee in vtoken)
             amountSpecified = (amountSpecified * 1e6) / int24(1e6 - uniswapFee - extendedFee);
         }
 
         {
-            // TODO: remove this after testing
-            // if (amountSpecified > 0) {
-            //     console.log('amountSpecified', uint256(amountSpecified));
-            // } else {
-            //     console.log('amountSpecified -', uint256(-amountSpecified));
-            // }
-            /// @dev updates global and tick states
             (int256 amount0_simulated, int256 amount1_simulated) = vPool.simulateSwap(
                 zeroForOne,
                 amountSpecified,
@@ -249,8 +221,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         /// @dev if specified vtoken then apply the protocol fee after swap
-        if (isVTokenSpecified) {
-            protocolFeeCollected = (uint256(vBaseIn.abs()) * protocolFee) / 1e6;
+        if (!isNotional) {
+            protocolFeeCollected = uint256(vBaseIn.abs().mulDiv(protocolFee, 1e6));
         }
 
         /// @dev user pays protocol fee so add it as in
@@ -274,26 +246,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             ? (step.amountIn, step.amountOut)
             : (step.amountOut, step.amountIn);
 
-        // TODO: remove this after testing
-        // console.log('');
-        // if (state.amountSpecifiedRemaining > 0) {
-        //     console.log('state.amountSpecifiedRemaining', uint256(state.amountSpecifiedRemaining));
-        // } else {
-        //     console.log('state.amountSpecifiedRemaining -', uint256(-state.amountSpecifiedRemaining));
-        // }
-        // console.log('step.sqrtPriceNextX96', uint256(step.sqrtPriceNextX96));
-        // if (state.tick > 0) {
-        //     console.log('state.tick', uint24(state.tick));
-        // } else {
-        //     console.log('state.tick -', uint24(-state.tick));
-        // }
-        // if (step.tickNext > 0) {
-        //     console.log('state.tickNext', uint24(step.tickNext));
-        // } else {
-        //     console.log('state.tickNext -', uint24(-step.tickNext));
-        // }
-        // console.log('step vBaseAmount', vBaseAmount);
-        // console.log('step vTokenAmount', vTokenAmount);
         if (state.liquidity > 0 && vBaseAmount > 0) {
             uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
             fpGlobal.update(
