@@ -141,8 +141,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             sumExFeeGlobalX128
         );
         uint256 uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
-
-        sumFeeInsideX128 = uniswapFeeInsideX128 + sumExFeeGlobalX128;
+        sumFeeInsideX128 = uniswapFeeInsideX128 + sumExFeeInsideX128;
     }
 
     function swapToken(
