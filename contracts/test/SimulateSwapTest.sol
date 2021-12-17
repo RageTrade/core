@@ -37,7 +37,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
 
     FundingPayment.Info public fpGlobal;
     uint256 public extendedFeeGrowthOutsideX128;
-    mapping(int24 => Tick.Info) public extendedTicks;
+    mapping(int24 => Tick.Info) public ticksExtended;
 
     constructor(IUniswapV3Pool vPool_, IOracle oracle_) {
         vPool = vPool_;
@@ -107,7 +107,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
             // if the tick is initialized, run the tick transition
             if (step.initialized) {
-                extendedTicks.cross(step.tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
+                ticksExtended.cross(step.tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
             }
         }
     }

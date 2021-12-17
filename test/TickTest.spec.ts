@@ -132,7 +132,7 @@ describe('Tick', () => {
       });
       await test.cross(1);
       const fpGlobal = await test.fpGlobal();
-      const tick = await test.extendedTicks(1);
+      const tick = await test.ticksExtended(1);
       expect(tick.sumALastX128).to.eq(fpGlobal.sumAX128);
       expect(tick.sumBOutsideX128).to.eq(fpGlobal.sumBX128);
       expect(tick.sumFpOutsideX128).to.eq(fpGlobal.sumFpX128);
@@ -158,7 +158,7 @@ describe('Tick', () => {
       const extendedFee2 = await test.sumExFeeGlobalX128();
       await test.cross(2);
 
-      const tick = await test.extendedTicks(2);
+      const tick = await test.ticksExtended(2);
       expect(tick.sumALastX128).to.eq(fpGlobal2.sumAX128);
       expect(tick.sumBOutsideX128).to.eq(fpGlobal2.sumBX128);
       expect(tick.sumFpOutsideX128).to.eq(fpGlobal2.sumFpX128);
@@ -210,7 +210,7 @@ describe('Tick', () => {
       sumExFeeOutsideX128?: BigNumberish;
     },
   ) {
-    const tick = await test.extendedTicks(tickIndex);
+    const tick = await test.ticksExtended(tickIndex);
     if (sumALastX128 === undefined) sumALastX128 = tick.sumALastX128;
     if (sumBOutsideX128 === undefined) sumBOutsideX128 = tick.sumBOutsideX128;
     if (sumFpOutsideX128 === undefined) sumFpOutsideX128 = tick.sumFpOutsideX128;

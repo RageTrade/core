@@ -6,6 +6,7 @@ import { FundingPayment } from './FundingPayment.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { LiquidityMath } from '@uniswap/v3-core/contracts/libraries/LiquidityMath.sol';
 
 import { Constants } from '../utils/Constants.sol';
 
@@ -22,7 +23,7 @@ library Tick {
         uint256 sumExFeeOutsideX128; // extended fee
     }
 
-    function getExtendedTickStateInside(
+    function getTickExtendedStateInside(
         mapping(int24 => Tick.Info) storage self,
         int24 tickLower,
         int24 tickUpper,
@@ -105,14 +106,36 @@ library Tick {
         }
     }
 
-    // function update(
-    //     mapping(int24 => Tick.Info) storage self,
-    //     int24 tick,
-    //     int24 tickCurrent,
-    //     uint256 sumExFeeGlobal0X128
-    // ) internal returns (bool flipped) {
-    //     // TODO if tick is flipped (when changing liquidity) then handle that case
-    // }
+    function update(
+        mapping(int24 => Tick.Info) storage self,
+        int24 tick,
+        int24 tickCurrent,
+        int128 liquidityDelta,
+        int256 sumAGlobalX128,
+        int256 sumBGlobalX128,
+        int256 sumFpGlobalX128,
+        uint256 sumExFeeGlobal0X128,
+        IUniswapV3Pool vPool
+    ) internal returns (bool flipped) {
+        // TODO if tick is flipped (when changing liquidity) then handle that case
+
+        Tick.Info storage info = self[tick];
+
+        (uint128 liquidityGrossBefore, , , , , , , ) = vPool.ticks(tick);
+        uint128 liquidityGrossAfter = LiquidityMath.addDelta(liquidityGrossBefore, liquidityDelta);
+
+        flipped = (liquidityGrossAfter == 0) != (liquidityGrossBefore == 0);
+
+        if (liquidityGrossBefore == 0) {
+            // by convention, we assume that all growth before a tick was initialized happened _below_ the tick
+            if (tick <= tickCurrent) {
+                info.sumALastX128 = sumAGlobalX128;
+                info.sumBOutsideX128 = sumBGlobalX128;
+                info.sumFpOutsideX128 = sumFpGlobalX128;
+                info.sumExFeeOutsideX128 = sumExFeeGlobal0X128;
+            }
+        }
+    }
 
     function cross(
         mapping(int24 => Tick.Info) storage self,
@@ -131,5 +154,12 @@ library Tick {
         info.sumBOutsideX128 = fpGlobal.sumBX128 - info.sumBOutsideX128;
         info.sumFpOutsideX128 = fpGlobal.sumFpX128 - sumFpOutsideX128;
         info.sumExFeeOutsideX128 = sumExFeeOutsideX128 - info.sumExFeeOutsideX128;
+    }
+
+    /// @notice Clears tick data
+    /// @param self The mapping containing all initialized tick information for initialized ticks
+    /// @param tick The tick that will be cleared
+    function clear(mapping(int24 => Tick.Info) storage self, int24 tick) internal {
+        delete self[tick];
     }
 }

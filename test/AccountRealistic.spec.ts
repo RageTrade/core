@@ -91,7 +91,7 @@ describe('Account Library Test Realistic', () => {
         input.tickLower,
         sqrtPriceCurrent,
         input.tickUpper,
-        input.liquidity,
+        input.liquidityDelta,
         vBase,
         vToken,
       );

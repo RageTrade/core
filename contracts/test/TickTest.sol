@@ -17,7 +17,7 @@ contract TickTest {
     using Tick for IUniswapV3Pool;
     using VTokenLib for VTokenAddress;
 
-    mapping(int24 => Tick.Info) public extendedTicks;
+    mapping(int24 => Tick.Info) public ticksExtended;
 
     FundingPayment.Info public fpGlobal;
     uint256 public sumExFeeGlobalX128;
@@ -29,7 +29,7 @@ contract TickTest {
     }
 
     function setTick(int24 tickIndex, Tick.Info memory tick) external {
-        extendedTicks[tickIndex] = tick;
+        ticksExtended[tickIndex] = tick;
     }
 
     function setFpGlobal(FundingPayment.Info calldata fpGlobal_) external {
@@ -45,7 +45,7 @@ contract TickTest {
         int24 tickUpper,
         int24 tickCurrent
     ) public view returns (int256 netPositionGrowthX128) {
-        (netPositionGrowthX128, , ) = extendedTicks.getExtendedTickStateInside(
+        (netPositionGrowthX128, , ) = ticksExtended.getTickExtendedStateInside(
             tickLower,
             tickUpper,
             tickCurrent,
@@ -59,7 +59,7 @@ contract TickTest {
         int24 tickUpper,
         int24 tickCurrent
     ) public view returns (int256 fundingPaymentGrowth) {
-        (, fundingPaymentGrowth, ) = extendedTicks.getExtendedTickStateInside(
+        (, fundingPaymentGrowth, ) = ticksExtended.getTickExtendedStateInside(
             tickLower,
             tickUpper,
             tickCurrent,
@@ -83,7 +83,7 @@ contract TickTest {
         int24 tickUpper,
         int24 tickCurrent
     ) public view returns (uint256 extendedFeeGrowthInside) {
-        (, , extendedFeeGrowthInside) = extendedTicks.getExtendedTickStateInside(
+        (, , extendedFeeGrowthInside) = ticksExtended.getTickExtendedStateInside(
             tickLower,
             tickUpper,
             tickCurrent,
@@ -103,6 +103,6 @@ contract TickTest {
     }
 
     function cross(int24 tickNext) external {
-        extendedTicks.cross(tickNext, fpGlobal, sumExFeeGlobalX128);
+        ticksExtended.cross(tickNext, fpGlobal, sumExFeeGlobalX128);
     }
 }
