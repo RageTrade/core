@@ -16,11 +16,10 @@ interface IVPoolWrapper {
         external
         view
         returns (
-            int256 sumA,
-            int256 sumBInside,
-            int256 sumFpInside,
-            uint256 uniswapFeeInside,
-            uint256 extendedFeeInside
+            int256 sumAX128,
+            int256 sumBInsideX128,
+            int256 sumFpInsideX128,
+            uint256 sumFeeInsideX128
         );
 
     function liquidityChange(

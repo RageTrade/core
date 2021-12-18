@@ -22,6 +22,7 @@ import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/librari
 import { PriceMath } from './libraries/PriceMath.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
 import { SignedFullMath } from './libraries/SignedFullMath.sol';
+import { UniswapV3PoolHelper } from './libraries/UniswapV3PoolHelper.sol';
 
 import { Oracle } from './libraries/Oracle.sol';
 
@@ -39,6 +40,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using SimulateSwap for IUniswapV3Pool;
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
+    using UniswapV3PoolHelper for IUniswapV3Pool;
     using VTokenLib for VTokenAddress;
 
     uint16 public immutable initialMarginRatio;
@@ -65,8 +67,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     IOracle public oracle;
 
     FundingPayment.Info public fpGlobal;
-    uint256 public extendedFeeGrowthGlobalX128;
-    mapping(int24 => Tick.Info) public extendedTicks;
+    uint256 public sumExFeeGlobalX128; // extendedFeeGrowthGlobalX128;
+    mapping(int24 => Tick.Info) public ticksExtended;
 
     Constants public constants;
 
@@ -123,28 +125,23 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             int256 sumAX128,
             int256 sumBInsideX128,
             int256 sumFpInsideX128,
-            uint256 uniswapFeeInsideX128,
-            uint256 extendedFeeInsideX128
+            uint256 sumFeeInsideX128
         )
     {
         (, int24 currentTick, , , , , ) = vPool.slot0();
         FundingPayment.Info memory _fpGlobal = fpGlobal;
         sumAX128 = _fpGlobal.sumAX128;
-        sumBInsideX128 = extendedTicks.getNetPositionInside(tickLower, tickUpper, currentTick, _fpGlobal.sumBX128);
-        sumFpInsideX128 = extendedTicks.getFundingPaymentGrowthInside(
+
+        uint256 sumExFeeInsideX128;
+        (sumBInsideX128, sumFpInsideX128, sumExFeeInsideX128) = ticksExtended.getTickExtendedStateInside(
             tickLower,
             tickUpper,
             currentTick,
-            _fpGlobal.sumAX128,
-            _fpGlobal.sumFpX128
+            _fpGlobal,
+            sumExFeeGlobalX128
         );
-        uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
-        extendedFeeInsideX128 = extendedTicks.getExtendedFeeGrowthInside(
-            tickLower,
-            tickUpper,
-            currentTick,
-            extendedFeeGrowthGlobalX128
-        );
+        uint256 uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
+        sumFeeInsideX128 = uniswapFeeInsideX128 + sumExFeeInsideX128;
     }
 
     function swapToken(
@@ -257,12 +254,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             );
             //
             if (buyVToken) {
-                extendedFeeGrowthGlobalX128 += vBaseAmount.mulDiv(extendedFee, 1e6 - extendedFee).mulDiv(
+                sumExFeeGlobalX128 += vBaseAmount.mulDiv(extendedFee, 1e6 - extendedFee).mulDiv(
                     FixedPoint128.Q128,
                     state.liquidity
                 );
             } else {
-                extendedFeeGrowthGlobalX128 += vBaseAmount
+                sumExFeeGlobalX128 += vBaseAmount
                     .mulDiv(uniswapFee + extendedFee, 1e6 - uniswapFee - extendedFee)
                     .mulDiv(FixedPoint128.Q128, state.liquidity);
             }
@@ -271,7 +268,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
             // if the tick is initialized, run the tick transition
             if (step.initialized) {
-                extendedTicks.cross(step.tickNext, fpGlobal, extendedFeeGrowthGlobalX128);
+                ticksExtended.cross(step.tickNext, fpGlobal, sumExFeeGlobalX128);
             }
         }
     }
@@ -302,19 +299,66 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         );
     }
 
+    function _updateTicks(
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta,
+        int24 tickCurrent
+    ) private {
+        FundingPayment.Info memory _fpGlobal = fpGlobal; // SLOAD
+        uint256 _sumExFeeGlobalX128 = sumExFeeGlobalX128;
+
+        // if we need to update the ticks, do it
+        bool flippedLower;
+        bool flippedUpper;
+        if (liquidityDelta != 0) {
+            flippedLower = ticksExtended.update(
+                tickLower,
+                tickCurrent,
+                liquidityDelta,
+                _fpGlobal.sumAX128,
+                _fpGlobal.sumBX128,
+                _fpGlobal.sumFpX128,
+                _sumExFeeGlobalX128,
+                vPool
+            );
+            flippedUpper = ticksExtended.update(
+                tickUpper,
+                tickCurrent,
+                liquidityDelta,
+                _fpGlobal.sumAX128,
+                _fpGlobal.sumBX128,
+                _fpGlobal.sumFpX128,
+                _sumExFeeGlobalX128,
+                vPool
+            );
+        }
+
+        // clear any tick data that is no longer needed
+        if (liquidityDelta < 0) {
+            if (flippedLower) {
+                ticksExtended.clear(tickLower);
+            }
+            if (flippedUpper) {
+                ticksExtended.clear(tickUpper);
+            }
+        }
+    }
+
     function liquidityChange(
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidity
+        int128 liquidityDelta
     ) external returns (int256 basePrincipal, int256 vTokenPrincipal) {
+        _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
         int256 amount0;
         int256 amount1;
-        if (liquidity > 0) {
+        if (liquidityDelta > 0) {
             (uint256 _amount0, uint256 _amount1) = vPool.mint({
                 recipient: address(this),
                 tickLower: tickLower,
                 tickUpper: tickUpper,
-                amount: uint128(liquidity),
+                amount: uint128(liquidityDelta),
                 data: ''
             });
             amount0 = _amount0.toInt256();
@@ -323,7 +367,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             (uint256 _amount0, uint256 _amount1) = vPool.burn({
                 tickLower: tickLower,
                 tickUpper: tickUpper,
-                amount: uint128(liquidity * -1)
+                amount: uint128(liquidityDelta * -1)
             });
             amount0 = _amount0.toInt256() * -1;
             amount1 = _amount1.toInt256() * -1;

@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish, FixedNumber } from '@ethersproject/bignumber';
 import hre, { ethers } from 'hardhat';
 import { VPoolWrapper, VPoolFactory, ERC20, VBase, VToken, UniswapV3Pool, ERC20__factory } from '../typechain-types';
 import { ERC20Interface } from '../typechain-types/ERC20';
-import { Q128, Q96, toQ96 } from './utils/fixed-point';
+import { Q128, Q96, toQ128, toQ96 } from './utils/fixed-point';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import {
   initializableTick,
@@ -19,39 +19,108 @@ import { TransferEvent } from '../typechain-types/ERC20';
 import { ContractTransaction } from '@ethersproject/contracts';
 
 describe('PoolWrapper', () => {
-  let vPoolWrapper: VPoolWrapper;
+  let vPoolWrapper: MockContract<VPoolWrapper>;
   let vPool: UniswapV3Pool;
   let vBase: MockContract<VBase>;
   let vToken: MockContract<VToken>;
 
   let isToken0: boolean;
 
+  interface Range {
+    tickLower: number;
+    tickUpper: number;
+  }
+
   describe('#liquidityChange', () => {
+    let smallerRange: Range;
+    let biggerRange: Range;
+
     before(async () => {
       ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
       }));
+
+      const { tick } = await vPool.slot0();
+      // ticks: -100 | -50 | 50 | 100
+      biggerRange = {
+        tickLower: initializableTick(tick - 100, 10),
+        tickUpper: initializableTick(tick + 100, 10),
+      };
+      smallerRange = {
+        tickLower: initializableTick(tick - 50, 10),
+        tickUpper: initializableTick(tick + 50, 10),
+      };
     });
 
     it('adds liquidity', async () => {
-      const { tick } = await vPool.slot0();
-      await vPoolWrapper.liquidityChange(
-        initializableTick(tick - 100, 10),
-        initializableTick(tick + 100, 10),
-        10_000_000,
-      );
+      await vPoolWrapper.liquidityChange(biggerRange.tickLower, biggerRange.tickUpper, 10_000_000);
       expect(await vPool.liquidity()).to.eq(10_000_000);
     });
 
     it('removes liquidity', async () => {
-      const { tick } = await vPool.slot0();
-      await vPoolWrapper.liquidityChange(
-        initializableTick(tick - 100, 10),
-        initializableTick(tick + 100, 10),
-        -4_000_000,
-      );
+      await vPoolWrapper.liquidityChange(biggerRange.tickLower, biggerRange.tickUpper, -4_000_000);
       expect(await vPool.liquidity()).to.eq(6_000_000);
+    });
+
+    it('sets tick state to global when tickLower <= tickCurrent', async () => {
+      // overwrite the global state
+      const fpGlobal = {
+        sumAX128: toQ128(1),
+        sumBX128: toQ128(2),
+        sumFpX128: toQ128(3),
+        timestampLast: 100,
+      };
+      const sumExFeeGlobalX128 = toQ128(4);
+      vPoolWrapper.setVariable('fpGlobal', fpGlobal);
+      vPoolWrapper.setVariable('sumExFeeGlobalX128', toQ128(4));
+
+      // add liquidity in the middle
+      const { tick } = await vPool.slot0();
+
+      await vPoolWrapper.liquidityChange(smallerRange.tickLower, smallerRange.tickUpper, 4_000_000);
+
+      // lower tick should be set to global state
+      const tickLowerState = await vPoolWrapper.ticksExtended(smallerRange.tickLower);
+      expect(tickLowerState.sumALastX128).to.eq(fpGlobal.sumAX128);
+      expect(tickLowerState.sumBOutsideX128).to.eq(fpGlobal.sumBX128);
+      expect(tickLowerState.sumFpOutsideX128).to.eq(fpGlobal.sumFpX128);
+      expect(tickLowerState.sumExFeeOutsideX128).to.eq(sumExFeeGlobalX128);
+
+      // upper tick should not be updated
+      const tickUpperState = await vPoolWrapper.ticksExtended(smallerRange.tickUpper);
+      expect(tickUpperState.sumALastX128).to.eq(0);
+      expect(tickUpperState.sumBOutsideX128).to.eq(0);
+      expect(tickUpperState.sumFpOutsideX128).to.eq(0);
+      expect(tickUpperState.sumExFeeOutsideX128).to.eq(0);
+
+      // bigger range should contain the value
+      const valuesInside_100_100 = await vPoolWrapper.getValuesInside(biggerRange.tickLower, biggerRange.tickUpper);
+      expect(valuesInside_100_100.sumAX128).to.eq(fpGlobal.sumAX128);
+      expect(valuesInside_100_100.sumBInsideX128).to.eq(fpGlobal.sumBX128);
+      expect(valuesInside_100_100.sumFpInsideX128).to.eq(fpGlobal.sumFpX128);
+      expect(valuesInside_100_100.sumFeeInsideX128).to.eq(sumExFeeGlobalX128);
+
+      // by default given to lower range
+      const valuesInside_100_50 = await vPoolWrapper.getValuesInside(biggerRange.tickLower, smallerRange.tickLower);
+      expect(valuesInside_100_50.sumAX128).to.eq(fpGlobal.sumAX128);
+      expect(valuesInside_100_50.sumBInsideX128).to.eq(fpGlobal.sumBX128);
+      expect(valuesInside_100_50.sumFpInsideX128).to.eq(fpGlobal.sumFpX128);
+      expect(valuesInside_100_50.sumFeeInsideX128).to.eq(sumExFeeGlobalX128);
+
+      // smaller range should give zero
+      const valuesInside_50_50 = await vPoolWrapper.getValuesInside(smallerRange.tickLower, smallerRange.tickUpper);
+      expect(valuesInside_50_50.sumAX128).to.eq(fpGlobal.sumAX128); // just gives global val
+      expect(valuesInside_50_50.sumBInsideX128).to.eq(0);
+      expect(valuesInside_50_50.sumFpInsideX128).to.eq(0);
+      expect(valuesInside_50_50.sumFeeInsideX128).to.eq(0);
+
+      // upper range should give zero
+      const valuesInside_50_100 = await vPoolWrapper.getValuesInside(smallerRange.tickUpper, biggerRange.tickUpper);
+      expect(valuesInside_50_100.sumAX128).to.eq(fpGlobal.sumAX128); // just gives global val
+      expect(valuesInside_50_100.sumBInsideX128).to.eq(0);
+      expect(valuesInside_50_100.sumFpInsideX128).to.eq(0);
+      expect(valuesInside_50_100.sumFeeInsideX128).to.eq(0);
     });
   });
 
@@ -348,24 +417,22 @@ describe('PoolWrapper', () => {
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(global.uniswapFeeX128);
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(global.extendedFeeX128);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(global.sumFeeGlobalX128);
 
         // if buy then uniswap fee will increase
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(
-          tradeAmount
-            .abs()
-            // removing protocol fee
-            .mul(1e6 - protocolFee)
-            .div(1e6)
-            // calculating uniswap fee
-            .mul(uniswapFee)
-            .div(1e6)
-            // taking per liquidity
-            .mul(Q128)
-            .div(liquidity1),
-        );
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(0);
+        const expectedUniswapFeeIncrease = tradeAmount
+          .abs()
+          // removing protocol fee
+          .mul(1e6 - protocolFee)
+          .div(1e6)
+          // calculating uniswap fee
+          .mul(uniswapFee)
+          .div(1e6)
+          // taking per liquidity
+          .mul(Q128)
+          .div(liquidity1);
+        const expectedExtendedFeeIncrease = 0;
+        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedUniswapFeeIncrease.add(expectedExtendedFeeIncrease));
       });
 
       it('sell: no tick cross', async () => {
@@ -377,25 +444,22 @@ describe('PoolWrapper', () => {
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(global.uniswapFeeX128);
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(global.extendedFeeX128);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(global.sumFeeGlobalX128);
 
         // if buy then uniswap fee will increase
-        expect(valuesInside20.uniswapFeeInsideX128).to.eq(0);
-
-        expect(valuesInside20.extendedFeeInsideX128).to.eq(
-          tradeAmount
-            .abs()
-            // adjusting protocol fee and inflation
-            .mul(1e6 + protocolFee)
-            .div(1e6 - uniswapFee)
-            // calculating uniswap fee
-            .mul(uniswapFee)
-            .div(1e6 - uniswapFee)
-            // taking per liquidity
-            .mul(Q128)
-            .div(liquidity1),
-        );
+        const expectedUniswapFeeIncrease = BigNumber.from(0);
+        const expectedExtendedFeeIncrease = tradeAmount
+          .abs()
+          // adjusting protocol fee and inflation
+          .mul(1e6 + protocolFee)
+          .div(1e6 - uniswapFee)
+          // calculating uniswap fee
+          .mul(uniswapFee)
+          .div(1e6 - uniswapFee)
+          // taking per liquidity
+          .mul(Q128)
+          .div(liquidity1);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedUniswapFeeIncrease.add(expectedExtendedFeeIncrease));
       });
 
       it('buy: single tick cross');
@@ -457,13 +521,12 @@ describe('PoolWrapper', () => {
     sumBX128: BigNumber;
     sumFpX128: BigNumber;
     timestampLast: number;
-    uniswapFeeX128: BigNumber;
-    extendedFeeX128: BigNumber;
+    sumFeeGlobalX128: BigNumber;
   }> {
     const fpGlobal = await vPoolWrapper.fpGlobal();
     const uniswapFeeX128 = isToken0 ? await vPool.feeGrowthGlobal1X128() : await vPool.feeGrowthGlobal0X128();
-    const extendedFeeX128 = await vPoolWrapper.extendedFeeGrowthGlobalX128();
-    return { ...fpGlobal, uniswapFeeX128, extendedFeeX128 };
+    const sumExFeeGlobalX128 = await vPoolWrapper.sumExFeeGlobalX128();
+    return { ...fpGlobal, sumFeeGlobalX128: uniswapFeeX128.add(sumExFeeGlobalX128) };
   }
 
   function parseUsdc(str: string): BigNumber {

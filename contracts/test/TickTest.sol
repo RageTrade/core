@@ -17,10 +17,10 @@ contract TickTest {
     using Tick for IUniswapV3Pool;
     using VTokenLib for VTokenAddress;
 
-    mapping(int24 => Tick.Info) public extendedTicks;
+    mapping(int24 => Tick.Info) public ticksExtended;
 
     FundingPayment.Info public fpGlobal;
-    uint256 public extendedFeeGrowthOutsideX128;
+    uint256 public sumExFeeGlobalX128;
 
     IUniswapV3Pool public vPool;
 
@@ -29,7 +29,15 @@ contract TickTest {
     }
 
     function setTick(int24 tickIndex, Tick.Info memory tick) external {
-        extendedTicks[tickIndex] = tick;
+        ticksExtended[tickIndex] = tick;
+    }
+
+    function setFpGlobal(FundingPayment.Info calldata fpGlobal_) external {
+        fpGlobal = fpGlobal_;
+    }
+
+    function setExtendedFeeGrowthOutsideX128(uint256 _extendedFeeGrowthOutsideX128) external {
+        sumExFeeGlobalX128 = _extendedFeeGrowthOutsideX128;
     }
 
     function getNetPositionInside(
@@ -37,17 +45,27 @@ contract TickTest {
         int24 tickUpper,
         int24 tickCurrent
     ) public view returns (int256 netPositionGrowthX128) {
-        return extendedTicks.getNetPositionInside(tickLower, tickUpper, tickCurrent, fpGlobal.sumBX128);
+        (netPositionGrowthX128, , ) = ticksExtended.getTickExtendedStateInside(
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            fpGlobal,
+            sumExFeeGlobalX128
+        );
     }
 
     function getFundingPaymentGrowthInside(
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        int256 sumAGlobal,
-        int256 sumFpGlobal
+        int24 tickCurrent
     ) public view returns (int256 fundingPaymentGrowth) {
-        return extendedTicks.getFundingPaymentGrowthInside(tickLower, tickUpper, tickCurrent, sumAGlobal, sumFpGlobal);
+        (, fundingPaymentGrowth, ) = ticksExtended.getTickExtendedStateInside(
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            fpGlobal,
+            sumExFeeGlobalX128
+        );
     }
 
     function getUniswapFeeGrowthInside(
@@ -63,10 +81,15 @@ contract TickTest {
     function getExtendedFeeGrowthInside(
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        uint256 extendedFeeGrowthGlobalX128
+        int24 tickCurrent
     ) public view returns (uint256 extendedFeeGrowthInside) {
-        return extendedTicks.getExtendedFeeGrowthInside(tickLower, tickUpper, tickCurrent, extendedFeeGrowthGlobalX128);
+        (, , extendedFeeGrowthInside) = ticksExtended.getTickExtendedStateInside(
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            fpGlobal,
+            sumExFeeGlobalX128
+        );
     }
 
     function registerTrade(
@@ -79,11 +102,7 @@ contract TickTest {
         fpGlobal.update(tokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
     }
 
-    function setExtendedFeeGrowthOutsideX128(uint256 _extendedFeeGrowthOutsideX128) external {
-        extendedFeeGrowthOutsideX128 = _extendedFeeGrowthOutsideX128;
-    }
-
     function cross(int24 tickNext) external {
-        extendedTicks.cross(tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
+        ticksExtended.cross(tickNext, fpGlobal, sumExFeeGlobalX128);
     }
 }

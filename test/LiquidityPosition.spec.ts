@@ -6,6 +6,7 @@ import { SqrtPriceMath, TickMath, maxLiquidityForAmounts as maxLiquidityForAmoun
 import { constants } from './utils/dummyConstants';
 import { LiquidityPositionTest } from '../typechain-types';
 import JSBI from 'jsbi';
+import { toQ128 } from './utils/fixed-point';
 
 describe('LiquidityPosition Library', () => {
   let test: LiquidityPositionTest;
@@ -38,11 +39,10 @@ describe('LiquidityPosition Library', () => {
       expect(lp.tickLower).to.eq(-1);
       expect(lp.tickUpper).to.eq(1);
       expect(lp.liquidity).to.eq(0);
-      expect(lp.sumALast).to.eq(0);
-      expect(lp.sumBInsideLast).to.eq(0);
-      expect(lp.sumFpInsideLast).to.eq(0);
-      expect(lp.longsFeeGrowthInsideLast).to.eq(0);
-      expect(lp.shortsFeeGrowthInsideLast).to.eq(0);
+      expect(lp.sumALastX128).to.eq(0);
+      expect(lp.sumBInsideLastX128).to.eq(0);
+      expect(lp.sumFpInsideLastX128).to.eq(0);
+      expect(lp.sumFeeInsideLastX128).to.eq(0);
     });
 
     it('non-zero chkpts', async () => {
@@ -51,11 +51,10 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumA: 10,
-        sumBInside: 20,
-        sumFpInside: 30,
-        longsFeeGrowthInside: 40,
-        shortsFeeGrowthInside: 50,
+        sumAX128: toQ128(10),
+        sumBInsideX128: toQ128(20),
+        sumFpInsideX128: toQ128(30),
+        sumFeeInsideX128: toQ128(40),
       });
 
       await test.updateCheckpoints();
@@ -64,11 +63,10 @@ describe('LiquidityPosition Library', () => {
       expect(lp.tickLower).to.eq(-1);
       expect(lp.tickUpper).to.eq(1);
       expect(lp.liquidity).to.eq(0);
-      expect(lp.sumALast).to.eq(10);
-      expect(lp.sumBInsideLast).to.eq(20);
-      expect(lp.sumFpInsideLast).to.eq(30);
-      expect(lp.longsFeeGrowthInsideLast).to.eq(40);
-      expect(lp.shortsFeeGrowthInsideLast).to.eq(50);
+      expect(lp.sumALastX128).to.eq(toQ128(10));
+      expect(lp.sumBInsideLastX128).to.eq(toQ128(20));
+      expect(lp.sumFpInsideLastX128).to.eq(toQ128(30));
+      expect(lp.sumFeeInsideLastX128).to.eq(toQ128(40));
     });
   });
 
@@ -105,7 +103,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: 1,
+        sumBInsideX128: toQ128(1),
       });
 
       expect(await test.netPosition()).to.eq(0, 'should still be 0 as no liquidity');
@@ -118,7 +116,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: BigNumber.from(1n << 128n),
+        sumBInsideX128: toQ128(1),
       });
 
       expect(await test.netPosition()).to.eq(1, '1*1');
@@ -131,7 +129,7 @@ describe('LiquidityPosition Library', () => {
       await setWrapperValueInside({
         tickLower: -1,
         tickUpper: 1,
-        sumBInside: BigNumber.from(1n << 128n).mul(-1),
+        sumBInsideX128: toQ128(-1),
       });
 
       expect(await test.netPosition()).to.eq(-1, '1*-1');
@@ -243,6 +241,7 @@ describe('LiquidityPosition Library', () => {
           await test.initialize(tickLower, tickUpper);
           await test.liquidityChange(liquidity);
           //ethers.constants.One.shl(96).mul(ethers.constants.One.shl(96)).div(sqrtPrice);
+          // TODO: refactor these tests
           let priceX128;
           if (!isToken0) {
             let sqrtX96 = inversex96(sqrtPriceCurrent);
@@ -290,24 +289,22 @@ describe('LiquidityPosition Library', () => {
   });
 
   async function setWrapperValueInside(val: {
-    tickLower: BigNumberish;
-    tickUpper: BigNumberish;
-    sumA?: BigNumberish;
-    sumBInside?: BigNumberish;
-    sumFpInside?: BigNumberish;
-    longsFeeGrowthInside?: BigNumberish;
-    shortsFeeGrowthInside?: BigNumberish;
+    tickLower: number;
+    tickUpper: number;
+    sumAX128?: BigNumberish;
+    sumBInsideX128?: BigNumberish;
+    sumFpInsideX128?: BigNumberish;
+    sumFeeInsideX128?: BigNumberish;
   }) {
     const wrapper = await hre.ethers.getContractAt('VPoolWrapperMock', await test.wrapper());
     const existingValues = await wrapper.getValuesInside(val.tickLower, val.tickUpper);
     await wrapper.setValuesInside(
       val.tickLower,
       val.tickUpper,
-      val.sumA ?? existingValues.sumA,
-      val.sumBInside ?? existingValues.sumBInside,
-      val.sumFpInside ?? existingValues.sumFpInside,
-      val.longsFeeGrowthInside ?? existingValues.longsFeeGrowthInside,
-      val.shortsFeeGrowthInside ?? existingValues.shortsFeeGrowthInside,
+      val.sumAX128 ?? existingValues.sumAX128,
+      val.sumBInsideX128 ?? existingValues.sumBInsideX128,
+      val.sumFpInsideX128 ?? existingValues.sumFpInsideX128,
+      val.sumFeeInsideX128 ?? existingValues.sumFeeInsideX128,
     );
   }
 

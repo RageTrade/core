@@ -2,7 +2,7 @@ import hre from 'hardhat';
 import { smock } from '@defi-wonderland/smock';
 import { constants } from './dummyConstants';
 import { ethers } from 'ethers';
-import { VPoolFactory, VPoolWrapperDeployer } from '../../typechain-types';
+import { VPoolWrapperDeployer, VPoolWrapper__factory } from '../../typechain-types';
 import { setupVPool, SetupArgs } from './setup-vPool';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -35,7 +35,7 @@ export async function setupWrapper(setupArgs: SetupArgs) {
     ],
   ]);
 
-  const vPoolWrapper = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
+  const vPoolWrapper = await (await smock.mock<VPoolWrapper__factory>('VPoolWrapper')).deploy();
   await vPoolWrapper.setOracle(oracle.address);
   hre.tracer.nameTags[vPoolWrapper.address] = 'vPoolWrapper';
 
