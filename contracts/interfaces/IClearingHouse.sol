@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { Account } from '../libraries/Account.sol';
 
 interface IClearingHouse {
     error AccessDenied(address senderAddress);
@@ -54,5 +55,5 @@ interface IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external;
+    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments);
 }

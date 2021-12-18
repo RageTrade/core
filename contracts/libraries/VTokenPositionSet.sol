@@ -48,6 +48,15 @@ library VTokenPositionSet {
         mapping(uint32 => VTokenPosition.Position) positions;
     }
 
+    function getIsTokenRangeActive(
+        Set storage set,
+        VTokenAddress vTokenAddress,
+        Constants memory constants
+    ) internal returns (bool isRangeActive) {
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
+        isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();
+    }
+
     function getAccountMarketValue(
         Set storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,

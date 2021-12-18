@@ -440,7 +440,7 @@ library Account {
         uint256 liquidatorPriceX128,
         int256 fixFee,
         Constants memory constants
-    ) internal {
+    ) internal returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         BalanceAdjustments memory balanceAdjustments = BalanceAdjustments(
             -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
             tokensToTrade,
@@ -478,6 +478,8 @@ library Account {
             balanceAdjustments.vTokenIncrease,
             balanceAdjustments.vBaseIncrease
         );
+
+        return balanceAdjustments;
     }
 
     /// @notice liquidates all range positions in case the account is under water
@@ -493,14 +495,15 @@ library Account {
         LiquidationParams memory liquidationParams,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
-    ) external returns (int256 insuranceFundFee) {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            vTokenAddress,
-            false,
-            constants
-        );
+    ) external returns (int256 insuranceFundFee, BalanceAdjustments memory liquidatorBalanceAdjustments) {
+        // VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+        //     vTokenAddress,
+        //     false,
+        //     constants
+        // );
 
-        if (!vTokenPosition.liquidityPositions.isEmpty()) revert InvalidLiquidationActiveRangePresent(vTokenAddress);
+        if (account.tokenPositions.getIsTokenRangeActive(vTokenAddress, constants))
+            revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
@@ -520,10 +523,19 @@ library Account {
             }
         }
 
+        int256 tokensToTrade;
+        {
+            VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+                vTokenAddress,
+                false,
+                constants
+            );
+            tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
+        }
+
         uint256 liquidationPriceX128;
         uint256 liquidatorPriceX128;
         {
-            int256 tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
             // console.log('Tokens To Trade');
             // console.logInt(tokensToTrade);
 
@@ -540,7 +552,7 @@ library Account {
             // console.log(liquidatorPriceX128);
             // console.log('Insurnace Fund Fee');
             // console.logInt(insuranceFundFee);
-            updateLiquidationAccounts(
+            liquidatorBalanceAdjustments = updateLiquidationAccounts(
                 account,
                 liquidatorAccount,
                 vTokenAddress,
@@ -551,14 +563,16 @@ library Account {
                 constants
             );
         }
-        int256 accountMarketValueFinal = account.getAccountValue(vTokenAddresses, constants);
+        {
+            int256 accountMarketValueFinal = account.getAccountValue(vTokenAddresses, constants);
 
-        if (accountMarketValueFinal < 0) {
-            insuranceFundFee = accountMarketValueFinal;
-            account
-                .tokenPositions
-                .positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]
-                .balance -= accountMarketValueFinal;
+            if (accountMarketValueFinal < 0) {
+                insuranceFundFee = accountMarketValueFinal;
+                account
+                    .tokenPositions
+                    .positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]
+                    .balance -= accountMarketValueFinal;
+            }
         }
         // console.log('#############  Insurance Fund Fee  ##################');
         // console.logInt(insuranceFundFee);

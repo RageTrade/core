@@ -203,13 +203,13 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external {
+    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.Info storage account = accounts[accountNo];
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
-
-        int256 insuranceFundFee = account.liquidateTokenPosition(
+        int256 insuranceFundFee;
+        (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
             accounts[liquidatorAccountNo],
             liquidationBps,
             vTokenAddress,
