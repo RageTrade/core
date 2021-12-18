@@ -32,22 +32,22 @@ interface IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         SwapParams memory swapParams
-    ) external;
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         LiquidityChangeParams calldata liquidityChangeParams
-    ) external;
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     function removeLimitOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper
-    ) external;
+    ) external returns (uint256 keeperFee);
 
-    function liquidateLiquidityPositions(uint256 accountNo) external;
+    function liquidateLiquidityPositions(uint256 accountNo) external returns (int256 keeperFee);
 
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,

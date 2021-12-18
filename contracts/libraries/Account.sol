@@ -321,11 +321,15 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         uint256 minRequiredMargin,
         Constants memory constants
-    ) external returns (int256 notionalValue) {
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
 
         // mint/burn tokens + fee + funding payment
-        notionalValue = account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);

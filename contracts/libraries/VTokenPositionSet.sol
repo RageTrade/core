@@ -255,7 +255,7 @@ library VTokenPositionSet {
         VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
             set.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddress.vPoolWrapper(constants), constants);
     }
@@ -329,7 +329,7 @@ library VTokenPositionSet {
         LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
@@ -348,11 +348,7 @@ library VTokenPositionSet {
             set.swapTokenAmount(vTokenAddress, -balanceAdjustments.traderPositionIncrease, constants);
         }
 
-        return
-            balanceAdjustments.vTokenIncrease.mulDiv(
-                vTokenAddress.getVirtualTwapPriceX128(constants),
-                FixedPoint128.Q128
-            ) + balanceAdjustments.vBaseIncrease;
+        return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease);
     }
 
     function closeLiquidityPosition(
