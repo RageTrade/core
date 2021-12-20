@@ -47,6 +47,9 @@ library VTokenPositionSet {
         uint32[8] active;
         mapping(uint32 => VTokenPosition.Position) positions;
     }
+    function isEmpty(Set storage set) internal view returns (bool) {
+        return set.active[0] == 0;
+    }
 
     function getIsTokenRangeActive(
         Set storage set,

@@ -215,7 +215,7 @@ library Account {
         totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
         // console.log('totalRequiredMargin');
         // console.logInt(totalRequiredMargin);
-        if (account.tokenPositions.active[0] != 0) {
+        if (!account.tokenPositions.isEmpty()) {
             totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
                 ? int256(minRequiredMargin)
                 : totalRequiredMargin;
