@@ -250,13 +250,15 @@ library VTokenPositionSet {
             );
     }
 
-    function closeLiquidityPosition(
+    function removeLimitOrder(
         Set storage set,
         VTokenAddress vTokenAddress,
-        LiquidityPosition.Info storage position,
+        int24 tickLower,
+        int24 tickUpper,
         Constants memory constants
     ) internal returns (int256) {
-        return set.closeLiquidityPosition(vTokenAddress, position, vTokenAddress.vPoolWrapper(constants), constants);
+        return
+            set.removeLimitOrder(vTokenAddress, tickLower, tickUpper, vTokenAddress.vPoolWrapper(constants), constants);
     }
 
     function liquidityChange(
@@ -360,21 +362,25 @@ library VTokenPositionSet {
         return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease);
     }
 
-    function closeLiquidityPosition(
+    function removeLimitOrder(
         Set storage set,
         VTokenAddress vTokenAddress,
-        LiquidityPosition.Info storage position,
+        int24 tickLower,
+        int24 tickUpper,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
+        int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
 
-        vTokenPosition.liquidityPositions.closeLiquidityPosition(
+        vTokenPosition.liquidityPositions.removeLimitOrder(
             set.accountNo,
             vTokenAddress,
-            position,
+            currentTick,
+            tickLower,
+            tickUpper,
             wrapper,
             balanceAdjustments
         );

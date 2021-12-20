@@ -41,7 +41,6 @@ library Account {
     using VTokenPositionSet for VTokenPositionSet.Set;
     using VTokenPosition for VTokenPosition.Position;
 
-    error IneligibleLimitOrderRemoval();
     error InvalidTransactionNotEnoughMargin(int256 accountMarketValue, int256 totalRequiredMargin);
     error InvalidTransactionNotEnoughProfit(int256 totalProfit);
     error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
@@ -595,22 +594,7 @@ library Account {
         uint256 limitOrderFeeAndFixFee,
         Constants memory constants
     ) external {
-        int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
-        LiquidityPosition.Info storage position = account
-            .tokenPositions
-            .getTokenPosition(vTokenAddress, false, constants)
-            .liquidityPositions
-            .getLiquidityPosition(tickLower, tickUpper);
-
-        if (
-            (currentTick >= tickUpper && position.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
-            (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
-        ) {
-            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-            account.tokenPositions.closeLiquidityPosition(vTokenAddress, position, constants);
-        } else {
-            revert IneligibleLimitOrderRemoval();
-        }
+        account.tokenPositions.removeLimitOrder(vTokenAddress, tickLower, tickUpper, constants);
 
         account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), constants);
     }

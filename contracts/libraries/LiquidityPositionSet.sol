@@ -219,6 +219,21 @@ library LiquidityPositionSet {
         );
     }
 
+    function removeLimitOrder(
+        Info storage set,
+        uint256 accountNo,
+        VTokenAddress vTokenAddress,
+        int24 currentTick,
+        int24 tickLower,
+        int24 tickUpper,
+        IVPoolWrapper wrapper,
+        Account.BalanceAdjustments memory balanceAdjustments
+    ) internal {
+        LiquidityPosition.Info storage position = set.getLiquidityPosition(tickLower, tickUpper);
+        position.checkValidLimitOrderRemoval(currentTick);
+        set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustments);
+    }
+
     function closeAllLiquidityPositions(
         Info storage set,
         uint256 accountNo,
