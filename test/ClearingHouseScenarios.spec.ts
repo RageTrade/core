@@ -213,7 +213,7 @@ describe('Clearing House Senario', () => {
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
       };
       await clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams);
     });
@@ -239,7 +239,7 @@ describe('Clearing House Senario', () => {
   //         closeTokenPosition: false,
   //         limitOrderType: 0,
   //         sqrtPriceCurrent: 0,
-  //         slippageTolerance: 0,
+  //         slippageToleranceBps: 0,
   //     };
   //     await clearingHouseTest.connect(user).updateRangeOrder(accountNo, truncatedAddress, liquidityChangeParams);
   //   }

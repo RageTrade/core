@@ -187,7 +187,7 @@ describe('Account Library Test Basic', () => {
         tickUpper: 100,
         liquidityDelta: 5,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
         closeTokenPosition: false,
         limitOrderType: 0,
       };
@@ -208,7 +208,7 @@ describe('Account Library Test Basic', () => {
           tickUpper: 195000,
           liquidityDelta: 5,
           sqrtPriceCurrent: 0,
-          slippageTolerance: 0,
+          slippageToleranceBps: 0,
           closeTokenPosition: false,
           limitOrderType: 0,
         };
@@ -246,7 +246,7 @@ describe('Account Library Test Basic', () => {
           tickUpper: 195000,
           liquidityDelta: 5,
           sqrtPriceCurrent: 0,
-          slippageTolerance: 0,
+          slippageToleranceBps: 0,
           closeTokenPosition: false,
           limitOrderType: 1,
         };
@@ -285,7 +285,7 @@ describe('Account Library Test Basic', () => {
           tickUpper: 195000,
           liquidityDelta: 5,
           sqrtPriceCurrent: 0,
-          slippageTolerance: 0,
+          slippageToleranceBps: 0,
           closeTokenPosition: false,
           limitOrderType: 2,
         };

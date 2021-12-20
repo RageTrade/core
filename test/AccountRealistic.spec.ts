@@ -204,7 +204,7 @@ describe('Account Library Test Realistic', () => {
       tickUpper: tickUpper,
       liquidityDelta: liquidityDelta,
       sqrtPriceCurrent: 0,
-      slippageTolerance: 0,
+      slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
     };

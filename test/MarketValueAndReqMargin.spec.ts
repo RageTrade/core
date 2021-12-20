@@ -31,7 +31,7 @@ describe('Market Value and Required Margin', () => {
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
       },
       constants,
     );

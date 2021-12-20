@@ -324,7 +324,7 @@ describe('Clearing House Library', () => {
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
       };
       console.log('Account Owner');
       console.log(await clearingHouseTest.getAccountOwner(user2AccountNo));
@@ -433,7 +433,7 @@ describe('Clearing House Library', () => {
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
       };
       expect(
         clearingHouseTest.connect(user2).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -448,7 +448,7 @@ describe('Clearing House Library', () => {
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
       };
       expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -463,7 +463,7 @@ describe('Clearing House Library', () => {
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
-        slippageTolerance: 0,
+        slippageToleranceBps: 0,
       };
       expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -482,7 +482,7 @@ describe('Clearing House Library', () => {
     //     closeTokenPosition: false,
     //     limitOrderType: 0,
     //     sqrtPriceCurrent: 0,
-    //     slippageTolerance: 0,
+    //     slippageToleranceBps: 0,
     //   };
     //   await clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams);
     // });

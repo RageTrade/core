@@ -14,6 +14,7 @@ interface IClearingHouse {
     error InvalidLiquidityChangeParameters();
     error InvalidTokenLiquidationParameters();
     error UninitializedToken(uint32 vTokenTruncatedAddress);
+    error SlippageBeyondTolerance();
 
     function createAccount() external returns (uint256 newAccountId);
 

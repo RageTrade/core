@@ -19,7 +19,7 @@ struct LiquidityChangeParams {
     int24 tickUpper;
     int128 liquidityDelta;
     uint160 sqrtPriceCurrent;
-    uint16 slippageTolerance;
+    uint16 slippageToleranceBps;
     bool closeTokenPosition;
     LimitOrderType limitOrderType;
 }

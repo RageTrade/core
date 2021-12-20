@@ -32,6 +32,20 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         insuranceFundAddress = _insuranceFundAddress;
     }
 
+    function checkSlippage(
+        VTokenAddress vTokenAddress,
+        uint160 sqrtPriceToCheck,
+        uint16 slippageToleranceBps
+    ) internal view {
+        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(constants);
+        uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
+            ? sqrtPriceCurrent - sqrtPriceToCheck
+            : sqrtPriceToCheck - sqrtPriceCurrent;
+        if ((slippageToleranceBps * sqrtPriceToCheck) / 1e4 > diff) {
+            revert SlippageBeyondTolerance();
+        }
+    }
+
     function getTokenAddressWithChecks(uint32 vTokenTruncatedAddress, bool isDepositCheck)
         internal
         view
@@ -145,6 +159,12 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
+
+        checkSlippage(
+            vTokenAddress,
+            liquidityChangeParams.sqrtPriceCurrent,
+            liquidityChangeParams.slippageToleranceBps
+        );
 
         if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
             revert InvalidLiquidityChangeParameters();
