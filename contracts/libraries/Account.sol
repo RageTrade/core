@@ -130,6 +130,15 @@ library Account {
         return account.owner != address(0);
     }
 
+    function updateBaseBalance(
+        Info storage account,
+        int256 amount,
+        Constants memory constants
+    ) internal returns (BalanceAdjustments memory balanceAdjustments) {
+        balanceAdjustments = BalanceAdjustments(amount, 0, 0);
+        account.tokenPositions.update(balanceAdjustments, VTokenAddress.wrap(constants.VBASE_ADDRESS), constants);
+    }
+
     /// @notice increases deposit balance of 'vTokenAddress' by 'amount'
     /// @param account account to deposit balance into
     /// @param vTokenAddress address of token to deposit
@@ -180,30 +189,12 @@ library Account {
         uint256 minRequiredMargin,
         Constants memory constants
     ) external {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            VTokenAddress.wrap(constants.VBASE_ADDRESS),
-            true,
-            constants
-        );
-        vTokenPosition.balance -= int256(amount);
+        account.updateBaseBalance(-int256(amount), constants);
 
         account.checkIfProfitAvailable(vTokenAddresses, constants);
         account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
 
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
-    }
-
-    function chargeFee(
-        Info storage account,
-        uint256 amount,
-        Constants memory constants
-    ) internal {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            VTokenAddress.wrap(constants.VBASE_ADDRESS),
-            true,
-            constants
-        );
-        vTokenPosition.balance -= int256(amount);
     }
 
     /// @notice returns market value and required margin for the account based on current market conditions
@@ -385,7 +376,7 @@ library Account {
         int256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
         (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, liquidationFee, liquidationParams);
 
-        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
+        account.updateBaseBalance(-(keeperFee + insuranceFundFee), constants);
     }
 
     function getLiquidationPriceX128AndFee(
@@ -568,10 +559,7 @@ library Account {
 
             if (accountMarketValueFinal < 0) {
                 insuranceFundFee = accountMarketValueFinal;
-                account
-                    .tokenPositions
-                    .positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]
-                    .balance -= accountMarketValueFinal;
+                account.updateBaseBalance(-accountMarketValueFinal, constants);
             }
         }
         // console.log('#############  Insurance Fund Fee  ##################');
@@ -624,6 +612,6 @@ library Account {
             revert IneligibleLimitOrderRemoval();
         }
 
-        account.chargeFee(limitOrderFeeAndFixFee, constants);
+        account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), constants);
     }
 }
