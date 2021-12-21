@@ -100,8 +100,8 @@ library LiquidityPosition {
             position.tickUpper,
             liquidity,
             position.limitOrderType,
-            -basePrincipal,
-            -vTokenPrincipal
+            -vTokenPrincipal,
+            -basePrincipal
         );
 
         position.update(accountNo, vTokenAddress, wrapper, balanceAdjustments);
