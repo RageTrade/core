@@ -78,7 +78,14 @@ library SimulateSwap {
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    ) internal returns (int256 amount0, int256 amount1) {
+    )
+        internal
+        returns (
+            int256 amount0,
+            int256 amount1,
+            uint256 accumulator
+        )
+    {
         return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, emptyFunction);
     }
 
@@ -87,8 +94,15 @@ library SimulateSwap {
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
-        function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
-    ) internal returns (int256 amount0, int256 amount1) {
+        function(bool, SwapCache memory, SwapState memory, StepComputations memory) returns (uint256) onSwapStep
+    )
+        internal
+        returns (
+            int256 amount0,
+            int256 amount1,
+            uint256 accumulator
+        )
+    {
         require(amountSpecified != 0, 'AS');
 
         SwapCache memory cache;
@@ -171,7 +185,7 @@ library SimulateSwap {
                 state.feeGrowthGlobalX128 += FullMath.mulDiv(step.feeAmount, FixedPoint128.Q128, state.liquidity);
 
             if (onSwapStep != emptyFunction) {
-                onSwapStep(zeroForOne, cache, state, step);
+                accumulator += onSwapStep(zeroForOne, cache, state, step);
             }
 
             // shift tick if we reached the next price
@@ -194,8 +208,8 @@ library SimulateSwap {
 
         return
             zeroForOne == exactInput
-                ? (amountSpecified - state.amountSpecifiedRemaining, state.amountCalculated)
-                : (state.amountCalculated, amountSpecified - state.amountSpecifiedRemaining);
+                ? (amountSpecified - state.amountSpecifiedRemaining, state.amountCalculated, accumulator)
+                : (state.amountCalculated, amountSpecified - state.amountSpecifiedRemaining, accumulator);
     }
 
     function emptyFunction(
@@ -203,5 +217,5 @@ library SimulateSwap {
         SimulateSwap.SwapCache memory,
         SimulateSwap.SwapState memory,
         SimulateSwap.StepComputations memory
-    ) internal view {}
+    ) internal view returns (uint256) {}
 }

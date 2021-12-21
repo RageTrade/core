@@ -187,11 +187,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         {
-            (int256 amount0_simulated, int256 amount1_simulated) = vPool.simulateSwap(
+            (int256 amount0_simulated, int256 amount1_simulated, uint256 protocolFee) = vPool.simulateSwap(
                 zeroForOne,
                 amountSpecified,
                 sqrtPriceLimitX96,
-                _onSwapSwap
+                _onSwapStep
             );
 
             /// @dev execute trade on uniswap
@@ -232,12 +232,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         _vBurn();
     }
 
-    function _onSwapSwap(
+    function _onSwapStep(
         bool zeroForOne,
         SimulateSwap.SwapCache memory cache,
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
-    ) internal {
+    ) internal returns (uint256 protocolFee) {
         bool buyVToken = isToken0 != zeroForOne;
         (uint256 vBaseAmount, uint256 vTokenAmount) = buyVToken
             ? (step.amountIn, step.amountOut)

@@ -61,7 +61,14 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    ) public returns (int256 amount0, int256 amount1) {
+    )
+        public
+        returns (
+            int256 amount0,
+            int256 amount1,
+            uint256 protocolFee
+        )
+    {
         return vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
     }
 
@@ -78,7 +85,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
             SwapStep[] memory steps
         )
     {
-        (amount0, amount1) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
+        (amount0, amount1, ) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
         cache = _cache;
         steps = _steps;
     }
@@ -88,7 +95,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         SimulateSwap.SwapCache memory cache,
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
-    ) internal {
+    ) internal returns (uint256) {
         // for reading
         _cache = cache;
         _steps.push(SwapStep({ state: state, step: step }));
