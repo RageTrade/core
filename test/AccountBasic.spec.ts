@@ -135,9 +135,9 @@ describe('Account Library Test Basic', () => {
 
     vPoolWrapperFake.swapToken.returns((input: any) => {
       if (input.isNotional) {
-        return [input.amount / 4000, -input.amount];
+        return [input.amount.mul(-1).div(4000), input.amount];
       } else {
-        return [input.amount, -4000 * input.amount];
+        return [input.amount.mul(-1), input.amount.mul(4000)];
       }
     });
 
