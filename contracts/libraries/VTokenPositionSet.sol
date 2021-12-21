@@ -320,6 +320,9 @@ library VTokenPositionSet {
             swapParams.sqrtPriceLimit,
             swapParams.isNotional
         );
+        //Change direction basis uniswap to balance increase
+        vTokenAmount = -vTokenAmount;
+        vBaseAmount = -vBaseAmount;
         // TODO: remove this after testing
         // console.log('Token Amount Out:');
         // console.logInt(vTokenAmount);
