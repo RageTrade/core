@@ -23,6 +23,7 @@ struct SwapParams {
     int256 amount;
     uint160 sqrtPriceLimit;
     bool isNotional;
+    bool isPartialAllowed;
 }
 
 library VTokenPositionSet {
@@ -248,7 +249,7 @@ library VTokenPositionSet {
             set.swapToken(
                 vTokenAddress,
                 ///@dev 0 means no price limit and false means amount mentioned is token amount
-                SwapParams(vTokenAmount, 0, false),
+                SwapParams(vTokenAmount, 0, false, false),
                 vTokenAddress.vPoolWrapper(constants),
                 constants
             );

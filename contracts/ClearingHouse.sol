@@ -140,14 +140,20 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        return
-            account.swapToken(
-                vTokenAddress,
-                swapParams,
-                vTokenAddresses,
-                liquidationParams.minRequiredMargin,
-                constants
-            );
+        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(
+            vTokenAddress,
+            swapParams,
+            vTokenAddresses,
+            liquidationParams.minRequiredMargin,
+            constants
+        );
+
+        if (!swapParams.isPartialAllowed) {
+            if (
+                !((swapParams.isNotional && vBaseAmountOut.abs() == swapParams.amount.abs()) ||
+                    (!swapParams.isNotional && vTokenAmountOut.abs() == swapParams.amount.abs()))
+            ) revert SlippageBeyondTolerance();
+        }
     }
 
     function updateRangeOrder(
