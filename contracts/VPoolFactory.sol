@@ -104,11 +104,9 @@ contract VPoolFactory {
         address VBASE_ADDRESS
     ) internal returns (address) {
         unchecked {
+            // TODO change require to custom errors
             // Pool for this token must not be already created
-            require(
-                ClearingHouse.isRealTokenAlreadyInitilized(setupVTokenParams.realTokenAddress) == false,
-                'Duplicate Pool'
-            );
+            require(!ClearingHouse.isRealTokenAlreadyInitilized(setupVTokenParams.realTokenAddress), 'Duplicate Pool');
 
             bytes memory bytecode = abi.encodePacked(
                 type(VToken).creationCode,

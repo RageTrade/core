@@ -97,7 +97,7 @@ describe('VTokenPositionSet Library', () => {
         setupVTokenParams: {
           vTokenName: 'vWETH',
           vTokenSymbol: 'vWETH',
-          realTokenAddress: realToken0,
+          realTokenAddress: realToken1,
           oracleAddress: oracleAddress,
         },
         extendedLpFee: 500,
@@ -107,7 +107,7 @@ describe('VTokenPositionSet Library', () => {
         twapDuration: 2,
         whitelisted: false,
       },
-      0,
+      1,
     );
 
     const eventFilter1 = VPoolFactory.filters.PoolInitlized();
