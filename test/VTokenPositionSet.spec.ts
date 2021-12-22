@@ -160,11 +160,6 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVToken[1]).to.eq(20); //sumAChk
       expect(resultVBase.balance).to.eq(-590);
     });
-
-    it('abs', async () => {
-      expect(await VTokenPositionSet.abs(-10)).to.eq(10);
-      expect(await VTokenPositionSet.abs(10)).to.eq(10);
-    });
   });
 
   describe('Token Swaps (Token Amount)', () => {

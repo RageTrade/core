@@ -9,6 +9,8 @@ import { Account, LiquidationParams } from './Account.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { LiquidityPositionSet, LiquidityChangeParams } from './LiquidityPositionSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
+import { SignedMath } from './SignedMath.sol';
+
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
@@ -35,6 +37,7 @@ library VTokenPositionSet {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using SafeCast for uint256;
     using SignedFullMath for int256;
+    using SignedMath for int256;
 
     error IncorrectUpdate();
     error DeactivationFailed(VTokenAddress);
@@ -90,6 +93,17 @@ library VTokenPositionSet {
     function max(int256 a, int256 b) internal pure returns (int256 c) {
         if (a > b) c = a;
         else c = b;
+    }
+
+    function getNotionalValue(
+        VTokenAddress vTokenAddress,
+        int256 vTokenAmount,
+        int256 vBaseAmount,
+        Constants memory constants
+    ) internal returns (int256) {
+        return
+            vTokenAmount.abs().mulDiv(vTokenAddress.getVirtualTwapPriceX128(constants), FixedPoint128.Q128) +
+            vBaseAmount.abs();
     }
 
     function getLongShortSideRisk(
@@ -207,11 +221,6 @@ library VTokenPositionSet {
         emit Account.FundingPayment(set.accountNo, vTokenAddress, 0, 0, fundingPayment);
     }
 
-    function abs(int256 value) internal pure returns (int256) {
-        if (value < 0) return value * -1;
-        else return value;
-    }
-
     function getTokenPosition(
         Set storage set,
         VTokenAddress vTokenAddress,
@@ -262,9 +271,8 @@ library VTokenPositionSet {
         int24 tickLower,
         int24 tickUpper,
         Constants memory constants
-    ) internal returns (int256) {
-        return
-            set.removeLimitOrder(vTokenAddress, tickLower, tickUpper, vTokenAddress.vPoolWrapper(constants), constants);
+    ) internal {
+        set.removeLimitOrder(vTokenAddress, tickLower, tickUpper, vTokenAddress.vPoolWrapper(constants), constants);
     }
 
     function liquidityChange(
@@ -378,7 +386,7 @@ library VTokenPositionSet {
         int24 tickUpper,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
@@ -395,12 +403,6 @@ library VTokenPositionSet {
         );
 
         set.update(balanceAdjustments, vTokenAddress, constants);
-
-        return
-            balanceAdjustments.vTokenIncrease.mulDiv(
-                vTokenAddress.getVirtualTwapPriceX128(constants),
-                FixedPoint128.Q128
-            ) + balanceAdjustments.vBaseIncrease;
     }
 
     function liquidateLiquidityPositions(
@@ -421,10 +423,12 @@ library VTokenPositionSet {
         set.update(balanceAdjustments, vTokenAddress, constants);
 
         return
-            balanceAdjustments.vTokenIncrease.mulDiv(
-                vTokenAddress.getVirtualTwapPriceX128(constants),
-                FixedPoint128.Q128
-            ) + balanceAdjustments.vBaseIncrease;
+            getNotionalValue(
+                vTokenAddress,
+                balanceAdjustments.vTokenIncrease,
+                balanceAdjustments.vBaseIncrease,
+                constants
+            );
     }
 
     function liquidateLiquidityPositions(

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { Account, LiquidityChangeParams, LiquidationParams, SwapParams } from './libraries/Account.sol';
+import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseState } from './ClearingHouseState.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
@@ -148,6 +148,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             constants
         );
 
+        uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
+        if (vBaseAmountOutAbs < minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
+
         if (!swapParams.isPartialAllowed) {
             if (
                 !((swapParams.isNotional && vBaseAmountOut.abs() == swapParams.amount.abs()) ||
@@ -175,14 +178,19 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
             revert InvalidLiquidityChangeParameters();
 
-        return
-            account.liquidityChange(
-                vTokenAddress,
-                liquidityChangeParams,
-                vTokenAddresses,
-                liquidationParams.minRequiredMargin,
-                constants
-            );
+        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            vTokenAddresses,
+            liquidationParams.minRequiredMargin,
+            constants
+        );
+
+        uint256 notionalValueAbs = uint256(
+            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, constants)
+        );
+
+        if (notionalValueAbs < minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
     function removeLimitOrder(

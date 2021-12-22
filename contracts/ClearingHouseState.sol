@@ -19,6 +19,7 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
     Constants public constants;
     LiquidationParams public liquidationParams;
     uint256 public removeLimitOrderFee;
+    uint256 public minimumOrderNotional;
 
     error NotVPoolFactory();
 
@@ -54,12 +55,14 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
         supportedDeposits[add] = status;
     }
 
-    function setPlatformParameters(LiquidationParams calldata _liquidationParams, uint256 _removeLimitOrderFee)
-        external
-        onlyGovernanceOrTeamMultisig
-    {
+    function setPlatformParameters(
+        LiquidationParams calldata _liquidationParams,
+        uint256 _removeLimitOrderFee,
+        uint256 _minimumOrderNotional
+    ) external onlyGovernanceOrTeamMultisig {
         liquidationParams = _liquidationParams;
         removeLimitOrderFee = _removeLimitOrderFee;
+        minimumOrderNotional = _minimumOrderNotional;
     }
 
     modifier onlyVPoolFactory() {
