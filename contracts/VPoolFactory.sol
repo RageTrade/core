@@ -100,7 +100,7 @@ contract VPoolFactory {
 
     function _deployVToken(
         SetupVTokenParams calldata setupVTokenParams,
-        uint256 salt,
+        uint256 counter,
         address VBASE_ADDRESS
     ) internal returns (address) {
         unchecked {
@@ -109,10 +109,9 @@ contract VPoolFactory {
                 ClearingHouse.isRealTokenAlreadyInitilized(setupVTokenParams.realTokenAddress) == false,
                 'Duplicate Pool'
             );
-            bytes memory bytecode = type(VToken).creationCode;
-            // TODO compute vPoolWrapper address here and pass it to vToken contract as immutable
-            bytecode = abi.encodePacked(
-                bytecode,
+
+            bytes memory bytecode = abi.encodePacked(
+                type(VToken).creationCode,
                 abi.encode(
                     setupVTokenParams.vTokenName,
                     setupVTokenParams.vTokenSymbol,
@@ -122,12 +121,13 @@ contract VPoolFactory {
                 )
             );
             bytes32 byteCodeHash = keccak256(bytecode);
-            bytes32 saltHash;
+            bytes32 salt;
             uint32 truncated;
             address vTokenAddressComputed;
+
             while (true) {
-                saltHash = keccak256(abi.encode(salt, setupVTokenParams.realTokenAddress));
-                vTokenAddressComputed = Create2.computeAddress(saltHash, byteCodeHash);
+                salt = keccak256(abi.encode(counter, setupVTokenParams.realTokenAddress));
+                vTokenAddressComputed = Create2.computeAddress(salt, byteCodeHash);
                 truncated = uint32(uint160(vTokenAddressComputed));
                 if (
                     truncated != 0 &&
@@ -135,10 +135,12 @@ contract VPoolFactory {
                     ClearingHouse.isVTokenAddressAvailable(truncated)
                 ) {
                     break;
+                } else {
+                    counter++; // using a different salt
                 }
-                salt++; // using a different salt
             }
-            address vTokenAddressDeployed = Create2.deploy(0, saltHash, bytecode);
+
+            address vTokenAddressDeployed = Create2.deploy(0, salt, bytecode);
             assert(vTokenAddressComputed == vTokenAddressDeployed); // TODO disable in mainnet?
 
             ClearingHouse.addVTokenAddress(truncated, vTokenAddressDeployed);

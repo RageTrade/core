@@ -2,14 +2,14 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { VPoolFactory, VPoolWrapperDeployer, ERC20, UtilsTest, VBase, IOracle } from '../typechain-types';
-import { getCreate2Address, getCreate2Address2 } from './utils/create2';
+import { getCreate2Address, getCreate2AddressByBytecodeHash } from './utils/create2';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
 import { BigNumber, utils } from 'ethers';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { getCreateAddressFor } from './utils/create-addresses';
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { hexlify, hexZeroPad, randomBytes } from 'ethers/lib/utils';
+import { hexlify, keccak256, randomBytes } from 'ethers/lib/utils';
 import { Q96 } from './utils/fixed-point';
 const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
@@ -100,7 +100,6 @@ describe('VPoolFactory', () => {
 
       //console.log(vTokenAddress, vPool, vPoolWrapper);
       // VToken : Create2
-      let counter = 0;
       // const saltInUint160 = await UtilsTestContract.convertAddressToUint160(realToken);
       // let salt = utils.defaultAbiCoder.encode(['uint256', 'address'], [saltInUint160, realToken]);
       let bytecode = utils.solidityPack(
@@ -114,13 +113,14 @@ describe('VPoolFactory', () => {
         ],
       );
 
+      let counter = 0;
       let vTokenComputedAddress;
       do {
-        let saltHash = utils.defaultAbiCoder.encode(['uint256', 'address'], [counter, realToken]);
-        vTokenComputedAddress = getCreate2Address(vPoolFactory.address, saltHash, bytecode);
+        let salt = keccak256(utils.defaultAbiCoder.encode(['uint256', 'address'], [counter, realToken]));
+        vTokenComputedAddress = getCreate2Address(vPoolFactory.address, salt, bytecode);
         // salt = hexZeroPad(BigNumber.from(salt).add(1).toHexString(), 32);
         counter++;
-      } while (BigNumber.from(vTokenComputedAddress).lt(vBase.address));
+      } while (!BigNumber.from(vTokenComputedAddress).lt(vBase.address));
       expect(vTokenAddress).to.eq(vTokenComputedAddress);
 
       // VToken : Cons Params
@@ -138,17 +138,15 @@ describe('VPoolFactory', () => {
       expect(vToken_state_owner.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
 
       // VPool : Create2
-      let salt: string;
-      if (vBase.address.toLowerCase() < vTokenAddress.toLowerCase()) {
-        salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vBase.address, vTokenAddress, 500]);
-      } else {
-        salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, vBase.address, 500]);
-      }
-      const vPoolCalculated = getCreate2Address2(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
+      let salt = keccak256(
+        utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, vBase.address, 500]),
+      );
+
+      const vPoolCalculated = getCreate2AddressByBytecodeHash(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
       expect(vPool).to.eq(vPoolCalculated);
 
       // VPoolWrapper : Create2
-      salt = utils.defaultAbiCoder.encode(['address', 'address'], [vTokenAddress, vBase.address]);
+      salt = keccak256(utils.defaultAbiCoder.encode(['address', 'address'], [vTokenAddress, vBase.address]));
       const vPoolWrapperCalculated = getCreate2Address(vPoolWrapperDeployer.address, salt, vPoolWrapperByteCode);
       expect(vPoolWrapper).to.eq(vPoolWrapperCalculated);
 
@@ -169,7 +167,7 @@ describe('VPoolFactory', () => {
   });
 
   describe('vToken always token0', () => {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       it(`fuzz ${i + 1}`, async () => {
         const _realToken = await (await hre.ethers.getContractFactory('ERC20')).deploy('', '');
         const _oracle = await smock.fake<IOracle>('IOracle', { address: hexlify(randomBytes(20)) });
