@@ -33,6 +33,7 @@ library LiquidityPosition {
     using VTokenLib for VTokenAddress;
 
     error AlreadyInitialized();
+    error IneligibleLimitOrderRemoval();
 
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
@@ -52,6 +53,15 @@ library LiquidityPosition {
 
     function isInitialized(Info storage info) internal view returns (bool) {
         return info.tickLower != 0 || info.tickUpper != 0;
+    }
+
+    function checkValidLimitOrderRemoval(Info storage info, int24 currentTick) internal view {
+        if (
+            !((currentTick >= info.tickUpper && info.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
+                (currentTick <= info.tickLower && info.limitOrderType == LimitOrderType.LOWER_LIMIT))
+        ) {
+            revert IneligibleLimitOrderRemoval();
+        }
     }
 
     function initialize(
@@ -90,8 +100,8 @@ library LiquidityPosition {
             position.tickUpper,
             liquidity,
             position.limitOrderType,
-            -basePrincipal,
-            -vTokenPrincipal
+            -vTokenPrincipal,
+            -basePrincipal
         );
 
         position.update(accountNo, vTokenAddress, wrapper, balanceAdjustments);

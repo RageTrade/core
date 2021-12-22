@@ -119,7 +119,7 @@ contract AccountTest {
     ) external {
         accounts[accountNo].swapToken(
             VTokenAddress.wrap(vTokenAddress),
-            SwapParams(amount, 0, false),
+            SwapParams(amount, 0, false, false),
             testVTokenAddresses,
             minRequiredMargin,
             constants
@@ -135,7 +135,7 @@ contract AccountTest {
     ) external {
         accounts[accountNo].swapToken(
             VTokenAddress.wrap(vTokenAddress),
-            SwapParams(amount, 0, true),
+            SwapParams(amount, 0, true, false),
             testVTokenAddresses,
             minRequiredMargin,
             constants

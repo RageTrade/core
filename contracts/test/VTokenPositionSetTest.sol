@@ -63,7 +63,7 @@ contract VTokenPositionSetTest {
         int256 vTokenAmount,
         Constants memory constants
     ) external {
-        dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false), wrapper, constants);
+        dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false, false), wrapper, constants);
     }
 
     function swapTokenNotional(
@@ -71,16 +71,7 @@ contract VTokenPositionSetTest {
         int256 vTokenNotional,
         Constants memory constants
     ) external {
-        dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true), wrapper, constants);
-    }
-
-    function closeLiquidityPosition(VTokenAddress vTokenAddress, Constants memory constants) external {
-        dummy.closeLiquidityPosition(
-            vTokenAddress,
-            dummy.getTokenPosition(vTokenAddress, true, constants).liquidityPositions.activate(-100, 100),
-            wrapper,
-            constants
-        );
+        dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true, false), wrapper, constants);
     }
 
     function liquidityChange(

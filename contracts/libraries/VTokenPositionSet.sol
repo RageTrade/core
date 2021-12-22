@@ -23,6 +23,7 @@ struct SwapParams {
     int256 amount;
     uint160 sqrtPriceLimit;
     bool isNotional;
+    bool isPartialAllowed;
 }
 
 library VTokenPositionSet {
@@ -46,6 +47,19 @@ library VTokenPositionSet {
         uint256 accountNo;
         uint32[8] active;
         mapping(uint32 => VTokenPosition.Position) positions;
+    }
+
+    function isEmpty(Set storage set) internal view returns (bool) {
+        return set.active[0] == 0;
+    }
+
+    function getIsTokenRangeActive(
+        Set storage set,
+        VTokenAddress vTokenAddress,
+        Constants memory constants
+    ) internal returns (bool isRangeActive) {
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
+        isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();
     }
 
     function getAccountMarketValue(
@@ -235,19 +249,21 @@ library VTokenPositionSet {
             set.swapToken(
                 vTokenAddress,
                 ///@dev 0 means no price limit and false means amount mentioned is token amount
-                SwapParams(vTokenAmount, 0, false),
+                SwapParams(vTokenAmount, 0, false, false),
                 vTokenAddress.vPoolWrapper(constants),
                 constants
             );
     }
 
-    function closeLiquidityPosition(
+    function removeLimitOrder(
         Set storage set,
         VTokenAddress vTokenAddress,
-        LiquidityPosition.Info storage position,
+        int24 tickLower,
+        int24 tickUpper,
         Constants memory constants
     ) internal returns (int256) {
-        return set.closeLiquidityPosition(vTokenAddress, position, vTokenAddress.vPoolWrapper(constants), constants);
+        return
+            set.removeLimitOrder(vTokenAddress, tickLower, tickUpper, vTokenAddress.vPoolWrapper(constants), constants);
     }
 
     function liquidityChange(
@@ -255,7 +271,7 @@ library VTokenPositionSet {
         VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
             set.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddress.vPoolWrapper(constants), constants);
     }
@@ -304,6 +320,9 @@ library VTokenPositionSet {
             swapParams.sqrtPriceLimit,
             swapParams.isNotional
         );
+        //Change direction basis uniswap to balance increase
+        vTokenAmount = -vTokenAmount;
+        vBaseAmount = -vBaseAmount;
         // TODO: remove this after testing
         // console.log('Token Amount Out:');
         // console.logInt(vTokenAmount);
@@ -329,7 +348,7 @@ library VTokenPositionSet {
         LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
@@ -348,28 +367,28 @@ library VTokenPositionSet {
             set.swapTokenAmount(vTokenAddress, -balanceAdjustments.traderPositionIncrease, constants);
         }
 
-        return
-            balanceAdjustments.vTokenIncrease.mulDiv(
-                vTokenAddress.getVirtualTwapPriceX128(constants),
-                FixedPoint128.Q128
-            ) + balanceAdjustments.vBaseIncrease;
+        return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease);
     }
 
-    function closeLiquidityPosition(
+    function removeLimitOrder(
         Set storage set,
         VTokenAddress vTokenAddress,
-        LiquidityPosition.Info storage position,
+        int24 tickLower,
+        int24 tickUpper,
         IVPoolWrapper wrapper,
         Constants memory constants
     ) internal returns (int256) {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, constants);
 
         Account.BalanceAdjustments memory balanceAdjustments;
+        int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
 
-        vTokenPosition.liquidityPositions.closeLiquidityPosition(
+        vTokenPosition.liquidityPositions.removeLimitOrder(
             set.accountNo,
             vTokenAddress,
-            position,
+            currentTick,
+            tickLower,
+            tickUpper,
             wrapper,
             balanceAdjustments
         );

@@ -142,6 +142,24 @@ export async function priceToSqrtPriceX96(
   return priceX128ToSqrtPriceX96(priceX128, vBase, vToken);
 }
 
+export async function priceToSqrtPriceX96WithoutContract(
+  price: number,
+  vBaseDecimals: BigNumberish,
+  vTokenDecimals: BigNumberish,
+  isToken0: boolean,
+) {
+  let priceX128 = toQ128(price);
+
+  priceX128 = priceX128.mul(BigNumber.from(10).pow(vBaseDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
+  priceX128 = BigNumber.from(priceX128);
+  let sqrtPriceX96 = sqrt(priceX128.mul(1n << 64n)); // 96 = (128 + 64) / 2
+
+  if (isToken0) {
+    sqrtPriceX96 = Q96.mul(Q96).div(sqrtPriceX96);
+  }
+  return sqrtPriceX96;
+}
+
 export async function sqrtPriceX96ToPrice(
   sqrtPriceX96: BigNumberish,
   vBase: ContractOrSmock<VBase>,

@@ -265,29 +265,6 @@ describe('VTokenPositionSet Library', () => {
     });
   });
 
-  describe('Close Liquidity Position', () => {
-    before(async () => {
-      const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
-      await VTokenPositionSet.init(vTokenAddress);
-      await VTokenPositionSet.liquidityChange(vTokenAddress, -100, 100, 100, constants);
-      const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
-
-      expect(resultVToken.balance).to.eq(-100);
-      expect(resultVBase.balance).to.eq(-400000);
-    });
-
-    it('Remove Liquidity', async () => {
-      await VTokenPositionSet.closeLiquidityPosition(vTokenAddress, constants);
-      const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
-
-      expect(resultVToken.balance).to.eq(0);
-      expect(resultVBase.balance).to.eq(0);
-    });
-  });
-
   describe('Liquididate Liquidity Positions (For a token)', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');

@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { Account } from '../libraries/Account.sol';
 
 interface IClearingHouse {
     error AccessDenied(address senderAddress);
@@ -13,6 +14,7 @@ interface IClearingHouse {
     error InvalidLiquidityChangeParameters();
     error InvalidTokenLiquidationParameters();
     error UninitializedToken(uint32 vTokenTruncatedAddress);
+    error SlippageBeyondTolerance();
 
     function createAccount() external returns (uint256 newAccountId);
 
@@ -32,27 +34,27 @@ interface IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         SwapParams memory swapParams
-    ) external;
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         LiquidityChangeParams calldata liquidityChangeParams
-    ) external;
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     function removeLimitOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper
-    ) external;
+    ) external returns (uint256 keeperFee);
 
-    function liquidateLiquidityPositions(uint256 accountNo) external;
+    function liquidateLiquidityPositions(uint256 accountNo) external returns (int256 keeperFee);
 
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external;
+    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments);
 }

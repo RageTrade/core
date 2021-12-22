@@ -41,7 +41,6 @@ library Account {
     using VTokenPositionSet for VTokenPositionSet.Set;
     using VTokenPosition for VTokenPosition.Position;
 
-    error IneligibleLimitOrderRemoval();
     error InvalidTransactionNotEnoughMargin(int256 accountMarketValue, int256 totalRequiredMargin);
     error InvalidTransactionNotEnoughProfit(int256 totalProfit);
     error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
@@ -130,6 +129,15 @@ library Account {
         return account.owner != address(0);
     }
 
+    function updateBaseBalance(
+        Info storage account,
+        int256 amount,
+        Constants memory constants
+    ) internal returns (BalanceAdjustments memory balanceAdjustments) {
+        balanceAdjustments = BalanceAdjustments(amount, 0, 0);
+        account.tokenPositions.update(balanceAdjustments, VTokenAddress.wrap(constants.VBASE_ADDRESS), constants);
+    }
+
     /// @notice increases deposit balance of 'vTokenAddress' by 'amount'
     /// @param account account to deposit balance into
     /// @param vTokenAddress address of token to deposit
@@ -180,30 +188,12 @@ library Account {
         uint256 minRequiredMargin,
         Constants memory constants
     ) external {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            VTokenAddress.wrap(constants.VBASE_ADDRESS),
-            true,
-            constants
-        );
-        vTokenPosition.balance -= int256(amount);
+        account.updateBaseBalance(-int256(amount), constants);
 
         account.checkIfProfitAvailable(vTokenAddresses, constants);
         account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
 
         // IERC20(RBASE_ADDRESS).transfer(msg.sender, amount);
-    }
-
-    function chargeFee(
-        Info storage account,
-        uint256 amount,
-        Constants memory constants
-    ) internal {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            VTokenAddress.wrap(constants.VBASE_ADDRESS),
-            true,
-            constants
-        );
-        vTokenPosition.balance -= int256(amount);
     }
 
     /// @notice returns market value and required margin for the account based on current market conditions
@@ -225,7 +215,7 @@ library Account {
         totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
         // console.log('totalRequiredMargin');
         // console.logInt(totalRequiredMargin);
-        if (account.tokenPositions.active[0] != 0) {
+        if (!account.tokenPositions.isEmpty()) {
             totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
                 ? int256(minRequiredMargin)
                 : totalRequiredMargin;
@@ -321,11 +311,15 @@ library Account {
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         uint256 minRequiredMargin,
         Constants memory constants
-    ) external returns (int256 notionalValue) {
+    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
 
         // mint/burn tokens + fee + funding payment
-        notionalValue = account.tokenPositions.liquidityChange(vTokenAddress, liquidityChangeParams, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            constants
+        );
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
@@ -381,7 +375,7 @@ library Account {
         int256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
         (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, liquidationFee, liquidationParams);
 
-        account.chargeFee(uint256(keeperFee + insuranceFundFee), constants);
+        account.updateBaseBalance(-(keeperFee + insuranceFundFee), constants);
     }
 
     function getLiquidationPriceX128AndFee(
@@ -436,7 +430,7 @@ library Account {
         uint256 liquidatorPriceX128,
         int256 fixFee,
         Constants memory constants
-    ) internal {
+    ) internal returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         BalanceAdjustments memory balanceAdjustments = BalanceAdjustments(
             -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
             tokensToTrade,
@@ -474,6 +468,8 @@ library Account {
             balanceAdjustments.vTokenIncrease,
             balanceAdjustments.vBaseIncrease
         );
+
+        return balanceAdjustments;
     }
 
     /// @notice liquidates all range positions in case the account is under water
@@ -489,14 +485,15 @@ library Account {
         LiquidationParams memory liquidationParams,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
-    ) external returns (int256 insuranceFundFee) {
-        VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-            vTokenAddress,
-            false,
-            constants
-        );
+    ) external returns (int256 insuranceFundFee, BalanceAdjustments memory liquidatorBalanceAdjustments) {
+        // VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+        //     vTokenAddress,
+        //     false,
+        //     constants
+        // );
 
-        if (!vTokenPosition.liquidityPositions.isEmpty()) revert InvalidLiquidationActiveRangePresent(vTokenAddress);
+        if (account.tokenPositions.getIsTokenRangeActive(vTokenAddress, constants))
+            revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
@@ -516,10 +513,19 @@ library Account {
             }
         }
 
+        int256 tokensToTrade;
+        {
+            VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+                vTokenAddress,
+                false,
+                constants
+            );
+            tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
+        }
+
         uint256 liquidationPriceX128;
         uint256 liquidatorPriceX128;
         {
-            int256 tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
             // console.log('Tokens To Trade');
             // console.logInt(tokensToTrade);
 
@@ -536,7 +542,7 @@ library Account {
             // console.log(liquidatorPriceX128);
             // console.log('Insurnace Fund Fee');
             // console.logInt(insuranceFundFee);
-            updateLiquidationAccounts(
+            liquidatorBalanceAdjustments = updateLiquidationAccounts(
                 account,
                 liquidatorAccount,
                 vTokenAddress,
@@ -547,14 +553,13 @@ library Account {
                 constants
             );
         }
-        int256 accountMarketValueFinal = account.getAccountValue(vTokenAddresses, constants);
+        {
+            int256 accountMarketValueFinal = account.getAccountValue(vTokenAddresses, constants);
 
-        if (accountMarketValueFinal < 0) {
-            insuranceFundFee = accountMarketValueFinal;
-            account
-                .tokenPositions
-                .positions[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]
-                .balance -= accountMarketValueFinal;
+            if (accountMarketValueFinal < 0) {
+                insuranceFundFee = accountMarketValueFinal;
+                account.updateBaseBalance(-accountMarketValueFinal, constants);
+            }
         }
         // console.log('#############  Insurance Fund Fee  ##################');
         // console.logInt(insuranceFundFee);
@@ -589,23 +594,8 @@ library Account {
         uint256 limitOrderFeeAndFixFee,
         Constants memory constants
     ) external {
-        int24 currentTick = vTokenAddress.getVirtualTwapTick(constants);
-        LiquidityPosition.Info storage position = account
-            .tokenPositions
-            .getTokenPosition(vTokenAddress, false, constants)
-            .liquidityPositions
-            .getLiquidityPosition(tickLower, tickUpper);
+        account.tokenPositions.removeLimitOrder(vTokenAddress, tickLower, tickUpper, constants);
 
-        if (
-            (currentTick >= tickUpper && position.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
-            (currentTick <= tickLower && position.limitOrderType == LimitOrderType.LOWER_LIMIT)
-        ) {
-            // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-            account.tokenPositions.closeLiquidityPosition(vTokenAddress, position, constants);
-        } else {
-            revert IneligibleLimitOrderRemoval();
-        }
-
-        account.chargeFee(limitOrderFeeAndFixFee, constants);
+        account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), constants);
     }
 }

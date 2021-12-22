@@ -72,15 +72,15 @@ describe('Account Library Test Realistic', () => {
 
     vPoolWrapperFake.swapToken.returns((input: any) => {
       if (input.isNotional) {
-        return [input.amount.mul(1n << 128n).div(priceX128), -input.amount];
-      } else {
         return [
-          input.amount,
           input.amount
-            .mul(priceX128)
-            .div(1n << 128n)
+            .mul(1n << 128n)
+            .div(priceX128)
             .mul(-1),
+          input.amount,
         ];
+      } else {
+        return [input.amount.mul(-1), input.amount.mul(priceX128).div(1n << 128n)];
       }
     });
 
@@ -204,7 +204,7 @@ describe('Account Library Test Realistic', () => {
       tickUpper: tickUpper,
       liquidityDelta: liquidityDelta,
       sqrtPriceCurrent: 0,
-      slippageTolerance: 0,
+      slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
     };

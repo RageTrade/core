@@ -89,11 +89,11 @@ contract VPoolWrapperMock is IVPoolWrapper {
         bool isNotional
     ) external pure returns (int256 vTokenAmount, int256 vBaseAmount) {
         if (isNotional) {
-            vTokenAmount = amount / 4000;
-            vBaseAmount = -amount;
+            vTokenAmount = -amount / 4000;
+            vBaseAmount = amount;
         } else {
-            vTokenAmount = amount;
-            vBaseAmount = -amount * 4000;
+            vTokenAmount = -amount;
+            vBaseAmount = amount * 4000;
         }
     }
 

@@ -187,11 +187,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         {
-            (int256 amount0_simulated, int256 amount1_simulated) = vPool.simulateSwap(
+            (int256 amount0_simulated, int256 amount1_simulated, uint256 protocolFee) = vPool.simulateSwap(
                 zeroForOne,
                 amountSpecified,
                 sqrtPriceLimitX96,
-                _onSwapSwap
+                _onSwapStep
             );
 
             /// @dev execute trade on uniswap
@@ -232,19 +232,19 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         _vBurn();
     }
 
-    function _onSwapSwap(
+    function _onSwapStep(
         bool zeroForOne,
         SimulateSwap.SwapCache memory cache,
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
-    ) internal {
+    ) internal returns (uint256 protocolFee) {
         bool buyVToken = isToken0 != zeroForOne;
         (uint256 vBaseAmount, uint256 vTokenAmount) = buyVToken
             ? (step.amountIn, step.amountOut)
             : (step.amountOut, step.amountIn);
 
         if (state.liquidity > 0 && vBaseAmount > 0) {
-            uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
+            uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128(isToken0);
             fpGlobal.update(
                 buyVToken ? int256(vTokenAmount) : -int256(vTokenAmount),
                 state.liquidity,
@@ -289,13 +289,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     // for updating global funding payment
     function zeroSwap() external {
-        uint256 priceX128 = oracle.getTwapSqrtPriceX96(1 hours).toPriceX128(isToken0);
+        uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128(isToken0);
         fpGlobal.update(
             0,
             1,
             uint48(block.timestamp),
             priceX128,
-            vPool.getTwapSqrtPrice(1 hours).toPriceX128(isToken0)
+            vPool.getTwapSqrtPrice(timeHorizon).toPriceX128(isToken0)
         );
     }
 
