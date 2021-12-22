@@ -128,6 +128,6 @@ contract VTokenPositionSetTest {
         )
     {
         VTokenPosition.Position storage pos = dummy.positions[vTokenAddress.truncate()];
-        return (pos.balance, pos.sumAChkpt, pos.netTraderPosition);
+        return (pos.balance, pos.sumAX128Ckpt, pos.netTraderPosition);
     }
 }

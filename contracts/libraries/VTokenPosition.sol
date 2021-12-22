@@ -30,7 +30,7 @@ library VTokenPosition {
     struct Position {
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
-        int256 sumAChkpt; // later look into cint64
+        int256 sumAX128Ckpt; // later look into cint64
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPositionSet.Info liquidityPositions;
@@ -75,8 +75,11 @@ library VTokenPosition {
     }
 
     function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
-        int256 extrapolatedSumA = wrapper.getSumAX128();
-        int256 unrealizedFP = position.netTraderPosition * (extrapolatedSumA - position.sumAChkpt);
+        int256 extrapolatedSumAX128 = wrapper.getSumAX128();
+        int256 unrealizedFP = position.netTraderPosition.mulDiv(
+            (extrapolatedSumAX128 - position.sumAX128Ckpt),
+            int256(FixedPoint128.Q128)
+        );
         return unrealizedFP;
     }
 

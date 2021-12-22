@@ -239,7 +239,7 @@ contract AccountTest {
         VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
             truncate(vTokenAddress)
         ];
-        return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAChkpt);
+        return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Ckpt);
     }
 
     function getAccountLiquidityPositionNum(uint256 accountNo, address vTokenAddress)

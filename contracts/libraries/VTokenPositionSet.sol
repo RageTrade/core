@@ -208,15 +208,15 @@ library VTokenPositionSet {
         Constants memory constants
     ) internal {
         VTokenPosition.Position storage _VTokenPosition = set.positions[vTokenAddress.truncate()];
-        int256 extrapolatedSumA = wrapper.getSumAX128();
+        int256 extrapolatedSumAX128 = wrapper.getSumAX128();
 
         VTokenPosition.Position storage _VBasePosition = set.positions[
             VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()
         ];
-        int256 fundingPayment = _VTokenPosition.netTraderPosition * (extrapolatedSumA - _VTokenPosition.sumAChkpt);
+        int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
         _VBasePosition.balance -= fundingPayment;
 
-        _VTokenPosition.sumAChkpt = extrapolatedSumA;
+        _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
 
         emit Account.FundingPayment(set.accountNo, vTokenAddress, 0, 0, fundingPayment);
     }
