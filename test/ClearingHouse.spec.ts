@@ -454,7 +454,16 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
     });
-    it('Fail - Low Notional Value');
+    it('Fail - Low Notional Value', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const swapParams = {
+        amount: tokenAmount('1', 8),
+        sqrtPriceLimit: 0,
+        isNotional: false,
+        isPartialAllowed: false,
+      };
+      expect(clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams)).to.be.reverted;
+    });
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const swapParams = {
@@ -512,32 +521,33 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
     });
-    // it('Fail - Low Notional Value', async () => {
-    //   const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
-    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
-    //   const swapParams = {
-    //     amount: tokenAmount('1', 6).div(200),
-    //     sqrtPriceLimit: curSqrtPrice.mul(110).div(100),
-    //     isNotional: true,
-    //     isPartialAllowed: false,
-    //   };
-    //   expect(
-    //     clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
-    //   ).to.be.revertedWith('LowNotionalValue()');
-    //   const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vTokenAddress);
-    // });
+    it('Fail - Low Notional Value', async () => {
+      const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const amount = tokenAmount('1', 6).div(100).sub(1);
+      const swapParams = {
+        amount: amount,
+        sqrtPriceLimit: 0,
+        isNotional: true,
+        isPartialAllowed: false,
+      };
+      expect(
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
+      ).to.be.revertedWith('LowNotionalValue(' + amount + ')');
+    });
 
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const amount = tokenAmount('1', 6).div(10);
       const swapParams = {
-        amount: tokenAmount('10000', 6),
+        amount: amount,
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
       const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
-      expect(accountTokenPosition.balance).to.eq(tokenAmount('-10000', 6));
+      expect(accountTokenPosition.balance).to.eq(amount.mul(-1));
     });
   });
   describe('#LiquidityChange - Without Limit', () => {
@@ -598,7 +608,21 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
     });
 
-    it('Fail - Low Notional Value');
+    it('Fail - Low Notional Value', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const liquidityChangeParams = {
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        liquidityDelta: 10n ** 6n,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageToleranceBps: 0,
+      };
+
+      expect(clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams))
+        .to.be.reverted;
+    });
 
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
