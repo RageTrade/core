@@ -26,8 +26,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     IUniswapV3Pool vPool;
     IOracle oracle;
 
-    bool public isToken0;
-
     struct SwapStep {
         SimulateSwap.SwapState state;
         SimulateSwap.StepComputations step;
@@ -42,10 +40,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     constructor(IUniswapV3Pool vPool_, IOracle oracle_) {
         vPool = vPool_;
         oracle = oracle_;
-    }
-
-    function setIsToken0(bool isToken0_) external {
-        isToken0 = isToken0_;
     }
 
     function clearSwapCache() external {
@@ -101,13 +95,13 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         _steps.push(SwapStep({ state: state, step: step }));
 
         fpGlobal.update(
-            zeroForOne == isToken0 ? int256(step.amountIn) : int256(step.amountOut),
+            zeroForOne ? int256(step.amountIn) : int256(step.amountOut),
             state.liquidity,
             cache.blockTimestamp,
             oracle.getTwapSqrtPriceX96(1 hours),
-            (isToken0 ? step.amountIn : step.amountOut).mulDiv(
+            (zeroForOne ? step.amountIn : step.amountOut).mulDiv(
                 FixedPoint128.Q128,
-                isToken0 ? step.amountOut : step.amountIn
+                zeroForOne ? step.amountOut : step.amountIn
             )
         );
 
@@ -117,6 +111,8 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
                 ticksExtended.cross(step.tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
             }
         }
+
+        return 0;
     }
 
     function swap(

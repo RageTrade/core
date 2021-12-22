@@ -59,37 +59,31 @@ describe('Tick', () => {
   };
   describe('#uniswapFeeGrowth', () => {
     it('zero', async () => {
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0, constants)).to.eq(0);
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(0);
     });
 
     it('current price inside, global increase', async () => {
       await vPool.setFeeGrowth(0, toQ128(10)); // increasing token1 global var
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0, constants)).to.eq(
-        toQ128(10),
-      );
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(toQ128(10));
     });
 
     it('current price outside, global increase', async () => {
       await vPool.setFeeGrowth(0, toQ128(10)); // increasing token1 global var
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2, vTokenAddress.suchThatVTokenIsToken0, constants)).to.eq(0);
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2)).to.eq(0);
     });
 
     it('current price inside, global increase with ticks', async () => {
       await vPool.setFeeGrowth(0, toQ128(30)); // increasing token1 global var
       await vPoolMocksetTick(-1, { feeGrowthOutside1X128: toQ128(5) });
       await vPoolMocksetTick(1, { feeGrowthOutside1X128: toQ128(10) });
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0, vTokenAddress.suchThatVTokenIsToken0, constants)).to.eq(
-        toQ128(15),
-      );
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(toQ128(15));
     });
 
     it('current price outside, global increase with ticks', async () => {
       await vPool.setFeeGrowth(0, 30); // increasing token1 global var
       await vPoolMocksetTick(-1, { feeGrowthOutside1X128: toQ128(5) });
       await vPoolMocksetTick(1, { feeGrowthOutside1X128: toQ128(10) });
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2, vTokenAddress.suchThatVTokenIsToken0, constants)).to.eq(
-        toQ128(5),
-      );
+      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2)).to.eq(toQ128(5));
     });
   });
 

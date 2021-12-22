@@ -71,11 +71,9 @@ contract TickTest {
     function getUniswapFeeGrowthInside(
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        VTokenAddress vToken,
-        Constants memory constants
+        int24 tickCurrent
     ) public view returns (uint256 uniswapFeeGrowthInside) {
-        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent, vToken.isToken0(constants));
+        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent);
     }
 
     function getExtendedFeeGrowthInside(

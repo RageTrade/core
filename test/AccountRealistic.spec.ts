@@ -85,15 +85,13 @@ describe('Account Library Test Realistic', () => {
     });
 
     vPoolWrapperFake.liquidityChange.returns((input: any) => {
-      const sqrtPriceCurrent = priceX128ToSqrtPriceX96(priceX128, vBase, vToken);
+      const sqrtPriceCurrent = priceX128ToSqrtPriceX96(priceX128);
 
       const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
         input.tickLower,
         sqrtPriceCurrent,
         input.tickUpper,
         input.liquidityDelta,
-        vBase,
-        vToken,
       );
 
       return [vBaseAmount, vTokenAmount];
@@ -149,8 +147,6 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         position.tickUpper,
         position.liquidity,
-        vBase,
-        vToken,
       );
 
       vBaseAmountTotal = vBaseAmountTotal.add(vBaseAmount);
@@ -224,9 +220,7 @@ describe('Account Library Test Realistic', () => {
       clearingHouse: clearingHouse,
       vPoolFactory: vPoolFactory,
       constants: constants,
-    } = await testSetupBase({
-      isVTokenToken0: false,
-    }));
+    } = await testSetupBase());
 
     ({
       oracle: oracle,
@@ -255,7 +249,6 @@ describe('Account Library Test Realistic', () => {
       whitelisted: true,
       vPoolFactory: vPoolFactory,
     }));
-
     vToken = await hre.ethers.getContractAt('VToken', vTokenAddress);
     vBaseAddress = vBase.address;
 
@@ -270,7 +263,6 @@ describe('Account Library Test Realistic', () => {
     vPoolWrapperFake.timeHorizon.returns(60);
     vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
     vPoolWrapperFake.initialMarginRatio.returns(20000);
-
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const factory = await hre.ethers.getContractFactory('AccountTest', {
       libraries: {
@@ -278,7 +270,6 @@ describe('Account Library Test Realistic', () => {
       },
     });
     test = await factory.deploy();
-
     await changeVPoolWrapperFakePrice(4000);
     minRequiredMargin = tokenAmount(20, 6);
     liquidationParams = {
@@ -762,14 +753,7 @@ describe('Account Library Test Realistic', () => {
       const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
       const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(4600, vBase, vToken));
       await test.removeLimitOrder(0, vTokenAddress, tickLower, tickUpper, tokenAmount(5, 6), constants);
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
 
       await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmount));
       await checkTokenBalance(vBaseAddress, startBaseDetails.balance.add(vBaseAmount).add(tokenAmount(-5, 6)));
@@ -838,14 +822,7 @@ describe('Account Library Test Realistic', () => {
         constants,
       );
       const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(price, vBase, vToken));
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
 
       await test.liquidateLiquidityPositions(0, liquidationParams, constants);
 
@@ -886,14 +863,7 @@ describe('Account Library Test Realistic', () => {
       );
 
       const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(price, vBase, vToken));
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
       await test.liquidateLiquidityPositions(0, liquidationParams, constants);
 
       const priceCurrentX128 = await priceToNearestPriceX128(price, vBase, vToken);
@@ -939,14 +909,7 @@ describe('Account Library Test Realistic', () => {
       );
 
       const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(price, vBase, vToken));
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
       await test.liquidateLiquidityPositions(0, liquidationParams, constants);
 
       const priceCurrentX128 = await priceToNearestPriceX128(price, vBase, vToken);
@@ -1184,14 +1147,7 @@ describe('Account Library Test Realistic', () => {
       const tick = await priceToTick(4000, vBase, vToken);
       const sqrtPriceCurrent = tickToSqrtPriceX96(tick);
 
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
       await checkTokenBalance(vTokenAddress, vTokenAmount.mul(-1));
       await checkTokenBalance(vBaseAddress, vBaseAmount.mul(-1));
       await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -1231,14 +1187,7 @@ describe('Account Library Test Realistic', () => {
       const position = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, 0);
 
       liquidity = liquidity.mul(-1);
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
       netSumB = startTokenDetails.balance
         .sub(vTokenAmount)
         .mul(-1)
@@ -1268,14 +1217,7 @@ describe('Account Library Test Realistic', () => {
       const position = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, 0);
 
       liquidity = liquidity.mul(-1);
-      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity,
-        vBase,
-        vToken,
-      );
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
       netSumB = startTokenDetails.balance
         .sub(vTokenAmount)
         .mul(-1)

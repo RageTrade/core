@@ -25,7 +25,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { config } from 'dotenv';
 import { stealFunds, tokenAmount } from './utils/stealFunds';
-import { sqrtPriceX96ToTick, priceToSqrtPriceX96WithoutContract } from './utils/price-tick';
+import { priceToSqrtPriceX96, sqrtPriceX96ToTick } from './utils/price-tick';
 
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
@@ -106,9 +106,9 @@ describe('Clearing House Library', () => {
   }
 
   async function initializePool(
-    VPoolFactory: VPoolFactory,
-    initialMargin: BigNumberish,
-    maintainanceMargin: BigNumberish,
+    vPoolFactory: VPoolFactory,
+    initialMarginRatio: BigNumberish,
+    maintainanceMarginRatio: BigNumberish,
     twapDuration: BigNumberish,
     initialPrice: BigNumberish,
   ) {
@@ -119,21 +119,26 @@ describe('Clearing House Library', () => {
     const oracle = await oracleFactory.deploy();
     oracle.setSqrtPrice(initialPrice);
 
-    await VPoolFactory.initializePool(
-      'vWETH',
-      'vWETH',
-      realToken.address,
-      oracle.address,
-      500,
-      500,
-      initialMargin,
-      maintainanceMargin,
-      twapDuration,
-      false,
+    await vPoolFactory.initializePool(
+      {
+        setupVTokenParams: {
+          vTokenName: 'vWETH',
+          vTokenSymbol: 'vWETH',
+          realTokenAddress: realToken.address,
+          oracleAddress: oracle.address,
+        },
+        extendedLpFee: 500,
+        protocolFee: 500,
+        initialMarginRatio,
+        maintainanceMarginRatio,
+        twapDuration,
+        whitelisted: false,
+      },
+      0,
     );
 
-    const eventFilter = VPoolFactory.filters.PoolInitlized();
-    const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
+    const eventFilter = vPoolFactory.filters.PoolInitlized();
+    const events = await vPoolFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
     const vPoolWrapper = events[0].args[2];
@@ -196,7 +201,7 @@ describe('Clearing House Library', () => {
       20_000,
       10_000,
       1,
-      await priceToSqrtPriceX96WithoutContract(4000, 6, 18, false),
+      await priceToSqrtPriceX96(4000, 6, 18),
       // .div(60 * 10 ** 6),
     );
 
@@ -205,12 +210,12 @@ describe('Clearing House Library', () => {
     realToken = out.realToken;
     vPool = await hre.ethers.getContractAt('IUniswapV3Pool', out.vPool);
 
-    console.log('### Is VToken 0 ? ###');
-    console.log(BigNumber.from(vTokenAddress).lt(vBaseAddress));
-    console.log(vTokenAddress);
-    console.log(vBaseAddress);
-    console.log('### Base decimals ###');
-    console.log(await vBase.decimals());
+    // console.log('### Is VToken 0 ? ###');
+    // console.log(BigNumber.from(vTokenAddress).lt(vBaseAddress));
+    // console.log(vTokenAddress);
+    // console.log(vBaseAddress);
+    // console.log('### Base decimals ###');
+    // console.log(await vBase.decimals());
 
     constants = await VPoolFactory.constants();
 

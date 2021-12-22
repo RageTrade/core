@@ -60,8 +60,8 @@ describe('price-tick util', () => {
   describe('#priceX128ToSqrtPriceX96', () => {
     for (const { priceX128, sqrtPriceX96 } of testCases) {
       it(`sqrt(${priceX128}(X128)) == ${sqrtPriceX96}(X96)`, async () => {
-        expect(priceX128ToSqrtPriceX96(priceX128, vBase, vToken)).to.eq(sqrtPriceX96);
-        expect(sqrtPriceX96ToPriceX128(sqrtPriceX96, vBase, vToken)).to.eq(priceX128);
+        expect(priceX128ToSqrtPriceX96(priceX128)).to.eq(sqrtPriceX96);
+        expect(sqrtPriceX96ToPriceX128(sqrtPriceX96)).to.eq(priceX128);
       });
     }
   });

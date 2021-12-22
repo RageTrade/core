@@ -24,8 +24,6 @@ describe('PoolWrapper', () => {
   let vBase: MockContract<VBase>;
   let vToken: MockContract<VToken>;
 
-  let isToken0: boolean;
-
   interface Range {
     tickLower: number;
     tickUpper: number;
@@ -36,7 +34,7 @@ describe('PoolWrapper', () => {
     let biggerRange: Range;
 
     before(async () => {
-      ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
       }));
@@ -130,7 +128,7 @@ describe('PoolWrapper', () => {
       let protocolFee: number;
 
       before(async () => {
-        ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+        ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
           rPriceInitial: 2000,
           vPriceInitial: 2000,
           uniswapFee: 500,
@@ -143,7 +141,6 @@ describe('PoolWrapper', () => {
         expect((protocolFee = await vPoolWrapper.protocolFee())).to.eq(500);
 
         // const { tick, sqrtPriceX96 } = await vPool.slot0();
-        // console.log({ isToken0, tick, sqrtPriceX96 });
 
         // bootstraping initial liquidity
         await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
@@ -224,7 +221,7 @@ describe('PoolWrapper', () => {
       let protocolFee: number;
 
       before(async () => {
-        ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+        ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
           rPriceInitial: 2000,
           vPriceInitial: 2000,
           uniswapFee: 500,
@@ -237,7 +234,6 @@ describe('PoolWrapper', () => {
         expect((protocolFee = await vPoolWrapper.protocolFee())).to.eq(500);
 
         // const { tick, sqrtPriceX96 } = await vPool.slot0();
-        // console.log({ isToken0, tick, sqrtPriceX96 });
 
         // bootstraping initial liquidity
         await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
@@ -324,7 +320,7 @@ describe('PoolWrapper', () => {
       // -10 ->   0 ===> 100 A
       //   0 ->  10 ===> 100 B
       //  10 ->  20 ===> 100 B
-      ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
         vBaseDecimals: 18,
@@ -336,26 +332,8 @@ describe('PoolWrapper', () => {
       uniswapFee = await vPoolWrapper.uniswapFee();
 
       const { sqrtPriceX96 } = await vPool.slot0();
-      liquidity1 = maxLiquidityForAmounts(
-        sqrtPriceX96,
-        -10,
-        10,
-        parseUnits('100', 18),
-        parseUnits('100', 18),
-        true,
-        vBase,
-        vToken,
-      );
-      liquidity2 = maxLiquidityForAmounts(
-        sqrtPriceX96,
-        10,
-        20,
-        parseUnits('100', 18),
-        parseUnits('100', 18),
-        true,
-        vBase,
-        vToken,
-      );
+      liquidity1 = maxLiquidityForAmounts(sqrtPriceX96, -10, 10, parseUnits('100', 18), parseUnits('100', 18), true);
+      liquidity2 = maxLiquidityForAmounts(sqrtPriceX96, 10, 20, parseUnits('100', 18), parseUnits('100', 18), true);
 
       await vPoolWrapper.liquidityChange(-10, 10, liquidity1);
       await vPoolWrapper.liquidityChange(10, 20, liquidity2);
@@ -480,9 +458,6 @@ describe('PoolWrapper', () => {
     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
     // );
 
-    if (!isToken0) {
-      [tickLower, tickUpper] = [tickUpper, tickLower];
-    }
     await vPoolWrapper.liquidityChange(tickLower, tickUpper, liquidityDelta);
   }
 
@@ -524,7 +499,7 @@ describe('PoolWrapper', () => {
     sumFeeGlobalX128: BigNumber;
   }> {
     const fpGlobal = await vPoolWrapper.fpGlobal();
-    const uniswapFeeX128 = isToken0 ? await vPool.feeGrowthGlobal1X128() : await vPool.feeGrowthGlobal0X128();
+    const uniswapFeeX128 = await vPool.feeGrowthGlobal1X128();
     const sumExFeeGlobalX128 = await vPoolWrapper.sumExFeeGlobalX128();
     return { ...fpGlobal, sumFeeGlobalX128: uniswapFeeX128.add(sumExFeeGlobalX128) };
   }

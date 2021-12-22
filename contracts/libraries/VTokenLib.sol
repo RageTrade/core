@@ -43,56 +43,14 @@ library VTokenLib {
         return IERC20(vToken.iface().realToken());
     }
 
-    function isToken0(VTokenAddress vToken, Constants memory constants) internal pure returns (bool) {
-        return VTokenAddress.unwrap(vToken) < constants.VBASE_ADDRESS;
-    }
-
-    function isToken1(VTokenAddress vToken, Constants memory constants) internal pure returns (bool) {
-        return !isToken0(vToken, constants);
-    }
-
-    function flip(
-        VTokenAddress vToken,
-        int256 amount0,
-        int256 amount1,
-        Constants memory constants
-    ) internal pure returns (int256 baseAmount, int256 vTokenAmount) {
-        if (vToken.isToken0(constants)) {
-            baseAmount = amount1;
-            vTokenAmount = amount0;
-        } else {
-            baseAmount = amount0;
-            vTokenAmount = amount1;
-        }
-    }
-
-    function flip(
-        VTokenAddress vToken,
-        uint256 amount0,
-        uint256 amount1,
-        Constants memory constants
-    ) internal pure returns (uint256 baseAmount, uint256 vTokenAmount) {
-        if (vToken.isToken0(constants)) {
-            baseAmount = amount1;
-            vTokenAmount = amount0;
-        } else {
-            baseAmount = amount0;
-            vTokenAmount = amount1;
-        }
-    }
-
     function vPool(VTokenAddress vToken, Constants memory constants) internal pure returns (IUniswapV3Pool) {
         address token0;
         address token1;
         address vTokenAddress = VTokenAddress.unwrap(vToken);
 
-        if (vToken.isToken0(constants)) {
-            token0 = vTokenAddress;
-            token1 = constants.VBASE_ADDRESS;
-        } else {
-            token0 = constants.VBASE_ADDRESS;
-            token1 = vTokenAddress;
-        }
+        token0 = vTokenAddress;
+        token1 = constants.VBASE_ADDRESS;
+
         return
             IUniswapV3Pool(
                 Create2.computeAddress(
@@ -144,7 +102,7 @@ library VTokenLib {
         view
         returns (uint256 priceX128)
     {
-        return vToken.getVirtualTwapSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
+        return vToken.getVirtualTwapSqrtPriceX96(constants).toPriceX128();
     }
 
     function getVirtualCurrentPriceX128(VTokenAddress vToken, Constants memory constants)
@@ -152,7 +110,7 @@ library VTokenLib {
         view
         returns (uint256 priceX128)
     {
-        return vToken.getVirtualCurrentSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
+        return vToken.getVirtualCurrentSqrtPriceX96(constants).toPriceX128();
     }
 
     function getRealTwapSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
@@ -168,7 +126,7 @@ library VTokenLib {
         view
         returns (uint256 priceX128)
     {
-        return vToken.getRealTwapSqrtPriceX96(constants).toPriceX128(vToken.isToken0(constants));
+        return vToken.getRealTwapSqrtPriceX96(constants).toPriceX128();
     }
 
     function getMarginRatio(

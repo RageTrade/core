@@ -48,7 +48,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     uint32 public immutable timeHorizon;
     VTokenAddress public immutable vToken;
     IUniswapV3Pool public immutable vPool;
-    bool public immutable isToken0;
 
     // fee collected by Uniswap from traders and given to LPs
     uint24 public immutable uniswapFee;
@@ -89,8 +88,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         vToken = VTokenAddress.wrap(vTokenAddress);
         vPool = IUniswapV3Pool(vPoolAddress);
         uniswapFee = vPool.fee();
-        isToken0 = vToken.isToken0(constants);
-        // console.log('isToken0', isToken0 ? 'true' : 'false');
     }
 
     // TODO restrict this to governance
@@ -140,7 +137,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             _fpGlobal,
             sumExFeeGlobalX128
         );
-        uint256 uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick, isToken0);
+        uint256 uniswapFeeInsideX128 = vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, currentTick);
         sumFeeInsideX128 = uniswapFeeInsideX128 + sumExFeeInsideX128;
     }
 
@@ -163,7 +160,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
         bool buyVToken = amountSpecified > 0;
 
-        bool zeroForOne = isToken0 != (buyVToken);
+        bool zeroForOne = !buyVToken;
 
         if (sqrtPriceLimitX96 == 0) {
             sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
@@ -187,7 +184,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         {
-            (int256 amount0_simulated, int256 amount1_simulated, uint256 protocolFee) = vPool.simulateSwap(
+            /// @dev token0 is vToken and token1 is vBase
+            (int256 vTokenIn_simulated, int256 vBaseIn_simulated, uint256 protocolFee) = vPool.simulateSwap(
                 zeroForOne,
                 amountSpecified,
                 sqrtPriceLimitX96,
@@ -195,18 +193,10 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             );
 
             /// @dev execute trade on uniswap
-            (int256 amount0, int256 amount1) = vPool.swap(
-                address(this),
-                zeroForOne,
-                amountSpecified,
-                sqrtPriceLimitX96,
-                ''
-            );
+            (vTokenIn, vBaseIn) = vPool.swap(address(this), zeroForOne, amountSpecified, sqrtPriceLimitX96, '');
 
-            // TODO remove this check in production
-            assert(amount0_simulated == amount0 && amount1_simulated == amount1);
-
-            (vBaseIn, vTokenIn) = vToken.flip(amount0, amount1, constants);
+            // TODO should this check be removed in production?
+            assert(vTokenIn_simulated == vTokenIn && vBaseIn_simulated == vBaseIn);
         }
 
         if (buyVToken) {
@@ -238,13 +228,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
     ) internal returns (uint256 protocolFee) {
-        bool buyVToken = isToken0 != zeroForOne;
+        bool buyVToken = !zeroForOne;
         (uint256 vBaseAmount, uint256 vTokenAmount) = buyVToken
             ? (step.amountIn, step.amountOut)
             : (step.amountOut, step.amountIn);
 
         if (state.liquidity > 0 && vBaseAmount > 0) {
-            uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128(isToken0);
+            uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
             fpGlobal.update(
                 buyVToken ? int256(vTokenAmount) : -int256(vTokenAmount),
                 state.liquidity,
@@ -289,14 +279,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     // for updating global funding payment
     function zeroSwap() external {
-        uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128(isToken0);
-        fpGlobal.update(
-            0,
-            1,
-            uint48(block.timestamp),
-            priceX128,
-            vPool.getTwapSqrtPrice(timeHorizon).toPriceX128(isToken0)
-        );
+        uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
+        fpGlobal.update(0, 1, uint48(block.timestamp), priceX128, vPool.getTwapSqrtPrice(timeHorizon).toPriceX128());
     }
 
     function _updateTicks(
@@ -351,8 +335,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int128 liquidityDelta
     ) external returns (int256 basePrincipal, int256 vTokenPrincipal) {
         _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
-        int256 amount0;
-        int256 amount1;
         if (liquidityDelta > 0) {
             (uint256 _amount0, uint256 _amount1) = vPool.mint({
                 recipient: address(this),
@@ -361,30 +343,28 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 amount: uint128(liquidityDelta),
                 data: ''
             });
-            amount0 = _amount0.toInt256();
-            amount1 = _amount1.toInt256();
+            vTokenPrincipal = _amount0.toInt256();
+            basePrincipal = _amount1.toInt256();
         } else {
             (uint256 _amount0, uint256 _amount1) = vPool.burn({
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 amount: uint128(liquidityDelta * -1)
             });
-            amount0 = _amount0.toInt256() * -1;
-            amount1 = _amount1.toInt256() * -1;
+            vTokenPrincipal = _amount0.toInt256() * -1;
+            basePrincipal = _amount1.toInt256() * -1;
             // review : do we want final amount here with fees included or just the am for liq ?
             // As per spec its am for liq only
             collect(tickLower, tickUpper);
         }
-        (basePrincipal, vTokenPrincipal) = vToken.flip(amount0, amount1, constants);
     }
 
     function uniswapV3MintCallback(
-        uint256 amount0,
-        uint256 amount1,
+        uint256 vTokenAmount,
+        uint256 vBaseAmount,
         bytes calldata
     ) external override {
         require(msg.sender == address(vPool));
-        (uint256 vBaseAmount, uint256 vTokenAmount) = vToken.flip(amount0, amount1, constants);
         if (vBaseAmount > 0) IVBase(constants.VBASE_ADDRESS).mint(msg.sender, vBaseAmount);
         if (vTokenAmount > 0) vToken.iface().mint(msg.sender, vTokenAmount);
     }

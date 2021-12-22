@@ -8,7 +8,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export async function setupWrapper(setupArgs: SetupArgs) {
   const signer = setupArgs.signer ?? (await hre.ethers.getSigners())[0];
-  const { vPool, vBase, vToken, oracle, isToken0 } = await setupVPool(setupArgs);
+  const { vPool, vBase, vToken, oracle } = await setupVPool(setupArgs);
 
   const wrapperDeployer = await smock.fake<VPoolWrapperDeployer>('VPoolWrapperDeployer', {
     address: signer.address,
@@ -42,5 +42,5 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   vBase.setVariable('isAuth', { [vPoolWrapper.address]: true });
   vToken.setVariable('vPoolWrapper', vPoolWrapper.address);
 
-  return { vPoolWrapper, vPool, vBase, vToken, oracle, isToken0 };
+  return { vPoolWrapper, vPool, vBase, vToken, oracle };
 }

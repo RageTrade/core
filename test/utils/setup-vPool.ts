@@ -73,9 +73,8 @@ export async function setupVPool({
     address: signer.address,
   });
 
-  const isToken0 = BigNumber.from(vBase.address).gt(vToken.address);
-  const token0 = isToken0 ? vToken.address : vBase.address;
-  const token1 = isToken0 ? vBase.address : vToken.address;
+  const token0 = vToken.address;
+  const token1 = vBase.address;
   const fee = uniswapFee;
   const tickSpacing = 10;
   v3Deployer.parameters.returns([signer.address, token0, token1, fee, tickSpacing]);
@@ -86,5 +85,5 @@ export async function setupVPool({
   const sqrtPrice = await priceToSqrtPriceX96(vPriceInitial, vBase, vToken);
   await vPool.initialize(sqrtPrice);
 
-  return { vPool, vBase, vToken, oracle, isToken0 };
+  return { vPool, vBase, vToken, oracle };
 }

@@ -34,8 +34,8 @@ describe('DepositTokenSet Library', () => {
 
   async function initializePool(
     VPoolFactory: VPoolFactory,
-    initialMargin: BigNumberish,
-    maintainanceMargin: BigNumberish,
+    initialMarginRatio: BigNumberish,
+    maintainanceMarginRatio: BigNumberish,
     twapDuration: BigNumberish,
   ) {
     const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
@@ -45,16 +45,21 @@ describe('DepositTokenSet Library', () => {
     const oracle = await oracleFactory.deploy();
 
     await VPoolFactory.initializePool(
-      'vWETH',
-      'vWETH',
-      realToken.address,
-      oracle.address,
-      500,
-      500,
-      initialMargin,
-      maintainanceMargin,
-      twapDuration,
-      false,
+      {
+        setupVTokenParams: {
+          vTokenName: 'vWETH',
+          vTokenSymbol: 'vWETH',
+          realTokenAddress: realToken.address,
+          oracleAddress: oracle.address,
+        },
+        extendedLpFee: 500,
+        protocolFee: 500,
+        initialMarginRatio,
+        maintainanceMarginRatio,
+        twapDuration,
+        whitelisted: false,
+      },
+      0,
     );
 
     const eventFilter = VPoolFactory.filters.PoolInitlized();
@@ -69,6 +74,7 @@ describe('DepositTokenSet Library', () => {
     // console.log('Oracle Address: ', oracleAddress);
     return { vTokenAddress, realToken, oracle };
   }
+
   before(async () => {
     await activateMainnetFork();
 

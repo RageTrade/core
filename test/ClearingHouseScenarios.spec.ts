@@ -65,8 +65,8 @@ describe('Clearing House Senario', () => {
 
   async function initializePool(
     VPoolFactory: VPoolFactory,
-    initialMargin: BigNumberish,
-    maintainanceMargin: BigNumberish,
+    initialMarginRatio: BigNumberish,
+    maintainanceMarginRatio: BigNumberish,
     twapDuration: BigNumberish,
     initialSqrtPrice: BigNumberish,
   ) {
@@ -78,16 +78,21 @@ describe('Clearing House Senario', () => {
     oracle.setSqrtPrice(initialSqrtPrice);
 
     await VPoolFactory.initializePool(
-      'vWETH',
-      'vWETH',
-      realToken.address,
-      oracle.address,
-      500,
-      500,
-      initialMargin,
-      maintainanceMargin,
-      twapDuration,
-      false,
+      {
+        setupVTokenParams: {
+          vTokenName: 'vWETH',
+          vTokenSymbol: 'vWETH',
+          realTokenAddress: realToken.address,
+          oracleAddress: oracle.address,
+        },
+        extendedLpFee: 500,
+        protocolFee: 500,
+        initialMarginRatio,
+        maintainanceMarginRatio,
+        twapDuration,
+        whitelisted: false,
+      },
+      0,
     );
 
     const eventFilter = VPoolFactory.filters.PoolInitlized();
@@ -228,10 +233,6 @@ describe('Clearing House Senario', () => {
   //     // console.log(
   //     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
   //     // );
-  //     const isToken0 =
-  //     if (!isToken0) {
-  //       [tickLower, tickUpper] = [tickUpper, tickLower];
-  //     }
   //     const liquidityChangeParams = {
   //         tickLower: tickLower,
   //         tickUpper: tickUpper,

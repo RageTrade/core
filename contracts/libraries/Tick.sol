@@ -79,27 +79,21 @@ library Tick {
         IUniswapV3Pool vPool,
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        bool isToken0
+        int24 tickCurrent
     ) internal view returns (uint256 uniswapFeeGrowthInsideX128) {
         uint256 uniswapFeeGrowthLowerX128;
         uint256 uniswapFeeGrowthUpperX128;
         {
-            (, , uint256 fee0LowerX128, uint256 fee1LowerX128, , , , ) = vPool.ticks(tickLower);
-            (, , uint256 fee0UpperX128, uint256 fee1UpperX128, , , , ) = vPool.ticks(tickUpper);
-            if (isToken0) {
-                uniswapFeeGrowthLowerX128 = fee1LowerX128;
-                uniswapFeeGrowthUpperX128 = fee1UpperX128;
-            } else {
-                uniswapFeeGrowthLowerX128 = fee0LowerX128;
-                uniswapFeeGrowthUpperX128 = fee0UpperX128;
-            }
+            (, , , uint256 fee1LowerX128, , , , ) = vPool.ticks(tickLower);
+            (, , , uint256 fee1UpperX128, , , , ) = vPool.ticks(tickUpper);
+            uniswapFeeGrowthLowerX128 = fee1LowerX128;
+            uniswapFeeGrowthUpperX128 = fee1UpperX128;
         }
 
         if (tickCurrent < tickLower) {
             uniswapFeeGrowthInsideX128 = uniswapFeeGrowthLowerX128 - uniswapFeeGrowthUpperX128;
         } else if (tickCurrent < tickUpper) {
-            uniswapFeeGrowthInsideX128 = (isToken0 ? vPool.feeGrowthGlobal1X128() : vPool.feeGrowthGlobal0X128());
+            uniswapFeeGrowthInsideX128 = vPool.feeGrowthGlobal1X128();
             uniswapFeeGrowthInsideX128 -= (uniswapFeeGrowthLowerX128 + uniswapFeeGrowthUpperX128);
         } else {
             uniswapFeeGrowthInsideX128 = uniswapFeeGrowthUpperX128 - uniswapFeeGrowthLowerX128;
