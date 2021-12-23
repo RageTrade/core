@@ -490,11 +490,21 @@ describe('Account Library Test Realistic', () => {
         );
       });
       it('Liquidation - Fail (Active Range Present)', async () => {
-        await test.addMargin(0, vTokenAddress, tokenAmount(1000000, 6), constants);
-
-        await liquidityChange(194000, 195000, tokenAmount(1, 18), false, 0);
-
         await changeVPoolPriceToNearestTick(3500);
+
+        await test.addMargin(0, vTokenAddress, tokenAmount(1000000, 6), constants);
+        let tickLower: number;
+        let tickUpper: number;
+        let liquidity: BigNumberish;
+        
+        tickLower = await priceToTick(3500, vBase, vToken);
+        tickLower -= tickLower % 10;
+        tickUpper = await priceToTick(4500, vBase, vToken);
+        tickUpper -= tickUpper % 10;
+        liquidity = 10n**10n;
+        
+        await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+
 
         expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.revertedWith(
           'InvalidLiquidationActiveRangePresent("' + vTokenAddress + '")',
@@ -611,7 +621,17 @@ describe('Account Library Test Realistic', () => {
       it('Liquidation - Fail (Active Range Present)', async () => {
         await test.addMargin(0, vTokenAddress, tokenAmount(1000000, 6), constants);
 
-        await liquidityChange(194000, 195000, tokenAmount(1, 18), false, 0);
+        let tickLower: number;
+        let tickUpper: number;
+        let liquidity: BigNumberish;
+        
+        tickLower = await priceToTick(3500, vBase, vToken);
+        tickLower -= tickLower % 10;
+        tickUpper = await priceToTick(4500, vBase, vToken);
+        tickUpper -= tickUpper % 10;
+        liquidity = 10n**10n;
+        
+        await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
         await changeVPoolPriceToNearestTick(3500);
 
@@ -697,9 +717,9 @@ describe('Account Library Test Realistic', () => {
     let tickUpper: number;
     let liquidity: BigNumberish;
     before(async () => {
-      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower = await priceToTick(3500, vBase, vToken);
       tickLower -= tickLower % 10;
-      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper = await priceToTick(4500, vBase, vToken);
       tickUpper -= tickUpper % 10;
       liquidity = tokenAmount(1, 18);
     });
@@ -711,8 +731,8 @@ describe('Account Library Test Realistic', () => {
       await test.cleanPositions(0, constants);
     });
     it('Limit Order Removal (Upper) with Fee - No Price Change', async () => {
-      await changeVPoolWrapperFakePrice(3400);
-      await changeVPoolPriceToNearestTick(3400);
+      await changeVPoolWrapperFakePrice(4600);
+      await changeVPoolPriceToNearestTick(4600);
 
       await liquidityChange(tickLower, tickUpper, liquidity, false, 2);
       await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -726,8 +746,8 @@ describe('Account Library Test Realistic', () => {
     });
 
     it('Limit Order Removal (Lower) with Fee - No Price Change', async () => {
-      await changeVPoolWrapperFakePrice(4600);
-      await changeVPoolPriceToNearestTick(4600);
+      await changeVPoolWrapperFakePrice(3400);
+      await changeVPoolPriceToNearestTick(3400);
 
       await liquidityChange(tickLower, tickUpper, liquidity, false, 1);
       await checkLiquidityPositionNum(vTokenAddress, 1);
@@ -747,11 +767,11 @@ describe('Account Library Test Realistic', () => {
       await checkLiquidityPositionNum(vTokenAddress, 1);
       await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 1, liquidity);
 
-      await changeVPoolWrapperFakePrice(4600);
-      await changeVPoolPriceToNearestTick(4600);
+      await changeVPoolWrapperFakePrice(3400);
+      await changeVPoolPriceToNearestTick(3400);
       const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
       const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-      const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(4600, vBase, vToken));
+      const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(3400, vBase, vToken));
       await test.removeLimitOrder(0, vTokenAddress, tickLower, tickUpper, tokenAmount(5, 6), constants);
       const { vBaseAmount, vTokenAmount } = amountsForLiquidity(tickLower, sqrtPriceCurrent, tickUpper, liquidity);
 
@@ -784,9 +804,9 @@ describe('Account Library Test Realistic', () => {
     let liquidity: BigNumberish;
     let price: number;
     before(async () => {
-      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower = await priceToTick(3500, vBase, vToken);
       tickLower -= tickLower % 10;
-      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper = await priceToTick(4500, vBase, vToken);
       tickUpper -= tickUpper % 10;
       liquidity = tokenAmount(1, 18);
     });
@@ -945,9 +965,9 @@ describe('Account Library Test Realistic', () => {
     let liquidity: BigNumberish;
     let price: number;
     before(async () => {
-      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower = await priceToTick(3500, vBase, vToken);
       tickLower -= tickLower % 10;
-      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper = await priceToTick(4500, vBase, vToken);
       tickUpper -= tickUpper % 10;
       tickLower1 = tickLower - 100;
       tickUpper1 = tickUpper + 100;
@@ -1120,9 +1140,9 @@ describe('Account Library Test Realistic', () => {
     let liquidity: BigNumber;
     let netSumB: BigNumber;
     before(async () => {
-      tickLower = await priceToTick(4500, vBase, vToken);
+      tickLower = await priceToTick(3500, vBase, vToken);
       tickLower -= tickLower % 10;
-      tickUpper = await priceToTick(3500, vBase, vToken);
+      tickUpper = await priceToTick(4500, vBase, vToken);
       tickUpper -= tickUpper % 10;
       netSumB = BigNumber.from(0);
     });
