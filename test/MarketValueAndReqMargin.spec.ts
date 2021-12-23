@@ -55,7 +55,7 @@ describe('Market Value and Required Margin', () => {
     vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
       address: vPoolAddress,
     });
-    vPoolFake.observe.returns([[0, 194430 * 60], []]);
+    vPoolFake.observe.returns([[0, -194430 * 60], []]);
 
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {
       address: vPoolWrapperAddress,
@@ -85,7 +85,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 26643.485738709
     it('Scenario 1 - Add Range', async () => {
       vPoolWrapperFake.liquidityChange.returns([125271786680, BigNumber.from('30105615887850845791')]);
-      await liqChange(193370, 195660, 35000);
+      await liqChange(-195660,-193370, 35000);
       await matchNumbers(0, 26643485738, 13321742869);
     });
 
@@ -97,7 +97,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 15110.520196929
     // ReqMargin (InitialMargin) 30221.0403938581
     it('Scenario 2 - Price Moves', async () => {
-      vPoolFake.observe.returns([[0, 193170 * 60], []]);
+      vPoolFake.observe.returns([[0, -193170 * 60], []]);
       await matchNumbers(-8656594064, 30221040393, 15110520196);
     });
 
@@ -112,7 +112,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 85036.1528009486
     it('Scenario 3 - Add Range Outside', async () => {
       vPoolWrapperFake.liquidityChange.returns([239585552683, 0]);
-      await liqChange(193370, 195660, 35000);
+      await liqChange(-195660, -193370, 35000);
       await matchNumbers(-8656594064, 85036152800, 42518076400);
     });
 
@@ -124,7 +124,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 36522806901
     // ReqMargin (InitialMargin) 73045.613802876
     it('Scenario 4 - Price Moves', async () => {
-      vPoolFake.observe.returns([[0, 194690 * 60], []]);
+      vPoolFake.observe.returns([[0, -194690 * 60], []]);
       await matchNumbers(-9383544194, 73045613802, 36522806901);
     });
 
@@ -139,7 +139,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 87763.1610219056
     it('Scenario 5 - Add Range Outside', async () => {
       vPoolWrapperFake.liquidityChange.returns([70104066864, BigNumber.from('26954936243705637801')]);
-      await liqChange(193370, 195660, 25000);
+      await liqChange(-195660, -193370, 25000);
       await matchNumbers(-9383544194, 87763161021, 43881580510);
     });
 
@@ -151,7 +151,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 36689.976692
     // ReqMargin (InitialMargin) 73379.953383
     it('Scenario 6 - Price Moves', async () => {
-      vPoolFake.observe.returns([[0, 196480 * 60], []]);
+      vPoolFake.observe.returns([[0, -196480 * 60], []]);
       await matchNumbers(-68061639307, 73379953383, 36689976691);
     });
   });
