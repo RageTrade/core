@@ -85,7 +85,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 26643.485738709
     it('Scenario 1 - Add Range', async () => {
       vPoolWrapperFake.liquidityChange.returns([125271786680, BigNumber.from('30105615887850845791')]);
-      await liqChange(-195660,-193370, 35000);
+      await liqChange(-195660, -193370, 35000);
       await matchNumbers(0, 26643485738, 13321742869);
     });
 

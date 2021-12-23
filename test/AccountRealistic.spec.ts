@@ -496,15 +496,14 @@ describe('Account Library Test Realistic', () => {
         let tickLower: number;
         let tickUpper: number;
         let liquidity: BigNumberish;
-        
+
         tickLower = await priceToTick(3500, vBase, vToken);
         tickLower -= tickLower % 10;
         tickUpper = await priceToTick(4500, vBase, vToken);
         tickUpper -= tickUpper % 10;
-        liquidity = 10n**10n;
-        
-        await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+        liquidity = 10n ** 10n;
 
+        await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
         expect(test.liquidateTokenPosition(0, 1, vTokenAddress, liquidationParams, constants)).to.be.revertedWith(
           'InvalidLiquidationActiveRangePresent("' + vTokenAddress + '")',
@@ -624,13 +623,13 @@ describe('Account Library Test Realistic', () => {
         let tickLower: number;
         let tickUpper: number;
         let liquidity: BigNumberish;
-        
+
         tickLower = await priceToTick(3500, vBase, vToken);
         tickLower -= tickLower % 10;
         tickUpper = await priceToTick(4500, vBase, vToken);
         tickUpper -= tickUpper % 10;
-        liquidity = 10n**10n;
-        
+        liquidity = 10n ** 10n;
+
         await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
         await changeVPoolPriceToNearestTick(3500);
