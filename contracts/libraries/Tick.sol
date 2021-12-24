@@ -20,7 +20,7 @@ library Tick {
         int256 sumALastX128;
         int256 sumBOutsideX128;
         int256 sumFpOutsideX128;
-        uint256 sumExFeeOutsideX128; // extended fee
+        uint256 sumFeeOutsideX128;
     }
 
     function getTickExtendedStateInside(
@@ -29,14 +29,14 @@ library Tick {
         int24 tickUpper,
         int24 tickCurrent,
         FundingPayment.Info memory fpGlobal,
-        uint256 sumExFeeGlobalX128
+        uint256 sumFeeGlobalX128
     )
         internal
         view
         returns (
             int256 sumBInsideX128,
             int256 sumFpInsideX128,
-            uint256 sumExFeeInsideX128
+            uint256 sumFeeInsideX128
         )
     {
         Info storage lower = self[tickLower];
@@ -49,11 +49,11 @@ library Tick {
             lower.sumFpOutsideX128,
             fpGlobal.sumAX128
         );
-        uint256 sumExFeeBelowX128 = lower.sumExFeeOutsideX128;
+        uint256 sumFeeBelowX128 = lower.sumFeeOutsideX128;
         if (tickCurrent < tickLower) {
             sumBBelowX128 = fpGlobal.sumBX128 - sumBBelowX128;
             sumFpBelowX128 = fpGlobal.sumFpX128 - sumFpBelowX128;
-            sumExFeeBelowX128 = sumExFeeGlobalX128 - sumExFeeBelowX128;
+            sumFeeBelowX128 = sumFeeGlobalX128 - sumFeeBelowX128;
         }
 
         int256 sumBAboveX128 = upper.sumBOutsideX128;
@@ -63,16 +63,16 @@ library Tick {
             upper.sumFpOutsideX128,
             fpGlobal.sumAX128
         );
-        uint256 sumExFeeAboveX128 = upper.sumExFeeOutsideX128;
+        uint256 sumFeeAboveX128 = upper.sumFeeOutsideX128;
         if (tickCurrent >= tickUpper) {
             sumBAboveX128 = fpGlobal.sumBX128 - sumBAboveX128;
             sumFpAboveX128 = fpGlobal.sumFpX128 - sumFpAboveX128;
-            sumExFeeAboveX128 = sumExFeeGlobalX128 - sumExFeeAboveX128;
+            sumFeeAboveX128 = sumFeeGlobalX128 - sumFeeAboveX128;
         }
 
         sumBInsideX128 = fpGlobal.sumBX128 - sumBBelowX128 - sumBAboveX128;
         sumFpInsideX128 = fpGlobal.sumFpX128 - sumFpBelowX128 - sumFpAboveX128;
-        sumExFeeInsideX128 = sumExFeeGlobalX128 - sumExFeeBelowX128 - sumExFeeAboveX128;
+        sumFeeInsideX128 = sumFeeGlobalX128 - sumFeeBelowX128 - sumFeeAboveX128;
     }
 
     function getUniswapFeeGrowthInside(
@@ -108,7 +108,7 @@ library Tick {
         int256 sumAGlobalX128,
         int256 sumBGlobalX128,
         int256 sumFpGlobalX128,
-        uint256 sumExFeeGlobal0X128,
+        uint256 sumFeeGlobal0X128,
         IUniswapV3Pool vPool
     ) internal returns (bool flipped) {
         // TODO if tick is flipped (when changing liquidity) then handle that case
@@ -126,7 +126,7 @@ library Tick {
                 info.sumALastX128 = sumAGlobalX128;
                 info.sumBOutsideX128 = sumBGlobalX128;
                 info.sumFpOutsideX128 = sumFpGlobalX128;
-                info.sumExFeeOutsideX128 = sumExFeeGlobal0X128;
+                info.sumFeeOutsideX128 = sumFeeGlobal0X128;
             }
         }
     }
@@ -135,7 +135,7 @@ library Tick {
         mapping(int24 => Tick.Info) storage self,
         int24 tick,
         FundingPayment.Info memory fpGlobal,
-        uint256 sumExFeeOutsideX128
+        uint256 sumFeeOutsideX128
     ) internal {
         Tick.Info storage info = self[tick];
         int256 sumFpOutsideX128 = FundingPayment.extrapolatedSumFpX128(
@@ -147,7 +147,7 @@ library Tick {
         info.sumALastX128 = fpGlobal.sumAX128;
         info.sumBOutsideX128 = fpGlobal.sumBX128 - info.sumBOutsideX128;
         info.sumFpOutsideX128 = fpGlobal.sumFpX128 - sumFpOutsideX128;
-        info.sumExFeeOutsideX128 = sumExFeeOutsideX128 - info.sumExFeeOutsideX128;
+        info.sumFeeOutsideX128 = sumFeeOutsideX128 - info.sumFeeOutsideX128;
     }
 
     /// @notice Clears tick data

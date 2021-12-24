@@ -26,7 +26,7 @@ export function fromQ128(val: BigNumber): number {
       .div(Q128)
       .toNumber() /
     (Number.MAX_SAFE_INTEGER - 1);
-  return Math.round(formatted * 10 ** 10) / 10 ** 10;
+  return formatted;
 }
 
 export const Q96 = BigNumber.from(1).shl(96);
@@ -53,5 +53,5 @@ export function fromQ96(val: BigNumber): number {
       .div(Q96)
       .toNumber() /
     (Number.MAX_SAFE_INTEGER - 1);
-  return Math.round(formatted * 10 ** 10) / 10 ** 18;
+  return formatted;
 }

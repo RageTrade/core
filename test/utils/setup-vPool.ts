@@ -22,7 +22,7 @@ export interface SetupArgs {
   vBaseDecimals?: number;
   vTokenDecimals?: number;
   uniswapFee?: number;
-  extendedFee?: number;
+  liquidityFee?: number;
   protocolFee?: number;
   signer?: SignerWithAddress;
   vBase?: MockContract<VBase>;
