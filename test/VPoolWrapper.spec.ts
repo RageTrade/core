@@ -151,16 +151,13 @@ describe('PoolWrapper', () => {
       await liquidityChange(1000, 4000, 10n ** 15n); // here vtoken should be put
     });
 
-    const VTOKEN_FOR_VBASE = true;
-    const VBASE_FOR_VTOKEN = false;
-
     it('buy 1 ETH (exactOut 1 ETH)', async () => {
-      const { vTokenIn } = await vPoolWrapper.callStatic.swap(VBASE_FOR_VTOKEN, parseEther('-1'), 0);
+      const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
 
       // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
       expect(vTokenIn.mul(-1)).to.eq(parseEther('1'));
 
-      const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(VBASE_FOR_VTOKEN, parseEther('-1'), 0));
+      const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
       }
@@ -170,12 +167,12 @@ describe('PoolWrapper', () => {
     });
 
     it('buy ETH worth 2000 USDC (exactIn 2000 USDC)', async () => {
-      const { vBaseIn } = await vPoolWrapper.callStatic.swap(VBASE_FOR_VTOKEN, parseUsdc('2000'), 0);
+      const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('2000'), 0);
 
       // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
       expect(vBaseIn).to.eq(parseUsdc('2000'));
 
-      const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(VBASE_FOR_VTOKEN, parseUsdc('2000'), 0));
+      const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('2000'), 0));
       if (!vBaseMintEvent) {
         throw new Error('vBaseMintEvent not emitted');
       }
@@ -190,12 +187,12 @@ describe('PoolWrapper', () => {
     });
 
     it('sell 1 ETH (exactIn 1 ETH)', async () => {
-      const { vTokenIn } = await vPoolWrapper.callStatic.swap(VTOKEN_FOR_VBASE, parseEther('1'), 0);
+      const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('-1'), 0);
 
       // when asked to charge 1 ETH, trader should be debited by that exactly and get whatever ETH
       expect(vTokenIn).to.eq(parseEther('1'));
 
-      const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(VTOKEN_FOR_VBASE, parseEther('1'), 0));
+      const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('-1'), 0));
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
       }
@@ -208,10 +205,10 @@ describe('PoolWrapper', () => {
     });
 
     it('sell ETH worth 2000 USDC (exactOut 2000 USDC)', async () => {
-      const { vBaseIn } = await vPoolWrapper.callStatic.swap(VTOKEN_FOR_VBASE, parseUsdc('-2000'), 0);
+      const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
       expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
 
-      const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(VTOKEN_FOR_VBASE, parseUsdc('-2000'), 0));
+      const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
       if (!vBaseBurnEvent) {
         throw new Error('vBaseMintEvent not emitted');
       }

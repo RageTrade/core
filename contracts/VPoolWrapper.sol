@@ -197,14 +197,30 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     /// @notice swaps token
-    /// @param swapVTokenForVBase: true for short or close long. false for long or close short.
-    /// @param amountSpecified: The amount of the swap, which implicitly configures the swap as exact input (positive), or exact output (negative)
-    /// @param sqrtPriceLimitX96: price limit
+    /// @param amountSpecified: positive means long, negative means short
+    /// @param isNotional: true means amountSpecified is dollar amount
+    /// @param sqrtPriceLimitX96: The Q64.96 sqrt price limit. If zero for one, the price cannot be less than this
+    /// value after the swap. If one for zero, the price cannot be greater than this value after the swap.
     function swap(
-        bool swapVTokenForVBase, // zeroForOne
+        bool isNotional,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 vBaseIn, int256 vTokenIn) {
+        // case isNotional true
+        // amountSpecified is positive
+        return _swap(amountSpecified < 0, isNotional ? amountSpecified : -amountSpecified, sqrtPriceLimitX96);
+    }
+
+    /// @notice Swap vToken for vBase, or vBase for vToken
+    /// @param swapVTokenForVBase: The direction of the swap, true for vToken to vBase, false for vBase to vToken
+    /// @param amountSpecified: The amount of the swap, which implicitly configures the swap as exact input (positive), or exact output (negative)
+    /// @param sqrtPriceLimitX96: The Q64.96 sqrt price limit. If zero for one, the price cannot be less than this
+    /// value after the swap. If one for zero, the price cannot be greater than this value after the swap.
+    function _swap(
+        bool swapVTokenForVBase, // zeroForOne
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96
+    ) internal returns (int256 vBaseIn, int256 vTokenIn) {
         bool exactIn = amountSpecified >= 0;
 
         if (sqrtPriceLimitX96 == 0) {
@@ -316,7 +332,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
 
         if (state.liquidity > 0) {
-            console.log('vTokenAmount', vTokenAmount);
             uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
             fpGlobal.update(
                 swapVTokenForVBase ? int256(vTokenAmount) : -int256(vTokenAmount), // when trader goes long, LP goes short
