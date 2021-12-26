@@ -74,9 +74,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     constructor() {
         address vTokenAddress;
         address vPoolAddress;
+        address oracleAddress;
         (
             vTokenAddress,
             vPoolAddress,
+            oracleAddress,
             liquidityFeePips,
             protocolFeePips,
             initialMarginRatio,
@@ -87,7 +89,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         ) = IVPoolWrapperDeployer(msg.sender).parameters();
         vToken = VTokenAddress.wrap(vTokenAddress);
         vPool = IUniswapV3Pool(vPoolAddress);
+        oracle = IOracle(oracleAddress); // TODO: take oracle from clearing house
         uniswapFeePips = vPool.fee();
+
+        // initializes the funding payment variable
+        zeroSwap();
     }
 
     // TODO move this to ClearingHouse
@@ -148,20 +154,25 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function _inflate(int256 amount) internal view returns (int256 inflated) {
-        inflated = (amount * 1e6) / int24(1e6 - uniswapFeePips);
+        int256 fees = (amount * int256(uint256(uniswapFeePips))) / int24(1e6 - uniswapFeePips) + 1; // round up
+        inflated = amount + fees;
     }
 
-    function _deinflate(uint256 inflated, bool roundUp) internal view returns (uint256 amount) {
+    function _deinflate(uint256 inflated) internal view returns (uint256 amount) {
         amount = (inflated * (1e6 - uniswapFeePips)) / 1e6;
-        amount += 1;
     }
 
-    function _deinflate(int256 inflated, bool roundUp) internal view returns (int256 amount) {
+    function _deinflate(int256 inflated) internal view returns (int256 amount) {
         amount = (inflated * int24(1e6 - uniswapFeePips)) / 1e6;
-        amount += 1;
     }
 
-    function _calculateFees(uint256 amount, bool add)
+    enum CalcFeeEnum {
+        ADD_FEE,
+        REMOVE_FEE,
+        SCALE_AMOUNT_ADD_FEE
+    }
+
+    function _calculateFees(uint256 amount, CalcFeeEnum calcFeeEnum)
         internal
         view
         returns (
@@ -171,11 +182,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {
         int256 amountAfterFees_;
-        (amountAfterFees_, liquidityFees, protocolFees) = _calculateFees(int256(amount), add);
+        (amountAfterFees_, liquidityFees, protocolFees) = _calculateFees(int256(amount), calcFeeEnum);
         amountAfterFees = uint256(amountAfterFees_);
     }
 
-    function _calculateFees(int256 amount, bool add)
+    function _calculateFees(int256 amount, CalcFeeEnum calcFeeEnum)
         internal
         view
         returns (
@@ -185,14 +196,16 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {
         uint256 amountAbs = uint256(amount.abs());
-        liquidityFees = (amountAbs * liquidityFeePips) / 1e6;
-        protocolFees = (amountAbs * protocolFeePips) / 1e6;
-        if (add) {
+        if (calcFeeEnum == CalcFeeEnum.SCALE_AMOUNT_ADD_FEE) {
             // TODO: this approximation works for small amounts, what will happen for larger amounts?
-            // amountAfterFees = (amount * 1e6) / int256(uint256(1e6 - liquidityFeePips - protocolFeePips));
-            amountAfterFees = amount + int256(liquidityFees + protocolFees);
-        } else {
+            amountAbs = (amountAbs * 1e6) / uint256(1e6 - liquidityFeePips - protocolFeePips);
+        }
+        liquidityFees = (amountAbs * liquidityFeePips) / 1e6 + 1; // round up
+        protocolFees = (amountAbs * protocolFeePips) / 1e6 + 1; // round up
+        if (calcFeeEnum == CalcFeeEnum.REMOVE_FEE) {
             amountAfterFees = amount - int256(liquidityFees + protocolFees);
+        } else {
+            amountAfterFees = amount + int256(liquidityFees + protocolFees);
         }
     }
 
@@ -234,10 +247,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (swapVTokenForVBase == (amountSpecified < 0)) {
             if (exactIn) {
                 // if exactIn VBase, remove fee and do smaller swap, so trader gets less vTokens
-                (amountSpecified, liquidityFees, protocolFees) = _calculateFees(amountSpecified, false);
+                (amountSpecified, liquidityFees, protocolFees) = _calculateFees(
+                    amountSpecified,
+                    CalcFeeEnum.REMOVE_FEE
+                );
             } else {
                 // if exactOut VBase, buy more (short more vToken) so that fee can be removed in vBase
-                (amountSpecified, liquidityFees, protocolFees) = _calculateFees(amountSpecified, true);
+                (amountSpecified, liquidityFees, protocolFees) = _calculateFees(amountSpecified, CalcFeeEnum.ADD_FEE);
             }
         }
 
@@ -267,9 +283,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // deinflate
         if (exactIn) {
             if (swapVTokenForVBase) {
-                vTokenIn = _deinflate(vTokenIn, !swapVTokenForVBase);
+                vTokenIn = _deinflate(vTokenIn);
             } else {
-                vBaseIn = _deinflate(vBaseIn, !swapVTokenForVBase);
+                vBaseIn = _deinflate(vBaseIn);
             }
         }
 
@@ -278,11 +294,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             if (exactIn) {
                 // if exactIn vToken, then give less vBaseOut to trader.
                 assert(vBaseIn < 0);
-                (vBaseIn, liquidityFees, protocolFees) = _calculateFees(vBaseIn, false);
+                (vBaseIn, liquidityFees, protocolFees) = _calculateFees(vBaseIn, CalcFeeEnum.REMOVE_FEE);
             } else {
                 // if exactOut vToken, increase vBaseIn, so that trader is charged more vBase
                 assert(vBaseIn > 0);
-                (vBaseIn, liquidityFees, protocolFees) = _calculateFees(vBaseIn, true);
+                (vBaseIn, liquidityFees, protocolFees) = _calculateFees(vBaseIn, CalcFeeEnum.ADD_FEE);
             }
         }
 
@@ -311,34 +327,22 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         // vBase and vToken amounts are inflated-deinflated to give effect of zero fee swap
         uint256 lpFeesInVBase;
-        uint256 vTokenAmount;
-        uint256 vBaseAmount;
-        if (exactIn) {
-            if (swapVTokenForVBase) {
-                vTokenAmount = step.amountIn;
-                (, lpFeesInVBase, ) = _calculateFees(vBaseAmount = step.amountOut, true); // TODO optimise/change this function
-            } else {
-                vTokenAmount = step.amountOut;
-                (, lpFeesInVBase, ) = _calculateFees(vBaseAmount = step.amountIn, true); // TODO optimise/change this function
-            }
-        } else {
-            if (swapVTokenForVBase) {
-                vTokenAmount = _deinflate(step.amountIn, true);
-                (, lpFeesInVBase, ) = _calculateFees(vBaseAmount = step.amountOut, true);
-            } else {
-                vTokenAmount = step.amountOut;
-                (, lpFeesInVBase, ) = _calculateFees(vBaseAmount = _deinflate(step.amountIn, true), true);
-            }
-        }
+        (uint256 vTokenAmount, uint256 vBaseAmount) = swapVTokenForVBase
+            ? (step.amountIn, step.amountOut)
+            : (step.amountOut, step.amountIn);
 
-        if (state.liquidity > 0) {
+        // since uniswap has charged fees, amounts are already deinflate
+
+        (vBaseAmount, lpFeesInVBase, ) = _calculateFees(vBaseAmount, CalcFeeEnum.SCALE_AMOUNT_ADD_FEE);
+
+        if (state.liquidity > 0 && vTokenAmount > 0) {
             uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
             fpGlobal.update(
                 swapVTokenForVBase ? int256(vTokenAmount) : -int256(vTokenAmount), // when trader goes long, LP goes short
                 state.liquidity,
                 _blockTimestamp(),
                 priceX128,
-                vTokenAmount.mulDiv(FixedPoint128.Q128, vBaseAmount) // TODO change to TWAP
+                vBaseAmount.mulDiv(FixedPoint128.Q128, vTokenAmount) // TODO change to TWAP
             );
 
             sumFeeGlobalX128 += lpFeesInVBase.mulDiv(FixedPoint128.Q128, state.liquidity);
@@ -367,7 +371,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     // for updating global funding payment
-    function zeroSwap() external {
+    function zeroSwap() internal {
         uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
         fpGlobal.update(0, 1, _blockTimestamp(), priceX128, vPool.getTwapSqrtPrice(timeHorizon).toPriceX128());
     }
@@ -487,7 +491,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     // used to set time in tests
-    function _blockTimestamp() internal view returns (uint48) {
+    function _blockTimestamp() internal view virtual returns (uint48) {
         return uint48(block.timestamp);
     }
 }

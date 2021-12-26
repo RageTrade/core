@@ -11,6 +11,7 @@ interface IVPoolWrapperDeployer {
         returns (
             address vTokenAddress,
             address vPoolAddress,
+            address oracleAddress,
             uint24 extendedLpFee,
             uint24 protocolFee,
             uint16 initialMargin,
@@ -24,7 +25,8 @@ interface IVPoolWrapperDeployer {
 
     function deployVPoolWrapper(
         address vTokenAddress,
-        address vPool,
+        address vPoolAddress,
+        address oracleAddress,
         uint24 extendedLpFee,
         uint24 protocolFee,
         uint16 initialMargin,

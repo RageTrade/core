@@ -73,17 +73,18 @@ contract VPoolFactory {
 
     function initializePool(InitializePoolParams calldata ipParams, uint256 salt) external isAllowed {
         address vTokenAddress = _deployVToken(ipParams.setupVTokenParams, salt, constants.VBASE_ADDRESS);
-        address vPool = IUniswapV3Factory(constants.UNISWAP_FACTORY_ADDRESS).createPool(
+        address vPoolAddress = IUniswapV3Factory(constants.UNISWAP_FACTORY_ADDRESS).createPool(
             constants.VBASE_ADDRESS,
             vTokenAddress,
             constants.DEFAULT_FEE_TIER
         );
-        IUniswapV3Pool(vPool).initialize(
+        IUniswapV3Pool(vPoolAddress).initialize(
             IOracle(ipParams.setupVTokenParams.oracleAddress).getTwapSqrtPriceX96(ipParams.twapDuration)
         );
         address vPoolWrapper = VPoolWrapperDeployer.deployVPoolWrapper(
             vTokenAddress,
-            vPool,
+            vPoolAddress,
+            ipParams.setupVTokenParams.oracleAddress,
             ipParams.extendedLpFee,
             ipParams.protocolFee,
             ipParams.initialMarginRatio,
@@ -95,7 +96,7 @@ contract VPoolFactory {
         IVPoolWrapper(vPoolWrapper).setOracle(ipParams.setupVTokenParams.oracleAddress);
         IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
         IVToken(vTokenAddress).setOwner(vPoolWrapper); // TODO remove this
-        emit PoolInitlized(vPool, vTokenAddress, vPoolWrapper);
+        emit PoolInitlized(vPoolAddress, vTokenAddress, vPoolWrapper);
     }
 
     function _deployVToken(
