@@ -93,25 +93,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         // for reading
         _cache = cache;
         _steps.push(SwapStep({ state: state, step: step }));
-
-        fpGlobal.update(
-            zeroForOne ? int256(step.amountIn) : int256(step.amountOut),
-            state.liquidity,
-            cache.blockTimestamp,
-            oracle.getTwapSqrtPriceX96(1 hours),
-            (zeroForOne ? step.amountIn : step.amountOut).mulDiv(
-                FixedPoint128.Q128,
-                zeroForOne ? step.amountOut : step.amountIn
-            )
-        );
-
-        if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
-            // if the tick is initialized, run the tick transition
-            if (step.initialized) {
-                ticksExtended.cross(step.tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
-            }
-        }
-
         return 0;
     }
 

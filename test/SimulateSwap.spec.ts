@@ -130,9 +130,6 @@ describe('SimulateSwap', () => {
 
         expect(amountSent).to.eq(zeroForOne ? amount0_simulated : amount1_simulated);
         expect(amountReceived).to.eq(zeroForOne ? amount1_simulated : amount0_simulated);
-
-        const fpGlobalAfter = await test.fpGlobal();
-        expect(fpGlobalAfter.sumBX128.sub(fpGlobalBefore.sumBX128)).to.eq(b);
       });
     }
   });
