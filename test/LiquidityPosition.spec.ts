@@ -136,10 +136,7 @@ describe('LiquidityPosition Library', () => {
     });
   });
 
-  const vTokenAddress = {
-    suchThatVTokenIsToken0: ethers.utils.hexZeroPad(BigNumber.from(1).toHexString(), 20),
-    suchThatVTokenIsToken1: BigNumber.from(1).shl(160).sub(1).toHexString(),
-  };
+  const vTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
   const oneSqrtPrice = BigNumber.from(1).shl(96);
 
   interface TestCase {
@@ -219,72 +216,57 @@ describe('LiquidityPosition Library', () => {
   describe('#baseValue', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.baseValue(oneSqrtPrice, vTokenAddress.suchThatVTokenIsToken1, constants)).to.eq(0);
+      expect(await test.baseValue(oneSqrtPrice, vTokenAddress, constants)).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
-      for (const vToken of [vTokenAddress.suchThatVTokenIsToken0, vTokenAddress.suchThatVTokenIsToken1]) {
-        const isToken0 = vToken == vTokenAddress.suchThatVTokenIsToken0;
-        it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount} | vToken is token${
-          isToken0 ? 0 : 1
-        }`, async () => {
-          const { liquidity, baseActual, vTokenActual, sqrtPriceCurrent } = calculateLiquidityValues({
-            baseAmount,
-            vTokenAmount,
-            tickLower,
-            tickUpper,
-            currentTick,
-            vToken,
-            roundUp: false,
-          });
-
-          await test.initialize(tickLower, tickUpper);
-          await test.liquidityChange(liquidity);
-          //ethers.constants.One.shl(96).mul(ethers.constants.One.shl(96)).div(sqrtPrice);
-          // TODO: refactor these tests
-          let priceX128;
-          if (!isToken0) {
-            let sqrtX96 = inversex96(sqrtPriceCurrent);
-            priceX128 = sqrtX96.mul(sqrtX96).div(ethers.constants.One.shl(64));
-          } else {
-            priceX128 = sqrtPriceCurrent.mul(sqrtPriceCurrent).div(ethers.constants.One.shl(64));
-          }
-          expect(await test.baseValue(sqrtPriceCurrent, vToken, constants)).to.eq(
-            baseActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
-          );
+      it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount}`, async () => {
+        const { liquidity, baseActual, vTokenActual, sqrtPriceCurrent } = calculateLiquidityValues({
+          baseAmount,
+          vTokenAmount,
+          tickLower,
+          tickUpper,
+          currentTick,
+          vTokenAddress,
+          roundUp: false,
         });
-      }
+
+        await test.initialize(tickLower, tickUpper);
+        await test.liquidityChange(liquidity);
+        //ethers.constants.One.shl(96).mul(ethers.constants.One.shl(96)).div(sqrtPrice);
+        // TODO: refactor these tests
+        const priceX128 = sqrtPriceCurrent.mul(sqrtPriceCurrent).div(ethers.constants.One.shl(64));
+
+        expect(await test.baseValue(sqrtPriceCurrent, vTokenAddress, constants)).to.eq(
+          baseActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
+        );
+      });
     });
   });
 
   describe('#maxNetPosition', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.maxNetPosition(vTokenAddress.suchThatVTokenIsToken1, constants)).to.eq(0);
+      expect(await test.maxNetPosition(vTokenAddress, constants)).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
-      for (const vToken of [vTokenAddress.suchThatVTokenIsToken0, vTokenAddress.suchThatVTokenIsToken1]) {
-        const isToken0 = vToken == vTokenAddress.suchThatVTokenIsToken0;
-        it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount} | vToken is token${
-          isToken0 ? 0 : 1
-        }`, async () => {
-          const { liquidity, maxNetPosition } = calculateLiquidityValues({
-            baseAmount,
-            vTokenAmount,
-            tickLower,
-            tickUpper,
-            currentTick,
-            vToken,
-            roundUp: true,
-          });
-
-          await test.initialize(tickLower, tickUpper);
-          await test.liquidityChange(liquidity);
-
-          expect(await test.maxNetPosition(vToken, constants)).to.eq(maxNetPosition);
+      it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount}`, async () => {
+        const { liquidity, maxNetPosition } = calculateLiquidityValues({
+          baseAmount,
+          vTokenAmount,
+          tickLower,
+          tickUpper,
+          currentTick,
+          vTokenAddress,
+          roundUp: true,
         });
-      }
+
+        await test.initialize(tickLower, tickUpper);
+        await test.liquidityChange(liquidity);
+
+        expect(await test.maxNetPosition(vTokenAddress, constants)).to.eq(maxNetPosition);
+      });
     });
   });
 
@@ -317,7 +299,7 @@ describe('LiquidityPosition Library', () => {
   }
 
   interface CalculateAddLiquidityValuesArgs extends TestCase {
-    vToken: string;
+    vTokenAddress: string;
     roundUp: boolean;
   }
 
@@ -327,15 +309,14 @@ describe('LiquidityPosition Library', () => {
     tickLower,
     tickUpper,
     currentTick,
-    vToken,
+    vTokenAddress,
     roundUp,
   }: CalculateAddLiquidityValuesArgs) {
-    const isToken1 = vToken === vTokenAddress.suchThatVTokenIsToken1;
     const sqrtPriceCurrent = TickMath.getSqrtRatioAtTick(currentTick);
     const sqrtPriceLower = TickMath.getSqrtRatioAtTick(tickLower);
     const sqrtPriceUpper = TickMath.getSqrtRatioAtTick(tickUpper);
-    const amount0 = vToken === vTokenAddress.suchThatVTokenIsToken0 ? vTokenAmount : baseAmount;
-    const amount1 = vToken === vTokenAddress.suchThatVTokenIsToken1 ? vTokenAmount : baseAmount;
+    const amount0 = vTokenAmount;
+    const amount1 = baseAmount;
 
     const liquidity = maxLiquidityForAmounts_(
       sqrtPriceCurrent,
@@ -356,15 +337,9 @@ describe('LiquidityPosition Library', () => {
     let baseActual: JSBI;
     let maxNetPosition: JSBI;
 
-    if (isToken1) {
-      vTokenActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
-      baseActual = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
-      maxNetPosition = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
-    } else {
-      baseActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
-      vTokenActual = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
-      maxNetPosition = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
-    }
+    baseActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
+    vTokenActual = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
+    maxNetPosition = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
 
     return {
       liquidity: BigNumber.from(liquidity.toString()),

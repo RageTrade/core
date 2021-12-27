@@ -26,8 +26,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     IUniswapV3Pool vPool;
     IOracle oracle;
 
-    bool public isToken0;
-
     struct SwapStep {
         SimulateSwap.SwapState state;
         SimulateSwap.StepComputations step;
@@ -44,10 +42,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         oracle = oracle_;
     }
 
-    function setIsToken0(bool isToken0_) external {
-        isToken0 = isToken0_;
-    }
-
     function clearSwapCache() external {
         delete _cache;
         delete _steps;
@@ -61,14 +55,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    )
-        public
-        returns (
-            int256 amount0,
-            int256 amount1,
-            uint256 protocolFee
-        )
-    {
+    ) public returns (int256 amount0, int256 amount1) {
         return vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
     }
 
@@ -85,7 +72,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
             SwapStep[] memory steps
         )
     {
-        (amount0, amount1, ) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
+        (amount0, amount1) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
         cache = _cache;
         steps = _steps;
     }
@@ -95,28 +82,10 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         SimulateSwap.SwapCache memory cache,
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
-    ) internal returns (uint256) {
+    ) internal {
         // for reading
         _cache = cache;
         _steps.push(SwapStep({ state: state, step: step }));
-
-        fpGlobal.update(
-            zeroForOne == isToken0 ? int256(step.amountIn) : int256(step.amountOut),
-            state.liquidity,
-            cache.blockTimestamp,
-            oracle.getTwapSqrtPriceX96(1 hours),
-            (isToken0 ? step.amountIn : step.amountOut).mulDiv(
-                FixedPoint128.Q128,
-                isToken0 ? step.amountOut : step.amountIn
-            )
-        );
-
-        if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
-            // if the tick is initialized, run the tick transition
-            if (step.initialized) {
-                ticksExtended.cross(step.tickNext, fpGlobal, extendedFeeGrowthOutsideX128);
-            }
-        }
     }
 
     function swap(

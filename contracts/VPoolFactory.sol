@@ -14,6 +14,8 @@ import { IClearingHouseState } from './interfaces/IClearingHouseState.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 
+import { console } from 'hardhat/console.sol';
+
 contract VPoolFactory {
     using VTokenLib for VTokenAddress;
 
@@ -52,74 +54,99 @@ contract VPoolFactory {
 
     event PoolInitlized(address vPoolAddress, address vTokenAddress, address vPoolWrapperAddress);
 
-    function initializePool(
-        string calldata vTokenName,
-        string calldata vTokenSymbol,
-        address realToken,
-        address oracleAddress,
-        uint24 extendedLpFee,
-        uint24 protocolFee,
-        uint16 initialMargin,
-        uint16 maintainanceMargin,
-        uint32 twapDuration,
-        bool whitelisted
-    ) external isAllowed {
-        address vTokenAddress = _deployVToken(vTokenName, vTokenSymbol, realToken, oracleAddress);
-        address vPool = IUniswapV3Factory(constants.UNISWAP_FACTORY_ADDRESS).createPool(
+    struct SetupVTokenParams {
+        string vTokenName;
+        string vTokenSymbol;
+        address realTokenAddress;
+        address oracleAddress;
+    }
+
+    struct InitializePoolParams {
+        SetupVTokenParams setupVTokenParams;
+        uint24 extendedLpFee;
+        uint24 protocolFee;
+        uint16 initialMarginRatio;
+        uint16 maintainanceMarginRatio;
+        uint32 twapDuration;
+        bool whitelisted;
+    }
+
+    function initializePool(InitializePoolParams calldata ipParams, uint256 salt) external isAllowed {
+        address vTokenAddress = _deployVToken(ipParams.setupVTokenParams, salt, constants.VBASE_ADDRESS);
+        address vPoolAddress = IUniswapV3Factory(constants.UNISWAP_FACTORY_ADDRESS).createPool(
             constants.VBASE_ADDRESS,
             vTokenAddress,
             constants.DEFAULT_FEE_TIER
         );
-        IUniswapV3Pool(vPool).initialize(IOracle(oracleAddress).getTwapSqrtPriceX96(twapDuration));
+        IUniswapV3Pool(vPoolAddress).initialize(
+            IOracle(ipParams.setupVTokenParams.oracleAddress).getTwapSqrtPriceX96(ipParams.twapDuration)
+        );
         address vPoolWrapper = VPoolWrapperDeployer.deployVPoolWrapper(
             vTokenAddress,
-            vPool,
-            extendedLpFee,
-            protocolFee,
-            initialMargin,
-            maintainanceMargin,
-            twapDuration,
-            whitelisted,
+            vPoolAddress,
+            ipParams.setupVTokenParams.oracleAddress,
+            ipParams.extendedLpFee,
+            ipParams.protocolFee,
+            ipParams.initialMarginRatio,
+            ipParams.maintainanceMarginRatio,
+            ipParams.twapDuration,
+            ipParams.whitelisted,
             constants
         );
-        IVPoolWrapper(vPoolWrapper).setOracle(oracleAddress);
+        IVPoolWrapper(vPoolWrapper).setOracle(ipParams.setupVTokenParams.oracleAddress);
         IVBase(constants.VBASE_ADDRESS).authorize(vPoolWrapper);
         IVToken(vTokenAddress).setOwner(vPoolWrapper); // TODO remove this
-        emit PoolInitlized(vPool, vTokenAddress, vPoolWrapper);
+        emit PoolInitlized(vPoolAddress, vTokenAddress, vPoolWrapper);
     }
 
     function _deployVToken(
-        string calldata vTokenName,
-        string calldata vTokenSymbol,
-        address realToken,
-        address oracleAddress
+        SetupVTokenParams calldata setupVTokenParams,
+        uint256 counter,
+        address VBASE_ADDRESS
     ) internal returns (address) {
-        // Pool for this token must not be already created
-        require(ClearingHouse.isRealTokenAlreadyInitilized(realToken) == false, 'Duplicate Pool');
+        unchecked {
+            // TODO change require to custom errors
+            // Pool for this token must not be already created
+            require(!ClearingHouse.isRealTokenAlreadyInitilized(setupVTokenParams.realTokenAddress), 'Duplicate Pool');
 
-        uint160 salt = uint160(realToken);
-        bytes memory bytecode = type(VToken).creationCode;
-        // TODO compute vPoolWrapper address here and pass it to vToken contract as immutable
-        bytecode = abi.encodePacked(
-            bytecode,
-            abi.encode(vTokenName, vTokenSymbol, realToken, oracleAddress, address(this))
-        );
-        bytes32 byteCodeHash = keccak256(bytecode);
-        uint32 truncated;
-        address vTokenAddress;
-        while (true) {
-            vTokenAddress = Create2.computeAddress(keccak256(abi.encode(salt)), byteCodeHash);
-            truncated = uint32(uint160(vTokenAddress));
-            if (ClearingHouse.isVTokenAddressAvailable(truncated)) {
-                break;
+            bytes memory bytecode = abi.encodePacked(
+                type(VToken).creationCode,
+                abi.encode(
+                    setupVTokenParams.vTokenName,
+                    setupVTokenParams.vTokenSymbol,
+                    setupVTokenParams.realTokenAddress,
+                    setupVTokenParams.oracleAddress,
+                    address(this)
+                )
+            );
+            bytes32 byteCodeHash = keccak256(bytecode);
+            bytes32 salt;
+            uint32 truncated;
+            address vTokenAddressComputed;
+
+            while (true) {
+                salt = keccak256(abi.encode(counter, setupVTokenParams.realTokenAddress));
+                vTokenAddressComputed = Create2.computeAddress(salt, byteCodeHash);
+                truncated = uint32(uint160(vTokenAddressComputed));
+                if (
+                    truncated != 0 &&
+                    uint160(vTokenAddressComputed) < uint160(VBASE_ADDRESS) &&
+                    ClearingHouse.isVTokenAddressAvailable(truncated)
+                ) {
+                    break;
+                } else {
+                    counter++; // using a different salt
+                }
             }
-            salt++; // using a different salt
+
+            address vTokenAddressDeployed = Create2.deploy(0, salt, bytecode);
+            assert(vTokenAddressComputed == vTokenAddressDeployed); // TODO disable in mainnet?
+
+            ClearingHouse.addVTokenAddress(truncated, vTokenAddressDeployed);
+            ClearingHouse.initRealToken(setupVTokenParams.realTokenAddress);
+
+            return vTokenAddressDeployed;
         }
-        address deployedAddress = Create2.deploy(0, keccak256(abi.encode(salt)), bytecode);
-        require(vTokenAddress == deployedAddress, 'Cal MisMatch'); // Can be disabled in mainnet deployment
-        ClearingHouse.addVTokenAddress(truncated, deployedAddress);
-        ClearingHouse.initRealToken(realToken);
-        return deployedAddress;
     }
 
     function allowCustomPools(bool _status) external onlyOwner {

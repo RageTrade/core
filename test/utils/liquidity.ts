@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_, SqrtPriceMath } from '@uniswap/v3-sdk';
 import JSBI from 'jsbi';
 import { VBase, VToken } from '../../typechain-types';
-import { ContractOrSmock, tickToSqrtPriceX96 } from './price-tick';
+import { tickToSqrtPriceX96, ERC20Decimals } from './price-tick';
 
 export function maxLiquidityForAmounts(
   sqrtPriceCurrent: BigNumberish,
@@ -11,23 +11,19 @@ export function maxLiquidityForAmounts(
   vBaseAmount: BigNumberish,
   vTokenAmount: BigNumberish,
   useFullPrecision: boolean,
-  vBase: ContractOrSmock<VBase>,
-  vToken: ContractOrSmock<VToken>,
 ) {
   sqrtPriceCurrent = BigNumber.from(sqrtPriceCurrent);
   vBaseAmount = BigNumber.from(vBaseAmount);
   vTokenAmount = BigNumber.from(vTokenAmount);
-  let [amount0, amount1] = [JSBI.BigInt(vBaseAmount.toString()), JSBI.BigInt(vTokenAmount.toString())];
-  if (BigNumber.from(vBase.address).gt(vToken.address)) {
-    [amount0, amount1] = [amount1, amount0];
-  }
+  let [amount0, amount1] = [JSBI.BigInt(vTokenAmount.toString()), JSBI.BigInt(vBaseAmount.toString())];
+
   return BigNumber.from(
     maxLiquidityForAmounts_(
       JSBI.BigInt(sqrtPriceCurrent.toString()),
       TickMath.getSqrtRatioAtTick(tickLower),
       TickMath.getSqrtRatioAtTick(tickUpper),
-      JSBI.BigInt(vBaseAmount.toString()),
-      JSBI.BigInt(vTokenAmount.toString()),
+      JSBI.BigInt(amount0.toString()),
+      JSBI.BigInt(amount1.toString()),
       useFullPrecision,
     ).toString(),
   );
@@ -38,8 +34,6 @@ export function amountsForLiquidity(
   sqrtPriceCurrent: BigNumberish,
   tickUpper: number,
   liquidity: BigNumberish,
-  vBase: ContractOrSmock<VBase>,
-  vToken: ContractOrSmock<VToken>,
 ) {
   let roundUp = false;
   // TODO: uncomment this and fix rounding issues
@@ -55,17 +49,11 @@ export function amountsForLiquidity(
     sqrtPriceMiddleJSBI = sqrtPriceUpperJSBI;
   }
 
-  const isVTokenToken0 = BigNumber.from(vBase.address).gt(vToken.address);
-
   let amount0 = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddleJSBI, sqrtPriceUpperJSBI, liquidityJSBI, roundUp);
   let amount1 = SqrtPriceMath.getAmount1Delta(sqrtPriceLowerJSBI, sqrtPriceMiddleJSBI, liquidityJSBI, roundUp);
 
   let vTokenAmount = amount0;
   let vBaseAmount = amount1;
-  if (!isVTokenToken0) {
-    vTokenAmount = amount1;
-    vBaseAmount = amount0;
-  }
 
   return {
     vBaseAmount: BigNumber.from(vBaseAmount.toString()),

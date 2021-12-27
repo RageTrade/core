@@ -184,11 +184,7 @@ library LiquidityPosition {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
-        if (vToken.isToken0(constants)) {
-            return SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true);
-        } else {
-            return SqrtPriceMath.getAmount1Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true);
-        }
+        return SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true);
     }
 
     function baseValue(
@@ -221,23 +217,15 @@ library LiquidityPosition {
             }
 
             int256 vTokenAmount;
-            bool isVTokenToken0 = vToken.isToken0(constants);
-            if (isVTokenToken0) {
-                vTokenAmount = SqrtPriceMath
-                    .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
-                    .toInt256();
-                baseValue_ = SqrtPriceMath
-                    .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
-                    .toInt256();
-            } else {
-                vTokenAmount = SqrtPriceMath
-                    .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
-                    .toInt256();
-                baseValue_ = SqrtPriceMath
-                    .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
-                    .toInt256();
-            }
-            uint256 priceX128 = sqrtPriceCurrent.toPriceX128(isVTokenToken0);
+
+            vTokenAmount = SqrtPriceMath
+                .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
+                .toInt256();
+            baseValue_ = SqrtPriceMath
+                .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
+                .toInt256();
+
+            uint256 priceX128 = sqrtPriceCurrent.toPriceX128();
             baseValue_ += vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128);
         }
         // adding fees

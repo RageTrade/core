@@ -38,15 +38,15 @@ library VTokenPosition {
 
     function marketValue(
         Position storage position,
-        uint256 price,
+        uint256 priceX128,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
         //TODO: Remove logs
         // console.log('Token Position Balance:');
         // console.logInt(position.balance);
         // console.log('Token PriceX128:');
-        // console.logInt(int256(price));
-        value = position.balance.mulDiv(price, FixedPoint128.Q128);
+        // console.logInt(int256(priceX128));
+        value = position.balance.mulDiv(priceX128, FixedPoint128.Q128);
         // console.log('Token Value:');
         // console.logInt(value);
         value -= unrealizedFundingPayment(position, wrapper);
@@ -55,10 +55,10 @@ library VTokenPosition {
     function marketValue(
         Position storage position,
         VTokenAddress vToken,
-        uint256 price,
+        uint256 priceX128,
         Constants memory constants
     ) internal view returns (int256 value) {
-        return marketValue(position, price, vToken.vPoolWrapper(constants));
+        return marketValue(position, priceX128, vToken.vPoolWrapper(constants));
     }
 
     function marketValue(
@@ -66,8 +66,8 @@ library VTokenPosition {
         VTokenAddress vToken,
         Constants memory constants
     ) internal view returns (int256) {
-        uint256 price = vToken.getVirtualTwapPriceX128(constants);
-        return marketValue(position, vToken, price, constants);
+        uint256 priceX128 = vToken.getVirtualTwapPriceX128(constants);
+        return marketValue(position, vToken, priceX128, constants);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {

@@ -6,6 +6,8 @@ import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/li
 import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 
+import { console } from 'hardhat/console.sol';
+
 library FundingPayment {
     using FullMath for uint256;
     using SignedFullMath for int256;

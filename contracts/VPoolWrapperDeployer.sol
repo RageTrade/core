@@ -13,6 +13,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
     struct Parameters {
         address vTokenAddress;
         address vPoolAddress;
+        address oracleAddress;
         uint24 extendedLpFee;
         uint24 protocolFee;
         uint16 initialMargin;
@@ -30,7 +31,8 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
 
     function deployVPoolWrapper(
         address vTokenAddress,
-        address vPool,
+        address vPoolAddress,
+        address oracleAddress,
         uint24 extendedLpFee,
         uint24 protocolFee,
         uint16 initialMargin,
@@ -44,7 +46,8 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         bytes memory bytecode = type(VPoolWrapper).creationCode;
         parameters = Parameters(
             vTokenAddress,
-            vPool,
+            vPoolAddress,
+            oracleAddress,
             extendedLpFee,
             protocolFee,
             initialMargin,

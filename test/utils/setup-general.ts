@@ -11,14 +11,12 @@ export async function testSetup({
   initialMarginRatio,
   maintainanceMarginRatio,
   twapDuration,
-  isVTokenToken0,
   whitelisted,
 }: {
   signer?: SignerWithAddress;
   initialMarginRatio: number;
   maintainanceMarginRatio: number;
   twapDuration: number;
-  isVTokenToken0: boolean;
   whitelisted: boolean;
 }) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
@@ -28,10 +26,7 @@ export async function testSetup({
   realBase.decimals.returns(6);
 
   //VBase
-  let vBaseAddress;
-  if (isVTokenToken0) vBaseAddress = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF';
-  else vBaseAddress = '0x0000000000000000000000000000000000000001'; // Uniswap reverts on 0
-  const vBase = await smock.fake<VBase>('VBase', { address: vBaseAddress });
+  const vBase = await smock.fake<VBase>('VBase', { address: '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' });
   vBase.decimals.returns(6);
 
   //Oracle
@@ -69,16 +64,21 @@ export async function testSetup({
   );
 
   await vPoolFactory.initializePool(
-    'vTest',
-    'vTest',
-    realToken.address,
-    oracle.address,
-    500,
-    500,
-    initialMarginRatio,
-    maintainanceMarginRatio,
-    twapDuration,
-    whitelisted,
+    {
+      setupVTokenParams: {
+        vTokenName: 'vTest',
+        vTokenSymbol: 'vTest',
+        realTokenAddress: realToken.address,
+        oracleAddress: oracle.address,
+      },
+      extendedLpFee: 500,
+      protocolFee: 500,
+      initialMarginRatio,
+      maintainanceMarginRatio,
+      twapDuration,
+      whitelisted: false,
+    },
+    0,
   );
 
   const eventFilter = vPoolFactory.filters.PoolInitlized();
@@ -101,13 +101,7 @@ export async function testSetup({
   };
 }
 
-export async function testSetupBase({
-  signer,
-  isVTokenToken0,
-}: {
-  signer?: SignerWithAddress;
-  isVTokenToken0: boolean;
-}) {
+export async function testSetupBase(signer?: SignerWithAddress) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   //RealBase
@@ -115,10 +109,7 @@ export async function testSetupBase({
   realBase.decimals.returns(6);
 
   //VBase
-  let vBaseAddress;
-  if (isVTokenToken0) vBaseAddress = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF';
-  else vBaseAddress = '0x0000000000000000000000000000000000000001'; // Uniswap reverts on 0
-  const vBase = await smock.fake<VBase>('VBase', { address: vBaseAddress });
+  const vBase = await smock.fake<VBase>('VBase', { address: '0x8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' });
   vBase.decimals.returns(6);
 
   const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 3);
@@ -186,18 +177,22 @@ export async function testSetupToken({
   realToken.decimals.returns(decimals);
 
   await vPoolFactory.initializePool(
-    'vTest',
-    'vTest',
-    realToken.address,
-    oracle.address,
-    500,
-    500,
-    initialMarginRatio,
-    maintainanceMarginRatio,
-    twapDuration,
-    whitelisted,
+    {
+      setupVTokenParams: {
+        vTokenName: 'vTest',
+        vTokenSymbol: 'vTest',
+        realTokenAddress: realToken.address,
+        oracleAddress: oracle.address,
+      },
+      extendedLpFee: 500,
+      protocolFee: 500,
+      initialMarginRatio,
+      maintainanceMarginRatio,
+      twapDuration,
+      whitelisted: false,
+    },
+    0,
   );
-
   const eventFilter = vPoolFactory.filters.PoolInitlized();
   const events = await vPoolFactory.queryFilter(eventFilter, 'latest');
   const vPoolAddress = events[0].args[0];

@@ -65,7 +65,23 @@ describe('VTokenPositionSet Library', () => {
 
     await VBase.transferOwnership(VPoolFactory.address);
 
-    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken0, oracleAddress, 500, 500, 2, 3, 2, false);
+    await VPoolFactory.initializePool(
+      {
+        setupVTokenParams: {
+          vTokenName: 'vWETH',
+          vTokenSymbol: 'vWETH',
+          realTokenAddress: realToken0,
+          oracleAddress: oracleAddress,
+        },
+        extendedLpFee: 500,
+        protocolFee: 500,
+        initialMarginRatio: 2,
+        maintainanceMarginRatio: 3,
+        twapDuration: 2,
+        whitelisted: false,
+      },
+      0,
+    );
 
     const eventFilter = VPoolFactory.filters.PoolInitlized();
     const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
@@ -76,7 +92,23 @@ describe('VTokenPositionSet Library', () => {
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
-    await VPoolFactory.initializePool('vWETH', 'vWETH', realToken1, oracleAddress, 500, 500, 2, 3, 2, false);
+    await VPoolFactory.initializePool(
+      {
+        setupVTokenParams: {
+          vTokenName: 'vWETH',
+          vTokenSymbol: 'vWETH',
+          realTokenAddress: realToken1,
+          oracleAddress: oracleAddress,
+        },
+        extendedLpFee: 500,
+        protocolFee: 500,
+        initialMarginRatio: 2,
+        maintainanceMarginRatio: 3,
+        twapDuration: 2,
+        whitelisted: false,
+      },
+      1,
+    );
 
     const eventFilter1 = VPoolFactory.filters.PoolInitlized();
     const events1 = await VPoolFactory.queryFilter(eventFilter1, 'latest');

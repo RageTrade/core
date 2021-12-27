@@ -93,9 +93,7 @@ describe('Account Library Test Basic', () => {
       clearingHouse: clearingHouse,
       vPoolFactory: vPoolFactory,
       constants: constants,
-    } = await testSetupBase({
-      isVTokenToken0: false,
-    }));
+    } = await testSetupBase());
 
     ({
       oracle: oracle,

@@ -52,7 +52,7 @@ describe('price-tick util', () => {
     for (const { price, priceX128 } of testCases) {
       it(`${price} == ${priceX128}(X128)`, async () => {
         expect(await priceToPriceX128(price, vBase, vToken)).to.eq(priceX128);
-        expect(await priceX128ToPrice(priceX128, vBase, vToken)).to.eq(price);
+        expect(roundUp(await priceX128ToPrice(priceX128, vBase, vToken))).to.eq(price);
       });
     }
   });
@@ -60,8 +60,8 @@ describe('price-tick util', () => {
   describe('#priceX128ToSqrtPriceX96', () => {
     for (const { priceX128, sqrtPriceX96 } of testCases) {
       it(`sqrt(${priceX128}(X128)) == ${sqrtPriceX96}(X96)`, async () => {
-        expect(priceX128ToSqrtPriceX96(priceX128, vBase, vToken)).to.eq(sqrtPriceX96);
-        expect(sqrtPriceX96ToPriceX128(sqrtPriceX96, vBase, vToken)).to.eq(priceX128);
+        expect(priceX128ToSqrtPriceX96(priceX128)).to.eq(sqrtPriceX96);
+        expect(sqrtPriceX96ToPriceX128(sqrtPriceX96)).to.eq(priceX128);
       });
     }
   });
@@ -70,8 +70,12 @@ describe('price-tick util', () => {
     for (const { price, sqrtPriceX96 } of testCases) {
       it(`sqrt(${price}) == ${sqrtPriceX96}(X96)`, async () => {
         expect(await priceToSqrtPriceX96(price, vBase, vToken)).to.eq(sqrtPriceX96);
-        expect(await sqrtPriceX96ToPrice(sqrtPriceX96, vBase, vToken)).to.eq(price);
+        expect(roundUp(await sqrtPriceX96ToPrice(sqrtPriceX96, vBase, vToken))).to.eq(price);
       });
     }
   });
 });
+
+function roundUp(num: number) {
+  return Math.ceil(num * 10 ** 10) / 10 ** 10;
+}

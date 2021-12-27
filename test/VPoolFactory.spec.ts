@@ -1,24 +1,26 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
-import { VPoolFactory, VPoolWrapperDeployer, ERC20, UtilsTest, VBase } from '../typechain-types';
-import { getCreate2Address, getCreate2Address2 } from './utils/create2';
+import { VPoolFactory, VPoolWrapperDeployer, ERC20, UtilsTest, VBase, IOracle } from '../typechain-types';
+import { getCreate2Address, getCreate2AddressByBytecodeHash } from './utils/create2';
 import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
-import { utils } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { getCreateAddressFor } from './utils/create-addresses';
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { hexlify, keccak256, randomBytes } from 'ethers/lib/utils';
+import { Q96 } from './utils/fixed-point';
 const realToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 describe('VPoolFactory', () => {
   let oracle: string;
-  let VBase: VBase;
-  let VPoolFactory: VPoolFactory;
-  let VPoolWrapperDeployer: VPoolWrapperDeployer;
+  let vBase: VBase;
+  let vPoolFactory: VPoolFactory;
+  let vPoolWrapperDeployer: VPoolWrapperDeployer;
   let UtilsTestContract: UtilsTest;
   let vTokenByteCode: string;
-  let VPoolWrapperByteCode: string;
+  let vPoolWrapperByteCode: string;
   let signers: SignerWithAddress[];
   before(async () => {
     await activateMainnetFork();
@@ -26,14 +28,14 @@ describe('VPoolFactory', () => {
     rBase.decimals.returns(18);
     const realToken = await smock.fake<ERC20>('ERC20');
     realToken.decimals.returns(10);
-    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realToken.address);
+    vBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realToken.address);
     oracle = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     signers = await hre.ethers.getSigners();
     const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 3);
     const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 4);
 
-    VPoolWrapperDeployer = await (
+    vPoolWrapperDeployer = await (
       await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     ).deploy(futureVPoolFactoryAddress);
 
@@ -45,12 +47,12 @@ describe('VPoolFactory', () => {
         },
       })
     ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
-    VPoolFactory = await (
+    vPoolFactory = await (
       await hre.ethers.getContractFactory('VPoolFactory')
     ).deploy(
-      VBase.address,
+      vBase.address,
       clearingHouse.address,
-      VPoolWrapperDeployer.address,
+      vPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
       POOL_BYTE_CODE_HASH,
@@ -60,11 +62,11 @@ describe('VPoolFactory', () => {
       await hre.ethers.getContractFactory('InsuranceFund')
     ).deploy(rBase.address, clearingHouse.address);
 
-    await VBase.transferOwnership(VPoolFactory.address);
+    await vBase.transferOwnership(vPoolFactory.address);
 
     UtilsTestContract = await (await hre.ethers.getContractFactory('UtilsTest')).deploy();
 
-    VPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
+    vPoolWrapperByteCode = (await hre.ethers.getContractFactory('VPoolWrapper')).bytecode;
     vTokenByteCode = (await hre.ethers.getContractFactory('VToken')).bytecode;
   });
 
@@ -72,28 +74,53 @@ describe('VPoolFactory', () => {
 
   describe('Initilize', () => {
     it('Deployments', async () => {
-      await VPoolFactory.initializePool('vWETH', 'vWETH', realToken, oracle, 500, 500, 2, 3, 60, false);
-      const eventFilter = VPoolFactory.filters.PoolInitlized();
-      const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
+      await vPoolFactory.initializePool(
+        {
+          setupVTokenParams: {
+            vTokenName: 'vWETH',
+            vTokenSymbol: 'vWETH',
+            realTokenAddress: realToken,
+            oracleAddress: oracle,
+          },
+          extendedLpFee: 500,
+          protocolFee: 500,
+          initialMarginRatio: 2,
+          maintainanceMarginRatio: 3,
+          twapDuration: 60,
+          whitelisted: false,
+        },
+        0,
+      );
+
+      const eventFilter = vPoolFactory.filters.PoolInitlized();
+      const events = await vPoolFactory.queryFilter(eventFilter, 'latest');
       const vPool = events[0].args[0];
       const vTokenAddress = events[0].args[1];
       const vPoolWrapper = events[0].args[2];
 
       //console.log(vTokenAddress, vPool, vPoolWrapper);
       // VToken : Create2
-      const saltInUint160 = await UtilsTestContract.convertAddressToUint160(realToken);
-      let salt = utils.defaultAbiCoder.encode(['uint160'], [saltInUint160]);
+      // const saltInUint160 = await UtilsTestContract.convertAddressToUint160(realToken);
+      // let salt = utils.defaultAbiCoder.encode(['uint256', 'address'], [saltInUint160, realToken]);
       let bytecode = utils.solidityPack(
         ['bytes', 'bytes'],
         [
           vTokenByteCode,
           utils.defaultAbiCoder.encode(
             ['string', 'string', 'address', 'address', 'address'],
-            ['vWETH', 'vWETH', realToken, oracle, VPoolFactory.address],
+            ['vWETH', 'vWETH', realToken, oracle, vPoolFactory.address],
           ),
         ],
       );
-      const vTokenComputedAddress = getCreate2Address(VPoolFactory.address, salt, bytecode);
+
+      let counter = 0;
+      let vTokenComputedAddress;
+      do {
+        let salt = keccak256(utils.defaultAbiCoder.encode(['uint256', 'address'], [counter, realToken]));
+        vTokenComputedAddress = getCreate2Address(vPoolFactory.address, salt, bytecode);
+        // salt = hexZeroPad(BigNumber.from(salt).add(1).toHexString(), 32);
+        counter++;
+      } while (!BigNumber.from(vTokenComputedAddress).lt(vBase.address));
       expect(vTokenAddress).to.eq(vTokenComputedAddress);
 
       // VToken : Cons Params
@@ -111,15 +138,16 @@ describe('VPoolFactory', () => {
       expect(vToken_state_owner.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
 
       // VPool : Create2
-      if (VBase.address.toLowerCase() < vTokenAddress.toLowerCase())
-        salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [VBase.address, vTokenAddress, 500]);
-      else salt = utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, VBase.address, 500]);
-      const vPoolCalculated = getCreate2Address2(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
+      let salt = keccak256(
+        utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, vBase.address, 500]),
+      );
+
+      const vPoolCalculated = getCreate2AddressByBytecodeHash(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
       expect(vPool).to.eq(vPoolCalculated);
 
       // VPoolWrapper : Create2
-      salt = utils.defaultAbiCoder.encode(['address', 'address'], [vTokenAddress, VBase.address]);
-      const vPoolWrapperCalculated = getCreate2Address(VPoolWrapperDeployer.address, salt, VPoolWrapperByteCode);
+      salt = keccak256(utils.defaultAbiCoder.encode(['address', 'address'], [vTokenAddress, vBase.address]));
+      const vPoolWrapperCalculated = getCreate2Address(vPoolWrapperDeployer.address, salt, vPoolWrapperByteCode);
       expect(vPoolWrapper).to.eq(vPoolWrapperCalculated);
 
       // VPoolWrapper : Params
@@ -136,5 +164,43 @@ describe('VPoolFactory', () => {
       // console.log(events1[0].args[0]);
       // console.log(events1[0].args[1]);
     });
+  });
+
+  describe('vToken always token0', () => {
+    for (let i = 0; i < 5; i++) {
+      it(`fuzz ${i + 1}`, async () => {
+        const _realToken = await (await hre.ethers.getContractFactory('ERC20')).deploy('', '');
+        const _oracle = await smock.fake<IOracle>('IOracle', { address: hexlify(randomBytes(20)) });
+        _oracle.getTwapSqrtPriceX96.returns(Q96);
+        const _extendedLpFee = Math.floor(Math.random() * 10) * 100;
+        const _protocolFee = Math.floor(Math.random() * 10) * 100;
+        const _initialMargin = Math.floor(Math.random() * 10) * 100;
+        const _maintainanceMargin = Math.floor(Math.random() * 10) * 100;
+        const _twapDuration = Math.floor(Math.random() * 10) * 100;
+        const _whitelisted = Math.random() > 0.5;
+
+        await vPoolFactory.initializePool(
+          {
+            setupVTokenParams: {
+              vTokenName: '',
+              vTokenSymbol: '',
+              realTokenAddress: _realToken.address,
+              oracleAddress: _oracle.address,
+            },
+            extendedLpFee: _extendedLpFee,
+            protocolFee: _protocolFee,
+            initialMarginRatio: _initialMargin,
+            maintainanceMarginRatio: _maintainanceMargin,
+            twapDuration: _twapDuration,
+            whitelisted: _whitelisted,
+          },
+          0,
+        );
+
+        const events = await vPoolFactory.queryFilter(vPoolFactory.filters.PoolInitlized(), 'latest');
+        const { vTokenAddress } = events[0].args;
+        expect(BigNumber.from(vTokenAddress).lt(vBase.address)).to.be.true;
+      });
+    }
   });
 });

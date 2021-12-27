@@ -20,7 +20,7 @@ contract TickTest {
     mapping(int24 => Tick.Info) public ticksExtended;
 
     FundingPayment.Info public fpGlobal;
-    uint256 public sumExFeeGlobalX128;
+    uint256 public sumFeeGlobalX128;
 
     IUniswapV3Pool public vPool;
 
@@ -36,8 +36,8 @@ contract TickTest {
         fpGlobal = fpGlobal_;
     }
 
-    function setExtendedFeeGrowthOutsideX128(uint256 _extendedFeeGrowthOutsideX128) external {
-        sumExFeeGlobalX128 = _extendedFeeGrowthOutsideX128;
+    function setFeeGrowthOutsideX128(uint256 _extendedFeeGrowthOutsideX128) external {
+        sumFeeGlobalX128 = _extendedFeeGrowthOutsideX128;
     }
 
     function getNetPositionInside(
@@ -50,7 +50,7 @@ contract TickTest {
             tickUpper,
             tickCurrent,
             fpGlobal,
-            sumExFeeGlobalX128
+            sumFeeGlobalX128
         );
     }
 
@@ -64,21 +64,19 @@ contract TickTest {
             tickUpper,
             tickCurrent,
             fpGlobal,
-            sumExFeeGlobalX128
+            sumFeeGlobalX128
         );
     }
 
     function getUniswapFeeGrowthInside(
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        VTokenAddress vToken,
-        Constants memory constants
+        int24 tickCurrent
     ) public view returns (uint256 uniswapFeeGrowthInside) {
-        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent, vToken.isToken0(constants));
+        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent);
     }
 
-    function getExtendedFeeGrowthInside(
+    function getFeeGrowthInside(
         int24 tickLower,
         int24 tickUpper,
         int24 tickCurrent
@@ -88,7 +86,7 @@ contract TickTest {
             tickUpper,
             tickCurrent,
             fpGlobal,
-            sumExFeeGlobalX128
+            sumFeeGlobalX128
         );
     }
 
@@ -103,6 +101,6 @@ contract TickTest {
     }
 
     function cross(int24 tickNext) external {
-        ticksExtended.cross(tickNext, fpGlobal, sumExFeeGlobalX128);
+        ticksExtended.cross(tickNext, fpGlobal, sumFeeGlobalX128);
     }
 }

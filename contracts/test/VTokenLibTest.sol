@@ -8,23 +8,6 @@ import { Constants } from '../utils/Constants.sol';
 contract VTokenLibTest {
     using VTokenLib for VTokenAddress;
 
-    function isToken0(VTokenAddress vToken, Constants memory constants) external pure returns (bool) {
-        return vToken.isToken0(constants);
-    }
-
-    function isToken1(VTokenAddress vToken, Constants memory constants) external pure returns (bool) {
-        return vToken.isToken1(constants);
-    }
-
-    function flip(
-        VTokenAddress vToken,
-        int256 amount0,
-        int256 amount1,
-        Constants memory constants
-    ) external pure returns (int256 baseAmount, int256 vTokenAmount) {
-        return vToken.flip(amount0, amount1, constants);
-    }
-
     function vPool(VTokenAddress vToken, Constants memory constants) external pure returns (address) {
         return address(vToken.vPool(constants));
     }

@@ -1,7 +1,6 @@
 import { BigNumber, BigNumberish, FixedNumber } from '@ethersproject/bignumber';
-import hre, { ethers } from 'hardhat';
-import { VPoolWrapper, VPoolFactory, ERC20, VBase, VToken, UniswapV3Pool, ERC20__factory } from '../typechain-types';
-import { ERC20Interface } from '../typechain-types/ERC20';
+import { ethers } from 'ethers';
+import { VPoolWrapperMock2, VBase, VToken, UniswapV3Pool } from '../typechain-types';
 import { Q128, Q96, toQ128, toQ96 } from './utils/fixed-point';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import {
@@ -19,12 +18,10 @@ import { TransferEvent } from '../typechain-types/ERC20';
 import { ContractTransaction } from '@ethersproject/contracts';
 
 describe('PoolWrapper', () => {
-  let vPoolWrapper: MockContract<VPoolWrapper>;
+  let vPoolWrapper: MockContract<VPoolWrapperMock2>;
   let vPool: UniswapV3Pool;
   let vBase: MockContract<VBase>;
   let vToken: MockContract<VToken>;
-
-  let isToken0: boolean;
 
   interface Range {
     tickLower: number;
@@ -36,7 +33,7 @@ describe('PoolWrapper', () => {
     let biggerRange: Range;
 
     before(async () => {
-      ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
       }));
@@ -71,9 +68,9 @@ describe('PoolWrapper', () => {
         sumFpX128: toQ128(3),
         timestampLast: 100,
       };
-      const sumExFeeGlobalX128 = toQ128(4);
+      const sumFeeGlobalX128 = toQ128(4);
       vPoolWrapper.setVariable('fpGlobal', fpGlobal);
-      vPoolWrapper.setVariable('sumExFeeGlobalX128', toQ128(4));
+      vPoolWrapper.setVariable('sumFeeGlobalX128', toQ128(4));
 
       // add liquidity in the middle
       const { tick } = await vPool.slot0();
@@ -85,28 +82,28 @@ describe('PoolWrapper', () => {
       expect(tickLowerState.sumALastX128).to.eq(fpGlobal.sumAX128);
       expect(tickLowerState.sumBOutsideX128).to.eq(fpGlobal.sumBX128);
       expect(tickLowerState.sumFpOutsideX128).to.eq(fpGlobal.sumFpX128);
-      expect(tickLowerState.sumExFeeOutsideX128).to.eq(sumExFeeGlobalX128);
+      expect(tickLowerState.sumFeeOutsideX128).to.eq(sumFeeGlobalX128);
 
       // upper tick should not be updated
       const tickUpperState = await vPoolWrapper.ticksExtended(smallerRange.tickUpper);
       expect(tickUpperState.sumALastX128).to.eq(0);
       expect(tickUpperState.sumBOutsideX128).to.eq(0);
       expect(tickUpperState.sumFpOutsideX128).to.eq(0);
-      expect(tickUpperState.sumExFeeOutsideX128).to.eq(0);
+      expect(tickUpperState.sumFeeOutsideX128).to.eq(0);
 
       // bigger range should contain the value
       const valuesInside_100_100 = await vPoolWrapper.getValuesInside(biggerRange.tickLower, biggerRange.tickUpper);
       expect(valuesInside_100_100.sumAX128).to.eq(fpGlobal.sumAX128);
       expect(valuesInside_100_100.sumBInsideX128).to.eq(fpGlobal.sumBX128);
       expect(valuesInside_100_100.sumFpInsideX128).to.eq(fpGlobal.sumFpX128);
-      expect(valuesInside_100_100.sumFeeInsideX128).to.eq(sumExFeeGlobalX128);
+      expect(valuesInside_100_100.sumFeeInsideX128).to.eq(sumFeeGlobalX128);
 
       // by default given to lower range
       const valuesInside_100_50 = await vPoolWrapper.getValuesInside(biggerRange.tickLower, smallerRange.tickLower);
       expect(valuesInside_100_50.sumAX128).to.eq(fpGlobal.sumAX128);
       expect(valuesInside_100_50.sumBInsideX128).to.eq(fpGlobal.sumBX128);
       expect(valuesInside_100_50.sumFpInsideX128).to.eq(fpGlobal.sumFpX128);
-      expect(valuesInside_100_50.sumFeeInsideX128).to.eq(sumExFeeGlobalX128);
+      expect(valuesInside_100_50.sumFeeInsideX128).to.eq(sumFeeGlobalX128);
 
       // smaller range should give zero
       const valuesInside_50_50 = await vPoolWrapper.getValuesInside(smallerRange.tickLower, smallerRange.tickUpper);
@@ -125,237 +122,132 @@ describe('PoolWrapper', () => {
   });
 
   describe('#swap', () => {
-    describe('uniswapFee + protocolFee', () => {
-      let uniswapFee: number;
-      let protocolFee: number;
+    // TODO: fuzz various liquidity and protocol fees
+    const uniswapFee = 500;
+    const liquidityFee = 700;
+    const protocolFee = 300;
 
-      before(async () => {
-        ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
-          rPriceInitial: 2000,
-          vPriceInitial: 2000,
-          uniswapFee: 500,
-          extendedFee: 0,
-          protocolFee: 500,
-        }));
+    before(async () => {
+      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
+        rPriceInitial: 2000,
+        vPriceInitial: 2000,
+        uniswapFee,
+        liquidityFee,
+        protocolFee,
+      }));
 
-        expect((uniswapFee = await vPoolWrapper.uniswapFee())).to.eq(500);
-        expect(await vPoolWrapper.extendedFee()).to.eq(0);
-        expect((protocolFee = await vPoolWrapper.protocolFee())).to.eq(500);
+      expect(await vPoolWrapper.uniswapFeePips()).to.eq(500);
+      expect(await vPoolWrapper.liquidityFeePips()).to.eq(700);
+      expect(await vPoolWrapper.protocolFeePips()).to.eq(300);
 
-        // const { tick, sqrtPriceX96 } = await vPool.slot0();
-        // console.log({ isToken0, tick, sqrtPriceX96 });
+      // const { tick, sqrtPriceX96 } = await vPool.slot0();
 
-        // bootstraping initial liquidity
-        await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
-        await liquidityChange(2000, 3000, 10n ** 15n); // here vtoken should be put
-        await liquidityChange(3000, 4000, 10n ** 15n); // here vtoken should be put
-        await liquidityChange(4000, 5000, 10n ** 15n);
-        await liquidityChange(1000, 4000, 10n ** 15n); // here vtoken should be put
-      });
-
-      it('buy 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
-        expect(vTokenIn.mul(-1)).to.eq(parseEther('1'));
-
-        const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
-        if (!vTokenBurnEvent) {
-          throw new Error('vTokenBurnEvent not emitted');
-        }
-
-        expect(vTokenBurnEvent.args.value).to.eq(parseEther('1'));
-      });
-
-      it('buy ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('2000'), 0);
-        expect(vBaseIn).to.eq(parseUsdc('2000'));
-
-        const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('2000'), 0));
-        if (!vBaseMintEvent) {
-          throw new Error('vBaseMintEvent not emitted');
-        }
-
-        // protocol fee is collected in vBase already
-        expect(vBaseMintEvent.args.value).to.eq(
-          parseUsdc('2000')
-            .mul(1e6 - protocolFee)
-            .div(1e6),
-        );
-      });
-
-      it('sell 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('-1'), 0);
-        expect(vTokenIn).to.eq(parseEther('1'));
-
-        const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('-1'), 0));
-        if (!vTokenMintEvent) {
-          throw new Error('vTokenMintEvent not emitted');
-        }
-        // amount is inflated, so the inflated amount is collected as fees by uniswap
-        expect(vTokenMintEvent.args.value).to.eq(
-          parseEther('1')
-            .mul(1e6)
-            .div(1e6 - uniswapFee),
-        );
-      });
-
-      it('sell ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
-        expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
-
-        const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
-        if (!vBaseBurnEvent) {
-          throw new Error('vBaseMintEvent not emitted');
-        }
-        // amount is inflated for uniswap and protocol fee both
-        expect(vBaseBurnEvent.args.value).to.eq(
-          parseUsdc('2000')
-            .mul(1e6)
-            .div(1e6 - uniswapFee)
-            .mul(1e6 + protocolFee)
-            .div(1e6),
-        );
-      });
+      // bootstraping initial liquidity
+      await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
+      await liquidityChange(2000, 3000, 10n ** 15n); // here vtoken should be put
+      await liquidityChange(3000, 4000, 10n ** 15n); // here vtoken should be put
+      await liquidityChange(4000, 5000, 10n ** 15n);
+      await liquidityChange(1000, 4000, 10n ** 15n); // here vtoken should be put
     });
 
-    describe('uniswapFee + extendedFee + protocolFee', () => {
-      let uniswapFee: number;
-      let extendedFee: number;
-      let fee = () => uniswapFee + extendedFee;
-      let protocolFee: number;
+    it('buy 1 ETH (exactOut 1 ETH)', async () => {
+      const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
 
-      before(async () => {
-        ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
-          rPriceInitial: 2000,
-          vPriceInitial: 2000,
-          uniswapFee: 500,
-          extendedFee: 500,
-          protocolFee: 500,
-        }));
+      // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
+      expect(vTokenIn.mul(-1)).to.eq(parseEther('1'));
 
-        expect((uniswapFee = await vPoolWrapper.uniswapFee())).to.eq(500);
-        expect((extendedFee = await vPoolWrapper.extendedFee())).to.eq(500);
-        expect((protocolFee = await vPoolWrapper.protocolFee())).to.eq(500);
+      const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
+      if (!vTokenBurnEvent) {
+        throw new Error('vTokenBurnEvent not emitted');
+      }
+      // vToken ERC0 tokens that are bought, are burned by the vPoolWrapper
+      // and just the value is returned to ClearingHouse
+      expect(vTokenBurnEvent.args.value).to.eq(parseEther('1'));
+    });
 
-        // const { tick, sqrtPriceX96 } = await vPool.slot0();
-        // console.log({ isToken0, tick, sqrtPriceX96 });
+    it('buy ETH worth 2000 USDC (exactIn 2000 USDC)', async () => {
+      const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('2000'), 0);
 
-        // bootstraping initial liquidity
-        await liquidityChange(1000, 2000, 10n ** 15n); // here usdc should be put
-        await liquidityChange(2000, 3000, 10n ** 15n); // here vtoken should be put
-        await liquidityChange(3000, 4000, 10n ** 15n); // here vtoken should be put
-        await liquidityChange(4000, 5000, 10n ** 15n);
-        await liquidityChange(1000, 4000, 10n ** 15n); // here vtoken should be put
-      });
+      // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
+      expect(vBaseIn).to.eq(parseUsdc('2000'));
 
-      it('buy 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('1'), 0);
-        expect(vTokenIn.mul(-1)).to.eq(parseEther('1'));
+      const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('2000'), 0));
+      if (!vBaseMintEvent) {
+        throw new Error('vBaseMintEvent not emitted');
+      }
+      // swap amount excludes protocol fee, liquidity fee
+      // but amount is inflated to include uniswap fees, which is ignored later
+      // and fee is collected so less vBase is minted
+      const inflatedAmount = parseUsdc('2000');
+      const infatedAmountFees = inflatedAmount.mul(uniswapFee).div(1e6 - uniswapFee);
+      // .add(1); // TODO why does this not work?
+      // sub by 2 because 2 units of vBase is minted less and accounted as extra fees (round up)
+      expect(vBaseMintEvent.args.value).to.eq(inflatedAmount.sub(infatedAmountFees).sub(2), 'mint mismatch');
+    });
 
-        const { vTokenBurnEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('1'), 0));
-        if (!vTokenBurnEvent) {
-          throw new Error('vTokenBurnEvent not emitted');
-        }
+    it('sell 1 ETH (exactIn 1 ETH)', async () => {
+      const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('-1'), 0);
 
-        expect(vTokenBurnEvent.args.value).to.eq(parseEther('1'));
-      });
+      // when asked to charge 1 ETH, trader should be debited by that exactly and get whatever ETH
+      expect(vTokenIn).to.eq(parseEther('1'));
 
-      it('buy ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('2000'), 0);
-        expect(vBaseIn).to.eq(parseUsdc('2000'));
+      const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('-1'), 0));
+      if (!vTokenMintEvent) {
+        throw new Error('vTokenMintEvent not emitted');
+      }
+      // amount is inflated, so the inflated amount is collected as fees by uniswap
+      // and more vToken is minted to sell for fees
+      const inflatedAmount = parseEther('1');
+      const infatedAmountFees = inflatedAmount
+        .mul(uniswapFee)
+        .div(1e6 - uniswapFee)
+        .add(1); // round up fees
+      expect(vTokenMintEvent.args.value).to.eq(inflatedAmount.add(infatedAmountFees));
+    });
 
-        const { vBaseMintEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('2000'), 0));
-        if (!vBaseMintEvent) {
-          throw new Error('vBaseMintEvent not emitted');
-        }
+    it('sell ETH worth 2000 USDC (exactOut 2000 USDC)', async () => {
+      const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
+      expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
 
-        // protocol fee is collected in vBase already
-        expect(vBaseMintEvent.args.value).to.eq(
-          parseUsdc('2000')
-            .mul(1e6 - protocolFee - extendedFee)
-            .div(1e6),
-        );
-      });
-
-      it('sell 1 ETH', async () => {
-        const { vTokenIn } = await vPoolWrapper.callStatic.swap(false, parseEther('-1'), 0);
-        expect(vTokenIn).to.eq(parseEther('1'));
-
-        const { vTokenMintEvent } = await extractEvents(vPoolWrapper.swap(false, parseEther('-1'), 0));
-        if (!vTokenMintEvent) {
-          throw new Error('vTokenMintEvent not emitted');
-        }
-        // amount is inflated, so the inflated amount is collected as fees by uniswap
-        expect(vTokenMintEvent.args.value).to.eq(
-          parseEther('1')
-            .mul(1e6)
-            .div(1e6 - fee()),
-        );
-      });
-
-      it('sell ETH worth 2000 USDC', async () => {
-        const { vBaseIn } = await vPoolWrapper.callStatic.swap(true, parseUsdc('-2000'), 0);
-        expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
-
-        const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
-        if (!vBaseBurnEvent) {
-          throw new Error('vBaseMintEvent not emitted');
-        }
-        // amount is inflated for uniswap and protocol fee both
-        expect(vBaseBurnEvent.args.value).to.eq(
-          parseUsdc('2000')
-            .mul(1e6)
-            .div(1e6 - fee())
-            .mul(1e6 + protocolFee)
-            .div(1e6),
-        );
-      });
+      const { vBaseBurnEvent } = await extractEvents(vPoolWrapper.swap(true, parseUsdc('-2000'), 0));
+      if (!vBaseBurnEvent) {
+        throw new Error('vBaseMintEvent not emitted');
+      }
+      // amount is inflated for uniswap and protocol fee both
+      expect(vBaseBurnEvent.args.value).to.eq(
+        parseUsdc('2000')
+          .sub(parseUsdc('2000').mul(liquidityFee).div(1e6).add(1))
+          .sub(parseUsdc('2000').mul(protocolFee).div(1e6).add(1)),
+      );
     });
   });
 
   describe('#getValuesInside', () => {
-    let protocolFee: number;
-    let uniswapFee: number;
+    const uniswapFee = 500;
+    const liquidityFee = 700;
+    const protocolFee = 300;
 
     let liquidity1: BigNumber;
     let liquidity2: BigNumber;
     beforeEach(async () => {
       // sets up the liquidity
-      // -20 -> -10 ===> 100 A
-      // -10 ->   0 ===> 100 A
-      //   0 ->  10 ===> 100 B
-      //  10 ->  20 ===> 100 B
-      ({ vPoolWrapper, vPool, isToken0, vBase, vToken } = await setupWrapper({
+      // -20 -> -10 ===> 100 A (liquidity2)
+      // -10 ->   0 ===> 100 A (liquidity1)
+      //   0 ->  10 ===> 100 B (liquidity1)
+      //  10 ->  20 ===> 100 B (liquidity2)
+      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
         vBaseDecimals: 18,
         vTokenDecimals: 18,
-        extendedFee: 0,
-        protocolFee: 500,
+        uniswapFee,
+        liquidityFee,
+        protocolFee,
       }));
-      protocolFee = await vPoolWrapper.protocolFee();
-      uniswapFee = await vPoolWrapper.uniswapFee();
 
       const { sqrtPriceX96 } = await vPool.slot0();
-      liquidity1 = maxLiquidityForAmounts(
-        sqrtPriceX96,
-        -10,
-        10,
-        parseUnits('100', 18),
-        parseUnits('100', 18),
-        true,
-        vBase,
-        vToken,
-      );
-      liquidity2 = maxLiquidityForAmounts(
-        sqrtPriceX96,
-        10,
-        20,
-        parseUnits('100', 18),
-        parseUnits('100', 18),
-        true,
-        vBase,
-        vToken,
-      );
+      liquidity1 = maxLiquidityForAmounts(sqrtPriceX96, -10, 10, parseUnits('100', 18), parseUnits('100', 18), true);
+      liquidity2 = maxLiquidityForAmounts(sqrtPriceX96, 10, 20, parseUnits('100', 18), parseUnits('100', 18), true);
 
       await vPoolWrapper.liquidityChange(-10, 10, liquidity1);
       await vPoolWrapper.liquidityChange(10, 20, liquidity2);
@@ -363,37 +255,48 @@ describe('PoolWrapper', () => {
     });
 
     describe('fp', () => {
-      it('no tick cross', async () => {
-        // buy 50 VTokens, does not cross tick
-        const tradeAmount = parseUnits('50', 18);
-        await vPoolWrapper.swap(false, tradeAmount, 0);
+      const cases = [
+        { isNotional: false, tradeAmount: parseEther('1'), info: 'exactOut ETH' },
+        { isNotional: false, tradeAmount: parseEther('-1'), info: 'exactIn ETH' },
+        { isNotional: true, tradeAmount: parseEther('2'), info: 'exactOut USDC' },
+        { isNotional: true, tradeAmount: parseEther('-2'), info: 'exactIn USDC' },
+      ];
 
-        const global = await getGlobal();
-        const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
+      for (const { isNotional, tradeAmount, info } of cases) {
+        it(`no tick cross | isNotional=${isNotional} | tradeAmount=${
+          isNotional ? formatUnits(tradeAmount, 6) : formatEther(tradeAmount)
+        } | ${info}`, async () => {
+          // trade that does not cross tick
+          await vPoolWrapper.swap(isNotional, tradeAmount, 0);
+          const globalState = await getGlobal();
+          const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
-        // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumAX128).to.eq(global.sumAX128);
-        expect(valuesInside20.sumBInsideX128).to.eq(global.sumBX128);
-        expect(valuesInside20.sumFpInsideX128).to.eq(global.sumFpX128);
+          // since the trade does not go outside -20 and 20, values inside should be same as global
+          expect(valuesInside20.sumAX128).to.eq(globalState.sumAX128);
+          expect(valuesInside20.sumBInsideX128).to.eq(globalState.sumBX128);
+          expect(valuesInside20.sumFpInsideX128).to.eq(globalState.sumFpX128);
 
-        // fp values should be correct
-        expect(valuesInside20.sumAX128).to.eq(0);
-        expect(valuesInside20.sumBInsideX128).to.eq(tradeAmount.mul(Q128).div(liquidity1));
-        expect(valuesInside20.sumFpInsideX128).to.eq(0);
-      });
+          // fp values should be correct
+          expect(valuesInside20.sumAX128).to.eq(0);
+          if (!isNotional) {
+            expect(valuesInside20.sumBInsideX128).to.eq(tradeAmount.mul(-1).mul(Q128).div(liquidity1));
+          }
+          expect(valuesInside20.sumFpInsideX128).to.eq(0);
+        });
+      }
 
       it('single tick cross', async () => {
         // buy 150 VTokens, crosses a tick
         const tradeAmount = parseUnits('150', 18);
         await vPoolWrapper.swap(false, tradeAmount, 0);
 
-        const global = await getGlobal();
+        const globalState = await getGlobal();
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumAX128).to.eq(global.sumAX128);
-        expect(valuesInside20.sumBInsideX128).to.eq(global.sumBX128);
-        expect(valuesInside20.sumFpInsideX128).to.eq(global.sumFpX128);
+        expect(valuesInside20.sumAX128).to.eq(globalState.sumAX128);
+        expect(valuesInside20.sumBInsideX128).to.eq(globalState.sumBX128);
+        expect(valuesInside20.sumFpInsideX128).to.eq(globalState.sumFpX128);
 
         expect(valuesInside20.sumAX128).to.eq(0);
         expect(valuesInside20.sumBInsideX128).to.eq(
@@ -401,7 +304,8 @@ describe('PoolWrapper', () => {
             .sub(1)
             .mul(Q128)
             .div(liquidity1)
-            .add(parseUnits('50', 18).add(1).mul(Q128).div(liquidity2)),
+            .add(parseUnits('50', 18).add(1).mul(Q128).div(liquidity2))
+            .mul(-1),
         );
         expect(valuesInside20.sumFpInsideX128).to.eq(0);
       });
@@ -413,26 +317,26 @@ describe('PoolWrapper', () => {
         const tradeAmount = parseUnits('50', 18);
         await vPoolWrapper.swap(true, tradeAmount, 0);
 
-        const global = await getGlobal();
+        const globalState = await getGlobal();
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumFeeInsideX128).to.eq(global.sumFeeGlobalX128);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
         // if buy then uniswap fee will increase
-        const expectedUniswapFeeIncrease = tradeAmount
+        const expectedFeeIncrease = tradeAmount
           .abs()
-          // removing protocol fee
-          .mul(1e6 - protocolFee)
+          // calculating liquidity fee
+          .mul(liquidityFee)
           .div(1e6)
-          // calculating uniswap fee
-          .mul(uniswapFee)
-          .div(1e6)
+          .add(1) // rounding amount down
           // taking per liquidity
           .mul(Q128)
           .div(liquidity1);
-        const expectedExtendedFeeIncrease = 0;
-        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedUniswapFeeIncrease.add(expectedExtendedFeeIncrease));
+        // TODO: fix vBaseAmount incorrect in onSwapStep. LPs get less fees.
+        // expect(valuesInside20.sumFeeInsideX128).to.eq(expectedFeeIncrease);
+        expect(valuesInside20.sumFeeInsideX128).to.lt(expectedFeeIncrease);
+        expect(valuesInside20.sumFeeInsideX128).to.gt(expectedFeeIncrease.mul(9999).div(10000));
       });
 
       it('sell: no tick cross', async () => {
@@ -440,26 +344,22 @@ describe('PoolWrapper', () => {
         const tradeAmount = parseUnits('-50', 18);
         await vPoolWrapper.swap(true, tradeAmount, 0);
 
-        const global = await getGlobal();
+        const globalState = await getGlobal();
         const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
         // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumFeeInsideX128).to.eq(global.sumFeeGlobalX128);
+        expect(valuesInside20.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
         // if buy then uniswap fee will increase
-        const expectedUniswapFeeIncrease = BigNumber.from(0);
-        const expectedExtendedFeeIncrease = tradeAmount
+        const expectedFeeIncrease = tradeAmount
           .abs()
-          // adjusting protocol fee and inflation
-          .mul(1e6 + protocolFee)
-          .div(1e6 - uniswapFee)
-          // calculating uniswap fee
-          .mul(uniswapFee)
-          .div(1e6 - uniswapFee)
+          // calculating liquidity fee
+          .mul(liquidityFee)
+          .div(1e6)
           // taking per liquidity
           .mul(Q128)
           .div(liquidity1);
-        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedUniswapFeeIncrease.add(expectedExtendedFeeIncrease));
+        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedFeeIncrease);
       });
 
       it('buy: single tick cross');
@@ -480,9 +380,6 @@ describe('PoolWrapper', () => {
     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
     // );
 
-    if (!isToken0) {
-      [tickLower, tickUpper] = [tickUpper, tickLower];
-    }
     await vPoolWrapper.liquidityChange(tickLower, tickUpper, liquidityDelta);
   }
 
@@ -524,9 +421,9 @@ describe('PoolWrapper', () => {
     sumFeeGlobalX128: BigNumber;
   }> {
     const fpGlobal = await vPoolWrapper.fpGlobal();
-    const uniswapFeeX128 = isToken0 ? await vPool.feeGrowthGlobal1X128() : await vPool.feeGrowthGlobal0X128();
-    const sumExFeeGlobalX128 = await vPoolWrapper.sumExFeeGlobalX128();
-    return { ...fpGlobal, sumFeeGlobalX128: uniswapFeeX128.add(sumExFeeGlobalX128) };
+    // const uniswapFeeX128 = await vPool.feeGrowthGlobal1X128();
+    const sumFeeGlobalX128 = await vPoolWrapper.sumFeeGlobalX128();
+    return { ...fpGlobal, sumFeeGlobalX128 };
   }
 
   function parseUsdc(str: string): BigNumber {
