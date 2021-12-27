@@ -265,7 +265,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         {
             // simulate swap and update our tick states
-            (int256 vTokenIn_simulated, int256 vBaseIn_simulated, ) = vPool.simulateSwap(
+            (int256 vTokenIn_simulated, int256 vBaseIn_simulated) = vPool.simulateSwap(
                 swapVTokenForVBase,
                 amountSpecified,
                 sqrtPriceLimitX96,
@@ -321,10 +321,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         SimulateSwap.SwapCache memory,
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
-    ) internal returns (uint256 protocolFeeForThisStep) {
-        // TODO remove protocolFeeForThisStep
-        bool exactIn = state.amountCalculated < 0;
-
+    ) internal {
         // vBase and vToken amounts are inflated-deinflated to give effect of zero fee swap
         uint256 lpFeesInVBase;
         (uint256 vTokenAmount, uint256 vBaseAmount) = swapVTokenForVBase
