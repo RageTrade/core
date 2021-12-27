@@ -4,7 +4,7 @@ import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
 
 import { FundingPaymentTest } from '../typechain-types';
-import { Q128, toQ128, fromQ128 } from './utils/fixed-point';
+import { Q128, toQ128 } from './utils/fixed-point';
 
 const DAY = 24 * 60 * 60;
 
@@ -39,15 +39,13 @@ describe('FundingPayment', () => {
 
     it('rp=1.01 vp=1 dt=10', async () => {
       const a = await test.nextAX128(10, 20, toQ128(1.01), toQ128(1));
-      expect(fromQ128(a)).to.eq(
-        fromQ128(
-          Q128.div(100) // mul by (1.01 - 1)
-            .mul(1) // mul by 1
-            .mul(100) // div by 1.01
-            .div(101) // above continued
-            .mul(20 - 10) // dt
-            .div(DAY),
-        ),
+      expect(a).to.eq(
+        toQ128(1.01)
+          .sub(toQ128(1)) // rp - vp
+          .mul(toQ128(1)) // vp
+          .div(toQ128(1.01)) // rp
+          .mul(20 - 10) // dt
+          .div(DAY),
       ); // (101-100)/101 * 100 * (20-10) / DAY
     });
   });
