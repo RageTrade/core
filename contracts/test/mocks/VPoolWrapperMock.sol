@@ -76,7 +76,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     }
 
     function getSumAX128() external pure returns (int256) {
-        return 20*(1<<128);
+        return 20 * (1 << 128);
     }
 
     function swapTokenAmount(int256 vTokenAmount) external pure returns (int256) {
