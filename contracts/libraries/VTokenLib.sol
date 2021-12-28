@@ -5,7 +5,7 @@ pragma solidity ^0.8.9;
 import { FixedPoint96 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
 import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
-import { Oracle } from './Oracle.sol';
+import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { PriceMath } from './PriceMath.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -22,6 +22,7 @@ library VTokenLib {
     using VTokenLib for VTokenAddress;
     using FullMath for uint256;
     using PriceMath for uint160;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
 
     function eq(VTokenAddress a, VTokenAddress b) internal pure returns (bool) {
         return VTokenAddress.unwrap(a) == VTokenAddress.unwrap(b);
@@ -82,19 +83,19 @@ library VTokenLib {
         view
         returns (uint160 sqrtPriceX96)
     {
-        return Oracle.getTwapSqrtPrice(vToken.vPool(constants), vToken.vPoolWrapper(constants).timeHorizon());
+        return vToken.vPool(constants).twapSqrtPrice(vToken.vPoolWrapper(constants).timeHorizon());
     }
-
+ 
     function getVirtualCurrentSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
-        return Oracle.getCurrentSqrtPrice(vToken.vPool(constants));
+        return vToken.vPool(constants).sqrtPriceCurrent();
     }
 
     function getVirtualTwapTick(VTokenAddress vToken, Constants memory constants) internal view returns (int24 tick) {
-        return Oracle.getTwapTick(vToken.vPool(constants), vToken.vPoolWrapper(constants).timeHorizon());
+        return vToken.vPool(constants).twapTick( vToken.vPoolWrapper(constants).timeHorizon());
     }
 
     function getVirtualTwapPriceX128(VTokenAddress vToken, Constants memory constants)

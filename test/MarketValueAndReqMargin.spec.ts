@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, OracleTest } from '../typechain-types';
+import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';

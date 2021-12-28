@@ -24,8 +24,6 @@ import { SignedMath } from './libraries/SignedMath.sol';
 import { SignedFullMath } from './libraries/SignedFullMath.sol';
 import { UniswapV3PoolHelper } from './libraries/UniswapV3PoolHelper.sol';
 
-import { Oracle } from './libraries/Oracle.sol';
-
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback {
@@ -36,7 +34,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     using PriceMath for uint160;
     using SafeCast for uint256;
-    using Oracle for IUniswapV3Pool;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
@@ -324,7 +321,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 state.liquidity,
                 _blockTimestamp(),
                 priceX128,
-                vBaseAmount.mulDiv(FixedPoint128.Q128, vTokenAmount) // TODO change to TWAP
+                vPool.twapSqrtPrice(timeHorizon).toPriceX128() // virtual pool twap price
             );
 
             sumFeeGlobalX128 += liquidityFees.mulDiv(FixedPoint128.Q128, state.liquidity);
@@ -355,7 +352,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     // for updating global funding payment
     function zeroSwap() internal {
         uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
-        fpGlobal.update(0, 1, _blockTimestamp(), priceX128, vPool.getTwapSqrtPrice(timeHorizon).toPriceX128());
+        fpGlobal.update(0, 1, _blockTimestamp(), priceX128, vPool.twapSqrtPrice(timeHorizon).toPriceX128());
     }
 
     function _updateTicks(
