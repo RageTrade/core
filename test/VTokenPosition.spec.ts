@@ -11,7 +11,7 @@ describe('VTokenPosition Library', () => {
   before(async () => {
     const factory = await hre.ethers.getContractFactory('VTokenPositionTest');
     VTokenPosition = (await factory.deploy()) as unknown as VTokenPositionTest;
-    await VTokenPosition.init(balance, -10, 10);
+    await VTokenPosition.init(balance, -10, 10n*(1n<<128n));
   });
 
   describe('Functions', () => {
