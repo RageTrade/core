@@ -31,9 +31,6 @@ library SimulateSwap {
         int24 tickSpacing;
         // the lp fee share of the pool
         uint24 fee;
-        // LP fees
-        uint256 feeGrowthGlobal0X128;
-        uint256 feeGrowthGlobal1X128;
     }
 
     // the top level state of the swap, the results of which are recorded in storage at the end
@@ -47,7 +44,7 @@ library SimulateSwap {
         // the tick associated with the current price
         int24 tick;
         // the global fee growth of the input token
-        uint256 feeGrowthGlobalX128;
+        uint256 feeGrowthGlobalIncreaseX128;
         // amount of input token paid as protocol fee
         uint128 protocolFee;
         // the current liquidity in range
@@ -87,15 +84,24 @@ library SimulateSwap {
         uint160 sqrtPriceLimitX96,
         function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
+        return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, v3Pool.fee(), onSwapStep);
+    }
+
+    function simulateSwap(
+        IUniswapV3Pool v3Pool,
+        bool zeroForOne,
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96,
+        uint24 v3PoolFee,
+        function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
+    ) internal returns (int256 amount0, int256 amount1) {
         require(amountSpecified != 0, 'AS');
 
         SwapCache memory cache;
         (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();
         cache.liquidityStart = v3Pool.liquidity();
-        cache.feeGrowthGlobal1X128 = v3Pool.feeGrowthGlobal0X128();
-        cache.feeGrowthGlobal1X128 = v3Pool.feeGrowthGlobal1X128();
         cache.tickSpacing = v3Pool.tickSpacing();
-        cache.fee = v3Pool.fee();
+        cache.fee = v3PoolFee;
 
         require(
             zeroForOne
@@ -111,7 +117,7 @@ library SimulateSwap {
             amountCalculated: 0,
             sqrtPriceX96: cache.sqrtPriceX96Start,
             tick: cache.tickStart,
-            feeGrowthGlobalX128: zeroForOne ? cache.feeGrowthGlobal0X128 : cache.feeGrowthGlobal1X128,
+            feeGrowthGlobalIncreaseX128: 0,
             protocolFee: 0,
             liquidity: cache.liquidityStart
         });
@@ -157,16 +163,14 @@ library SimulateSwap {
                 state.amountCalculated = state.amountCalculated + (step.amountIn + step.feeAmount).toInt256();
             }
 
-            // if the protocol fee is on, calculate how much is owed, decrement feeAmount, and increment protocolFee
-            if (cache.feeProtocol > 0) {
-                uint256 delta = step.feeAmount / cache.feeProtocol;
-                step.feeAmount -= delta;
-                state.protocolFee += uint128(delta);
-            }
-
             // update global fee tracker
-            if (state.liquidity > 0)
-                state.feeGrowthGlobalX128 += FullMath.mulDiv(step.feeAmount, FixedPoint128.Q128, state.liquidity);
+            if (state.liquidity > 0) {
+                state.feeGrowthGlobalIncreaseX128 += FullMath.mulDiv(
+                    step.feeAmount,
+                    FixedPoint128.Q128,
+                    state.liquidity
+                );
+            }
 
             if (onSwapStep != emptyFunction) {
                 onSwapStep(zeroForOne, cache, state, step);

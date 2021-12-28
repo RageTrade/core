@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
 import { FundingPayment } from '../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
 import { Tick } from '../libraries/Tick.sol';
@@ -24,7 +25,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     using VTokenLib for VTokenAddress;
 
     IUniswapV3Pool vPool;
-    IOracle oracle;
 
     struct SwapStep {
         SimulateSwap.SwapState state;
@@ -37,9 +37,8 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     uint256 public extendedFeeGrowthOutsideX128;
     mapping(int24 => Tick.Info) public ticksExtended;
 
-    constructor(IUniswapV3Pool vPool_, IOracle oracle_) {
+    constructor(IUniswapV3Pool vPool_) {
         vPool = vPool_;
-        oracle = oracle_;
     }
 
     function clearSwapCache() external {
@@ -77,8 +76,25 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         steps = _steps;
     }
 
+    function simulateSwap3(
+        bool swapVTokenForVBase,
+        int256 amountSpecified,
+        uint24 fee
+    ) public returns (int256 vTokenIn, int256 vBaseIn) {
+        // case isNotional true
+        // amountSpecified is positive
+        return
+            vPool.simulateSwap(
+                swapVTokenForVBase,
+                amountSpecified,
+                swapVTokenForVBase ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
+                fee,
+                _onSwapSwap
+            );
+    }
+
     function _onSwapSwap(
-        bool zeroForOne,
+        bool,
         SimulateSwap.SwapCache memory cache,
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
