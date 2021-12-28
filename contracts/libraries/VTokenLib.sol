@@ -85,7 +85,7 @@ library VTokenLib {
     {
         return vToken.vPool(constants).twapSqrtPrice(vToken.vPoolWrapper(constants).timeHorizon());
     }
- 
+
     function getVirtualCurrentSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
         internal
         view
@@ -95,7 +95,7 @@ library VTokenLib {
     }
 
     function getVirtualTwapTick(VTokenAddress vToken, Constants memory constants) internal view returns (int24 tick) {
-        return vToken.vPool(constants).twapTick( vToken.vPoolWrapper(constants).timeHorizon());
+        return vToken.vPool(constants).twapTick(vToken.vPoolWrapper(constants).timeHorizon());
     }
 
     function getVirtualTwapPriceX128(VTokenAddress vToken, Constants memory constants)
