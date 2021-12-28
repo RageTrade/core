@@ -19,11 +19,15 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
     Constants public constants;
     LiquidationParams public liquidationParams;
     uint256 public removeLimitOrderFee;
+    uint256 public minimumOrderNotional;
+    bool public paused;
 
+    error Paused();
     error NotVPoolFactory();
 
     constructor(address _VPoolFactory) {
         VPoolFactory = _VPoolFactory;
+        paused = false;
     }
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
@@ -54,16 +58,27 @@ abstract contract ClearingHouseState is IClearingHouseState, Governable {
         supportedDeposits[add] = status;
     }
 
-    function setPlatformParameters(LiquidationParams calldata _liquidationParams, uint256 _removeLimitOrderFee)
-        external
-        onlyGovernanceOrTeamMultisig
-    {
+    function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
+        paused = _pause;
+    }
+
+    function setPlatformParameters(
+        LiquidationParams calldata _liquidationParams,
+        uint256 _removeLimitOrderFee,
+        uint256 _minimumOrderNotional
+    ) external onlyGovernanceOrTeamMultisig {
         liquidationParams = _liquidationParams;
         removeLimitOrderFee = _removeLimitOrderFee;
+        minimumOrderNotional = _minimumOrderNotional;
     }
 
     modifier onlyVPoolFactory() {
         if (VPoolFactory != msg.sender) revert NotVPoolFactory();
+        _;
+    }
+
+    modifier notPaused() {
+        if (paused) revert Paused();
         _;
     }
 }

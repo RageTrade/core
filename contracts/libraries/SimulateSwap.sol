@@ -27,8 +27,6 @@ library SimulateSwap {
         uint8 feeProtocol;
         // liquidity at the beginning of the swap
         uint128 liquidityStart;
-        // the timestamp of the current block
-        uint32 blockTimestamp;
         // the tick spacing of the pool
         int24 tickSpacing;
         // the lp fee share of the pool

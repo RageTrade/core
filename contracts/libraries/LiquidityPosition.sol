@@ -31,6 +31,7 @@ library LiquidityPosition {
     using SafeCast for uint256;
     using LiquidityPosition for Info;
     using VTokenLib for VTokenAddress;
+    using SignedFullMath for int256;
 
     error AlreadyInitialized();
     error IneligibleLimitOrderRemoval();
@@ -160,9 +161,10 @@ library LiquidityPosition {
         int256 sumAX128,
         int256 sumFpInsideX128
     ) internal view returns (int256 vBaseIncrease) {
-        vBaseIncrease =
-            sumFpInsideX128 -
-            (position.sumFpInsideLastX128 + position.sumBInsideLastX128 * (sumAX128 - position.sumALastX128));
+        vBaseIncrease = (sumFpInsideX128 -
+            (position.sumFpInsideLastX128 +
+                position.sumBInsideLastX128.mulDiv(sumAX128 - position.sumALastX128, int256(FixedPoint128.Q128))))
+            .mulDiv(position.liquidity, FixedPoint128.Q128);
     }
 
     function unrealizedFees(Info storage position, uint256 sumFeeInsideX128)

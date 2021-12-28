@@ -157,13 +157,8 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.realizeFundingPaymentToAccount(vTokenAddress, constants);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
-      expect(resultVToken[1]).to.eq(20); //sumAChk
+      expect(resultVToken[1]).to.eq((20n * 1n) << 128n); //sumAChk
       expect(resultVBase.balance).to.eq(-590);
-    });
-
-    it('abs', async () => {
-      expect(await VTokenPositionSet.abs(-10)).to.eq(10);
-      expect(await VTokenPositionSet.abs(10)).to.eq(10);
     });
   });
 

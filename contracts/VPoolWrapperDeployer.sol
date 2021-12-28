@@ -29,6 +29,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         VPoolFactory = _VPoolFactory;
     }
 
+    //Made virtual to override for testing
     function deployVPoolWrapper(
         address vTokenAddress,
         address vPoolAddress,
@@ -40,7 +41,7 @@ contract VPoolWrapperDeployer is IVPoolWrapperDeployer {
         uint32 twapDuration,
         bool whitelisted,
         Constants memory constants
-    ) external returns (address) {
+    ) external virtual returns (address) {
         if (msg.sender != VPoolFactory) revert NotVPoolFactory();
         bytes32 salt = keccak256(abi.encode(vTokenAddress, constants.VBASE_ADDRESS));
         bytes memory bytecode = type(VPoolWrapper).creationCode;

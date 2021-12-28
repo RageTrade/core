@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { Account, LiquidityChangeParams, LiquidationParams, SwapParams } from './libraries/Account.sol';
+import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseState } from './ClearingHouseState.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
@@ -57,7 +57,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (!isDepositCheck && !supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
     }
 
-    function createAccount() external returns (uint256 newAccountId) {
+    function createAccount() external notPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
 
@@ -82,7 +82,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint256 amount
-    ) external {
+    ) external notPaused {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -103,7 +103,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint256 amount
-    ) external {
+    ) external notPaused {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -120,7 +120,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }
 
-    function removeProfit(uint256 accountNo, uint256 amount) external {
+    function removeProfit(uint256 accountNo, uint256 amount) external notPaused {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -134,7 +134,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         SwapParams memory swapParams
-    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -148,6 +148,9 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
             constants
         );
 
+        uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
+        if (vBaseAmountOutAbs < minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
+
         if (!swapParams.isPartialAllowed) {
             if (
                 !((swapParams.isNotional && vBaseAmountOut.abs() == swapParams.amount.abs()) ||
@@ -160,7 +163,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         LiquidityChangeParams calldata liquidityChangeParams
-    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -175,14 +178,19 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
             revert InvalidLiquidityChangeParameters();
 
-        return
-            account.liquidityChange(
-                vTokenAddress,
-                liquidityChangeParams,
-                vTokenAddresses,
-                liquidationParams.minRequiredMargin,
-                constants
-            );
+        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
+            vTokenAddress,
+            liquidityChangeParams,
+            vTokenAddresses,
+            liquidationParams.minRequiredMargin,
+            constants
+        );
+
+        uint256 notionalValueAbs = uint256(
+            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, constants)
+        );
+
+        if (notionalValueAbs < minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
     function removeLimitOrder(
@@ -190,7 +198,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper
-    ) external returns (uint256 keeperFee) {
+    ) external notPaused returns (uint256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
@@ -208,7 +216,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
-    function liquidateLiquidityPositions(uint256 accountNo) external returns (int256 keeperFee) {
+    function liquidateLiquidityPositions(uint256 accountNo) external notPaused returns (int256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
@@ -229,7 +237,7 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) external notPaused returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.Info storage account = accounts[accountNo];
 

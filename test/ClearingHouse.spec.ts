@@ -224,6 +224,36 @@ describe('Clearing House Library', () => {
 
   after(deactivateMainnetFork);
 
+  describe('#Init Params', () => {
+    it('Set Params', async () => {
+      const liquidationParams = {
+        fixFee: tokenAmount(10, 6),
+        minRequiredMargin: tokenAmount(20, 6),
+        liquidationFeeFraction: 1500,
+        tokenLiquidationPriceDeltaBps: 3000,
+        insuranceFundFeeShareBps: 5000,
+      };
+      const removeLimitOrderFee = tokenAmount(10, 6);
+      const minOrderNotional = tokenAmount(1, 6).div(100);
+
+      await clearingHouseTest.setPlatformParameters(liquidationParams, removeLimitOrderFee, minOrderNotional);
+      const curLiquidationParams = await clearingHouseTest.liquidationParams();
+      const curRemoveLimitOrderFee = await clearingHouseTest.removeLimitOrderFee();
+      const curMinOrderNotional = await clearingHouseTest.minimumOrderNotional();
+      const curPaused = await clearingHouseTest.paused();
+
+      expect(liquidationParams.fixFee).eq(curLiquidationParams.fixFee);
+      expect(liquidationParams.minRequiredMargin).eq(curLiquidationParams.minRequiredMargin);
+      expect(liquidationParams.liquidationFeeFraction).eq(curLiquidationParams.liquidationFeeFraction);
+      expect(liquidationParams.tokenLiquidationPriceDeltaBps).eq(curLiquidationParams.tokenLiquidationPriceDeltaBps);
+      expect(liquidationParams.insuranceFundFeeShareBps).eq(curLiquidationParams.insuranceFundFeeShareBps);
+
+      expect(removeLimitOrderFee).eq(curRemoveLimitOrderFee);
+      expect(minOrderNotional).eq(curMinOrderNotional);
+      expect(curPaused).to.be.false;
+    });
+  });
+
   describe('#StealFunds', () => {
     it('Steal Funds', async () => {
       await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleForBase);
@@ -294,6 +324,96 @@ describe('Clearing House Library', () => {
     it('Add Base Deposit Support  - Pass', async () => {
       await clearingHouseTest.connect(admin).updateSupportedDeposits(vBaseAddress, true);
       expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.true;
+    });
+  });
+
+  describe('#Pause Check', () => {
+    let amount: BigNumberish;
+    let truncatedAddress: number;
+    let swapParams: any;
+    let liquidityChangeParams: any;
+
+    before(async () => {
+      amount = tokenAmount('1000000', 6);
+      truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      swapParams = {
+        amount: tokenAmount('10000', 18),
+        sqrtPriceLimit: 0,
+        isNotional: false,
+        isPartialAllowed: false,
+      };
+      liquidityChangeParams = {
+        tickLower: 100,
+        tickUpper: 100,
+        liquidityDelta: 10n ** 19n,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageToleranceBps: 0,
+      };
+    });
+    it('Pause', async () => {
+      clearingHouseTest.setPaused(true);
+      const curPaused = await clearingHouseTest.paused();
+
+      expect(curPaused).to.be.true;
+    });
+
+    it('Create Account', async () => {
+      expect(clearingHouseTest.createAccount()).to.be.revertedWith('Paused()');
+    });
+
+    it('Deposit', async () => {
+      expect(clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, amount)).to.be.revertedWith(
+        'Paused()',
+      );
+    });
+
+    it('Withdraw', async () => {
+      expect(
+        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, amount),
+      ).to.be.revertedWith('Paused()');
+    });
+
+    it('Profit', async () => {
+      expect(clearingHouseTest.connect(user1).removeProfit(user1AccountNo, amount)).to.be.revertedWith('Paused()');
+    });
+
+    it('Token Position', async () => {
+      expect(
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
+      ).to.be.revertedWith('Paused()');
+    });
+
+    it('Range Position', async () => {
+      expect(
+        clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
+      ).to.be.revertedWith('Paused()');
+    });
+
+    it('Token Liquidation', async () => {
+      expect(
+        clearingHouseTest.connect(user2).liquidateTokenPosition(user2AccountNo, user1AccountNo, truncatedAddress, 5000),
+      ).to.be.revertedWith('Paused()');
+    });
+
+    it('Range Liquidation', async () => {
+      expect(clearingHouseTest.connect(user2).liquidateLiquidityPositions(user1AccountNo)).to.be.revertedWith(
+        'Paused()',
+      );
+    });
+
+    it('Remove Limit Order', async () => {
+      expect(
+        clearingHouseTest.connect(user2).removeLimitOrder(user1AccountNo, truncatedAddress, -100, 100),
+      ).to.be.revertedWith('Paused()');
+    });
+
+    it('UnPause', async () => {
+      clearingHouseTest.setPaused(false);
+      const curPaused = await clearingHouseTest.paused();
+
+      expect(curPaused).to.be.false;
     });
   });
 
@@ -426,7 +546,16 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
     });
-    it('Fail - Low Notional Value');
+    it('Fail - Low Notional Value', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const swapParams = {
+        amount: tokenAmount('1', 8),
+        sqrtPriceLimit: 0,
+        isNotional: false,
+        isPartialAllowed: false,
+      };
+      expect(clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams)).to.be.reverted;
+    });
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const swapParams = {
@@ -484,41 +613,52 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
     });
-    it('Fail - Low Notional Value');
-    // , async () => {
-    //   const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
-    //   const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
-    //   const swapParams = {
-    //     amount: tokenAmount('1', 6),
-    //     sqrtPriceLimit: curSqrtPrice.mul(110).div(100),
-    //     isNotional: true,
-    //     isPartialAllowed: false,
-    //   };
-    //   expect(
-    //     clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
-    //   ).to.be.revertedWith('LowNotionalValue()');
-    //   const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vTokenAddress);
-    // });
+    it('Fail - Low Notional Value', async () => {
+      const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const amount = tokenAmount('1', 6).div(100).sub(1);
+      const swapParams = {
+        amount: amount,
+        sqrtPriceLimit: 0,
+        isNotional: true,
+        isPartialAllowed: false,
+      };
+      expect(
+        clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
+      ).to.be.revertedWith('LowNotionalValue(' + amount + ')');
+    });
 
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const amount = tokenAmount('1', 6).div(10);
       const swapParams = {
-        amount: tokenAmount('10000', 6),
+        amount: amount,
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
       const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
-      expect(accountTokenPosition.balance).to.eq(tokenAmount('-10000', 6));
+      expect(accountTokenPosition.balance).to.eq(amount.mul(-1));
     });
   });
   describe('#LiquidityChange - Without Limit', () => {
+    let tickLower: BigNumberish;
+    let tickUpper: BigNumberish;
+    before(async () => {
+      const { sqrtPriceX96 } = await vPool.slot0();
+
+      let tick = sqrtPriceX96ToTick(sqrtPriceX96);
+      tick = tick - (tick % 10);
+
+      tickLower = tick - 100;
+      tickUpper = tick + 100;
+    });
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
       const liquidityChangeParams = {
-        tickLower: -100,
-        tickUpper: 100,
+        tickLower: tickLower,
+        tickUpper: tickUpper,
         liquidityDelta: 100000,
         closeTokenPosition: false,
         limitOrderType: 0,
@@ -532,8 +672,8 @@ describe('Clearing House Library', () => {
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       const liquidityChangeParams = {
-        tickLower: -100,
-        tickUpper: 100,
+        tickLower: tickLower,
+        tickUpper: tickUpper,
         liquidityDelta: 100000,
         closeTokenPosition: false,
         limitOrderType: 0,
@@ -547,8 +687,8 @@ describe('Clearing House Library', () => {
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
       const liquidityChangeParams = {
-        tickLower: -100,
-        tickUpper: 100,
+        tickLower: tickLower,
+        tickUpper: tickUpper,
         liquidityDelta: 100000,
         closeTokenPosition: false,
         limitOrderType: 0,
@@ -560,14 +700,28 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UnsupportedToken("' + vBaseAddress + '")');
     });
 
-    it('Fail - Low Notional Value');
+    it('Fail - Low Notional Value', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+      const liquidityChangeParams = {
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        liquidityDelta: 10n ** 6n,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+        sqrtPriceCurrent: 0,
+        slippageToleranceBps: 0,
+      };
+
+      expect(clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams))
+        .to.be.reverted;
+    });
 
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const liquidityChangeParams = {
-        tickLower: -100,
-        tickUpper: 100,
-        liquidityDelta: 10n ** 6n,
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        liquidityDelta: 10n ** 15n,
         closeTokenPosition: false,
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
