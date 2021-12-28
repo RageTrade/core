@@ -255,7 +255,7 @@ describe('PoolWrapper', () => {
           // calculating liquidity fee
           .mul(liquidityFee)
           .div(1e6)
-          .add(1)
+          // .add(1) // fee collected by LP is less than fee paid by traders
           // taking per liquidity
           .mul(Q128)
           .div(liquidity1);
