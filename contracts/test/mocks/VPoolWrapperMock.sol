@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -26,6 +27,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     uint16 public immutable override maintainanceMarginRatio;
     uint32 public immutable override timeHorizon;
     bool public override whitelisted;
+    IUniswapV3Pool public vPool;
 
     constructor() {
         (initialMarginRatio, maintainanceMarginRatio, timeHorizon) = (0, 0, 0);
@@ -45,6 +47,10 @@ contract VPoolWrapperMock is IVPoolWrapper {
             sumFpInsideX128,
             sumFeeInsideX128
         );
+    }
+
+    function setVPool(address vPoolAddress) external {
+        vPool = IUniswapV3Pool(vPoolAddress);
     }
 
     int256 _liquidity;

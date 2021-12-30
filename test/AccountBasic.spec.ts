@@ -125,6 +125,7 @@ describe('Account Library Test Basic', () => {
     vPoolWrapperFake.timeHorizon.returns(60);
     vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
     vPoolWrapperFake.initialMarginRatio.returns(20000);
+    vPoolWrapperFake.vPool.returns(vPoolFake.address);
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const factory = await hre.ethers.getContractFactory('AccountTest', {

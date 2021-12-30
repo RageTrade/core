@@ -30,7 +30,7 @@ contract LiquidityPositionTest {
     }
 
     function updateCheckpoints() external {
-        lp.update(0, VTokenAddress.wrap(address(0)), wrapper, balanceAdjustments);
+        lp.update(0, VTokenAddress.wrap(address(0)), wrapper, 0, balanceAdjustments);
     }
 
     function netPosition() public view returns (int256) {
