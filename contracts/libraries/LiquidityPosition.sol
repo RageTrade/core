@@ -11,6 +11,8 @@ import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -32,6 +34,7 @@ library LiquidityPosition {
     using LiquidityPosition for Info;
     using VTokenLib for VTokenAddress;
     using SignedFullMath for int256;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
 
     error AlreadyInitialized();
     error IneligibleLimitOrderRemoval();
@@ -44,6 +47,7 @@ library LiquidityPosition {
         int24 tickUpper;
         // the liquidity of the position
         uint128 liquidity;
+        int256 vTokenAmountIn;
         // funding payment checkpoints
         int256 sumALastX128;
         int256 sumBInsideLastX128;
@@ -106,13 +110,20 @@ library LiquidityPosition {
             -basePrincipal
         );
 
-        position.update(accountNo, vTokenAddress, wrapper, balanceAdjustments);
+        uint160 sqrtPriceCurrent = wrapper.vPool().sqrtPriceCurrent();
+        {
+            (int256 tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent);
+
+            position.update(accountNo, vTokenAddress, wrapper, tokenAmountCurrent, balanceAdjustments);
+        }
 
         if (liquidity > 0) {
             position.liquidity += uint128(liquidity);
         } else if (liquidity < 0) {
             position.liquidity -= uint128(liquidity * -1);
         }
+
+        (position.vTokenAmountIn, ) = position.tokenAmountsInRange(sqrtPriceCurrent);
     }
 
     function update(
@@ -120,6 +131,7 @@ library LiquidityPosition {
         uint256 accountNo,
         VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper, // TODO use vTokenLib
+        int256 vTokenAmountOut,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
         (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = wrapper
@@ -127,7 +139,7 @@ library LiquidityPosition {
 
         int256 fundingPayment = position.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
         balanceAdjustments.vBaseIncrease += fundingPayment;
-        balanceAdjustments.traderPositionIncrease += position.netPosition(sumBInsideX128);
+        balanceAdjustments.traderPositionIncrease += vTokenAmountOut - position.vTokenAmountIn;
 
         int256 unrealizedLiquidityFee = position.unrealizedFees(sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
@@ -199,6 +211,31 @@ library LiquidityPosition {
         return position.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
     }
 
+    function tokenAmountsInRange(Info storage position, uint160 sqrtPriceCurrent)
+        internal
+        view
+        returns (int256 vTokenAmount, int256 vBaseAmount)
+    {
+        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
+        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
+
+        // If price is outside the range, then consider it at the ends
+        // for calculation of amounts
+        uint160 sqrtPriceMiddleX96 = sqrtPriceCurrent;
+        if (sqrtPriceCurrent < sqrtPriceLowerX96) {
+            sqrtPriceMiddleX96 = sqrtPriceLowerX96;
+        } else if (sqrtPriceCurrent > sqrtPriceUpperX96) {
+            sqrtPriceMiddleX96 = sqrtPriceUpperX96;
+        }
+
+        vTokenAmount = SqrtPriceMath
+            .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
+            .toInt256();
+        vBaseAmount = SqrtPriceMath
+            .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
+            .toInt256();
+    }
+
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
@@ -207,29 +244,9 @@ library LiquidityPosition {
         Constants memory constants
     ) internal view returns (int256 baseValue_) {
         {
-            uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
-            uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
-
-            // If price is outside the range, then consider it at the ends
-            // for calculation of amounts
-            uint160 sqrtPriceMiddleX96 = sqrtPriceCurrent;
-            if (sqrtPriceCurrent < sqrtPriceLowerX96) {
-                sqrtPriceMiddleX96 = sqrtPriceLowerX96;
-            } else if (sqrtPriceCurrent > sqrtPriceUpperX96) {
-                sqrtPriceMiddleX96 = sqrtPriceUpperX96;
-            }
-
-            int256 vTokenAmount;
-
-            vTokenAmount = SqrtPriceMath
-                .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
-                .toInt256();
-            baseValue_ = SqrtPriceMath
-                .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
-                .toInt256();
-
+            (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(sqrtPriceCurrent);
             uint256 priceX128 = sqrtPriceCurrent.toPriceX128();
-            baseValue_ += vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128);
+            baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees
         (int256 sumAX128, , int256 sumFpInsideX128, uint256 sumFeeInsideX128) = wrapper.getValuesInside(
