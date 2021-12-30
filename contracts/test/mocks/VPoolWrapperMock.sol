@@ -85,7 +85,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
     function swapToken(
         int256 amount,
-        uint160 sqrtPriceLimit,
+        uint160, // sqrtPriceLimit,
         bool isNotional
     ) external pure returns (int256 vTokenAmount, int256 vBaseAmount) {
         if (isNotional) {

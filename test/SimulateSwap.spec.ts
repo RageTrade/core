@@ -25,11 +25,8 @@ describe('SimulateSwap', () => {
     await activateMainnetFork(13555700);
     signer = await impersonateAccount(ACCOUNT);
     v3Pool = await hre.ethers.getContractAt('IUniswapV3Pool', UNISWAP_REAL_POOL, signer);
-    oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
-    test = await (
-      await hre.ethers.getContractFactory('SimulateSwapTest', signer)
-    ).deploy(UNISWAP_REAL_POOL, oracle.address);
+    test = await (await hre.ethers.getContractFactory('SimulateSwapTest', signer)).deploy(UNISWAP_REAL_POOL);
 
     (await hre.ethers.getContractAt('IERC20', await v3Pool.token0(), signer)).approve(
       test.address,

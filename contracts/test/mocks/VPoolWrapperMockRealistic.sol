@@ -25,8 +25,6 @@ import { SignedFullMath } from '../../libraries/SignedFullMath.sol';
 import { UniswapV3PoolHelper } from '../../libraries/UniswapV3PoolHelper.sol';
 import { VPoolWrapper } from '../../VPoolWrapper.sol';
 
-import { Oracle } from '../../libraries/Oracle.sol';
-
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapperMockRealistic is VPoolWrapper {

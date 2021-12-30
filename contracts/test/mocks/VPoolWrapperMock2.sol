@@ -22,4 +22,12 @@ contract VPoolWrapperMock2 is VPoolWrapper {
     function increaseTimestamp(uint48 secs) external {
         blockTimestamp += secs;
     }
+
+    function swapInternal(
+        bool swapVTokenForVBase, // zeroForOne
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96
+    ) public returns (int256 vTokenIn, int256 vBaseIn) {
+        return _swap(swapVTokenForVBase, amountSpecified, sqrtPriceLimitX96);
+    }
 }

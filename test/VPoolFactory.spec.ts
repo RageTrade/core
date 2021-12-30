@@ -176,26 +176,24 @@ describe('VPoolFactory', () => {
         const _protocolFee = Math.floor(Math.random() * 10) * 100;
         const _initialMargin = Math.floor(Math.random() * 10) * 100;
         const _maintainanceMargin = Math.floor(Math.random() * 10) * 100;
-        const _twapDuration = Math.floor(Math.random() * 10) * 100;
+        const _twapDuration = Math.floor(Math.random() * 10 + 1) * 100;
         const _whitelisted = Math.random() > 0.5;
 
-        await vPoolFactory.initializePool(
-          {
-            setupVTokenParams: {
-              vTokenName: '',
-              vTokenSymbol: '',
-              realTokenAddress: _realToken.address,
-              oracleAddress: _oracle.address,
-            },
-            extendedLpFee: _extendedLpFee,
-            protocolFee: _protocolFee,
-            initialMarginRatio: _initialMargin,
-            maintainanceMarginRatio: _maintainanceMargin,
-            twapDuration: _twapDuration,
-            whitelisted: _whitelisted,
+        const params = {
+          setupVTokenParams: {
+            vTokenName: '',
+            vTokenSymbol: '',
+            realTokenAddress: _realToken.address,
+            oracleAddress: _oracle.address,
           },
-          0,
-        );
+          extendedLpFee: _extendedLpFee,
+          protocolFee: _protocolFee,
+          initialMarginRatio: _initialMargin,
+          maintainanceMarginRatio: _maintainanceMargin,
+          twapDuration: _twapDuration,
+          whitelisted: _whitelisted,
+        };
+        await vPoolFactory.initializePool(params, 0);
 
         const events = await vPoolFactory.queryFilter(vPoolFactory.filters.PoolInitlized(), 'latest');
         const { vTokenAddress } = events[0].args;
