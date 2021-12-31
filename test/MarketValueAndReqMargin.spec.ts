@@ -66,6 +66,7 @@ describe('Market Value and Required Margin', () => {
     vPoolWrapperFake.timeHorizon.returns(60);
     vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
     vPoolWrapperFake.initialMarginRatio.returns(20000);
+    vPoolWrapperFake.vPool.returns(vPoolFake.address);
 
     const myContractFactory = await smock.mock('VTokenPositionSetTest2');
     VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, VPoolFactory, VBase, VPoolWrapper, ERC20 } from '../typechain-types';
+import { VTokenPositionSetTest, VPoolFactory, VBase, VPoolWrapper, ERC20, UniswapV3Pool } from '../typechain-types';
 import {
   UNISWAP_FACTORY_ADDRESS,
   DEFAULT_FEE_TIER,
@@ -15,6 +15,7 @@ import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './utils/create-addresses';
+import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 
@@ -95,6 +96,10 @@ describe('VTokenPositionSet Library', () => {
     // console.log('VPoolFactoryAddress', VPoolFactory.address);
     // console.log('Vwrapper', events[0].args[2]);
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
+    const vPoolAddress = ADDRESS_ZERO;
+    const vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
+      address: vPoolAddress,
+    });
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
     await VPoolFactory.initializePool(

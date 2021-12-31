@@ -439,7 +439,8 @@ describe('Account Library Test Realistic', () => {
     describe('#Token Position Liquidation Helpers', () => {
       it('Liquidation at 4000 ', async () => {
         await changeVPoolPriceToNearestTick(4000);
-        const priceX128 = await priceToNearestPriceX128(4000, vBase, vToken);
+        //Slightly different (don't use priceToPriceX128)
+        const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(4000, vBase, vToken));
         const tokensToTrade = tokenAmount(-1, 18);
         const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
           await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress, liquidationParams, constants);
@@ -455,7 +456,8 @@ describe('Account Library Test Realistic', () => {
       it('Liquidation at 3500 ', async () => {
         await changeVPoolPriceToNearestTick(3500);
         const tokensToTrade = tokenAmount(1, 18);
-        const priceX128 = await priceToNearestPriceX128(3500, vBase, vToken);
+        //Slightly different (don't use priceToPriceX128)
+        const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(3500, vBase, vToken));
         const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
           await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress, liquidationParams, constants);
 
@@ -545,7 +547,7 @@ describe('Account Library Test Realistic', () => {
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
-        const priceX128 = await priceToNearestPriceX128(3500, vBase, vToken);
+        const priceX128 = await priceToPriceX128(3500, vBase, vToken);
         const liquidationPriceX128 = priceX128.sub(priceX128.mul(300).div(10000));
         const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
 
@@ -580,7 +582,7 @@ describe('Account Library Test Realistic', () => {
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
-        const priceX128 = await priceToNearestPriceX128(3000, vBase, vToken);
+        const priceX128 = await priceToPriceX128(3000, vBase, vToken);
         const liquidationPriceX128 = priceX128.sub(priceX128.mul(300).div(10000));
         const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
 
@@ -667,7 +669,7 @@ describe('Account Library Test Realistic', () => {
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
-        const priceX128 = await priceToNearestPriceX128(4500, vBase, vToken);
+        const priceX128 = await priceToPriceX128(4500, vBase, vToken);
         const liquidationPriceX128 = priceX128.add(priceX128.mul(300).div(10000));
         const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
 
@@ -702,7 +704,7 @@ describe('Account Library Test Realistic', () => {
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
-        const priceX128 = await priceToNearestPriceX128(5000, vBase, vToken);
+        const priceX128 = await priceToPriceX128(5000, vBase, vToken);
         const liquidationPriceX128 = priceX128.add(priceX128.mul(300).div(10000));
         const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
 
