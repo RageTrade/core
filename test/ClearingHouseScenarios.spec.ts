@@ -19,6 +19,7 @@ import {
   IUniswapV3Pool,
   VPoolWrapperMockRealistic,
   VToken,
+  VBase,
 } from '../typechain-types';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
@@ -39,6 +40,9 @@ import {
   tickToPrice,
   tickToSqrtPriceX96,
   sqrtPriceX96ToPrice,
+  priceToSqrtPriceX96,
+  sqrtPriceX96ToPriceX128,
+  priceX128ToPrice,
 } from './utils/price-tick';
 
 import { smock } from '@defi-wonderland/smock';
@@ -58,6 +62,7 @@ describe('Clearing House Library', () => {
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
+  let vBase: VBase;
 
   let signers: SignerWithAddress[];
   let admin: SignerWithAddress;
@@ -208,7 +213,7 @@ describe('Clearing House Library', () => {
     await checkVirtualTick(expectedEndTick);
     await checkTokenBalance(user2AccountNo, tokenAddress, expectedEndTokenBalance);
     //TODO: Add base check back
-    // await checkTokenBalance(user2AccountNo, baseAddress, expectedEndBaseBalance);
+    await checkTokenBalance(user2AccountNo, baseAddress, expectedEndBaseBalance);
   }
 
   async function updateRangeOrder(
@@ -278,6 +283,29 @@ describe('Clearing House Library', () => {
     );
   }
 
+  async function checkGlobalFundingPaymentParams(
+    expectedSumBX128?: BigNumberish,
+    expectedSumAX128?: BigNumberish,
+    expectedSumFpX128?: BigNumberish,
+  ) {
+    const fpGlobal = await vPoolWrapper.fpGlobal();
+    //Already a multiple of e6 since token(e18) and liquidity(e12)
+    if (typeof expectedSumBX128 !== 'undefined') {
+      const sumBX128 = fpGlobal.sumBX128.mul(10n ** 10n).div(1n << 128n);
+      expect(sumBX128).to.eq(expectedSumBX128);
+    }
+    //Already a multiple of e-12 since token price has that multiple
+    if (typeof expectedSumAX128 !== 'undefined') {
+      const sumAX128 = fpGlobal.sumAX128.mul(10n ** 20n).div(1n << 128n);
+      expect(sumAX128).to.eq(expectedSumAX128);
+    }
+    //Already a multiple of e-6 since Fp = a*sumB
+    if (typeof expectedSumFpX128 !== 'undefined') {
+      const sumFpX128 = fpGlobal.sumFpX128.mul(10n ** 19n).div(1n << 128n);
+      expect(sumFpX128).to.eq(expectedSumFpX128);
+    }
+  }
+
   async function initializePool(
     VPoolFactory: VPoolFactory,
     initialMarginRatio: BigNumberish,
@@ -327,7 +355,7 @@ describe('Clearing House Library', () => {
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
     const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    const vBase = await vBaseFactory.deploy(REAL_BASE);
+    vBase = await vBaseFactory.deploy(REAL_BASE);
     vBaseAddress = vBase.address;
 
     signers = await hre.ethers.getSigners();
@@ -553,12 +581,10 @@ describe('Clearing House Library', () => {
   // });
 
   describe('#Scenario 1', async () => {
-    beforeEach(async () => {
-      const { sqrtPriceX96 } = await vPool.slot0();
-      oracle.setSqrtPrice(sqrtPriceX96);
-    });
-    it('Timestamp Update - 0', async () => {
+    it('Timestamp And Oracle Update - 0', async () => {
       vPoolWrapper.setBlockTimestamp(0);
+      const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
+      oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
     });
     it('Acct[0] Initial Collateral Deposit = 100K USDC', async () => {
@@ -592,8 +618,10 @@ describe('Clearing House Library', () => {
         true,
       );
     });
-    it('Timestamp Update - 600', async () => {
+    it('Timestamp and Oracle Update - 600', async () => {
       vPoolWrapper.setBlockTimestamp(600);
+      const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
+      oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(600);
     });
     it('Acct[2] Initial Collateral Deposit = 100K USDC', async () => {
@@ -609,7 +637,7 @@ describe('Clearing House Library', () => {
       const swapTokenAmount = '-8969616182683630000';
       //TODO: Correction in finquant test cases
       const expectedTokenBalance = '-8969616182683630000';
-      const expectedBaseBalance = '19146228583';
+      const expectedBaseBalance = 19146228583n - 1n;
 
       await swapTokenAndCheck(
         user2,
@@ -632,7 +660,7 @@ describe('Clearing House Library', () => {
       await checkRealBaseBalance(clearingHouseTest.address, tokenAmount(3n * 10n ** 5n, 6));
       await checkDepositBalance(user1AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
     });
-    it('Timestamp Update - 1200', async () => {
+    it('Timestamp and Oracle Update - 1200', async () => {
       vPoolWrapper.setBlockTimestamp(1200);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(1200);
     });
@@ -662,8 +690,10 @@ describe('Clearing House Library', () => {
       );
     });
 
-    it('Timestamp Update - 1900', async () => {
+    it('Timestamp and Oracle Update - 1900', async () => {
       vPoolWrapper.setBlockTimestamp(1900);
+      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(1900);
     });
 
@@ -674,7 +704,48 @@ describe('Clearing House Library', () => {
       const swapTokenAmount = '-9841461389446880000';
       //TODO: Correction in finquant test cases
       const expectedTokenBalance = '-18811077572130510000';
-      const expectedBaseBalance = '39913423323';
+      const expectedBaseBalance = 39913423323n - 3n;
+
+      // const expectedSumBX128 = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
+      const expectedSumBX128 = 2494598646462n;
+
+      const expectedSumAX128 = 2345128n;
+      const expectedSumFpX128 = 19019671n;
+
+      await swapTokenAndCheck(
+        user2,
+        user2AccountNo,
+        vTokenAddress,
+        vBaseAddress,
+        swapTokenAmount,
+        0,
+        false,
+        false,
+        startTick,
+        endTick,
+        expectedTokenBalance,
+        expectedBaseBalance,
+      );
+
+      await checkGlobalFundingPaymentParams(expectedSumBX128, expectedSumAX128, expectedSumFpX128);
+    });
+
+    it('Timestamp and Oracle Update - 2600', async () => {
+      vPoolWrapper.setBlockTimestamp(2600);
+      const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vBase, vToken);
+      oracle.setSqrtPrice(realSqrtPrice);
+      expect(await vPoolWrapper.blockTimestamp()).to.eq(2600);
+    });
+
+    it('Acct[2] Short ETH : Price Changes (StartTick = -199820, EndTick = -200050', async () => {
+      const startTick = -199820;
+      const endTick = -200050;
+
+      const swapTokenAmount = '-24716106801005000000';
+      //TODO: Correction in finquant test cases
+      const expectedTokenBalance = '-43527184373135510000';
+
+      const expectedBaseBalance = 91163779613n - 4n;
 
       await swapTokenAndCheck(
         user2,
@@ -692,36 +763,13 @@ describe('Clearing House Library', () => {
       );
     });
 
-    it('Timestamp Update - 2600', async () => {
-      vPoolWrapper.setBlockTimestamp(2600);
-      expect(await vPoolWrapper.blockTimestamp()).to.eq(2600);
+    it('Timestamp and Oracle Update - 3300', async () => {
+      vPoolWrapper.setBlockTimestamp(3300);
+      const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vBase, vToken);
+      oracle.setSqrtPrice(realSqrtPrice);
+      expect(await vPoolWrapper.blockTimestamp()).to.eq(3300);
     });
 
-    it('Acct[2] Short ETH : Price Changes (StartTick = -199820, EndTick = -200050');
-    // , async () => {
-    //   const startTick = -199820;
-    //   const endTick = -200050;
-
-    //   const swapTokenAmount = '-24716106801005000000';
-    //   //TODO: Correction in finquant test cases
-    //   const expectedTokenBalance = '-43527184373135510000';
-    //   const expectedBaseBalance = '91687997289';
-
-    //   await swapTokenAndCheck(
-    //     user2,
-    //     user2AccountNo,
-    //     vTokenAddress,
-    //     vBaseAddress,
-    //     swapTokenAmount,
-    //     0,
-    //     false,
-    //     false,
-    //     startTick,
-    //     endTick,
-    //     expectedTokenBalance,
-    //     expectedBaseBalance,
-    //   );
-    // });
     it('Acct[2] Long  ETH : Price Changes (StartTick = -200050, EndTick = -199820');
     it('Acct[2] Long  ETH : Price Changes (StartTick = -199820, EndTick = -199540');
     it('Acct[2] Short ETH : Price Changes (StartTick = -199540, EndTick = -199820');
