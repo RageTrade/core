@@ -50,6 +50,7 @@ library VTokenPositionSet {
         uint256 accountNo;
         uint32[8] active;
         mapping(uint32 => VTokenPosition.Position) positions;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     function isEmpty(Set storage set) internal view returns (bool) {

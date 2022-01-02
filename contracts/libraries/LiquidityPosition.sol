@@ -50,6 +50,7 @@ library LiquidityPosition {
         int256 sumFpInsideLastX128;
         // fee growth inside
         uint256 sumFeeInsideLastX128;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     function isInitialized(Info storage info) internal view returns (bool) {

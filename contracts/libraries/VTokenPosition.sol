@@ -34,6 +34,7 @@ library VTokenPosition {
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPositionSet.Info liquidityPositions;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     function marketValue(

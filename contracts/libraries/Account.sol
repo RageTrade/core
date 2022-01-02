@@ -121,6 +121,7 @@ library Account {
         address owner;
         VTokenPositionSet.Set tokenPositions;
         DepositTokenSet.Info tokenDeposits;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     /// @notice checks if 'account' is initialized

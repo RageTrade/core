@@ -24,6 +24,7 @@ library DepositTokenSet {
         // single per pool because it's fungible, allows for having
         uint32[8] active;
         mapping(uint32 => uint256) deposits;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     // add overrides that accept vToken or truncated
