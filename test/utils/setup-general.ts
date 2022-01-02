@@ -1,7 +1,7 @@
 import hre, { ethers } from 'hardhat';
 import { FakeContract, smock } from '@defi-wonderland/smock';
 import { ClearingHouse, ERC20, VBase, VPoolFactory } from '../../typechain-types';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './realConstants';
+import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, UNISWAP_V3_POOL_BYTE_CODE_HASH, REAL_BASE } from './realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './create-addresses';
 import { ConstantsStruct } from '../../typechain-types/ClearingHouse';
@@ -36,21 +36,27 @@ export async function testSetup({
   const realToken = await smock.fake<ERC20>('ERC20', { address: ethers.constants.AddressZero });
   realToken.decimals.returns(18);
 
-  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 3);
-  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 4);
+  const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 5);
+  const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 6);
 
   const vPoolWrapperDeployer = await (
     await hre.ethers.getContractFactory('VPoolWrapperDeployer')
   ).deploy(futureVPoolFactoryAddress);
 
   const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
-  const clearingHouse = await (
+  const clearingHouseLogic = await (
     await hre.ethers.getContractFactory('ClearingHouse', {
       libraries: {
         Account: accountLib.address,
       },
     })
   ).deploy(futureVPoolFactoryAddress, realBase.address, futureInsurnaceFundAddress);
+
+  const proxyAdmin = await (await hre.ethers.getContractFactory('ProxyAdmin')).deploy();
+  const clearingHouseProxy = await (
+    await hre.ethers.getContractFactory('TransparentUpgradeableProxy')
+  ).deploy(clearingHouseLogic.address, proxyAdmin.address, '0x');
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', clearingHouseProxy.address);
 
   const vPoolFactory = await (
     await hre.ethers.getContractFactory('VPoolFactory')
@@ -60,7 +66,7 @@ export async function testSetup({
     vPoolWrapperDeployer.address,
     UNISWAP_FACTORY_ADDRESS,
     DEFAULT_FEE_TIER,
-    POOL_BYTE_CODE_HASH,
+    UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
   await vPoolFactory.initializePool(
@@ -89,15 +95,18 @@ export async function testSetup({
   const constants = await clearingHouse.constants();
 
   return {
-    realbase: realBase,
-    vBase: vBase,
-    oracle: oracle,
-    clearingHouse: clearingHouse,
-    vPoolFactory: vPoolFactory,
-    vPoolAddress: vPoolAddress,
-    vTokenAddress: vTokenAddress,
-    vPoolWrapperAddress: vPoolWrapperAddress,
-    constants: constants,
+    realBase,
+    vBase,
+    oracle,
+    clearingHouse,
+    proxyAdmin,
+    clearingHouseLogic,
+    clearingHouseProxy,
+    vPoolFactory,
+    vPoolAddress,
+    vTokenAddress,
+    vPoolWrapperAddress,
+    constants,
   };
 }
 
@@ -136,7 +145,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     vPoolWrapperDeployer.address,
     UNISWAP_FACTORY_ADDRESS,
     DEFAULT_FEE_TIER,
-    POOL_BYTE_CODE_HASH,
+    UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
   const constants = await clearingHouse.constants();

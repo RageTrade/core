@@ -34,6 +34,7 @@ contract VToken is ERC20, IVToken {
 
     error Unauthorised();
 
+    // TODO bring uniswap vPool address in the logic
     function _beforeTokenTransfer(
         address from,
         address to,

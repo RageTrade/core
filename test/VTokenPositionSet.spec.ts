@@ -3,7 +3,12 @@ import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
 import { VTokenPositionSetTest, VPoolFactory, VBase, VPoolWrapper, ERC20 } from '../typechain-types';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
+import {
+  UNISWAP_FACTORY_ADDRESS,
+  DEFAULT_FEE_TIER,
+  UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  REAL_BASE,
+} from './utils/realConstants';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
@@ -56,7 +61,7 @@ describe('VTokenPositionSet Library', () => {
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
-      POOL_BYTE_CODE_HASH,
+      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     const InsuranceFund = await (

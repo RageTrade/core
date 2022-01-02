@@ -39,6 +39,7 @@ contract VBase is IVBase, ERC20('Virtual Base Token', 'vBase'), Ownable {
 
     error Unauthorised();
 
+    // TODO change to only clearing house can mint
     function mint(address account, uint256 amount) external {
         if (!isAuth[msg.sender]) {
             revert Unauthorised();

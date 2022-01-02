@@ -3,7 +3,12 @@ import hre from 'hardhat';
 import { network } from 'hardhat';
 import { VPoolFactory, VPoolWrapperDeployer, ERC20, UtilsTest, VBase, IOracle } from '../typechain-types';
 import { getCreate2Address, getCreate2AddressByBytecodeHash } from './utils/create2';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
+import {
+  UNISWAP_FACTORY_ADDRESS,
+  DEFAULT_FEE_TIER,
+  UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  REAL_BASE,
+} from './utils/realConstants';
 import { BigNumber, utils } from 'ethers';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { getCreateAddressFor } from './utils/create-addresses';
@@ -55,7 +60,7 @@ describe('VPoolFactory', () => {
       vPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
-      POOL_BYTE_CODE_HASH,
+      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     const InsuranceFund = await (
@@ -142,7 +147,11 @@ describe('VPoolFactory', () => {
         utils.defaultAbiCoder.encode(['address', 'address', 'uint24'], [vTokenAddress, vBase.address, 500]),
       );
 
-      const vPoolCalculated = getCreate2AddressByBytecodeHash(UNISWAP_FACTORY_ADDRESS, salt, POOL_BYTE_CODE_HASH);
+      const vPoolCalculated = getCreate2AddressByBytecodeHash(
+        UNISWAP_FACTORY_ADDRESS,
+        salt,
+        UNISWAP_V3_POOL_BYTE_CODE_HASH,
+      );
       expect(vPool).to.eq(vPoolCalculated);
 
       // VPoolWrapper : Create2

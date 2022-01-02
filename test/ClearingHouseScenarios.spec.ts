@@ -21,7 +21,12 @@ import {
   VToken,
 } from '../typechain-types';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
+import {
+  UNISWAP_FACTORY_ADDRESS,
+  DEFAULT_FEE_TIER,
+  UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  REAL_BASE,
+} from './utils/realConstants';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -363,7 +368,7 @@ describe('Clearing House Library', () => {
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
-      POOL_BYTE_CODE_HASH,
+      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     const InsuranceFund = await (

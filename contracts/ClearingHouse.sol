@@ -4,33 +4,26 @@ pragma solidity ^0.8.9;
 
 import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
-import { ClearingHouseState } from './ClearingHouseState.sol';
+import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
+import { Constants } from './utils/Constants.sol';
 
-contract ClearingHouse is ClearingHouseState, IClearingHouse {
+contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
 
-    address public immutable realBase;
-    address public immutable insuranceFundAddress;
-
-    uint256 public numAccounts;
-    mapping(uint256 => Account.Info) accounts;
-
+    // only initializes immutable vars
     constructor(
-        address VPoolFactory,
+        address _vPoolFactory,
         address _realBase,
         address _insuranceFundAddress
-    ) ClearingHouseState(VPoolFactory) {
-        realBase = _realBase;
-        insuranceFundAddress = _insuranceFundAddress;
-    }
+    ) ClearingHouseStorage(_vPoolFactory, _realBase, _insuranceFundAddress) {}
 
     function checkSlippage(
         VTokenAddress vTokenAddress,
@@ -261,5 +254,57 @@ contract ClearingHouse is ClearingHouseState, IClearingHouse {
         } else {
             IInsuranceFund(insuranceFundAddress).claim(uint256(-insuranceFundFee));
         }
+    }
+
+    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
+        return vTokenAddresses[truncated].eq(address(0));
+    }
+
+    function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
+        return realTokenInitilized[realToken];
+    }
+
+    function addVTokenAddress(uint32 truncated, address full) external onlyVPoolFactory {
+        vTokenAddresses[truncated] = VTokenAddress.wrap(full);
+    }
+
+    function initRealToken(address realToken) external onlyVPoolFactory {
+        realTokenInitilized[realToken] = true;
+    }
+
+    function setConstants(Constants memory _constants) external onlyVPoolFactory {
+        constants = _constants;
+    }
+
+    function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
+        supportedVTokens[add] = status;
+    }
+
+    function updateSupportedDeposits(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
+        supportedDeposits[add] = status;
+    }
+
+    function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
+        paused = _pause;
+    }
+
+    function setPlatformParameters(
+        LiquidationParams calldata _liquidationParams,
+        uint256 _removeLimitOrderFee,
+        uint256 _minimumOrderNotional
+    ) external onlyGovernanceOrTeamMultisig {
+        liquidationParams = _liquidationParams;
+        removeLimitOrderFee = _removeLimitOrderFee;
+        minimumOrderNotional = _minimumOrderNotional;
+    }
+
+    modifier onlyVPoolFactory() {
+        if (vPoolFactory != msg.sender) revert NotVPoolFactory();
+        _;
+    }
+
+    modifier notPaused() {
+        if (paused) revert Paused();
+        _;
     }
 }
