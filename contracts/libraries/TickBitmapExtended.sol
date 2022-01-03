@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { BitMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/BitMath.sol';
+import { BitMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/BitMath.sol';
 
 library TickBitmapExtended {
     /// @notice Computes the position in the mapping where the initialized bit for a tick lives

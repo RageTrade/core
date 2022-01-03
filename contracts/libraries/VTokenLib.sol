@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.9;
 
-import { FixedPoint96 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
-import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { PriceMath } from './PriceMath.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';

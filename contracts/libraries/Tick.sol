@@ -5,8 +5,8 @@ pragma solidity ^0.8.9;
 import { FundingPayment } from './FundingPayment.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import { LiquidityMath } from '@uniswap/v3-core/contracts/libraries/LiquidityMath.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { LiquidityMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
 
 import { Constants } from '../utils/Constants.sol';
 

@@ -3,8 +3,8 @@
 pragma solidity ^0.8.9;
 
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import { IUniswapV3Factory } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Factory.sol';
 import { Constants } from './utils/Constants.sol';
 import { IOracle } from './interfaces/IOracle.sol';
 import { IVBase } from './interfaces/IVBase.sol';
