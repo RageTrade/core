@@ -13,7 +13,6 @@ interface IClearingHouse {
     error AccessDenied(address senderAddress);
     error UnsupportedToken(VTokenAddress vTokenAddress);
     error LowNotionalValue(uint256 notionalValue);
-    error InvalidLiquidityChangeParameters();
     error InvalidTokenLiquidationParameters();
     error UninitializedToken(uint32 vTokenTruncatedAddress);
     error SlippageBeyondTolerance();

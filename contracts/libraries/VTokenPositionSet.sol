@@ -373,7 +373,7 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, vTokenAddress, constants);
 
-        if (liquidityChangeParams.closeTokenPosition && balanceAdjustments.vTokenIncrease > 0) {
+        if (liquidityChangeParams.closeTokenPosition) {
             set.swapTokenAmount(vTokenAddress, -balanceAdjustments.traderPositionIncrease, constants);
         }
 

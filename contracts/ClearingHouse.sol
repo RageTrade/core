@@ -168,9 +168,6 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
             liquidityChangeParams.slippageToleranceBps
         );
 
-        if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
-            revert InvalidLiquidityChangeParameters();
-
         (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
             vTokenAddress,
             liquidityChangeParams,
