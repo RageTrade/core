@@ -125,14 +125,14 @@ library VTokenPositionSet {
     /// @param vTokenAmount amount of tokens
     /// @param vBaseAmount amount of base
     /// @param constants platform constants
-    /// @return notionalValue for the given token and base amounts
+    /// @return notionalAmountClosed for the given token and base amounts
     function getNotionalValue(
         VTokenAddress vTokenAddress,
         int256 vTokenAmount,
         int256 vBaseAmount,
         Constants memory constants
-    ) internal view returns (int256 notionalValue) {
-        notionalValue =
+    ) internal view returns (int256 notionalAmountClosed) {
+        notionalAmountClosed =
             vTokenAmount.abs().mulDiv(vTokenAddress.getVirtualTwapPriceX128(constants), FixedPoint128.Q128) +
             vBaseAmount.abs();
     }
@@ -318,14 +318,14 @@ library VTokenPositionSet {
     /// @param vTokenAddress address of the token
     /// @param swapParams parameters for swap
     /// @param constants platform constants
-    /// @return vTokenAmount - token amount coming out of pool
-    /// @return vBaseAmount - base amount coming out of pool
+    /// @return vTokenAmountOut - token amount coming out of pool
+    /// @return vBaseAmountOut - base amount coming out of pool
     function swapToken(
         Set storage set,
         VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
         Constants memory constants
-    ) internal returns (int256 vTokenAmount, int256 vBaseAmount) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return set.swapToken(vTokenAddress, swapParams, vTokenAddress.vPoolWrapper(constants), constants);
     }
 
@@ -335,14 +335,14 @@ library VTokenPositionSet {
     /// @param vTokenAddress address of the token
     /// @param vTokenAmount amount of the token
     /// @param constants platform constants
-    /// @return vTokenAmount - token amount coming out of pool
-    /// @return vBaseAmount - base amount coming out of pool
+    /// @return vTokenAmountOut - token amount coming out of pool
+    /// @return vBaseAmountOut - base amount coming out of pool
     function swapTokenAmount(
         Set storage set,
         VTokenAddress vTokenAddress,
         int256 vTokenAmount,
         Constants memory constants
-    ) internal returns (int256, int256) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
             set.swapToken(
                 vTokenAddress,
@@ -390,12 +390,12 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of token
     /// @param constants platform constants
-    /// @return notionalValue - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         VTokenAddress vTokenAddress,
         Constants memory constants
-    ) internal returns (int256 notionalValue) {
+    ) internal returns (int256 notionalAmountClosed) {
         return set.liquidateLiquidityPositions(vTokenAddress, vTokenAddress.vPoolWrapper(constants), constants);
     }
 
@@ -403,22 +403,18 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param vTokenAddresses mapping from truncated token address to token address for all active tokens
     /// @param constants platform constants
-    /// @return notionalValue - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         Constants memory constants
-    ) internal returns (int256 notionalValue) {
-        int256 notionalAmountClosed;
-
+    ) internal returns (int256 notionalAmountClosed) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
             notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], constants);
         }
-
-        return notionalAmountClosed;
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount / base amount
@@ -427,15 +423,15 @@ library VTokenPositionSet {
     /// @param swapParams parameters for swap
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param constants platform constants
-    /// @return vTokenAmount - token amount coming out of pool
-    /// @return vBaseAmount - base amount coming out of pool
+    /// @return vTokenAmountOut - token amount coming out of pool
+    /// @return vBaseAmountOut - base amount coming out of pool
     function swapToken(
         Set storage set,
         VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256, int256) {
+    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // TODO: remove this after testing
         // console.log('Amount In:');
         // console.logInt(swapParams.amount);
@@ -443,31 +439,29 @@ library VTokenPositionSet {
         // console.log('Is Notional:');
         // console.log(swapParams.isNotional);
 
-        (int256 vTokenAmount, int256 vBaseAmount) = wrapper.swapToken(
+        (vTokenAmountOut, vBaseAmountOut) = wrapper.swapToken(
             swapParams.amount,
             swapParams.sqrtPriceLimit,
             swapParams.isNotional
         );
         //Change direction basis uniswap to balance increase
-        vTokenAmount = -vTokenAmount;
-        vBaseAmount = -vBaseAmount;
+        vTokenAmountOut = -vTokenAmountOut;
+        vBaseAmountOut = -vBaseAmountOut;
         // TODO: remove this after testing
         // console.log('Token Amount Out:');
-        // console.logInt(vTokenAmount);
+        // console.logInt(vTokenAmountOut);
 
         // console.log('VBase Amount Out:');
-        // console.logInt(vBaseAmount);
+        // console.logInt(vBaseAmountOut);
         Account.BalanceAdjustments memory balanceAdjustments = Account.BalanceAdjustments(
-            vBaseAmount,
-            vTokenAmount,
-            vTokenAmount
+            vBaseAmountOut,
+            vTokenAmountOut,
+            vTokenAmountOut
         );
 
         set.update(balanceAdjustments, vTokenAddress, constants);
 
-        emit Account.TokenPositionChange(set.accountNo, vTokenAddress, vTokenAmount, vBaseAmount);
-
-        return (vTokenAmount, vBaseAmount);
+        emit Account.TokenPositionChange(set.accountNo, vTokenAddress, vTokenAmountOut, vBaseAmountOut);
     }
 
     /// @notice function for liquidity add/remove
@@ -544,13 +538,13 @@ library VTokenPositionSet {
     /// @param vTokenAddress address of token
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param constants platform constants
-    /// @return notionalValue - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
+    ) internal returns (int256 notionalAmountClosed) {
         Account.BalanceAdjustments memory balanceAdjustments;
 
         set.getTokenPosition(vTokenAddress, false, constants).liquidityPositions.closeAllLiquidityPositions(
@@ -575,22 +569,18 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param vTokenAddresses mapping from truncated token address to token address for all active tokens
     /// @param constants platform constants
-    /// @return notionalValue - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         IVPoolWrapper wrapper,
         Constants memory constants
-    ) internal returns (int256) {
-        int256 notionalAmountClosed;
-
+    ) internal returns (int256 notionalAmountClosed) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
             notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], wrapper, constants);
         }
-
-        return notionalAmountClosed;
     }
 }
