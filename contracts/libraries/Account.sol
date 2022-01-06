@@ -707,7 +707,7 @@ library Account {
 
     /// @notice removes limit order based on the current price position (keeper call)
     /// @param account account to liquidate
-    /// @param vTokenAddress address of token to swap
+    /// @param vTokenAddress address of token for the range
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
     /// @param constants platform constants
