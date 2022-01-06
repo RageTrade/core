@@ -282,7 +282,7 @@ library VTokenPositionSet {
             VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()
         ];
         int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
-        _VBasePosition.balance -= fundingPayment;
+        _VBasePosition.balance += fundingPayment;
 
         _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
 

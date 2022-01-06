@@ -50,7 +50,7 @@ library VTokenPosition {
         value = position.balance.mulDiv(priceX128, FixedPoint128.Q128);
         // console.log('Token Value:');
         // console.logInt(value);
-        value -= unrealizedFundingPayment(position, wrapper);
+        value += unrealizedFundingPayment(position, wrapper);
     }
 
     function marketValue(
@@ -77,7 +77,7 @@ library VTokenPosition {
 
     function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
-        int256 unrealizedFP = position.netTraderPosition.mulDiv(
+        int256 unrealizedFP = (-position.netTraderPosition).mulDiv(
             (extrapolatedSumAX128 - position.sumAX128Ckpt),
             int256(FixedPoint128.Q128)
         );
