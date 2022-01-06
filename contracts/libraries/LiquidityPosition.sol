@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.9;
 
-import { SqrtPriceMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SqrtPriceMath.sol';
-import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
-import { SafeCast } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
-import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
-import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { SqrtPriceMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/SqrtPriceMath.sol';
+import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
@@ -50,6 +50,7 @@ library LiquidityPosition {
         int256 sumFpInsideLastX128;
         // fee growth inside
         uint256 sumFeeInsideLastX128;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     function isInitialized(Info storage info) internal view returns (bool) {

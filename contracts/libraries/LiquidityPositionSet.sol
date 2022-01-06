@@ -39,6 +39,7 @@ library LiquidityPositionSet {
         uint48[5] active;
         // concat(tickLow,tickHigh)
         mapping(uint48 => LiquidityPosition.Info) positions;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     function isEmpty(Info storage set) internal view returns (bool) {

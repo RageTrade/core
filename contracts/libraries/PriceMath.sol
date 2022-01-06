@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.9;
 
-import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
-import { FixedPoint96 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
-import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
+import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 library PriceMath {
     using FullMath for uint256;

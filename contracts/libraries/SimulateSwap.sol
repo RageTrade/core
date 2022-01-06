@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.9;
 
-import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
-import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
-import { LiquidityMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
-import { SwapMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SwapMath.sol';
-import { SafeCast } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/SafeCast.sol';
-import { TickMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { LiquidityMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
+import { SwapMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/SwapMath.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 import { TickBitmapExtended } from './TickBitmapExtended.sol';
 
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { console } from 'hardhat/console.sol';
 

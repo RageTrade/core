@@ -8,7 +8,12 @@ import { DepositTokenSetTest, VPoolFactory, ClearingHouse, OracleMock, RealToken
 import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { UNISWAP_FACTORY_ADDRESS, DEFAULT_FEE_TIER, POOL_BYTE_CODE_HASH, REAL_BASE } from './utils/realConstants';
+import {
+  UNISWAP_FACTORY_ADDRESS,
+  DEFAULT_FEE_TIER,
+  UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  REAL_BASE,
+} from './utils/realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { smock } from '@defi-wonderland/smock';
 
@@ -110,7 +115,7 @@ describe('DepositTokenSet Library', () => {
       VPoolWrapperDeployer.address,
       UNISWAP_FACTORY_ADDRESS,
       DEFAULT_FEE_TIER,
-      POOL_BYTE_CODE_HASH,
+      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     const InsuranceFund = await (

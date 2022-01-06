@@ -51,10 +51,10 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "@134dd3v/uniswap-v3-core-0.8-support": "^1.0.1",
     "@openzeppelin/contracts": "^4.0.0",
     "@openzeppelin/contracts-upgradeable": "^4.1.0",
     "@uniswap/v3-core": "^1.0.0",
+    "@uniswap/v3-core-0.8-support": "git://github.com/134dd3v/v3-core.git#3c9f09e618c6ba68fd524aeb608bbb80bd6b7dd1",
     "@uniswap/v3-periphery": "^1.2.1",
     "ethers": "^5.4.6"
   },

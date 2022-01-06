@@ -7,6 +7,8 @@ import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
+import { Constants } from '../utils/Constants.sol';
+
 interface IClearingHouse {
     error AccessDenied(address senderAddress);
     error UnsupportedToken(VTokenAddress vTokenAddress);
@@ -57,4 +59,14 @@ interface IClearingHouse {
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
     ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments);
+
+    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
+
+    function addVTokenAddress(uint32 truncated, address full) external;
+
+    function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool);
+
+    function initRealToken(address _realToken) external;
+
+    function setConstants(Constants memory constants) external;
 }

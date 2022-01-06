@@ -3,14 +3,14 @@
 pragma solidity ^0.8.9;
 
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import { IUniswapV3Factory } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Factory.sol';
 import { Constants } from './utils/Constants.sol';
 import { IOracle } from './interfaces/IOracle.sol';
 import { IVBase } from './interfaces/IVBase.sol';
 import { VToken, IVToken } from './tokens/VToken.sol';
 import { IVPoolWrapperDeployer } from './interfaces/IVPoolWrapperDeployer.sol';
-import { IClearingHouseState } from './interfaces/IClearingHouseState.sol';
+import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 
@@ -24,8 +24,8 @@ contract VPoolFactory {
     address public immutable owner;
     bool public isRestricted;
 
-    IClearingHouseState public immutable ClearingHouse;
-    IVPoolWrapperDeployer public immutable VPoolWrapperDeployer;
+    IClearingHouse public immutable clearingHouse;
+    IVPoolWrapperDeployer public immutable vPoolWrapperDeployer;
 
     constructor(
         address VBASE_ADDRESS,
@@ -37,7 +37,7 @@ contract VPoolFactory {
     ) {
         isRestricted = true;
         owner = msg.sender;
-        VPoolWrapperDeployer = IVPoolWrapperDeployer(VPoolWrapperDeployerAddress);
+        vPoolWrapperDeployer = IVPoolWrapperDeployer(VPoolWrapperDeployerAddress);
         constants = Constants(
             address(this),
             VPoolWrapperDeployerAddress,
@@ -45,11 +45,11 @@ contract VPoolFactory {
             UNISWAP_FACTORY_ADDRESS,
             DEFAULT_FEE_TIER,
             POOL_BYTE_CODE_HASH,
-            VPoolWrapperDeployer.byteCodeHash()
+            vPoolWrapperDeployer.byteCodeHash()
         );
-        ClearingHouse = IClearingHouseState(ClearingHouseAddress);
-        ClearingHouse.setConstants(constants);
-        ClearingHouse.addVTokenAddress(VTokenAddress.wrap(VBASE_ADDRESS).truncate(), VBASE_ADDRESS);
+        clearingHouse = IClearingHouse(ClearingHouseAddress);
+        clearingHouse.setConstants(constants);
+        clearingHouse.addVTokenAddress(VTokenAddress.wrap(VBASE_ADDRESS).truncate(), VBASE_ADDRESS);
     }
 
     event PoolInitlized(address vPoolAddress, address vTokenAddress, address vPoolWrapperAddress);
@@ -57,7 +57,7 @@ contract VPoolFactory {
     struct SetupVTokenParams {
         string vTokenName;
         string vTokenSymbol;
-        address realTokenAddress;
+        address realTokenAddress; // TODO remove dependency on real token address, as it is not needed
         address oracleAddress;
     }
 
@@ -81,7 +81,7 @@ contract VPoolFactory {
         IUniswapV3Pool(vPoolAddress).initialize(
             IOracle(ipParams.setupVTokenParams.oracleAddress).getTwapSqrtPriceX96(ipParams.twapDuration)
         );
-        address vPoolWrapper = VPoolWrapperDeployer.deployVPoolWrapper(
+        address vPoolWrapper = vPoolWrapperDeployer.deployVPoolWrapper(
             vTokenAddress,
             vPoolAddress,
             ipParams.setupVTokenParams.oracleAddress,
@@ -107,7 +107,7 @@ contract VPoolFactory {
         unchecked {
             // TODO change require to custom errors
             // Pool for this token must not be already created
-            require(!ClearingHouse.isRealTokenAlreadyInitilized(setupVTokenParams.realTokenAddress), 'Duplicate Pool');
+            require(!clearingHouse.isRealTokenAlreadyInitilized(setupVTokenParams.realTokenAddress), 'Duplicate Pool');
 
             bytes memory bytecode = abi.encodePacked(
                 type(VToken).creationCode,
@@ -131,7 +131,7 @@ contract VPoolFactory {
                 if (
                     truncated != 0 &&
                     uint160(vTokenAddressComputed) < uint160(VBASE_ADDRESS) &&
-                    ClearingHouse.isVTokenAddressAvailable(truncated)
+                    clearingHouse.isVTokenAddressAvailable(truncated)
                 ) {
                     break;
                 } else {
@@ -142,8 +142,8 @@ contract VPoolFactory {
             address vTokenAddressDeployed = Create2.deploy(0, salt, bytecode);
             assert(vTokenAddressComputed == vTokenAddressDeployed); // TODO disable in mainnet?
 
-            ClearingHouse.addVTokenAddress(truncated, vTokenAddressDeployed);
-            ClearingHouse.initRealToken(setupVTokenParams.realTokenAddress);
+            clearingHouse.addVTokenAddress(truncated, vTokenAddressDeployed);
+            clearingHouse.initRealToken(setupVTokenParams.realTokenAddress);
 
             return vTokenAddressDeployed;
         }

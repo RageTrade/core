@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
@@ -24,6 +24,7 @@ library DepositTokenSet {
         // single per pool because it's fungible, allows for having
         uint32[8] active;
         mapping(uint32 => uint256) deposits;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     // add overrides that accept vToken or truncated

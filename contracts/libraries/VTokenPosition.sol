@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.9;
 
-import { FullMath } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FullMath.sol';
-import { FixedPoint128 } from '@134dd3v/uniswap-v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { Account } from './Account.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
@@ -34,6 +34,7 @@ library VTokenPosition {
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPositionSet.Info liquidityPositions;
+        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
     function marketValue(
