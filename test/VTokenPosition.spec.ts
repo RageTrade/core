@@ -17,7 +17,7 @@ describe('VTokenPosition Library', () => {
   describe('Functions', () => {
     it('unrealizedFundingPayment', async () => {
       const result = await VTokenPosition.unrealizedFundingPayment();
-      expect(result).to.eq(-100);
+      expect(result).to.eq(100);
     });
     it('marketValue', async () => {
       const priceX128 = priceX96.mul(priceX96).div(1n << 64n);
