@@ -50,7 +50,7 @@ library Tick {
             fpGlobal.sumAX128
         );
         uint256 sumFeeBelowX128 = lower.sumFeeOutsideX128;
-        if (tickCurrent < tickLower) {
+        if (tickLower > tickCurrent) {
             sumBBelowX128 = fpGlobal.sumBX128 - sumBBelowX128;
             sumFpBelowX128 = fpGlobal.sumFpX128 - sumFpBelowX128;
             sumFeeBelowX128 = sumFeeGlobalX128 - sumFeeBelowX128;
@@ -64,7 +64,7 @@ library Tick {
             fpGlobal.sumAX128
         );
         uint256 sumFeeAboveX128 = upper.sumFeeOutsideX128;
-        if (tickCurrent >= tickUpper) {
+        if (tickUpper <= tickCurrent) {
             sumBAboveX128 = fpGlobal.sumBX128 - sumBAboveX128;
             sumFpAboveX128 = fpGlobal.sumFpX128 - sumFpAboveX128;
             sumFeeAboveX128 = sumFeeGlobalX128 - sumFeeAboveX128;
