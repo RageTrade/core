@@ -143,18 +143,18 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     /// @notice swaps token
-    /// @param amountSpecified: positive means long, negative means short
+    /// @param amount: positive means long, negative means short
     /// @param isNotional: true means amountSpecified is dollar amount
     /// @param sqrtPriceLimitX96: The Q64.96 sqrt price limit. If zero for one, the price cannot be less than this
     /// value after the swap. If one for zero, the price cannot be greater than this value after the swap.
     function swapToken(
-        int256 amountSpecified,
+        int256 amount,
         uint160 sqrtPriceLimitX96,
         bool isNotional
     ) external returns (int256 vTokenAmount, int256 vBaseAmount) {
         // case isNotional true
         // amountSpecified is positive
-        return swap(amountSpecified < 0, isNotional ? amountSpecified : -amountSpecified, sqrtPriceLimitX96);
+        return swap(amount < 0, isNotional ? amount : -amount, sqrtPriceLimitX96);
     }
 
     /// @notice Swap vToken for vBase, or vBase for vToken
