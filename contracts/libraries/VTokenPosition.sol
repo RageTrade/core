@@ -37,6 +37,10 @@ library VTokenPosition {
         uint256[100] emptySlots; // reserved for adding variables when upgrading logic
     }
 
+    /// @notice returns the market value of the supplied token position
+    /// @param position token position
+    /// @param priceX128 price in fixed point 128
+    /// @param wrapper pool wrapper corresponding to position
     function marketValue(
         Position storage position,
         uint256 priceX128,
@@ -53,6 +57,11 @@ library VTokenPosition {
         value += unrealizedFundingPayment(position, wrapper);
     }
 
+    /// @notice returns the market value of the supplied token position
+    /// @param position token position
+    /// @param priceX128 price in fixed point 128
+    /// @param vToken tokenAddress corresponding to the position
+    /// @param constants platform constants
     function marketValue(
         Position storage position,
         VTokenAddress vToken,
@@ -62,6 +71,10 @@ library VTokenPosition {
         return marketValue(position, priceX128, vToken.vPoolWrapper(constants));
     }
 
+    /// @notice returns the market value of the supplied token position
+    /// @param position token position
+    /// @param vToken tokenAddress corresponding to the position
+    /// @param constants platform constants
     function marketValue(
         Position storage position,
         VTokenAddress vToken,
@@ -75,6 +88,9 @@ library VTokenPosition {
         return position.balance > 0 ? RISK_SIDE.LONG : RISK_SIDE.SHORT;
     }
 
+    /// @notice returns the unrealized funding payment for the position
+    /// @param position token position
+    /// @param wrapper pool wrapper corresponding to position
     function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
         int256 unrealizedFP = (-position.netTraderPosition).mulDiv(
@@ -84,6 +100,10 @@ library VTokenPosition {
         return unrealizedFP;
     }
 
+    /// @notice returns the unrealized funding payment for the position
+    /// @param position token position
+    /// @param vToken tokenAddress corresponding to the position
+    /// @param constants platform constants
     function unrealizedFundingPayment(
         Position storage position,
         VTokenAddress vToken,
