@@ -91,6 +91,8 @@ library LiquidityPosition {
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
+        position.update(accountNo, vTokenAddress, wrapper, balanceAdjustments);
+
         (int256 basePrincipal, int256 vTokenPrincipal) = wrapper.liquidityChange(
             position.tickLower,
             position.tickUpper,
@@ -114,7 +116,7 @@ library LiquidityPosition {
         {
             (int256 tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent);
 
-            position.update(accountNo, vTokenAddress, wrapper, tokenAmountCurrent, balanceAdjustments);
+            balanceAdjustments.traderPositionIncrease += tokenAmountCurrent - position.vTokenAmountIn;
         }
 
         if (liquidity > 0) {
@@ -131,7 +133,6 @@ library LiquidityPosition {
         uint256 accountNo,
         VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper, // TODO use vTokenLib
-        int256 vTokenAmountOut,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
         (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = wrapper
@@ -139,7 +140,6 @@ library LiquidityPosition {
 
         int256 fundingPayment = position.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
         balanceAdjustments.vBaseIncrease += fundingPayment;
-        balanceAdjustments.traderPositionIncrease += vTokenAmountOut - position.vTokenAmountIn;
 
         int256 unrealizedLiquidityFee = position.unrealizedFees(sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
@@ -152,7 +152,6 @@ library LiquidityPosition {
             position.tickUpper,
             unrealizedLiquidityFee
         );
-
         // updating checkpoints
         position.sumALastX128 = sumAX128;
         position.sumBInsideLastX128 = sumBInsideX128;
