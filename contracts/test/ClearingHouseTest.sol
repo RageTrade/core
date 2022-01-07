@@ -11,6 +11,7 @@ contract ClearingHouseTest is ClearingHouse {
     using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using LiquidityPosition for LiquidityPosition.Info;
 
     constructor(
         address VPoolFactory,
@@ -94,6 +95,29 @@ contract ClearingHouseTest is ClearingHouse {
         for (num = 0; num < liquidityPositionSet.active.length; num++) {
             if (liquidityPositionSet.active[num] == 0) break;
         }
+    }
+
+    function getAccountLiquidityPositionFundingAndFee(
+        uint256 accountNo,
+        address vTokenAddress,
+        uint8 num // TODO change to fetch by ticks
+    ) external view returns (int256 fundingPayment, uint256 unrealizedLiquidityFee) {
+        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
+            .tokenPositions
+            .positions[VTokenAddress.wrap(vTokenAddress).truncate()]
+            .liquidityPositions;
+        LiquidityPosition.Info storage liquidityPosition = liquidityPositionSet.positions[
+            liquidityPositionSet.active[num]
+        ];
+
+        (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = VTokenAddress
+            .wrap(vTokenAddress)
+            .vPoolWrapper(constants)
+            .getValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
+
+        fundingPayment = liquidityPosition.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
+
+        unrealizedLiquidityFee = liquidityPosition.unrealizedFees(sumFeeInsideX128);
     }
 
     function getAccountLiquidityPositionDetails(
