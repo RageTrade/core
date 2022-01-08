@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { console } from 'hardhat/console.sol';
 

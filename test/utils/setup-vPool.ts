@@ -69,9 +69,12 @@ export async function setupVPool({
 
   await oracle.setSqrtPrice(await priceToSqrtPriceX96(rPriceInitial, vBase, vToken));
 
-  const v3Deployer = await smock.fake<IUniswapV3PoolDeployer>('IUniswapV3PoolDeployer', {
-    address: signer.address,
-  });
+  const v3Deployer = await smock.fake<IUniswapV3PoolDeployer>(
+    '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3PoolDeployer.sol:IUniswapV3PoolDeployer',
+    {
+      address: signer.address,
+    },
+  );
 
   const token0 = vToken.address;
   const token1 = vBase.address;

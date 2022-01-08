@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 interface IVPoolWrapper {
     event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);

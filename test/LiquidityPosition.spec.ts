@@ -22,9 +22,12 @@ describe('LiquidityPosition Library', () => {
 
   before(async () => {
     const vPoolAddress = ADDRESS_ZERO;
-    const vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
-      address: vPoolAddress,
-    });
+    const vPoolFake = await smock.fake<UniswapV3Pool>(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      {
+        address: vPoolAddress,
+      },
+    );
     const tick = -19800;
     const sqrtPriceX96 = tickToSqrtPriceX96(tick);
     vPoolFake.observe.returns([[0, tick * 60], []]);

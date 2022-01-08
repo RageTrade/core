@@ -97,9 +97,12 @@ describe('VTokenPositionSet Library', () => {
     // console.log('Vwrapper', events[0].args[2]);
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events[0].args[2]);
     const vPoolAddress = ADDRESS_ZERO;
-    const vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
-      address: vPoolAddress,
-    });
+    const vPoolFake = await smock.fake<UniswapV3Pool>(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      {
+        address: vPoolAddress,
+      },
+    );
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
     await VPoolFactory.initializePool(

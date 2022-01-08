@@ -12,7 +12,7 @@ import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
