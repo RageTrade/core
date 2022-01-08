@@ -173,7 +173,7 @@ library LiquidityPosition {
         int256 sumAX128,
         int256 sumFpInsideX128
     ) internal view returns (int256 vBaseIncrease) {
-        vBaseIncrease = (sumFpInsideX128 -
+        vBaseIncrease = -(sumFpInsideX128 -
             (position.sumFpInsideLastX128 +
                 position.sumBInsideLastX128.mulDiv(sumAX128 - position.sumALastX128, int256(FixedPoint128.Q128))))
             .mulDiv(position.liquidity, FixedPoint128.Q128);
