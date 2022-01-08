@@ -381,10 +381,10 @@ describe('Clearing House Library', () => {
     expectedEndTokenBalance: BigNumberish,
     expectedEndBaseBalance: BigNumberish,
     checkApproximateTokenBalance: Boolean,
-    expectedSumALast: BigNumberish,
-    expectedSumBLast: BigNumberish,
-    expectedSumFpLast: BigNumberish,
-    expectedSumFeeLast: BigNumberish,
+    expectedSumALast?: BigNumberish,
+    expectedSumBLast?: BigNumberish,
+    expectedSumFpLast?: BigNumberish,
+    expectedSumFeeLast?: BigNumberish,
   ) {
     await updateRangeOrder(
       user,
@@ -401,19 +401,21 @@ describe('Clearing House Library', () => {
       : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
     await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
-    await checkLiquidityPositionDetails(
-      userAccountNo,
-      tokenAddress,
-      liquidityPositionNum,
-      tickLower,
-      tickUpper,
-      limitOrderType,
-      liquidityDelta,
-      expectedSumALast,
-      expectedSumBLast,
-      expectedSumFpLast,
-      expectedSumFeeLast,
-    );
+    if (liquidityPositionNum !== -1) {
+      await checkLiquidityPositionDetails(
+        userAccountNo,
+        tokenAddress,
+        liquidityPositionNum,
+        tickLower,
+        tickUpper,
+        limitOrderType,
+        liquidityDelta,
+        expectedSumALast,
+        expectedSumBLast,
+        expectedSumFpLast,
+        expectedSumFeeLast,
+      );
+    }
   }
 
   async function checkGlobalParams(
@@ -981,13 +983,13 @@ describe('Clearing House Library', () => {
       const expectedBaseAmountOutWithFee = 51250196260n;
       const expectedFundingPayment = 160028n + 1n;
 
-      const expectedTickSumB = 1305108448316n+3n;
-      const expectedTickSumA = 2345128n;
-      const expectedTickSumFp = 0n;
-      const expectedTickSumFee = 2758123n;
+      const expectedTickSumB = 1305108448316n + 3n;
+      const expectedTickSumA = 3195846n;
+      const expectedTickSumFp = 11102790n;
+      const expectedTickSumFee = 2758123n + 1n;
 
       const expectedAccount1UnrealizedFunding = 0n;
-      const expectedAccount1UnrealizedFee = 0n;
+      const expectedAccount1UnrealizedFee = 11810983n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1041,17 +1043,17 @@ describe('Clearing House Library', () => {
       const expectedSumFp = 81960507n;
       const expectedSumFee = 15781728n + 1n;
 
-      const expectedTickSumB = 1305108448316n;
-      const expectedTickSumA = 2345128n;
-      const expectedTickSumFp = 0n;
-      const expectedTickSumFee = 2758123n;
+      const expectedTickSumB = 1189490198145n;
+      const expectedTickSumA = 4027221n;
+      const expectedTickSumFp = 60007362n + 1n;
+      const expectedTickSumFee = 13023604n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedBaseAmountOutWithFee = -51404177823n - 2n;
       const expectedFundingPayment = 361873n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 0n;
-      const expectedAccount1UnrealizedFee = 11810983n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
+      const expectedAccount1UnrealizedFee = 23621967n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1110,12 +1112,12 @@ describe('Clearing House Library', () => {
       const expectedBaseAmountOutWithFee = -48797153836n - 1n;
       const expectedFundingPayment = 182889n + 1n;
 
-      const expectedTickSumB = 189490198145n;
+      const expectedTickSumB = 1189490198145n;
       const expectedTickSumA = 4027221n;
-      const expectedTickSumFp = 60007362n;
-      const expectedTickSumFee = 13023604n;
+      const expectedTickSumFp = 60007362n + 1n;
+      const expectedTickSumFee = 13023604n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
       const expectedAccount1UnrealizedFee = 23621967n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1170,16 +1172,16 @@ describe('Clearing House Library', () => {
       const expectedSumFp = 102984058n + 1n;
       const expectedSumFee = 28704645n + 1n;
 
-      const expectedTickSumB = 189490198145n;
+      const expectedTickSumB = 1189490198145n;
       const expectedTickSumA = 4027221n;
-      const expectedTickSumFp = 60007362n;
-      const expectedTickSumFee = 13023604n;
+      const expectedTickSumFp = 60007362n + 1n;
+      const expectedTickSumFee = 13023604n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedBaseAmountOutWithFee = 48650981631n - 1n;
       const expectedFundingPayment = -24358n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
       const expectedAccount1UnrealizedFee = 23621967n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1239,13 +1241,13 @@ describe('Clearing House Library', () => {
       const expectedBaseAmountOutWithFee = 51250196260n;
       const expectedFundingPayment = 26396n + 1n;
 
-      const expectedTickSumB = 1305108448316n;
-      const expectedTickSumA = 5599294n;
-      const expectedTickSumFp = 24277051n;
-      const expectedTickSumFee = 15681040n;
+      const expectedTickSumB = 1305108448316n + 3n;
+      const expectedTickSumA = 5739622n;
+      const expectedTickSumFp = 26108494n;
+      const expectedTickSumFee = 15681040n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
-      const expectedAccount1UnrealizedFee = 23621967n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
+      const expectedAccount1UnrealizedFee = 35432951n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1298,17 +1300,17 @@ describe('Clearing House Library', () => {
       const expectedSumFp = 148203538n + 1n;
       const expectedSumFee = 39796806n + 1n;
 
-      const expectedTickSumB = 1305108448316n;
-      const expectedTickSumA = 5599294n;
-      const expectedTickSumFp = 24277051n;
-      const expectedTickSumFee = 15681040n;
+      const expectedTickSumB = 1189490198145n;
+      const expectedTickSumA = 746151n;
+      const expectedTickSumFp = 0n;
+      const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedBaseAmountOutWithFee = 57229752578n;
       const expectedFundingPayment = 361873n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 7285n;
-      const expectedAccount1UnrealizedFee = 35432951n;
+      const expectedAccount1UnrealizedFunding = -94570n + 2n;
+      const expectedAccount1UnrealizedFee = 48621967n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1354,15 +1356,23 @@ describe('Clearing House Library', () => {
       const liquidityDelta = -22538439850760800n;
       const limitOrderType = 0;
       const expectedEndTokenBalance = 12196020739034000000n;
-      const expectedEndBaseBalance = '-24951543170';
+      const expectedEndBaseBalance = -24951472603n + 3n;
 
-      const expectedSumALast = 6570998n;
-      const expectedSumBLast = -115618250170n;
-      const expectedSumFpLast = 32327135n;
-      const expectedSumFeeLast = 21572907n;
+      // const expectedSumALast = 6570998n;
+      // const expectedSumBLast = -115618250170n;
+      // const expectedSumFpLast = 32327135n;
+      // const expectedSumFeeLast = 21572907n;
 
-      const expectedAccount1UnrealizedFunding = 94570n;
-      const expectedAccount1UnrealizedFee = 48621967n;
+      const expectedAccount1UnrealizedFunding = -94570n + 2n;
+      const expectedAccount1UnrealizedFee = 48621967n + 1n;
+
+      await checkUnrealizedFundingPaymentAndFee(
+        user1AccountNo,
+        vTokenAddress,
+        0,
+        expectedAccount1UnrealizedFunding,
+        expectedAccount1UnrealizedFee,
+      );
 
       await updateRangeOrderAndCheck(
         user1,
@@ -1374,23 +1384,11 @@ describe('Clearing House Library', () => {
         liquidityDelta,
         false,
         limitOrderType,
+        -1,
         0,
-        1,
         expectedEndTokenBalance,
         expectedEndBaseBalance,
         true,
-        expectedSumALast,
-        expectedSumBLast,
-        expectedSumFpLast,
-        expectedSumFeeLast,
-      );
-
-      await checkUnrealizedFundingPaymentAndFee(
-        user1AccountNo,
-        vTokenAddress,
-        0,
-        expectedAccount1UnrealizedFunding,
-        expectedAccount1UnrealizedFee,
       );
     });
 
@@ -1416,10 +1414,10 @@ describe('Clearing House Library', () => {
       const expectedSumFp = 230540892n + 1n;
       const expectedSumFee = 43138396n + 1n;
 
-      const expectedTickSumB = 6716317396136n;
-      const expectedTickSumA = 6570998n;
-      const expectedTickSumFp = 78917555n;
-      const expectedTickSumFee = 37253947n;
+      const expectedTickSumB = 0n;
+      const expectedTickSumA = 0n;
+      const expectedTickSumFp = 0n;
+      const expectedTickSumFee = 0n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedBaseAmountOutWithFee = 25160205935n;
@@ -1444,7 +1442,7 @@ describe('Clearing House Library', () => {
       );
 
       await checkGlobalParams(expectedSumB, expectedSumA, expectedSumFp, expectedSumFee);
-      await checkTickParams(-200, expectedTickSumB, expectedTickSumA, expectedTickSumFp, expectedTickSumFee);
+      await checkTickParams(-200310, expectedTickSumB, expectedTickSumA, expectedTickSumFp, expectedTickSumFee);
     });
 
     it('Timestamp and Oracle Update - 6300', async () => {
