@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 interface IVPoolWrapper {
+    event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);
+
     function timeHorizon() external view returns (uint32);
 
     function initialMarginRatio() external view returns (uint16);

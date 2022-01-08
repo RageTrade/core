@@ -213,7 +213,10 @@ describe('Clearing House Library', () => {
     vTokenAddress = out.vTokenAddress;
     oracle = out.oracle;
     realToken = out.realToken;
-    vPool = await hre.ethers.getContractAt('IUniswapV3Pool', out.vPool);
+    vPool = (await hre.ethers.getContractAt(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      out.vPool,
+    )) as IUniswapV3Pool;
 
     // console.log('### Is VToken 0 ? ###');
     // console.log(BigNumber.from(vTokenAddress).lt(vBaseAddress));

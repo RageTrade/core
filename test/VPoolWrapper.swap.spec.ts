@@ -62,7 +62,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swapInternal(swapDirection, amountSpecified, 0));
+      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(swapDirection, amountSpecified, 0));
 
       // when asked to charge 1 ETH, trader should be debited by that exactly and get whatever ETH
       expect(vTokenIn).to.eq(parseEther('1'));
@@ -82,7 +82,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vTokenMintEvent, vBaseBurnEvent } = await extractEvents(
-        vPoolWrapper.swapInternal(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
       );
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
@@ -99,7 +99,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swapInternal(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);
@@ -122,7 +122,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swapInternal(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0));
+      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0));
 
       // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
       expect(vBaseIn).to.eq(parseUsdc('2000'));
@@ -142,7 +142,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vBaseMintEvent, vTokenBurnEvent } = await extractEvents(
-        vPoolWrapper.swapInternal(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
       );
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
@@ -161,7 +161,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swapInternal(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);
@@ -183,7 +183,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swapInternal(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0));
+      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0));
 
       // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
       assert(vTokenIn.isNegative());
@@ -204,7 +204,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vTokenBurnEvent, vBaseMintEvent } = await extractEvents(
-        vPoolWrapper.swapInternal(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
       );
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
@@ -220,7 +220,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swapInternal(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);
@@ -242,7 +242,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swapInternal(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0));
+      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0));
       assert(vBaseIn.isNegative());
       expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
     });
@@ -262,7 +262,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vBaseBurnEvent, vTokenMintEvent } = await extractEvents(
-        vPoolWrapper.swapInternal(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
       );
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
@@ -276,7 +276,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swapInternal(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);

@@ -52,9 +52,12 @@ describe('Market Value and Required Margin', () => {
       twapDuration: 60,
       whitelisted: true,
     }));
-    vPoolFake = await smock.fake<UniswapV3Pool>('IUniswapV3Pool', {
-      address: vPoolAddress,
-    });
+    vPoolFake = await smock.fake<UniswapV3Pool>(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      {
+        address: vPoolAddress,
+      },
+    );
     vPoolFake.observe.returns([[0, -194430 * 60], []]);
 
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {

@@ -1,6 +1,7 @@
 import { BigNumber, BigNumberish, FixedNumber } from '@ethersproject/bignumber';
 import { ethers } from 'ethers';
 import { VPoolWrapperMock2, VBase, VToken, UniswapV3Pool, SimulateSwapTest } from '../typechain-types';
+import { SwapEvent } from '../typechain-types/VPoolWrapper';
 import { Q128, Q96, toQ128, toQ96 } from './utils/fixed-point';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import {
@@ -123,17 +124,20 @@ describe('PoolWrapper', () => {
 
   describe('#getValuesInside', () => {
     const uniswapFee = 500;
-    const liquidityFee = 700;
-    const protocolFee = 300;
+    const liquidityFee = 1000;
+    const protocolFee = 500;
+    // const uniswapFee = 500;
+    // const liquidityFee = 700;
+    // const protocolFee = 300;
 
     let liquidity1: BigNumber;
     let liquidity2: BigNumber;
     beforeEach(async () => {
       // sets up the liquidity
-      // -20 -> -10 ===> 100 A (liquidity2)
-      // -10 ->   0 ===> 100 A (liquidity1)
-      //   0 ->  10 ===> 100 B (liquidity1)
-      //  10 ->  20 ===> 100 B (liquidity2)
+      // -60 -> -30 ===> 100 A (liquidity2)
+      // -30 ->   0 ===> 100 A (liquidity1)
+      //   0 ->  30 ===> 100 B (liquidity1)
+      //  30 ->  60 ===> 100 B (liquidity2)
       ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
@@ -145,125 +149,379 @@ describe('PoolWrapper', () => {
       }));
 
       const { sqrtPriceX96 } = await vPool.slot0();
-      liquidity1 = maxLiquidityForAmounts(sqrtPriceX96, -10, 10, parseUnits('100', 18), parseUnits('100', 18), true);
-      liquidity2 = maxLiquidityForAmounts(sqrtPriceX96, 10, 20, parseUnits('100', 18), parseUnits('100', 18), true);
+      liquidity1 = maxLiquidityForAmounts(sqrtPriceX96, -30, 30, parseUnits('100', 18), parseUnits('100', 18), true);
+      liquidity2 = maxLiquidityForAmounts(sqrtPriceX96, 30, 60, parseUnits('100', 18), parseUnits('100', 18), true);
 
-      await vPoolWrapper.liquidityChange(-10, 10, liquidity1);
-      await vPoolWrapper.liquidityChange(10, 20, liquidity2);
-      await vPoolWrapper.liquidityChange(-20, -10, liquidity2);
+      await vPoolWrapper.liquidityChange(-60, -30, liquidity2);
+      await vPoolWrapper.liquidityChange(-30, 30, liquidity1);
+      await vPoolWrapper.liquidityChange(30, 60, liquidity2);
     });
 
-    describe('fp', () => {
-      const cases = [
-        { isNotional: false, tradeAmount: parseEther('1'), info: 'exactOut ETH' },
-        { isNotional: false, tradeAmount: parseEther('-1'), info: 'exactIn ETH' },
-        { isNotional: true, tradeAmount: parseEther('2'), info: 'exactOut USDC' },
-        { isNotional: true, tradeAmount: parseEther('-2'), info: 'exactIn USDC' },
-      ];
+    describe('values', () => {
+      it('no trade', async () => {
+        const valuesInside10 = await vPoolWrapper.getValuesInside(-10, 10);
+        expect(valuesInside10.sumFeeInsideX128).to.eq(0);
+        const valuesInside30 = await vPoolWrapper.getValuesInside(-30, 30);
+        expect(valuesInside30.sumFeeInsideX128).to.eq(0);
+        const valuesInside40 = await vPoolWrapper.getValuesInside(-40, 40);
+        expect(valuesInside40.sumFeeInsideX128).to.eq(0);
+        const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+        expect(valuesInside60.sumFeeInsideX128).to.eq(0);
+        const valuesInside70 = await vPoolWrapper.getValuesInside(-70, 70);
+        expect(valuesInside70.sumFeeInsideX128).to.eq(0);
+      });
 
-      for (const { isNotional, tradeAmount, info } of cases) {
-        it(`no tick cross | isNotional=${isNotional} | tradeAmount=${
-          isNotional ? formatUnits(tradeAmount, 6) : formatEther(tradeAmount)
-        } | ${info}`, async () => {
-          // trade that does not cross tick
-          await vPoolWrapper.swap(isNotional, tradeAmount, 0);
+      it('small trade', async () => {
+        // moves tick from 0 to 14
+        await vPoolWrapper.swap(false, parseUnits('50', 18), 0);
+
+        const sumFeeGlobal = await vPoolWrapper.sumFeeGlobalX128();
+
+        const valuesInside10 = await vPoolWrapper.getValuesInside(-10, 10);
+        expect(valuesInside10.sumFeeInsideX128).to.eq(0); // since 10 is not initialized tick
+        const valuesInside30 = await vPoolWrapper.getValuesInside(-30, 30);
+        expect(valuesInside30.sumFeeInsideX128).to.eq(sumFeeGlobal);
+        const valuesInside40 = await vPoolWrapper.getValuesInside(-40, 40);
+        expect(valuesInside40.sumFeeInsideX128).to.eq(sumFeeGlobal);
+        const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+        expect(valuesInside60.sumFeeInsideX128).to.eq(sumFeeGlobal);
+        const valuesInside70 = await vPoolWrapper.getValuesInside(-70, 70);
+        expect(valuesInside70.sumFeeInsideX128).to.eq(sumFeeGlobal);
+
+        const valuesInside6030 = await vPoolWrapper.getValuesInside(-60, -30);
+        expect(valuesInside6030.sumFeeInsideX128).to.eq(0);
+        const valuesInside3060 = await vPoolWrapper.getValuesInside(30, 60);
+        expect(valuesInside3060.sumFeeInsideX128).to.eq(0);
+        const valuesInside5040 = await vPoolWrapper.getValuesInside(-50, -40);
+        expect(valuesInside5040.sumFeeInsideX128).to.eq(0);
+        const valuesInside4050 = await vPoolWrapper.getValuesInside(40, 50);
+        expect(valuesInside4050.sumFeeInsideX128).to.eq(0);
+
+        const valuesInside4010a = await vPoolWrapper.getValuesInside(-40, -10);
+        expect(valuesInside4010a.sumFeeInsideX128).to.eq(0);
+        const valuesInside4010b = await vPoolWrapper.getValuesInside(-40, 10);
+        expect(valuesInside4010b.sumFeeInsideX128).to.eq(0); // since 10 is not initialized tick
+        const valuesInside4020b = await vPoolWrapper.getValuesInside(-40, 20);
+        expect(valuesInside4020b.sumFeeInsideX128).to.eq(sumFeeGlobal);
+      });
+    });
+
+    describe('lp sumB', () => {
+      describe('no tick cross', () => {
+        it('buy | exactIn vBase', async () => {
+          const amountSpecified = parseUnits('50', 18); // vBase
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
+
           const globalState = await getGlobal();
-          const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
 
-          // since the trade does not go outside -20 and 20, values inside should be same as global
-          expect(valuesInside20.sumAX128).to.eq(globalState.sumAX128);
-          expect(valuesInside20.sumBInsideX128).to.eq(globalState.sumBX128);
-          expect(valuesInside20.sumFpInsideX128).to.eq(globalState.sumFpX128);
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
 
-          // fp values should be correct
-          expect(valuesInside20.sumAX128).to.eq(0);
-          if (!isNotional) {
-            expect(valuesInside20.sumBInsideX128).to.eq(tradeAmount.mul(-1).mul(Q128).div(liquidity1));
-          }
-          expect(valuesInside20.sumFpInsideX128).to.eq(0);
-        });
-      }
-
-      it('single tick cross', async () => {
-        // buy 150 VTokens, crosses a tick
-        const tradeAmount = parseUnits('150', 18);
-        await vPoolWrapper.swap(false, tradeAmount, 0);
-
-        const globalState = await getGlobal();
-        const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
-
-        // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumAX128).to.eq(globalState.sumAX128);
-        expect(valuesInside20.sumBInsideX128).to.eq(globalState.sumBX128);
-        expect(valuesInside20.sumFpInsideX128).to.eq(globalState.sumFpX128);
-
-        expect(valuesInside20.sumAX128).to.eq(0);
-        expect(valuesInside20.sumBInsideX128).to.eq(
-          parseUnits('100', 18)
-            .sub(1)
+          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+            // taking per liquidity
             .mul(Q128)
-            .div(liquidity1)
-            .add(parseUnits('50', 18).add(1).mul(Q128).div(liquidity2))
-            .mul(-1),
-        );
-        expect(valuesInside20.sumFpInsideX128).to.eq(0);
+            .div(liquidity1);
+          expect(globalState.sumBX128).to.eq(expectedSumBIncrease);
+
+          // just after first trade, the initial values of sumA and sumFp are still zero
+          expect(valuesInside60.sumAX128).to.eq(0);
+          expect(valuesInside60.sumFpInsideX128).to.eq(0);
+        });
+
+        it('buy | exactOut vToken', async () => {
+          const amountSpecified = parseUnits('-50', 18); // vToken
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
+          expect(SwapEvent.args.vTokenIn.abs()).eq(amountSpecified.abs());
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumBX128).to.eq(expectedSumBIncrease);
+
+          // just after first trade, the initial values of sumA and sumFp are still zero
+          expect(valuesInside60.sumAX128).to.eq(0);
+          expect(valuesInside60.sumFpInsideX128).to.eq(0);
+        });
+
+        it('sell | exactIn vToken', async () => {
+          const amountSpecified = parseUnits('50', 18); // vToken
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
+          expect(SwapEvent.args.vTokenIn.abs()).eq(amountSpecified.abs());
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumBX128).to.eq(expectedSumBIncrease);
+
+          // just after first trade, the initial values of sumA and sumFp are still zero
+          expect(valuesInside60.sumAX128).to.eq(0);
+          expect(valuesInside60.sumFpInsideX128).to.eq(0);
+        });
+
+        it('sell | exactOut vBase', async () => {
+          const amountSpecified = parseUnits('-50', 18); // vBase
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumBX128).to.eq(expectedSumBIncrease);
+
+          // just after first trade, the initial values of sumA and sumFp are still zero
+          expect(valuesInside60.sumAX128).to.eq(0);
+          expect(valuesInside60.sumFpInsideX128).to.eq(0);
+        });
+      });
+
+      describe('single tick cross', () => {
+        it('buy | exactIn vBase', async () => {
+          const amountSpecified = parseUnits('150', 18); // vBase
+          await vPoolWrapper.swap(false, amountSpecified, 0);
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const values6060 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(values6060.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          // since trade went other way, there should not be any net position in one side
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          expect(values6030.sumBInsideX128).to.eq(0);
+
+          // sum of net positions in individual ranges should equal global net position
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3030.sumBInsideX128).to.not.eq(0);
+          expect(values3060.sumBInsideX128).to.not.eq(0);
+          expect(values3030.sumBInsideX128.add(values3060.sumBInsideX128)).to.eq(globalState.sumBX128);
+        });
+
+        it('buy | exactOut vToken', async () => {
+          const amountSpecified = parseUnits('150', 18); // vToken
+          await vPoolWrapper.swap(false, amountSpecified, 0);
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const values6060 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(values6060.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          // since trade went other way, there should not be any net position in one side
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          expect(values6030.sumBInsideX128).to.eq(0);
+
+          // sum of net positions in individual ranges should equal global net position
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3030.sumBInsideX128).to.not.eq(0);
+          expect(values3060.sumBInsideX128).to.not.eq(0);
+          expect(values3030.sumBInsideX128.add(values3060.sumBInsideX128)).to.eq(globalState.sumBX128);
+        });
+
+        it('sell | exactIn vToken', async () => {
+          const amountSpecified = parseUnits('150', 18); // vToken
+          await vPoolWrapper.swap(true, amountSpecified, 0);
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const values6060 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(values6060.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          // sum of net positions in individual ranges should equal global net position
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          expect(values6030.sumBInsideX128).to.not.eq(0);
+          expect(values3030.sumBInsideX128).to.not.eq(0);
+          expect(values6030.sumBInsideX128.add(values3030.sumBInsideX128)).to.eq(globalState.sumBX128);
+
+          // since trade went other way, there should not be any net position in one side
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3060.sumBInsideX128).to.eq(0);
+        });
+
+        it('sell | exactOut vBase', async () => {
+          const amountSpecified = parseUnits('-150', 18); // vBase
+          await vPoolWrapper.swap(true, amountSpecified, 0);
+
+          const globalState = await getGlobal();
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          const values6060 = await vPoolWrapper.getValuesInside(-60, 60);
+          expect(values6060.sumBInsideX128).to.eq(globalState.sumBX128);
+
+          // sum of net positions in individual ranges should equal global net position
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          expect(values6030.sumBInsideX128).to.not.eq(0);
+          expect(values3030.sumBInsideX128).to.not.eq(0);
+          expect(values6030.sumBInsideX128.add(values3030.sumBInsideX128)).to.eq(globalState.sumBX128);
+
+          // since trade went other way, there should not be any net position in one side
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3060.sumBInsideX128).to.eq(0);
+        });
       });
     });
 
-    describe('fee', () => {
-      it('buy: no tick cross', async () => {
-        // buy VToken worth 50 VBase, does not cross tick
-        const tradeAmount = parseUnits('50', 18);
-        await vPoolWrapper.swap(true, tradeAmount, 0);
+    describe('lp fees', () => {
+      describe('no tick cross', () => {
+        it('buy | exactIn vBase', async () => {
+          const amountSpecified = parseUnits('50', 18);
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
 
-        const globalState = await getGlobal();
-        const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
+          const globalState = await getGlobal();
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
 
-        // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
+          // since no trades went outside -20 and 20, values inside should be same as global
+          expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
-        // if buy then uniswap fee will increase
-        const expectedFeeIncrease = tradeAmount
-          .abs()
-          // calculating liquidity fee
-          .mul(liquidityFee)
-          .div(1e6)
-          .add(1) // rounding amount down
-          // taking per liquidity
-          .mul(Q128)
-          .div(liquidity1);
-        // TODO: fix vBaseAmount incorrect in onSwapStep. LPs get less fees.
-        // expect(valuesInside20.sumFeeInsideX128).to.eq(expectedFeeIncrease);
-        expect(valuesInside20.sumFeeInsideX128).to.lt(expectedFeeIncrease);
-        expect(valuesInside20.sumFeeInsideX128).to.gt(expectedFeeIncrease.mul(9999).div(10000));
+          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+            .sub(1) // TODO why this sub 1 is needed, fix this
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumFeeGlobalX128).to.eq(expectedFeeIncrease);
+        });
+
+        it('buy | exactOut vToken', async () => {
+          const amountSpecified = parseUnits('-50', 18);
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
+
+          const globalState = await getGlobal();
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
+
+          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumFeeGlobalX128).to.eq(expectedFeeIncrease);
+        });
+
+        it('sell | exactOut vBase', async () => {
+          const amountSpecified = parseUnits('-50', 18);
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
+
+          const globalState = await getGlobal();
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
+
+          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumFeeGlobalX128).to.eq(expectedFeeIncrease);
+        });
+
+        it('sell | exactIn vToken', async () => {
+          const amountSpecified = parseUnits('50', 18);
+          const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
+
+          const globalState = await getGlobal();
+          const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
+
+          // since no trades went outside -20 and 20, values inside should be same as global
+          expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
+
+          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+            // taking per liquidity
+            .mul(Q128)
+            .div(liquidity1);
+          expect(globalState.sumFeeGlobalX128).to.eq(expectedFeeIncrease);
+        });
       });
 
-      it('sell: no tick cross', async () => {
-        // buy VToken worth 50 VBase, does not cross tick
-        const tradeAmount = parseUnits('50', 18);
-        await vPoolWrapper.swap(true, tradeAmount, 0);
+      describe('single tick cross', () => {
+        it('buy | exactIn vBase', async () => {
+          const amountSpecified = parseUnits('150', 18);
+          await vPoolWrapper.swap(false, amountSpecified, 0);
 
-        const globalState = await getGlobal();
-        const valuesInside20 = await vPoolWrapper.getValuesInside(-20, 20);
+          const { sumFeeGlobalX128 } = await getGlobal();
 
-        // since no trades went outside -20 and 20, values inside should be same as global
-        expect(valuesInside20.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          expect(values6030.sumFeeInsideX128).to.eq(0);
 
-        // if buy then uniswap fee will increase
-        const expectedFeeIncrease = tradeAmount
-          .abs()
-          // calculating liquidity fee
-          .mul(liquidityFee)
-          .div(1e6)
-          // .add(1) // fee collected by LP is less than fee paid by traders
-          // taking per liquidity
-          .mul(Q128)
-          .div(liquidity1);
-        expect(valuesInside20.sumFeeInsideX128).to.eq(expectedFeeIncrease);
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3030.sumFeeInsideX128).to.not.eq(0);
+          expect(values3060.sumFeeInsideX128).to.not.eq(0);
+          expect(values3030.sumFeeInsideX128.add(values3060.sumFeeInsideX128)).to.eq(sumFeeGlobalX128);
+        });
+
+        it('buy | exactOut vToken', async () => {
+          const amountSpecified = parseUnits('-150', 18);
+          await vPoolWrapper.swap(false, amountSpecified, 0);
+          const { sumFeeGlobalX128 } = await getGlobal();
+
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          expect(values6030.sumFeeInsideX128).to.eq(0);
+
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3030.sumFeeInsideX128).to.not.eq(0);
+          expect(values3060.sumFeeInsideX128).to.not.eq(0);
+          expect(values3030.sumFeeInsideX128.add(values3060.sumFeeInsideX128)).to.eq(sumFeeGlobalX128);
+        });
+
+        it('sell | exactIn vToken', async () => {
+          const amountSpecified = parseUnits('150', 18);
+          await vPoolWrapper.swap(true, amountSpecified, 0);
+
+          const { sumFeeGlobalX128 } = await getGlobal();
+
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          expect(values6030.sumFeeInsideX128).to.not.eq(0);
+          expect(values3030.sumFeeInsideX128).to.not.eq(0);
+          expect(values6030.sumFeeInsideX128.add(values3030.sumFeeInsideX128)).to.eq(sumFeeGlobalX128);
+
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3060.sumFeeInsideX128).to.eq(0);
+        });
+
+        it('sell | exactOut vBase', async () => {
+          const amountSpecified = parseUnits('-150', 18);
+          await vPoolWrapper.swap(true, amountSpecified, 0);
+
+          const { sumFeeGlobalX128 } = await getGlobal();
+
+          const values6030 = await vPoolWrapper.getValuesInside(-60, -30);
+          const values3030 = await vPoolWrapper.getValuesInside(-30, 30);
+          expect(values6030.sumFeeInsideX128).to.not.eq(0);
+          expect(values3030.sumFeeInsideX128).to.not.eq(0);
+          expect(values6030.sumFeeInsideX128.add(values3030.sumFeeInsideX128)).to.eq(sumFeeGlobalX128);
+
+          const values3060 = await vPoolWrapper.getValuesInside(30, 60);
+          expect(values3060.sumFeeInsideX128).to.eq(0);
+        });
       });
-
-      it('buy: single tick cross');
-      it('sell: single tick cross');
     });
   });
 
@@ -283,7 +541,7 @@ describe('PoolWrapper', () => {
     await vPoolWrapper.liquidityChange(tickLower, tickUpper, liquidityDelta);
   }
 
-  async function extractEvents(tx: ContractTransaction | Promise<ContractTransaction>) {
+  async function extractTransferEvents(tx: ContractTransaction | Promise<ContractTransaction>) {
     tx = await tx;
     const rc = await tx.wait();
     const transferEvents = rc.logs
@@ -311,6 +569,26 @@ describe('PoolWrapper', () => {
         event => event.address === vBase.address && event.args.to === ethers.constants.AddressZero,
       ),
     };
+  }
+  async function extractSwapEvent(tx: ContractTransaction | Promise<ContractTransaction>) {
+    tx = await tx;
+    const rc = await tx.wait();
+    const SwapEvent = (
+      rc.logs
+        ?.map(log => {
+          try {
+            return { ...log, ...vPoolWrapper.interface.parseLog(log) };
+          } catch {
+            return null;
+          }
+        })
+        .filter(event => event !== null)
+        .filter(event => event?.name === 'Swap') as unknown as SwapEvent[]
+    ).find(event => event.address === vPoolWrapper.address);
+    if (!SwapEvent) {
+      throw new Error('SwapEvent was not emitted');
+    }
+    return SwapEvent;
   }
 
   async function getGlobal(): Promise<{
