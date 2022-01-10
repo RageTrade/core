@@ -2,14 +2,39 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { SqrtPriceMath, TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_ } from '@uniswap/v3-sdk';
+import { smock } from '@defi-wonderland/smock';
+
+import {
+  SqrtPriceMath,
+  TickMath,
+  maxLiquidityForAmounts as maxLiquidityForAmounts_,
+  ADDRESS_ZERO,
+  tickToPrice,
+} from '@uniswap/v3-sdk';
 import { constants } from './utils/dummyConstants';
-import { LiquidityPositionTest } from '../typechain-types';
+import { LiquidityPositionTest, UniswapV3Pool } from '../typechain-types';
 import JSBI from 'jsbi';
 import { toQ128 } from './utils/fixed-point';
+import { priceToTick, tickToSqrtPriceX96 } from './utils/price-tick';
 
 describe('LiquidityPosition Library', () => {
   let test: LiquidityPositionTest;
+
+  before(async () => {
+    const vPoolAddress = ADDRESS_ZERO;
+    const vPoolFake = await smock.fake<UniswapV3Pool>(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      {
+        address: vPoolAddress,
+      },
+    );
+    const tick = -19800;
+    const sqrtPriceX96 = tickToSqrtPriceX96(tick);
+    vPoolFake.observe.returns([[0, tick * 60], []]);
+    vPoolFake.slot0.returns(() => {
+      return [sqrtPriceX96, tick, 0, 0, 0, 0, false];
+    });
+  });
 
   beforeEach(async () => {
     const factory = await hre.ethers.getContractFactory('LiquidityPositionTest');

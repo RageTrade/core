@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import './interfaces/IVPoolWrapper.sol';
 import './interfaces/IVPoolWrapperDeployer.sol';
-import { VTokenAddress, VTokenLib, IUniswapV3Pool, Constants } from './libraries/VTokenLib.sol';
+import { VTokenAddress, VTokenLib, Constants } from './libraries/VTokenLib.sol';
 import '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 import './interfaces/IVBase.sol';

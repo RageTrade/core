@@ -5,11 +5,13 @@ pragma solidity ^0.8.9;
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { PriceMath } from './PriceMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library UniswapV3PoolHelper {
     using UniswapV3PoolHelper for IUniswapV3Pool;
+    using PriceMath for uint160;
 
     error IllegalTwapDuration(uint32 period);
     error OracleConsultFailed();
@@ -25,6 +27,11 @@ library UniswapV3PoolHelper {
         if (sqrtPriceX96 == 0) {
             sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         }
+    }
+
+    function priceCurrent(IUniswapV3Pool v3Pool) internal view returns (uint256 priceX128) {
+        uint160 sqrtPriceX96 = v3Pool.sqrtPriceCurrent();
+        return sqrtPriceX96.toPriceX128();
     }
 
     function twapSqrtPrice(IUniswapV3Pool pool, uint32 twapDuration) internal view returns (uint160 sqrtPriceX96) {

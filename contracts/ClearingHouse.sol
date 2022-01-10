@@ -50,6 +50,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         if (!isDepositCheck && !supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
     }
 
+    /// @inheritdoc IClearingHouse
     function createAccount() external notPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
@@ -61,6 +62,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         emit Account.AccountCreated(msg.sender, newAccountId);
     }
 
+    /// @inheritdoc IClearingHouse
     function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
@@ -71,6 +73,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         IERC20(realBase).transfer(teamMultisig(), totalProtocolFee);
     }
 
+    /// @inheritdoc IClearingHouse
     function addMargin(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -92,6 +95,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         emit Account.DepositMargin(accountNo, vTokenAddress, amount);
     }
 
+    /// @inheritdoc IClearingHouse
     function removeMargin(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -113,6 +117,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
     }
 
+    /// @inheritdoc IClearingHouse
     function removeProfit(uint256 accountNo, uint256 amount) external notPaused {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
@@ -123,6 +128,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         emit Account.WithdrawProfit(accountNo, amount);
     }
 
+    /// @inheritdoc IClearingHouse
     function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -152,6 +158,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         }
     }
 
+    /// @inheritdoc IClearingHouse
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -168,9 +175,6 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
             liquidityChangeParams.slippageToleranceBps
         );
 
-        if (liquidityChangeParams.liquidityDelta > 0 && liquidityChangeParams.closeTokenPosition)
-            revert InvalidLiquidityChangeParameters();
-
         (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
             vTokenAddress,
             liquidityChangeParams,
@@ -186,6 +190,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         if (notionalValueAbs < minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
+    /// @inheritdoc IClearingHouse
     function removeLimitOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -209,6 +214,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
+    /// @inheritdoc IClearingHouse
     function liquidateLiquidityPositions(uint256 accountNo) external notPaused returns (int256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
         int256 insuranceFundFee;
@@ -225,6 +231,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
+    /// @inheritdoc IClearingHouse
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
         uint256 accountNo,

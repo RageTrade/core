@@ -122,7 +122,7 @@ describe('Clearing House Library', () => {
 
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
-    oracle.setSqrtPrice(initialPrice);
+    await oracle.setSqrtPrice(initialPrice);
 
     await vPoolFactory.initializePool(
       {
