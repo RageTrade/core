@@ -5,6 +5,13 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 interface IVPoolWrapper {
+    struct WrapperValuesInside {
+        int256 sumAX128;
+        int256 sumBInsideX128;
+        int256 sumFpInsideX128;
+        uint256 sumFeeInsideX128;
+    }
+
     event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);
 
     function timeHorizon() external view returns (uint32);
@@ -20,18 +27,19 @@ interface IVPoolWrapper {
     function getValuesInside(int24 tickLower, int24 tickUpper)
         external
         view
-        returns (
-            int256 sumAX128,
-            int256 sumBInsideX128,
-            int256 sumFpInsideX128,
-            uint256 sumFeeInsideX128
-        );
+        returns (WrapperValuesInside memory wrapperValuesInside);
 
     function liquidityChange(
         int24 tickLower,
         int24 tickUpper,
         int128 liquidity
-    ) external returns (int256 vBaseAmount, int256 vTokenAmount);
+    )
+        external
+        returns (
+            int256 vBaseAmount,
+            int256 vTokenAmount,
+            WrapperValuesInside memory wrapperValuesInside
+        );
 
     function getSumAX128() external view returns (int256);
 

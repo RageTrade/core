@@ -91,13 +91,14 @@ library LiquidityPosition {
         IVPoolWrapper wrapper,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        position.update(accountNo, vTokenAddress, wrapper, balanceAdjustments);
+        (
+            int256 basePrincipal,
+            int256 vTokenPrincipal,
+            IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside
+        ) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
 
-        (int256 basePrincipal, int256 vTokenPrincipal) = wrapper.liquidityChange(
-            position.tickLower,
-            position.tickUpper,
-            liquidity
-        );
+        position.update(accountNo, vTokenAddress, wrapperValuesInside, balanceAdjustments);
+
         balanceAdjustments.vBaseIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
@@ -132,16 +133,16 @@ library LiquidityPosition {
         Info storage position,
         uint256 accountNo,
         VTokenAddress vTokenAddress,
-        IVPoolWrapper wrapper, // TODO use vTokenLib
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
         Account.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = wrapper
-            .getValuesInside(position.tickLower, position.tickUpper);
-
-        int256 fundingPayment = position.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
+        int256 fundingPayment = position.unrealizedFundingPayment(
+            wrapperValuesInside.sumAX128,
+            wrapperValuesInside.sumFpInsideX128
+        );
         balanceAdjustments.vBaseIncrease += fundingPayment;
 
-        int256 unrealizedLiquidityFee = position.unrealizedFees(sumFeeInsideX128).toInt256();
+        int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
         emit Account.FundingPayment(accountNo, vTokenAddress, position.tickLower, position.tickUpper, fundingPayment);
@@ -153,15 +154,18 @@ library LiquidityPosition {
             unrealizedLiquidityFee
         );
         // updating checkpoints
-        position.sumALastX128 = sumAX128;
-        position.sumBInsideLastX128 = sumBInsideX128;
-        position.sumFpInsideLastX128 = sumFpInsideX128;
-        position.sumFeeInsideLastX128 = sumFeeInsideX128;
+        position.sumALastX128 = wrapperValuesInside.sumAX128;
+        position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
+        position.sumFpInsideLastX128 = wrapperValuesInside.sumFpInsideX128;
+        position.sumFeeInsideLastX128 = wrapperValuesInside.sumFeeInsideX128;
     }
 
     function netPosition(Info storage position, IVPoolWrapper wrapper) internal view returns (int256) {
-        (, int256 sumBInsideX128, , ) = wrapper.getValuesInside(position.tickLower, position.tickUpper);
-        return position.netPosition(sumBInsideX128);
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getValuesInside(
+            position.tickLower,
+            position.tickUpper
+        );
+        return position.netPosition(wrapperValuesInside.sumBInsideX128);
     }
 
     function netPosition(Info storage position, int256 sumBInsideX128) internal view returns (int256) {
@@ -248,11 +252,14 @@ library LiquidityPosition {
             baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees
-        (int256 sumAX128, , int256 sumFpInsideX128, uint256 sumFeeInsideX128) = wrapper.getValuesInside(
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getValuesInside(
             position.tickLower,
             position.tickUpper
         );
-        baseValue_ += position.unrealizedFees(sumFeeInsideX128).toInt256();
-        baseValue_ += position.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
+        baseValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
+        baseValue_ += position.unrealizedFundingPayment(
+            wrapperValuesInside.sumAX128,
+            wrapperValuesInside.sumFpInsideX128
+        );
     }
 }

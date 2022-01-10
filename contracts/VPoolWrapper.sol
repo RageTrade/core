@@ -121,25 +121,18 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
-        external
+        public
         view
-        returns (
-            int256 sumAX128,
-            int256 sumBInsideX128,
-            int256 sumFpInsideX128,
-            uint256 sumFeeInsideX128
-        )
+        returns (WrapperValuesInside memory wrapperValuesInside)
     {
         (, int24 currentTick, , , , , ) = vPool.slot0();
         FundingPayment.Info memory _fpGlobal = fpGlobal;
-        sumAX128 = _fpGlobal.sumAX128;
-        (sumBInsideX128, sumFpInsideX128, sumFeeInsideX128) = ticksExtended.getTickExtendedStateInside(
-            tickLower,
-            tickUpper,
-            currentTick,
-            _fpGlobal,
-            sumFeeGlobalX128
-        );
+        wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
+        (
+            wrapperValuesInside.sumBInsideX128,
+            wrapperValuesInside.sumFpInsideX128,
+            wrapperValuesInside.sumFeeInsideX128
+        ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
     }
 
     /// @notice swaps token
@@ -354,7 +347,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int24 tickUpper,
         int128 liquidityDelta,
         int24 tickCurrent
-    ) private {
+    ) private returns (WrapperValuesInside memory wrapperValuesInside) {
         FundingPayment.Info memory _fpGlobal = fpGlobal; // SLOAD
         uint256 _sumFeeGlobalX128 = sumFeeGlobalX128;
 
@@ -384,6 +377,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             );
         }
 
+        wrapperValuesInside = getValuesInside(tickLower, tickUpper);
+
         // clear any tick data that is no longer needed
         if (liquidityDelta < 0) {
             if (flippedLower) {
@@ -399,8 +394,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int24 tickLower,
         int24 tickUpper,
         int128 liquidityDelta
-    ) external returns (int256 basePrincipal, int256 vTokenPrincipal) {
-        _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
+    )
+        external
+        returns (
+            int256 basePrincipal,
+            int256 vTokenPrincipal,
+            WrapperValuesInside memory wrapperValuesInside
+        )
+    {
+        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
         if (liquidityDelta > 0) {
             (uint256 _amount0, uint256 _amount1) = vPool.mint({
                 recipient: address(this),
