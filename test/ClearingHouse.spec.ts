@@ -235,29 +235,35 @@ describe('Clearing House Library', () => {
   describe('#Init Params', () => {
     it('Set Params', async () => {
       const liquidationParams = {
-        fixFee: tokenAmount(10, 6),
-        minRequiredMargin: tokenAmount(20, 6),
         liquidationFeeFraction: 1500,
         tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
       };
+      const fixFee = tokenAmount(10, 6);
       const removeLimitOrderFee = tokenAmount(10, 6);
-      const minOrderNotional = tokenAmount(1, 6).div(100);
+      const minimumOrderNotional = tokenAmount(1, 6).div(100);
+      const minRequiredMargin = tokenAmount(20, 6);
 
-      await clearingHouseTest.setPlatformParameters(liquidationParams, removeLimitOrderFee, minOrderNotional);
-      const curLiquidationParams = await clearingHouseTest.liquidationParams();
-      const curRemoveLimitOrderFee = await clearingHouseTest.removeLimitOrderFee();
-      const curMinOrderNotional = await clearingHouseTest.minimumOrderNotional();
+      await clearingHouseTest.setPlatformParameters(
+        liquidationParams,
+        removeLimitOrderFee,
+        minimumOrderNotional,
+        minRequiredMargin,
+      );
+      await clearingHouseTest.setFixFee(fixFee);
+      const accountStorage = await clearingHouseTest.accountStorage();
       const curPaused = await clearingHouseTest.paused();
 
-      expect(liquidationParams.fixFee).eq(curLiquidationParams.fixFee);
-      expect(liquidationParams.minRequiredMargin).eq(curLiquidationParams.minRequiredMargin);
-      expect(liquidationParams.liquidationFeeFraction).eq(curLiquidationParams.liquidationFeeFraction);
-      expect(liquidationParams.tokenLiquidationPriceDeltaBps).eq(curLiquidationParams.tokenLiquidationPriceDeltaBps);
-      expect(liquidationParams.insuranceFundFeeShareBps).eq(curLiquidationParams.insuranceFundFeeShareBps);
+      expect(await clearingHouseTest.fixFee()).eq(fixFee);
+      expect(accountStorage.minRequiredMargin).eq(minRequiredMargin);
+      expect(accountStorage.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
+      expect(accountStorage.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
+        liquidationParams.tokenLiquidationPriceDeltaBps,
+      );
+      expect(accountStorage.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
-      expect(removeLimitOrderFee).eq(curRemoveLimitOrderFee);
-      expect(minOrderNotional).eq(curMinOrderNotional);
+      expect(accountStorage.removeLimitOrderFee).eq(removeLimitOrderFee);
+      expect(accountStorage.minimumOrderNotional).eq(minimumOrderNotional);
       expect(curPaused).to.be.false;
     });
   });
