@@ -22,6 +22,7 @@ jobs:
         env:
           ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
           MNEMONIC: ${{ secrets.MNEMONIC }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   format:
     runs-on: ubuntu-latest
     environment: CI
