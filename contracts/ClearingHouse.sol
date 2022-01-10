@@ -220,7 +220,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
             vTokenAddresses,
-            liquidationParams,
+            getLiquidationParams(),
             constants
         );
         int256 accountFee = keeperFee + insuranceFundFee;
@@ -237,7 +237,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external notPaused returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) public notPaused returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.Info storage account = accounts[accountNo];
 
@@ -247,7 +247,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
             accounts[liquidatorAccountNo],
             liquidationBps,
             vTokenAddress,
-            liquidationParams,
+            getLiquidationParams(),
             vTokenAddresses,
             constants
         );
@@ -313,5 +313,22 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     modifier notPaused() {
         if (paused) revert Paused();
         _;
+    }
+
+    /// @notice Gets fix fee
+    /// @dev Allowed to be overriden for specific chain implementations
+    /// @return fixFee amount of fixFee in base
+    function _getFixFee() internal view virtual returns (uint256 fixFee) {
+        return 0;
+    }
+
+    function getLiquidationParams() public view returns (LiquidationParams memory liqParams) {
+        liqParams = LiquidationParams({
+            fixFee: _getFixFee(),
+            minRequiredMargin: liquidationParams.minRequiredMargin,
+            liquidationFeeFraction: liquidationParams.liquidationFeeFraction,
+            tokenLiquidationPriceDeltaBps: liquidationParams.tokenLiquidationPriceDeltaBps,
+            insuranceFundFeeShareBps: liquidationParams.insuranceFundFeeShareBps
+        });
     }
 }
