@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@134dd3v/arbos-precompiles@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@134dd3v/arbos-precompiles/-/arbos-precompiles-1.0.3.tgz#aaecb140d947cb56aaa6004b28321d9f796a741d"
+  integrity sha512-7zWODw3DfD/VoBs3g9SgedKgf+1cpyDTjFR0FDkBVaQY5E+YyM0YCqZgeABRC0syGx5hLVu/gt0pKWAdoJFFaA==
+
 "@134dd3v/prettier-plugin-solidity@^1.0.0-beta.18":
   version "1.0.0-beta.18"
   resolved "https://registry.yarnpkg.com/@134dd3v/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-beta.18.tgz#9669d4c6aa88f0a0b12d9668bad8bb07be188cc2"

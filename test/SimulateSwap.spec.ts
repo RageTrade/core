@@ -22,7 +22,7 @@ describe('SimulateSwap', () => {
   let test: SimulateSwapTest;
 
   before(async () => {
-    await activateMainnetFork(13555700);
+    await activateMainnetFork({ blockNumber: 13555700, network: 'mainnet' });
     signer = await impersonateAccount(ACCOUNT);
     v3Pool = (await hre.ethers.getContractAt(
       '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',

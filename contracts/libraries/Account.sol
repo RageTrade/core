@@ -556,11 +556,11 @@ library Account {
         int256 fixFee,
         Constants memory constants
     ) internal returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        BalanceAdjustments memory balanceAdjustments = BalanceAdjustments(
-            -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
-            tokensToTrade,
-            tokensToTrade
-        );
+        BalanceAdjustments memory balanceAdjustments = BalanceAdjustments({
+            vBaseIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
+            vTokenIncrease: tokensToTrade,
+            traderPositionIncrease: tokensToTrade
+        });
 
         // console.log('Liquidation Account Update Values');
         // console.logInt(balanceAdjustments.vBaseIncrease);
@@ -575,11 +575,11 @@ library Account {
             balanceAdjustments.vBaseIncrease
         );
 
-        balanceAdjustments = BalanceAdjustments(
-            tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
-            -tokensToTrade,
-            -tokensToTrade
-        );
+        balanceAdjustments = BalanceAdjustments({
+            vBaseIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
+            vTokenIncrease: -tokensToTrade,
+            traderPositionIncrease: -tokensToTrade
+        });
 
         // console.log('Liquidator Account Update Values');
         // console.logInt(balanceAdjustments.vBaseIncrease);
