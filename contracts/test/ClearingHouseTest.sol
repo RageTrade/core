@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import { ClearingHouse } from '../ClearingHouse.sol';
 import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition } from '../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 contract ClearingHouseTest is ClearingHouse {
     using Account for Account.Info;
@@ -124,14 +125,17 @@ contract ClearingHouseTest is ClearingHouse {
             liquidityPositionSet.active[num]
         ];
 
-        (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = VTokenAddress
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = VTokenAddress
             .wrap(vTokenAddress)
             .vPoolWrapper(accountStorage.constants)
             .getValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
-        fundingPayment = liquidityPosition.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
+        fundingPayment = liquidityPosition.unrealizedFundingPayment(
+            wrapperValuesInside.sumAX128,
+            wrapperValuesInside.sumFpInsideX128
+        );
 
-        unrealizedLiquidityFee = liquidityPosition.unrealizedFees(sumFeeInsideX128);
+        unrealizedLiquidityFee = liquidityPosition.unrealizedFees(wrapperValuesInside.sumFeeInsideX128);
     }
 
     function getAccountLiquidityPositionDetails(
