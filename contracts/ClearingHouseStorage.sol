@@ -6,6 +6,17 @@ import { Constants } from './utils/Constants.sol';
 import { Governable } from './utils/Governable.sol';
 import { LiquidationParams } from './libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
+import { RealTokenLib } from './libraries/RealTokenLib.sol';
+
+struct AccountStorage {
+    Constants constants; // TODO make it immutable, involves seperating the constants, doing this might also cause stack too deep issues
+    mapping(uint32 => VTokenAddress) vTokenAddresses;
+    mapping(uint32 => RealTokenLib.RealToken) realTokens;
+    LiquidationParams liquidationParams;
+    uint256 minRequiredMargin;
+    uint256 removeLimitOrderFee;
+    uint256 minimumOrderNotional;
+}
 
 abstract contract ClearingHouseStorage is Governable {
     using VTokenLib for VTokenAddress;
@@ -15,9 +26,6 @@ abstract contract ClearingHouseStorage is Governable {
     address public immutable realBase;
     address public immutable insuranceFundAddress;
 
-    Constants public constants; // TODO make it immutable, involves seperating the constants, doing this might also cause stack too deep issues
-
-    mapping(uint32 => VTokenAddress) vTokenAddresses;
     mapping(address => bool) public realTokenInitilized;
     mapping(VTokenAddress => bool) public supportedVTokens;
     mapping(VTokenAddress => bool) public supportedDeposits;
@@ -25,10 +33,9 @@ abstract contract ClearingHouseStorage is Governable {
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
 
-    LiquidationParams public liquidationParams;
-    uint256 public removeLimitOrderFee;
-    uint256 public minimumOrderNotional;
     bool public paused;
+
+    AccountStorage public accountStorage;
 
     error Paused();
     error NotVPoolFactory();

@@ -30,7 +30,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(constants);
+        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage.constants);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
@@ -44,7 +44,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         view
         returns (VTokenAddress vTokenAddress)
     {
-        vTokenAddress = vTokenAddresses[vTokenTruncatedAddress];
+        vTokenAddress = accountStorage.vTokenAddresses[vTokenTruncatedAddress];
         if (vTokenAddress.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
         if (isDepositCheck && !supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
         if (!isDepositCheck && !supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
@@ -84,13 +84,13 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.constants.VBASE_ADDRESS)) {
             IERC20(vTokenAddress.realToken()).transferFrom(msg.sender, address(this), amount);
         } else {
             IERC20(realBase).transferFrom(msg.sender, address(this), amount);
         }
 
-        account.addMargin(vTokenAddress, amount, constants);
+        account.addMargin(vTokenAddress, amount, accountStorage);
 
         emit Account.DepositMargin(accountNo, vTokenAddress, amount);
     }
@@ -106,9 +106,9 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        account.removeMargin(vTokenAddress, amount, vTokenAddresses, liquidationParams.minRequiredMargin, constants);
+        account.removeMargin(vTokenAddress, amount, accountStorage);
 
-        if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.constants.VBASE_ADDRESS)) {
             IERC20(vTokenAddress.realToken()).transfer(msg.sender, amount);
         } else {
             IERC20(realBase).transfer(msg.sender, amount);
@@ -122,7 +122,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        account.removeProfit(amount, vTokenAddresses, liquidationParams.minRequiredMargin, constants);
+        account.removeProfit(amount, accountStorage);
         IERC20(realBase).transfer(msg.sender, amount);
 
         emit Account.WithdrawProfit(accountNo, amount);
@@ -139,16 +139,10 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
 
-        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(
-            vTokenAddress,
-            swapParams,
-            vTokenAddresses,
-            liquidationParams.minRequiredMargin,
-            constants
-        );
+        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vTokenAddress, swapParams, accountStorage);
 
         uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
-        if (vBaseAmountOutAbs < minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
+        if (vBaseAmountOutAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
 
         if (!swapParams.isPartialAllowed) {
             if (
@@ -178,16 +172,14 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
             vTokenAddress,
             liquidityChangeParams,
-            vTokenAddresses,
-            liquidationParams.minRequiredMargin,
-            constants
+            accountStorage
         );
 
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, constants)
+            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, accountStorage.constants)
         );
 
-        if (notionalValueAbs < minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
+        if (notionalValueAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
     /// @inheritdoc IClearingHouse
@@ -200,15 +192,9 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
+        keeperFee = accountStorage.removeLimitOrderFee + _getFixFee();
 
-        account.removeLimitOrder(
-            vTokenAddress,
-            tickLower,
-            tickUpper,
-            removeLimitOrderFee + liquidationParams.fixFee,
-            constants
-        );
-        keeperFee = removeLimitOrderFee + liquidationParams.fixFee;
+        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage.constants);
 
         IERC20(realBase).transfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
@@ -218,11 +204,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     function liquidateLiquidityPositions(uint256 accountNo) external notPaused returns (int256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
         int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
-            vTokenAddresses,
-            getLiquidationParams(),
-            constants
-        );
+        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(_getFixFee(), accountStorage);
         int256 accountFee = keeperFee + insuranceFundFee;
 
         IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
@@ -247,9 +229,8 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
             accounts[liquidatorAccountNo],
             liquidationBps,
             vTokenAddress,
-            getLiquidationParams(),
-            vTokenAddresses,
-            constants
+            _getFixFee(),
+            accountStorage
         );
 
         transferInsuranceFundFee(insuranceFundFee);
@@ -264,7 +245,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     }
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
-        return vTokenAddresses[truncated].eq(address(0));
+        return accountStorage.vTokenAddresses[truncated].eq(address(0));
     }
 
     function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
@@ -272,7 +253,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     }
 
     function addVTokenAddress(uint32 truncated, address full) external onlyVPoolFactory {
-        vTokenAddresses[truncated] = VTokenAddress.wrap(full);
+        accountStorage.vTokenAddresses[truncated] = VTokenAddress.wrap(full);
     }
 
     function initRealToken(address realToken) external onlyVPoolFactory {
@@ -280,7 +261,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     }
 
     function setConstants(Constants memory _constants) external onlyVPoolFactory {
-        constants = _constants;
+        accountStorage.constants = _constants;
     }
 
     function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
@@ -298,11 +279,13 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     function setPlatformParameters(
         LiquidationParams calldata _liquidationParams,
         uint256 _removeLimitOrderFee,
-        uint256 _minimumOrderNotional
+        uint256 _minimumOrderNotional,
+        uint256 _minRequiredMargin
     ) external onlyGovernanceOrTeamMultisig {
-        liquidationParams = _liquidationParams;
-        removeLimitOrderFee = _removeLimitOrderFee;
-        minimumOrderNotional = _minimumOrderNotional;
+        accountStorage.liquidationParams = _liquidationParams;
+        accountStorage.removeLimitOrderFee = _removeLimitOrderFee;
+        accountStorage.minimumOrderNotional = _minimumOrderNotional;
+        accountStorage.minRequiredMargin = _minRequiredMargin;
     }
 
     modifier onlyVPoolFactory() {
@@ -320,15 +303,5 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     /// @return fixFee amount of fixFee in base
     function _getFixFee() internal view virtual returns (uint256 fixFee) {
         return 0;
-    }
-
-    function getLiquidationParams() public view returns (LiquidationParams memory liqParams) {
-        liqParams = LiquidationParams({
-            fixFee: _getFixFee(),
-            minRequiredMargin: liquidationParams.minRequiredMargin,
-            liquidationFeeFraction: liquidationParams.liquidationFeeFraction,
-            tokenLiquidationPriceDeltaBps: liquidationParams.tokenLiquidationPriceDeltaBps,
-            insuranceFundFeeShareBps: liquidationParams.insuranceFundFeeShareBps
-        });
     }
 }
