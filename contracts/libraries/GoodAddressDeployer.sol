@@ -40,8 +40,10 @@ library GoodAddressDeployer {
                 // we found good address, so stop the for loop and proceed
                 break;
             } else {
-                // since address is not what we'd likeusing a different salt
-                salt++;
+                // since address is not what we'd like, using a different salt
+                unchecked {
+                    salt++;
+                }
             }
         }
 
