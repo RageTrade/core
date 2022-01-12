@@ -3,9 +3,10 @@
 pragma solidity ^0.8.9;
 
 import { ClearingHouse } from '../ClearingHouse.sol';
-import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition } from '../libraries/Account.sol';
+import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition, SignedFullMath } from '../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { console } from 'hardhat/console.sol';
 
 contract ClearingHouseTest is ClearingHouse {
     using Account for Account.Info;
@@ -14,6 +15,7 @@ contract ClearingHouseTest is ClearingHouse {
     using VTokenPosition for VTokenPosition.Position;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
+    using SignedFullMath for int256;
 
     uint256 public fixFee;
 
@@ -118,11 +120,12 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 fundingPayment)
     {
+        VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
         VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
-            VTokenAddress.wrap(vTokenAddress).truncate()
+            vToken.truncate()
         ];
 
-        IVPoolWrapper wrapper = VTokenAddress.wrap(vTokenAddress).vPoolWrapper(accountStorage.constants);
+        IVPoolWrapper wrapper = vToken.vPoolWrapper(accountStorage.constants);
 
         fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
@@ -143,7 +146,7 @@ contract ClearingHouseTest is ClearingHouse {
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = VTokenAddress
             .wrap(vTokenAddress)
             .vPoolWrapper(accountStorage.constants)
-            .getValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
+            .getExtrapolatedValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
         fundingPayment = liquidityPosition.unrealizedFundingPayment(
             wrapperValuesInside.sumAX128,

@@ -26,7 +26,17 @@ contract VPoolWrapperMock is IVPoolWrapper {
         (initialMarginRatio, maintainanceMarginRatio, timeHorizon) = (0, 0, 0);
     }
 
+    function updateGlobalFundingState() public {}
+
     function getValuesInside(int24 tickLower, int24 tickUpper)
+        public
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside)
+    {
+        return _getValuesInside[tickLower][tickUpper];
+    }
+
+    function getExtrapolatedValuesInside(int24 tickLower, int24 tickUpper)
         public
         view
         returns (WrapperValuesInside memory wrapperValuesInside)
@@ -90,6 +100,10 @@ contract VPoolWrapperMock is IVPoolWrapper {
     }
 
     function getSumAX128() external pure returns (int256) {
+        return 20 * (1 << 128);
+    }
+
+    function getExtrapolatedSumAX128() external pure returns (int256) {
         return 20 * (1 << 128);
     }
 

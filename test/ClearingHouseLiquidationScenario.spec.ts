@@ -22,6 +22,7 @@ import {
   VBase,
   Account__factory,
   InsuranceFund,
+  UniswapV3Pool,
 } from '../typechain-types';
 
 import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
@@ -375,6 +376,7 @@ describe('Clearing House Library (Liquidation)', () => {
     expectedUnrealizedFundingPayment: BigNumberish,
   ) {
     const fundingPayment = await clearingHouseTest.getAccountTokenPositionFunding(userAccountNo, tokenAddress);
+    console.log('Token Position Funding');
     console.log(fundingPayment.toBigInt());
     // expect(fundingPayment).to.eq(expectedUnrealizedFundingPayment);
   }
@@ -450,6 +452,11 @@ describe('Clearing House Library (Liquidation)', () => {
         liquidityDelta,
       );
     }
+  }
+
+  async function logPoolPrice(pool: IUniswapV3Pool, token: VToken) {
+    const { sqrtPriceX96 } = await pool.slot0();
+    console.log(await sqrtPriceX96ToPrice(sqrtPriceX96, vBase, token));
   }
 
   async function checkGlobalParams(
@@ -599,7 +606,7 @@ describe('Clearing House Library (Liquidation)', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
 
-    await oracle.setSqrtPrice(initialPrice);
+    await await oracle.setSqrtPrice(initialPrice);
 
     await VPoolFactory.initializePool(
       {
@@ -958,7 +965,7 @@ describe('Clearing House Library (Liquidation)', () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await changeWrapperTimestampAndCheck(0);
       const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
-      oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
     });
 
     it('Acct[0] Adds Liq to BTC Pool b/w ticks (60000 to 68000) @ tickCurrent = 64197', async () => {
@@ -999,7 +1006,7 @@ describe('Clearing House Library (Liquidation)', () => {
     it('Timestamp And Oracle Update - 100', async () => {
       await changeWrapperTimestampAndCheck(100);
       const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
-      oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[0] Adds Liq to ETH Pool b/w ticks (-190000 to -196000) @ tickCurrent = -194365', async () => {
@@ -1040,7 +1047,7 @@ describe('Clearing House Library (Liquidation)', () => {
     it('Timestamp and Oracle Update - 600', async () => {
       await changeWrapperTimestampAndCheck(600);
       const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
-      oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
     });
 
     it('Acct[1] Short BTC : Price Changes (StartTick = 64197, EndTick = 64000)', async () => {
@@ -1080,7 +1087,9 @@ describe('Clearing House Library (Liquidation)', () => {
     it('Timestamp and Oracle Update - 1000', async () => {
       await changeWrapperTimestampAndCheck(1000);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
-      oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[1] Adds Liq to BTC Pool b/w ticks (63000 to 64400) @ tickCurrent = 64000', async () => {
@@ -1111,9 +1120,10 @@ describe('Clearing House Library (Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 1500', async () => {
       await changeWrapperTimestampAndCheck(1500);
-
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
-      oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[1] Short ETH : Price Changes (StartTick = -194365, EndTick = -194430)', async () => {
@@ -1152,8 +1162,10 @@ describe('Clearing House Library (Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 2000', async () => {
       await changeWrapperTimestampAndCheck(2000);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
-      oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[1] Adds Liq to ETH Pool b/w ticks (-195660 to -193370) @ tickCurrent = -194430', async () => {
@@ -1193,9 +1205,10 @@ describe('Clearing House Library (Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 2500', async () => {
       await changeWrapperTimestampAndCheck(2500);
-
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
       await oracle1.setSqrtPrice(realSqrtPrice1);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[2] Long BTC : Price Changes (StartTick = 64000, EndTick = 64400)', async () => {
@@ -1239,9 +1252,10 @@ describe('Clearing House Library (Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 2600', async () => {
       await changeWrapperTimestampAndCheck(2600);
-
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
-      oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[2] Long ETH : Price Changes (StartTick = -194430, EndTick = -193370)', async () => {
@@ -1284,9 +1298,10 @@ describe('Clearing House Library (Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 3000', async () => {
       await changeWrapperTimestampAndCheck(3000);
-
       const realSqrtPrice1 = await priceToSqrtPriceX96(62651.8307931874, vBase, vToken1);
-      oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
     it('Acct[2] Long BTC : Price Changes (StartTick = 64400, EndTick = 66000)', async () => {
@@ -1331,165 +1346,167 @@ describe('Clearing House Library (Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 3500', async () => {
       await changeWrapperTimestampAndCheck(3500);
-
       const realSqrtPrice1 = await priceToSqrtPriceX96(73522.0163840689, vBase, vToken1);
-      oracle1.setSqrtPrice(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken1);
-      oracle.setSqrtPrice(realSqrtPrice);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
     });
 
-    // it('Acct[1] Underwater : Liquidate Ranges @ current tickBTC = 66000, current tickETH = -193370', async () => {
-    //   const expectedToken1Balance = -501494329n - 1n;
-    //   const expectedTokenBalance = -25559097903887700000n;
+    it('Acct[1] Underwater : Liquidate Ranges @ current tickBTC = 66000, current tickETH = -193370', async () => {
+      const expectedToken1Balance = -501494329n - 1n;
+      const expectedTokenBalance = -25559097903887700000n;
 
-    //   const netTokenPosition = expectedTokenBalance;
-    //   const netTokenPosition1 = expectedToken1Balance;
+      const netTokenPosition = expectedTokenBalance;
+      const netTokenPosition1 = expectedToken1Balance;
 
-    //   const expectedBaseBalance = 393265223658n;
+      const expectedBaseBalance = 393256714158n - 49n;
 
-    //   const expected_MktVal_preRangeLiquidation = 31114231695n;
-    //   const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
+      const expected_MktVal_preRangeLiquidation = 31114231695n;
+      const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
 
-    //   const expected_MktVal_postRangeLiquidation = 0n;
-    //   const expectedReqMaintenanceMargin_postRangeLiquidation = 0n;
+      const expected_MktVal_postRangeLiquidation = 0n;
+      const expectedReqMaintenanceMargin_postRangeLiquidation = 0n;
 
-    //   const MaintenanceMarginFactor = 0n;
-    //   const liquidationFeeFraction = 0n;
-    //   const fixFee = tokenAmount(10, 6);
-    //   const insuranceFundFeeShareBps = 0n;
+      const MaintenanceMarginFactor = 0n;
+      const liquidationFeeFraction = 0n;
+      const fixFee = tokenAmount(10, 6);
+      const insuranceFundFeeShareBps = 0n;
 
-    //   const expectedTotalNotionalAmountClosed = 0n;
-    //   const expectedLiquidationFee = 0n;
-    //   const expectedKeeperFee = 4465434460n;
-    //   const expectedInsuranceFundFee = 4455434460n;
-    //   const feeDeductedFromLiquidatedAcct = 0n;
+      const expectedTotalNotionalAmountClosed = 0n;
+      const expectedLiquidationFee = 0n;
+      const expectedKeeperFee = 4466985212n;
+      const expectedInsuranceFundFee = 4456985212n;
+      const feeDeductedFromLiquidatedAcct = 0n;
 
-    //   // const MktVal_FixFee_KeeperFee = expected_MktVal_preRangeLiquidation - fixFee - expectedKeeperFee;
+      // const MktVal_FixFee_KeeperFee = expected_MktVal_preRangeLiquidation - fixFee - expectedKeeperFee;
 
-    //   await liquidateLiquidityPositions(keeper, user1AccountNo);
+      await liquidateLiquidityPositions(keeper, user1AccountNo);
 
-    //   await checkLiquidityPositionNum(user1AccountNo, vTokenAddress, 0);
-    //   await checkLiquidityPositionNum(user1AccountNo, vToken1Address, 0);
+      await checkLiquidityPositionNum(user1AccountNo, vTokenAddress, 0);
+      await checkLiquidityPositionNum(user1AccountNo, vToken1Address, 0);
 
-    //   await checkTokenBalanceApproxiate(user1AccountNo, vTokenAddress, expectedTokenBalance, 8);
-    //   await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
-    //   await checkTraderPositionApproximate(user1AccountNo, vTokenAddress, netTokenPosition, 8);
-    //   // await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
-    //   await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
-    //   await checkRealBaseBalance(keeper.address, expectedKeeperFee);
-    //   await checkRealBaseBalance(insuranceFund.address, expectedInsuranceFundFee);
-    // });
+      await checkTokenBalanceApproxiate(user1AccountNo, vTokenAddress, expectedTokenBalance, 8);
+      await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
+      await checkTraderPositionApproximate(user1AccountNo, vTokenAddress, netTokenPosition, 8);
+      // await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
+      await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
+      await checkRealBaseBalance(keeper.address, expectedKeeperFee);
+      await checkRealBaseBalance(insuranceFund.address, expectedInsuranceFundFee);
+    });
 
-    // it('Timestamp and Oracle Update - 4000', async () => {
-    //   await changeWrapperTimestampAndCheck(4000);
+    it('Timestamp and Oracle Update - 4000', async () => {
+      await changeWrapperTimestampAndCheck(4000);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(73522.0163840689, vBase, vToken1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
+    });
 
-    //   const realSqrtPrice1 = await priceToSqrtPriceX96(73522.0163840689, vBase, vToken1);
-    //   oracle1.setSqrtPrice(realSqrtPrice1);
-    // });
+    it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -193370', async () => {
+      const expectedTokenBalance = 0n;
 
-    // it('Acct[1] Underwater : Liquidate BTC Token Positions @ current tickBTC = 66000', async () => {
-    //   const expectedTokenBalance = 0n;
-    //   const expectedToken1Balance = 0n;
+      const netTokenPosition = expectedTokenBalance;
 
-    //   const netTokenPosition = expectedTokenBalance;
-    //   const netTokenPosition1 = expectedToken1Balance;
+      const expectedBaseBalance = 287844678219n - 48n;
 
-    //   const expectedBaseBalance = 13676112687n;
+      const tickETH = 193370;
 
-    //   const tickBTC = 66000;
+      const expected_MktVal_preTokenLiquidation = 0n;
+      const expectedReqMaintenanceMargin_preTokenLiquidation = 0n;
 
-    //   const expected_MktVal_preTokenLiquidation = 0n;
-    //   const expectedReqMaintenanceMargin_preTokenLiquidation = 0n;
+      const expected_MktVal_postTokenLiquidation = 0n;
+      const expectedReqMaintenanceMargin_postTokenLiquidation = 0n;
 
-    //   const expected_MktVal_postTokenLiquidation = 0n;
-    //   const expectedReqMaintenanceMargin_postTokenLiquidation = 0n;
+      const liquidationBps = 10000n;
+      const TokensToTrade = 0n;
+      const TokensToTrade1 = 0n;
 
-    //   const liquidationBps1 = 1000n;
-    //   const TokensToTrade = 0n;
-    //   const TokensToTrade1 = 0n;
+      const expectedPriceX128 = 0n;
+      const expectedPriceDeltaX128 = 0n;
 
-    //   const MaintenanceMarginFactor = 0n;
-    //   const tokenLiquidationPriceDeltaBps = 0n;
-    //   const insuranceFundFeeShareBps = 0n;
-    //   const fixFee = tokenAmount(10, 6);
+      const expectedLiquidationPriceX128 = 4123.86745092869;
+      const expectedLiquidatorPriceX128 = 4063.81112882778;
 
-    //   const expectedPriceX128 = 0n;
-    //   const expectedPriceDeltaX128 = 0n;
+      const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
+      const expectedInsuranceFundFee = 1534985416n;
 
-    //   const expectedLiquidationPriceX128 = 75689.824397259;
-    //   const expectedLiquidatorPriceX128 = 74587.5454011824;
-    //   const expectedInsuranceFundFee = 552786665n;
+      const liquidatorBaseBalance = 103877346504n;
+      const liquidatorTokenPosition = -25559097903887700000n;
+      const liquidatorNetTradePosition = -25559097903887700000n;
 
-    //   const liquidatorBaseBalance = 374062310327n;
-    //   const liquidatorToken1Position = -501494329n;
-    //   const liquidatorNetTrade1Position = -501494329n;
+      const LiquidationAccountBaseBalancePositLiquidation = 0n;
 
-    //   const LiquidationAccountBaseBalancePositLiquidation = 0n;
+      // await logPoolPrice(vPool,vToken);
 
-    //   await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vToken1Address, liquidationBps1);
+      await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vTokenAddress, liquidationBps);
 
-    //   await checkRealBaseBalance(insuranceFund.address, expectedInsuranceFundFee);
-    //   await checkTokenBalance(user1AccountNo, vTokenAddress, expectedTokenBalance);
-    //   await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
-    //   await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
-    //   await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition1);
-    //   await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
-    // });
+      await checkTokenBalance(user1AccountNo, vTokenAddress, expectedTokenBalance);
+      await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
 
-    // it('Timestamp and Oracle Update - 4500', async () => {
-    //   await changeWrapperTimestampAndCheck(4500);
+      await checkTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatorTokenPosition, 8);
+      await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
 
-    //   const realSqrtPrice = await priceToSqrtPriceX96(4005.75708454576, vBase, vToken);
-    //   oracle.setSqrtPrice(realSqrtPrice);
-    // });
+      await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
+      await checkTokenBalance(keeperAccountNo, vBaseAddress, liquidatorBaseBalance);
 
-    // it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -193370', async () => {
-    //   const expectedTokenBalance = 0n;
-    //   const expectedToken1Balance = 0n;
+      await checkRealBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
+    });
 
-    //   const netTokenPosition = expectedTokenBalance;
-    //   const netTokenPosition1 = expectedToken1Balance;
+    it('Timestamp and Oracle Update - 4500', async () => {
+      await changeWrapperTimestampAndCheck(4500);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(73522.0163840689, vBase, vToken1);
+      await oracle1.setSqrtPrice(realSqrtPrice1);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      await oracle.setSqrtPrice(realSqrtPrice);
+    });
 
-    //   const expectedBaseBalance = -91735627210n;
+    it('Acct[1] Underwater : Liquidate BTC Token Positions @ current tickBTC = 66000', async () => {
+      const expectedToken1Balance = 0n;
 
-    //   const tickETH = -193370;
+      const netTokenPosition1 = expectedToken1Balance;
 
-    //   const expected_MktVal_preTokenLiquidation = 0n;
-    //   const expectedReqMaintenanceMargin_preTokenLiquidation = 0n;
+      const expectedBaseBalance = -91743367496n - 48n;
 
-    //   const expected_MktVal_postTokenLiquidation = 0n;
-    //   const expectedReqMaintenanceMargin_postTokenLiquidation = 0n;
+      const tickBTC = 66000;
 
-    //   const liquidationBps = 1000n;
-    //   const TokensToTrade = 0n;
-    //   const TokensToTrade1 = 0n;
+      const expected_MktVal_preTokenLiquidation = 0n;
+      const expectedReqMaintenanceMargin_preTokenLiquidation = 0n;
 
-    //   const MaintenanceMarginFactor = 0n;
-    //   const tokenLiquidationPriceDeltaBps = 0n;
-    //   const insuranceFundFeeShareBps = 0n;
-    //   const fixFee = 0n;
+      const expected_MktVal_postTokenLiquidation = 0n;
+      const expectedReqMaintenanceMargin_postTokenLiquidation = 0n;
 
-    //   const expectedPriceX128 = 0n;
-    //   const expectedPriceDeltaX128 = 0n;
+      const liquidationBps1 = 10000n;
+      const TokensToTrade = 0n;
+      const TokensToTrade1 = 0n;
 
-    //   const expectedLiquidationPriceX128 = 4123.86745092869;
-    //   const expectedLiquidatorPriceX128 = 4063.81112882778;
-    //   const expectedInsuranceFundFee = 153498541n;
+      const expectedPriceX128 = 0n;
+      const expectedPriceDeltaX128 = 0n;
 
-    //   const liquidatorBaseBalance = 477939656831n;
-    //   const liquidatorTokenPosition = -25559097903887700000n;
-    //   const liquidatorNetTradePosition = -25559097903887700000n;
+      const expectedLiquidationPriceX128 = 75689.824397259;
+      const expectedLiquidatorPriceX128 = 74587.5454011824;
 
-    //   const LiquidationAccountBaseBalancePositLiquidation = 0n;
+      const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
 
-    //   await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vTokenAddress, liquidationBps);
+      const expectedInsuranceFundFee = 5527866666n;
 
-    //   await checkRealBaseBalance(insuranceFund.address, expectedInsuranceFundFee);
-    //   await checkTokenBalance(user1AccountNo, vTokenAddress, expectedTokenBalance);
-    //   await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
-    //   await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
-    //   await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition1);
-    //   await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
-    // });
+      const liquidatorBaseBalance = 477939657577n;
+      const liquidatorToken1Position = -501494329n - 1n;
+      const liquidatorNetTrade1Position = -501494329n - 1n;
+
+      const LiquidationAccountBaseBalancePositLiquidation = 0n;
+
+      await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vToken1Address, liquidationBps1);
+
+      await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
+      await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
+
+      await checkTokenBalance(keeperAccountNo, vToken1Address, liquidatorToken1Position);
+      await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
+
+      await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
+      await checkTokenBalance(keeperAccountNo, vBaseAddress, liquidatorBaseBalance);
+
+      await checkRealBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
+    });
   });
 });
