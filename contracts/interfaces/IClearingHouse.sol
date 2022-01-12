@@ -3,7 +3,8 @@
 pragma solidity ^0.8.9;
 
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
+import { LiquidityChangeParams } from '../libraries/LiquidityPositionSet.sol';
+import { SwapParams } from '../libraries/VTokenPositionSet.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
@@ -31,6 +32,16 @@ interface IClearingHouse {
 
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
+
+    function ClearingHouse__init(
+        address _vPoolFactory,
+        address _realBase,
+        address _insuranceFundAddress,
+        address _VBASE_ADDRESS,
+        address _UNISWAP_V3_FACTORY_ADDRESS,
+        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
+        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+    ) external;
 
     /// @notice creates a new account and adds it to the accounts map
     /// @return newAccountId - serial number of the new account created
@@ -120,11 +131,21 @@ interface IClearingHouse {
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
 
-    function addVTokenAddress(uint32 truncated, address full) external;
+    function addVTokenAddress(address full) external;
 
     function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool);
 
     function initRealToken(address _realToken) external;
 
-    function setConstants(Constants memory constants) external;
+    // function setConstants(
+    //     address _VBASE_ADDRESS,
+    //     address _UNISWAP_V3_FACTORY_ADDRESS,
+    //     uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
+    //     bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+    // ) external;
+
+    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+        external
+        view
+        returns (uint256 realPriceX128, uint256 virtualPriceX128);
 }

@@ -16,7 +16,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { Constants } from '../utils/Constants.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -194,11 +194,7 @@ library LiquidityPosition {
         );
     }
 
-    function maxNetPosition(
-        Info storage position,
-        VTokenAddress vToken,
-        Constants memory constants
-    ) internal view returns (uint256) {
+    function maxNetPosition(Info storage position, VTokenAddress vToken) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -208,10 +204,10 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
-        Constants memory constants
+        VTokenAddress vTokenAddress,
+        AccountStorage storage accountStorage
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
+        return position.baseValue(sqrtPriceCurrent, vTokenAddress, vTokenAddress.vPoolWrapper(accountStorage));
     }
 
     function tokenAmountsInRange(Info storage position, uint160 sqrtPriceCurrent)
@@ -243,8 +239,7 @@ library LiquidityPosition {
         Info storage position,
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
-        IVPoolWrapper wrapper,
-        Constants memory constants
+        IVPoolWrapper wrapper
     ) internal view returns (int256 baseValue_) {
         {
             (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(sqrtPriceCurrent);

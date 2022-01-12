@@ -13,6 +13,8 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { Constants } from '../utils/Constants.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
@@ -61,27 +63,27 @@ library VTokenPosition {
     /// @param position token position
     /// @param priceX128 price in fixed point 128
     /// @param vToken tokenAddress corresponding to the position
-    /// @param constants platform constants
+    /// @param accountStorage platform constants
     function marketValue(
         Position storage position,
         VTokenAddress vToken,
         uint256 priceX128,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (int256 value) {
-        return marketValue(position, priceX128, vToken.vPoolWrapper(constants));
+        return marketValue(position, priceX128, vToken.vPoolWrapper(accountStorage));
     }
 
     /// @notice returns the market value of the supplied token position
     /// @param position token position
     /// @param vToken tokenAddress corresponding to the position
-    /// @param constants platform constants
+    /// @param accountStorage platform constants
     function marketValue(
         Position storage position,
         VTokenAddress vToken,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (int256) {
-        uint256 priceX128 = vToken.getVirtualTwapPriceX128(constants);
-        return marketValue(position, vToken, priceX128, constants);
+        uint256 priceX128 = vToken.getVirtualTwapPriceX128(accountStorage);
+        return marketValue(position, vToken, priceX128, accountStorage);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {
@@ -103,12 +105,12 @@ library VTokenPosition {
     /// @notice returns the unrealized funding payment for the position
     /// @param position token position
     /// @param vToken tokenAddress corresponding to the position
-    /// @param constants platform constants
+    /// @param accountStorage platform constants
     function unrealizedFundingPayment(
         Position storage position,
         VTokenAddress vToken,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, vToken.vPoolWrapper(constants));
+        return unrealizedFundingPayment(position, vToken.vPoolWrapper(accountStorage));
     }
 }

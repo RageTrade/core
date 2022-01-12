@@ -13,5 +13,5 @@ interface IVToken is IERC20 {
 
     function burn(uint256 amount) external;
 
-    function setOwner(address) external;
+    function setVPoolWrapper(address) external;
 }

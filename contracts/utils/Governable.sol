@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
+
 import { Context } from '@openzeppelin/contracts/utils/Context.sol';
+import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 /**
  * This module is used through inheritance. It will make available the modifier
  * `onlyGovernance` and `onlyGovernanceOrTeamMultisig`, which can be applied to your functions
  * to restrict their use to the caller.
  */
-abstract contract Governable is Context {
+abstract contract Governable is Context, Initializable {
     address private _governance;
     address private _teamMultisig;
 
@@ -22,6 +24,10 @@ abstract contract Governable is Context {
      * @dev Initializes the contract setting the deployer as the initial governance and team multisig.
      */
     constructor() {
+        Governable__init();
+    }
+
+    function Governable__init() internal initializer {
         address msgSender = _msgSender();
 
         _governance = msgSender;

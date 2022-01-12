@@ -5,15 +5,19 @@ pragma solidity ^0.8.9;
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Constants } from '../utils/Constants.sol';
 
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+
 contract VTokenLibTest {
     using VTokenLib for VTokenAddress;
 
-    function vPool(VTokenAddress vToken, Constants memory constants) external pure returns (address) {
-        return address(vToken.vPool(constants));
+    AccountStorage accountStorage;
+
+    function vPool(VTokenAddress vToken, Constants memory constants) external view returns (address) {
+        return address(vToken.vPool(accountStorage));
     }
 
-    function vPoolWrapper(VTokenAddress vToken, Constants memory constants) external pure returns (address) {
-        return address(vToken.vPoolWrapper(constants));
+    function vPoolWrapper(VTokenAddress vToken, Constants memory constants) external view returns (address) {
+        return address(vToken.vPoolWrapper(accountStorage));
     }
 
     function realToken(VTokenAddress vToken) external view returns (address) {
@@ -21,11 +25,11 @@ contract VTokenLibTest {
     }
 
     function getVirtualTwapSqrtPrice(VTokenAddress vToken, Constants memory constants) external view returns (uint160) {
-        return vToken.getVirtualTwapSqrtPriceX96(constants);
+        return vToken.getVirtualTwapSqrtPriceX96(accountStorage);
     }
 
     function getRealTwapSqrtPrice(VTokenAddress vToken, Constants memory constants) external view returns (uint160) {
-        return vToken.getRealTwapSqrtPriceX96(constants);
+        return vToken.getRealTwapSqrtPriceX96(accountStorage);
     }
 
     function getMarginRatio(
@@ -33,6 +37,6 @@ contract VTokenLibTest {
         bool isInitialMargin,
         Constants memory constants
     ) external view returns (uint16) {
-        return vToken.getMarginRatio(isInitialMargin, constants);
+        return vToken.getMarginRatio(isInitialMargin, accountStorage);
     }
 }

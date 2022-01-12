@@ -15,15 +15,27 @@ contract ClearingHouseArbitrum is ClearingHouse {
     using FullMath for uint256;
     using PriceMath for uint160;
 
-    // immutable variables do not effect storage layouts
-    IOracle public immutable ethUsdcOracle;
+    IOracle public ethUsdcOracle;
 
-    constructor(
+    function ClearingHouseArbitrum__init(
         address _vPoolFactory,
         address _realBase,
         address _insuranceFundAddress,
+        address _VBASE_ADDRESS,
+        address _UNISWAP_V3_FACTORY_ADDRESS,
+        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
+        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH,
         address _ethUsdcOracle
-    ) ClearingHouse(_vPoolFactory, _realBase, _insuranceFundAddress) {
+    ) public {
+        ClearingHouse__init(
+            _vPoolFactory,
+            _realBase,
+            _insuranceFundAddress,
+            _VBASE_ADDRESS,
+            _UNISWAP_V3_FACTORY_ADDRESS,
+            _UNISWAP_V3_DEFAULT_FEE_TIER,
+            _UNISWAP_V3_POOL_BYTE_CODE_HASH
+        );
         ethUsdcOracle = IOracle(_ethUsdcOracle);
     }
 

@@ -11,6 +11,8 @@ import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { Constants } from '../utils/Constants.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+
 contract VTokenPositionSetTest2 {
     using Uint32L8ArrayLib for uint32[8];
     using LiquidityPositionSet for LiquidityPositionSet.Info;
@@ -19,6 +21,8 @@ contract VTokenPositionSetTest2 {
 
     mapping(uint32 => VTokenAddress) vTokenAddresses;
     VTokenPositionSet.Set dummy;
+
+    AccountStorage accountStorage;
 
     function init(VTokenAddress vTokenAddress) external {
         VTokenPositionSet.activate(dummy, vTokenAddress);
@@ -30,7 +34,7 @@ contract VTokenPositionSetTest2 {
         VTokenAddress vTokenAddress,
         Constants memory constants
     ) external {
-        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
+        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
     }
 
     function liquidityChange(
@@ -38,14 +42,14 @@ contract VTokenPositionSetTest2 {
         LiquidityChangeParams memory liquidityChangeParams,
         Constants memory constants
     ) external {
-        VTokenPositionSet.liquidityChange(dummy, vTokenAddress, liquidityChangeParams, constants);
+        VTokenPositionSet.liquidityChange(dummy, vTokenAddress, liquidityChangeParams, accountStorage);
     }
 
     function getAllTokenPositionValue(Constants memory constants) external view returns (int256) {
-        return VTokenPositionSet.getAccountMarketValue(dummy, vTokenAddresses, constants);
+        return VTokenPositionSet.getAccountMarketValue(dummy, vTokenAddresses, accountStorage);
     }
 
     function getRequiredMargin(bool isInititalMargin, Constants memory constants) external view returns (int256) {
-        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokenAddresses, constants);
+        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokenAddresses, accountStorage);
     }
 }

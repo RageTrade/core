@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
-import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
+import { ClearingHouseStorage, RageTradePoolSettings } from './ClearingHouseStorage.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
@@ -13,24 +13,38 @@ import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
 import { Constants } from './utils/Constants.sol';
 
-contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
+contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
 
-    // only initializes immutable vars
-    constructor(
+    function ClearingHouse__init(
         address _vPoolFactory,
         address _realBase,
-        address _insuranceFundAddress
-    ) ClearingHouseStorage(_vPoolFactory, _realBase, _insuranceFundAddress) {}
+        address _insuranceFundAddress,
+        address _VBASE_ADDRESS,
+        address _UNISWAP_V3_FACTORY_ADDRESS,
+        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
+        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+    ) public initializer {
+        vPoolFactory = _vPoolFactory;
+        realBase = _realBase;
+        insuranceFundAddress = _insuranceFundAddress;
+
+        accountStorage.VBASE_ADDRESS = _VBASE_ADDRESS;
+        accountStorage.UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
+        accountStorage.UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
+        accountStorage.UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
+
+        Governable__init();
+    }
 
     function checkSlippage(
         VTokenAddress vTokenAddress,
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage.constants);
+        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
@@ -84,7 +98,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        if (!vTokenAddress.eq(accountStorage.constants.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
             IERC20(vTokenAddress.realToken()).transferFrom(msg.sender, address(this), amount);
         } else {
             IERC20(realBase).transferFrom(msg.sender, address(this), amount);
@@ -108,7 +122,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         account.removeMargin(vTokenAddress, amount, accountStorage);
 
-        if (!vTokenAddress.eq(accountStorage.constants.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
             IERC20(vTokenAddress.realToken()).transfer(msg.sender, amount);
         } else {
             IERC20(realBase).transfer(msg.sender, amount);
@@ -176,7 +190,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         );
 
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, accountStorage.constants)
+            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, accountStorage)
         );
 
         if (notionalValueAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
@@ -194,7 +208,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
         keeperFee = accountStorage.removeLimitOrderFee + _getFixFee();
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage.constants);
+        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage);
 
         IERC20(realBase).transfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
@@ -252,17 +266,26 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         return realTokenInitilized[realToken];
     }
 
-    function addVTokenAddress(uint32 truncated, address full) external onlyVPoolFactory {
-        accountStorage.vTokenAddresses[truncated] = VTokenAddress.wrap(full);
+    function addVTokenAddress(address full) external onlyVPoolFactory {
+        VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
+        accountStorage.vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
     }
 
     function initRealToken(address realToken) external onlyVPoolFactory {
         realTokenInitilized[realToken] = true;
     }
 
-    function setConstants(Constants memory _constants) external onlyVPoolFactory {
-        accountStorage.constants = _constants;
-    }
+    // function setConstants(
+    //     address _VBASE_ADDRESS,
+    //     address _UNISWAP_V3_FACTORY_ADDRESS,
+    //     uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
+    //     bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+    // ) external onlyVPoolFactory {
+    //     accountStorage.VBASE_ADDRESS = _VBASE_ADDRESS;
+    //     accountStorage.UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
+    //     accountStorage.UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
+    //     accountStorage.UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
+    // }
 
     function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;
@@ -276,6 +299,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         paused = _pause;
     }
 
+    // TODO: rename to setGlobalSettings
     function setPlatformParameters(
         LiquidationParams calldata _liquidationParams,
         uint256 _removeLimitOrderFee,
@@ -286,6 +310,13 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         accountStorage.removeLimitOrderFee = _removeLimitOrderFee;
         accountStorage.minimumOrderNotional = _minimumOrderNotional;
         accountStorage.minRequiredMargin = _minRequiredMargin;
+    }
+
+    function updateRageTradePoolParams(VTokenAddress vTokenAddress, RageTradePoolSettings calldata newSettings)
+        public
+        onlyGovernanceOrTeamMultisig
+    {
+        accountStorage.rtPools[vTokenAddress].settings = newSettings;
     }
 
     modifier onlyVPoolFactory() {
@@ -303,5 +334,14 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     /// @return fixFee amount of fixFee in base
     function _getFixFee() internal view virtual returns (uint256 fixFee) {
         return 0;
+    }
+
+    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+        external
+        view
+        returns (uint256 realPriceX128, uint256 virtualPriceX128)
+    {
+        realPriceX128 = vTokenAddress.getRealTwapSqrtPriceX96(accountStorage);
+        virtualPriceX128 = vTokenAddress.getVirtualTwapPriceX128(accountStorage);
     }
 }

@@ -34,8 +34,6 @@ contract AccountTest {
         uint256 _minimumOrderNotional,
         uint256 _fixFee
     ) external {
-        accountStorage.constants = _constants;
-
         accountStorage.liquidationParams = _liquidationParams;
         accountStorage.minRequiredMargin = _minRequiredMargin;
         accountStorage.removeLimitOrderFee = _removeLimitOrderFee;
@@ -51,21 +49,14 @@ contract AccountTest {
     }
 
     function cleanPositions(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(
-            accountStorage.vTokenAddresses,
-            accountStorage.constants
-        );
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountStorage.vTokenAddresses, accountStorage);
         VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.VBASE_ADDRESS))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(
-            balanceAdjustments,
-            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
-            accountStorage.constants
-        );
+        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.VBASE_ADDRESS), accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -76,30 +67,23 @@ contract AccountTest {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage.constants);
+            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage);
         }
     }
 
     function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(
-            accountStorage.vTokenAddresses,
-            accountStorage.constants
-        );
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountStorage.vTokenAddresses, accountStorage);
         DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
-        deposit = set.deposits[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
-        set.decreaseBalance(
-            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
-            deposit,
-            accountStorage.constants
-        );
+        deposit = set.deposits[uint32(uint160(accountStorage.VBASE_ADDRESS))];
+        set.decreaseBalance(VTokenAddress.wrap(accountStorage.VBASE_ADDRESS), deposit, accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(accountStorage.vTokenAddresses[truncatedAddress], deposit, accountStorage.constants);
+            set.decreaseBalance(accountStorage.vTokenAddresses[truncatedAddress], deposit, accountStorage);
         }
     }
 
@@ -208,7 +192,7 @@ contract AccountTest {
             tickLower,
             tickUpper,
             removeLimitOrderFee,
-            accountStorage.constants
+            accountStorage
         );
     }
 
@@ -296,10 +280,6 @@ contract AccountTest {
     }
 
     function getAccountProfit(uint256 accountNo) external view returns (int256 profit) {
-        return
-            accounts[accountNo].tokenPositions.getAccountMarketValue(
-                accountStorage.vTokenAddresses,
-                accountStorage.constants
-            );
+        return accounts[accountNo].tokenPositions.getAccountMarketValue(accountStorage.vTokenAddresses, accountStorage);
     }
 }

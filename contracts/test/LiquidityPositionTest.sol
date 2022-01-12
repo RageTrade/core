@@ -8,11 +8,12 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
-import { VPoolFactory } from '../VPoolFactory.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 import { Constants } from '../utils/Constants.sol';
+
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 contract LiquidityPositionTest {
     using LiquidityPosition for LiquidityPosition.Info;
@@ -21,6 +22,8 @@ contract LiquidityPositionTest {
     Account.BalanceAdjustments public balanceAdjustments;
     LiquidityPosition.Info public lp;
     VPoolWrapperMock public wrapper;
+
+    AccountStorage accountStorage;
 
     constructor() {
         wrapper = new VPoolWrapperMock();
@@ -47,7 +50,7 @@ contract LiquidityPositionTest {
     }
 
     function maxNetPosition(VTokenAddress vToken, Constants memory constants) public view returns (uint256) {
-        return lp.maxNetPosition(vToken, constants);
+        return lp.maxNetPosition(vToken);
     }
 
     function baseValue(
@@ -55,6 +58,6 @@ contract LiquidityPositionTest {
         VTokenAddress vToken,
         Constants memory constants
     ) public view returns (int256) {
-        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
+        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper);
     }
 }

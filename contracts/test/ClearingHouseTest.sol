@@ -30,8 +30,22 @@ contract ClearingHouseTest is ClearingHouse {
     constructor(
         address VPoolFactory,
         address _realBase,
-        address _insuranceFundAddress
-    ) ClearingHouse(VPoolFactory, _realBase, _insuranceFundAddress) {}
+        address _insuranceFundAddress,
+        address _VBASE_ADDRESS,
+        address _UNISWAP_V3_FACTORY_ADDRESS,
+        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
+        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+    ) {
+        ClearingHouse__init(
+            VPoolFactory,
+            _realBase,
+            _insuranceFundAddress,
+            _VBASE_ADDRESS,
+            _UNISWAP_V3_FACTORY_ADDRESS,
+            _UNISWAP_V3_DEFAULT_FEE_TIER,
+            _UNISWAP_V3_POOL_BYTE_CODE_HASH
+        );
+    }
 
     // TODO remove
     function getTruncatedTokenAddress(VTokenAddress vTokenAddress) external pure returns (uint32) {
@@ -43,13 +57,9 @@ contract ClearingHouseTest is ClearingHouse {
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.VBASE_ADDRESS))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(
-            balanceAdjustments,
-            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
-            accountStorage.constants
-        );
+        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.VBASE_ADDRESS), accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -60,7 +70,7 @@ contract ClearingHouseTest is ClearingHouse {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage.constants);
+            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage);
         }
     }
 
@@ -125,7 +135,7 @@ contract ClearingHouseTest is ClearingHouse {
             vToken.truncate()
         ];
 
-        IVPoolWrapper wrapper = vToken.vPoolWrapper(accountStorage.constants);
+        IVPoolWrapper wrapper = vToken.vPoolWrapper(accountStorage);
 
         fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
@@ -145,7 +155,7 @@ contract ClearingHouseTest is ClearingHouse {
 
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = VTokenAddress
             .wrap(vTokenAddress)
-            .vPoolWrapper(accountStorage.constants)
+            .vPoolWrapper(accountStorage)
             .getExtrapolatedValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
         fundingPayment = liquidityPosition.unrealizedFundingPayment(
