@@ -9,7 +9,7 @@ import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork
 import { getCreateAddressFor } from './utils/create-addresses';
 import {
   AccountTest,
-  VPoolFactory,
+  RageTradeFactory,
   ClearingHouse,
   ERC20,
   RealTokenMock,
@@ -18,10 +18,10 @@ import {
   ClearingHouseTest,
   IUniswapV3Pool,
 } from '../typechain-types';
-import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
-  UNISWAP_FACTORY_ADDRESS,
-  DEFAULT_FEE_TIER,
+  UNISWAP_V3_FACTORY_ADDRESS,
+  UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
   REAL_BASE,
 } from './utils/realConstants';
@@ -46,7 +46,7 @@ describe('Clearing House Library', () => {
   let ownerAddress: string;
   let testContractAddress: string;
   let oracleAddress: string;
-  let constants: ConstantsStruct;
+  // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
   let vPool: IUniswapV3Pool;
 
@@ -111,7 +111,7 @@ describe('Clearing House Library', () => {
   }
 
   async function initializePool(
-    vPoolFactory: VPoolFactory,
+    rageTradeFactory: RageTradeFactory,
     initialMarginRatio: BigNumberish,
     maintainanceMarginRatio: BigNumberish,
     twapDuration: BigNumberish,
@@ -124,26 +124,26 @@ describe('Clearing House Library', () => {
     const oracle = await oracleFactory.deploy();
     await oracle.setSqrtPrice(initialPrice);
 
-    await vPoolFactory.initializePool(
-      {
-        setupVTokenParams: {
-          vTokenName: 'vWETH',
-          vTokenSymbol: 'vWETH',
-          realTokenAddress: realToken.address,
-          oracleAddress: oracle.address,
-        },
-        extendedLpFee: 500,
-        protocolFee: 500,
+    await rageTradeFactory.initializePool({
+      deployVTokenParams: {
+        vTokenName: 'vWETH',
+        vTokenSymbol: 'vWETH',
+        rTokenAddress: realToken.address,
+        oracleAddress: oracle.address,
+      },
+      rageTradePoolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
         whitelisted: false,
+        oracle: oracle.address,
       },
-      0,
-    );
+      liquidityFeePips: 500,
+      protocolFeePips: 500,
+    });
 
-    const eventFilter = vPoolFactory.filters.PoolInitlized();
-    const events = await vPoolFactory.queryFilter(eventFilter, 'latest');
+    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
     const vPoolWrapper = events[0].args[2];
@@ -156,9 +156,11 @@ describe('Clearing House Library', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
-    const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    const vBase = await vBaseFactory.deploy(REAL_BASE);
-    vBaseAddress = vBase.address;
+    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+
+    // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
+    // const vBase = await vBaseFactory.deploy(REAL_BASE);
+    // vBaseAddress = vBase.address;
 
     signers = await hre.ethers.getSigners();
 
@@ -169,40 +171,50 @@ describe('Clearing House Library', () => {
     const futureVPoolFactoryAddress = await getCreateAddressFor(admin, 3);
     const futureInsurnaceFundAddress = await getCreateAddressFor(admin, 4);
 
-    const VPoolWrapperDeployer = await (
-      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
-    ).deploy(futureVPoolFactoryAddress);
+    // const VPoolWrapperDeployer = await (
+    //   await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    // ).deploy(futureVPoolFactoryAddress);
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
-    clearingHouseTest = await (
+    const clearingHouseTestLogic = await (
       await hre.ethers.getContractFactory('ClearingHouseTest', {
         libraries: {
           Account: accountLib.address,
         },
       })
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
+    ).deploy();
 
-    const VPoolFactory = await (
-      await hre.ethers.getContractFactory('VPoolFactory')
+    const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
+
+    const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
+
+    const rageTradeFactory = await (
+      await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
-      vBaseAddress,
-      clearingHouseTest.address,
-      VPoolWrapperDeployer.address,
-      UNISWAP_FACTORY_ADDRESS,
-      DEFAULT_FEE_TIER,
+      clearingHouseTestLogic.address,
+      vPoolWrapperLogic.address,
+      rBase.address,
+      insuranceFundAddressComputed,
+      UNISWAP_V3_FACTORY_ADDRESS,
+      UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
-    const InsuranceFund = await (
+    clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+
+    const insuranceFund = await (
       await hre.ethers.getContractFactory('InsuranceFund')
     ).deploy(REAL_BASE, clearingHouseTest.address);
 
-    await vBase.transferOwnership(VPoolFactory.address);
-    const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
-    realToken = await realTokenFactory.deploy();
+    const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+    vBaseAddress = vBase.address;
+
+    // await vBase.transferOwnership(VPoolFactory.address);
+    // const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
+    // realToken = await realTokenFactory.deploy();
 
     let out = await initializePool(
-      VPoolFactory,
+      rageTradeFactory,
       20_000,
       10_000,
       1,
@@ -225,9 +237,7 @@ describe('Clearing House Library', () => {
     // console.log('### Base decimals ###');
     // console.log(await vBase.decimals());
 
-    constants = await VPoolFactory.constants();
-
-    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    // constants = await VPoolFactory.constants();
   });
 
   after(deactivateMainnetFork);
@@ -367,7 +377,7 @@ describe('Clearing House Library', () => {
       };
     });
     it('Pause', async () => {
-      clearingHouseTest.setPaused(true);
+      await clearingHouseTest.setPaused(true);
       const curPaused = await clearingHouseTest.paused();
 
       expect(curPaused).to.be.true;
@@ -433,7 +443,7 @@ describe('Clearing House Library', () => {
     });
 
     it('UnPause', async () => {
-      clearingHouseTest.setPaused(false);
+      await clearingHouseTest.setPaused(false);
       const curPaused = await clearingHouseTest.paused();
 
       expect(curPaused).to.be.false;

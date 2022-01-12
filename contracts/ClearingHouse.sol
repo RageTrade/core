@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.9;
 
+import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
 import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
@@ -16,6 +18,7 @@ import { Constants } from './utils/Constants.sol';
 import { console } from 'hardhat/console.sol';
 
 contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
+    using SafeERC20 for IERC20;
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
@@ -101,9 +104,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
         if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
-            IERC20(vTokenAddress.realToken()).transferFrom(msg.sender, address(this), amount);
+            IERC20(vTokenAddress.realToken()).safeTransferFrom(msg.sender, address(this), amount);
         } else {
-            IERC20(realBase).transferFrom(msg.sender, address(this), amount);
+            console.log('realBase');
+            console.log(realBase);
+            IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
         }
 
         account.addMargin(vTokenAddress, amount, accountStorage);
@@ -125,9 +130,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         account.removeMargin(vTokenAddress, amount, accountStorage);
 
         if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
-            IERC20(vTokenAddress.realToken()).transfer(msg.sender, amount);
+            IERC20(vTokenAddress.realToken()).safeTransfer(msg.sender, amount);
         } else {
-            IERC20(realBase).transfer(msg.sender, amount);
+            IERC20(realBase).safeTransfer(msg.sender, amount);
         }
 
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);

@@ -70,14 +70,14 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
         Governable(address(clearingHouse)).transferTeamMultisig(msg.sender);
 
         // TODO refactor the code such that registering vBase as a pool is not needed
-        // clearingHouse.registerPool(
-        //     address(vBase),
-        //     IClearingHouse.RageTradePool(
-        //         IUniswapV3Pool(address(0)),
-        //         IVPoolWrapper(address(0)),
-        //         IClearingHouse.RageTradePoolSettings(0, 0, 60, false, new BaseOracle())
-        //     )
-        // );
+        clearingHouse.registerPool(
+            address(vBase),
+            IClearingHouse.RageTradePool(
+                IUniswapV3Pool(address(0)),
+                IVPoolWrapper(address(0)),
+                IClearingHouse.RageTradePoolSettings(0, 0, 60, false, new BaseOracle())
+            )
+        );
 
         // isRestricted = true;
         // vPoolWrapperDeployer = IVPoolWrapperDeployer(VPoolWrapperDeployerAddress);
