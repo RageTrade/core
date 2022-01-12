@@ -402,6 +402,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             WrapperValuesInside memory wrapperValuesInside
         )
     {
+        zeroSwap();
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
         if (liquidityDelta > 0) {
             (uint256 _amount0, uint256 _amount1) = vPool.mint({
