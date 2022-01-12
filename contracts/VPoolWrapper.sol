@@ -85,7 +85,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         uniswapFeePips = params.UNISWAP_V3_DEFAULT_FEE_TIER;
 
         // initializes the funding payment state
-        updateGlobalFundingState();
+        fpGlobal.update(0, 1, _blockTimestamp(), 1, 1);
     }
 
     // TODO move this to ClearingHouse

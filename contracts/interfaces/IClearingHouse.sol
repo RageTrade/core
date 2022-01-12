@@ -2,6 +2,10 @@
 
 pragma solidity ^0.8.9;
 
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { IOracle } from './IOracle.sol';
+import { IVPoolWrapper } from './IVPoolWrapper.sol';
+
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { LiquidityChangeParams } from '../libraries/LiquidityPositionSet.sol';
 import { SwapParams } from '../libraries/VTokenPositionSet.sol';
@@ -11,6 +15,20 @@ import { Account } from '../libraries/Account.sol';
 import { Constants } from '../utils/Constants.sol';
 
 interface IClearingHouse {
+    struct RageTradePool {
+        IUniswapV3Pool vPool;
+        IVPoolWrapper vPoolWrapper;
+        RageTradePoolSettings settings;
+    }
+
+    struct RageTradePoolSettings {
+        uint16 initialMarginRatio;
+        uint16 maintainanceMarginRatio;
+        uint32 twapDuration;
+        bool whitelisted;
+        IOracle oracle;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);
@@ -131,7 +149,7 @@ interface IClearingHouse {
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
 
-    function addVTokenAddress(address full) external;
+    function registerPool(address full, RageTradePool calldata rageTradePool) external;
 
     function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool);
 

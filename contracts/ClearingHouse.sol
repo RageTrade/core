@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
-import { ClearingHouseStorage, RageTradePoolSettings } from './ClearingHouseStorage.sol';
+import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
@@ -13,13 +13,15 @@ import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
 import { Constants } from './utils/Constants.sol';
 
+import { console } from 'hardhat/console.sol';
+
 contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
 
     function ClearingHouse__init(
-        address _vPoolFactory,
+        address _rageTradeFactory,
         address _realBase,
         address _insuranceFundAddress,
         address _VBASE_ADDRESS,
@@ -27,7 +29,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
         bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
     ) public initializer {
-        vPoolFactory = _vPoolFactory;
+        rageTradeFactory = _rageTradeFactory;
         realBase = _realBase;
         insuranceFundAddress = _insuranceFundAddress;
 
@@ -266,12 +268,18 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         return realTokenInitilized[realToken];
     }
 
-    function addVTokenAddress(address full) external onlyVPoolFactory {
+    function registerPool(address full, RageTradePool calldata rageTradePool) external onlyRageTradeFactory {
         VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
-        accountStorage.vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
+        uint32 truncated = vTokenAddress.truncate();
+
+        // pool will not be registered twice by the rage trade factory
+        assert(accountStorage.vTokenAddresses[truncated].eq(address(0)));
+
+        accountStorage.vTokenAddresses[truncated] = vTokenAddress;
+        accountStorage.rtPools[vTokenAddress] = rageTradePool;
     }
 
-    function initRealToken(address realToken) external onlyVPoolFactory {
+    function initRealToken(address realToken) external onlyRageTradeFactory {
         realTokenInitilized[realToken] = true;
     }
 
@@ -312,15 +320,15 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         accountStorage.minRequiredMargin = _minRequiredMargin;
     }
 
-    function updateRageTradePoolParams(VTokenAddress vTokenAddress, RageTradePoolSettings calldata newSettings)
+    function updateRageTradePoolSettings(VTokenAddress vTokenAddress, RageTradePoolSettings calldata newSettings)
         public
         onlyGovernanceOrTeamMultisig
     {
         accountStorage.rtPools[vTokenAddress].settings = newSettings;
     }
 
-    modifier onlyVPoolFactory() {
-        if (vPoolFactory != msg.sender) revert NotVPoolFactory();
+    modifier onlyRageTradeFactory() {
+        if (rageTradeFactory != msg.sender) revert NotRageTradeFactory();
         _;
     }
 
@@ -343,5 +351,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     {
         realPriceX128 = vTokenAddress.getRealTwapSqrtPriceX96(accountStorage);
         virtualPriceX128 = vTokenAddress.getVirtualTwapPriceX128(accountStorage);
+    }
+
+    function rageTradePools(VTokenAddress vTokenAddress) public view returns (RageTradePool memory rageTradePool) {
+        return accountStorage.rtPools[vTokenAddress];
     }
 }

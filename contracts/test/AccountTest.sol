@@ -10,6 +10,9 @@ import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { Constants } from '../utils/Constants.sol';
 import { RealTokenLib } from '../libraries/RealTokenLib.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 contract AccountTest {
     using Account for Account.Info;
@@ -17,6 +20,7 @@ contract AccountTest {
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using DepositTokenSet for DepositTokenSet.Info;
+    using VTokenLib for VTokenAddress;
 
     mapping(uint256 => Account.Info) accounts;
     AccountStorage public accountStorage;
@@ -27,7 +31,6 @@ contract AccountTest {
     constructor() {}
 
     function setAccountStorage(
-        Constants calldata _constants,
         LiquidationParams calldata _liquidationParams,
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
@@ -39,6 +42,21 @@ contract AccountTest {
         accountStorage.removeLimitOrderFee = _removeLimitOrderFee;
         accountStorage.minimumOrderNotional = _minimumOrderNotional;
         fixFee = _fixFee;
+    }
+
+    function registerPool(address full, IClearingHouse.RageTradePool calldata rageTradePool) external {
+        VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
+        uint32 truncated = vTokenAddress.truncate();
+
+        // pool will not be registered twice by the rage trade factory
+        assert(accountStorage.vTokenAddresses[truncated].eq(address(0)));
+
+        accountStorage.vTokenAddresses[truncated] = vTokenAddress;
+        accountStorage.rtPools[vTokenAddress] = rageTradePool;
+    }
+
+    function setVBaseAddress(address VBASE_ADDRESS) external {
+        accountStorage.VBASE_ADDRESS = VBASE_ADDRESS;
     }
 
     function createAccount() external {

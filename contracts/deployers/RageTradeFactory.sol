@@ -5,13 +5,13 @@ pragma solidity ^0.8.9;
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 
+import { Governable } from '../utils/Governable.sol';
+
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Factory.sol';
-import { Constants } from '../utils/Constants.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { VToken, IVToken } from '../tokens/VToken.sol';
-import { IVPoolWrapperDeployer } from '../interfaces/IVPoolWrapperDeployer.sol';
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
@@ -22,7 +22,7 @@ import { ClearingHouseDeployer } from './ClearingHouseDeployer.sol';
 import { VBaseDeployer } from './VBaseDeployer.sol';
 import { VTokenDeployer } from './VTokenDeployer.sol';
 import { VPoolWrapperDeployer } from './VPoolWrapperDeployer.sol';
-import { RageTradePoolSettings } from '../ClearingHouseStorage.sol';
+import { BaseOracle } from '../oracles/BaseOracle.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -40,14 +40,15 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
 
     constructor(
         address clearingHouseLogicAddress,
+        address _vPoolWrapperLogicAddress,
         address rBaseAddress,
         address insuranceFundAddress,
-        address vBaseAddress,
         address _UNISWAP_V3_FACTORY_ADDRESS,
         uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH,
-        address _vPoolWrapperLogicAddress
+        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
+        proxyAdmin = new ProxyAdmin();
+
         UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
         UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
         UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
@@ -59,13 +60,24 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
                 clearingHouseLogicAddress,
                 rBaseAddress,
                 insuranceFundAddress,
-                vBaseAddress,
+                address(vBase),
                 _UNISWAP_V3_FACTORY_ADDRESS,
                 _UNISWAP_V3_DEFAULT_FEE_TIER,
                 _UNISWAP_V3_POOL_BYTE_CODE_HASH
             )
         );
-        clearingHouse.addVTokenAddress(address(vBase));
+        Governable(address(clearingHouse)).transferGovernance(msg.sender);
+        Governable(address(clearingHouse)).transferTeamMultisig(msg.sender);
+
+        // TODO refactor the code such that registering vBase as a pool is not needed
+        // clearingHouse.registerPool(
+        //     address(vBase),
+        //     IClearingHouse.RageTradePool(
+        //         IUniswapV3Pool(address(0)),
+        //         IVPoolWrapper(address(0)),
+        //         IClearingHouse.RageTradePoolSettings(0, 0, 60, false, new BaseOracle())
+        //     )
+        // );
 
         // isRestricted = true;
         // vPoolWrapperDeployer = IVPoolWrapperDeployer(VPoolWrapperDeployerAddress);
@@ -83,7 +95,7 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
 
     struct InitializePoolParams {
         VTokenDeployer.DeployVTokenParams deployVTokenParams;
-        RageTradePoolSettings rageTradePoolInitialSettings;
+        IClearingHouse.RageTradePoolSettings rageTradePoolInitialSettings;
         uint24 liquidityFeePips;
         uint24 protocolFeePips;
     }
@@ -99,7 +111,14 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
             );
     }
 
-    function initializePool(InitializePoolParams calldata initializePoolParams, uint256 salt) external onlyOwner {
+    function _isVTokenAddressGood(address addr) internal view virtual override returns (bool) {
+        return
+            super._isVTokenAddressGood(addr) &&
+            (uint160(addr) < uint160(address(vBase))) &&
+            clearingHouse.isVTokenAddressAvailable(uint32(uint160(addr)));
+    }
+
+    function initializePool(InitializePoolParams calldata initializePoolParams) external onlyOwner {
         // STEP 1: Deploy the virtual token ERC20, such that it will be token0
         IVToken vToken = _deployVToken(initializePoolParams.deployVTokenParams); // TODO fix this params
 
@@ -129,6 +148,10 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
         // STEP 5: Authorize vPoolWrapper in vToken and vBase
         vBase.authorize(address(vPoolWrapper));
         vToken.setVPoolWrapper(address(vPoolWrapper));
+        clearingHouse.registerPool(
+            address(vToken),
+            IClearingHouse.RageTradePool(vPool, vPoolWrapper, initializePoolParams.rageTradePoolInitialSettings)
+        );
 
         emit PoolInitlized(vPool, vToken, vPoolWrapper);
     }

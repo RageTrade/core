@@ -4,13 +4,14 @@ pragma solidity ^0.8.9;
 
 import { TransparentUpgradeableProxy } from '../proxy/TransparentUpgradeableProxy.sol';
 import { ProxyAdmin } from '../proxy/ProxyAdmin.sol';
+import { ClearingHouseDeployer } from './ClearingHouseDeployer.sol';
 
 import { GoodAddressDeployer } from '../libraries/GoodAddressDeployer.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IRageTradeFactory } from '../interfaces/IRageTradeFactory.sol';
 
-abstract contract VPoolWrapperDeployer is IRageTradeFactory, ProxyAdmin {
+abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeployer {
     address public vPoolWrapperLogicAddress;
 
     constructor(address _vPoolWrapperLogicAddress) {
@@ -36,7 +37,7 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ProxyAdmin {
         }
 
         // this public function has onlyOwner modifier
-        upgrade(proxy, vPoolWrapperLogicAddress);
+        proxyAdmin.upgrade(proxy, vPoolWrapperLogicAddress);
     }
 
     function _deployVPoolWrapper(IVPoolWrapper.InitializeVPoolWrapperParams memory params)
@@ -47,17 +48,8 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ProxyAdmin {
             type(TransparentUpgradeableProxy).creationCode,
             abi.encode(
                 address(vPoolWrapperLogicAddress),
-                address(this),
-                abi.encodeWithSelector(
-                    IVPoolWrapper.VPoolWrapper__init.selector,
-                    params.clearingHouse,
-                    params.vTokenAddress,
-                    params.vBase,
-                    params.vPool,
-                    params.liquidityFeePips,
-                    params.protocolFeePips,
-                    params.UNISWAP_V3_DEFAULT_FEE_TIER
-                )
+                address(proxyAdmin),
+                abi.encodeWithSelector(IVPoolWrapper.VPoolWrapper__init.selector, params)
             )
         );
 

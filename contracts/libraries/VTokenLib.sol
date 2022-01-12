@@ -17,6 +17,8 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { Constants } from '../utils/Constants.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
+import { console } from 'hardhat/console.sol';
+
 type VTokenAddress is address;
 
 library VTokenLib {
@@ -64,7 +66,11 @@ library VTokenLib {
     // }
 
     // // overload
-    function vPool(VTokenAddress vTokenAddress, AccountStorage storage accountStorage) internal view returns (IUniswapV3Pool) {
+    function vPool(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (IUniswapV3Pool)
+    {
         return accountStorage.rtPools[vTokenAddress].vPool;
     }
 
@@ -85,7 +91,7 @@ library VTokenLib {
             accountStorage.rtPools[vTokenAddress].vPool.twapSqrtPrice(
                 accountStorage.rtPools[vTokenAddress].settings.twapDuration
             );
-    } 
+    }
 
     function getVirtualCurrentSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
@@ -100,7 +106,10 @@ library VTokenLib {
         view
         returns (int24 tick)
     {
-        return accountStorage.rtPools[vTokenAddress].vPool.twapTick(accountStorage.rtPools[vTokenAddress].settings.twapDuration);
+        return
+            accountStorage.rtPools[vTokenAddress].vPool.twapTick(
+                accountStorage.rtPools[vTokenAddress].settings.twapDuration
+            );
     }
 
     function getVirtualTwapPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
@@ -124,7 +133,6 @@ library VTokenLib {
         view
         returns (uint160 sqrtPriceX96)
     {
-        // return IOracle(vTokenAddress.iface().oracle()).getTwapSqrtPriceX96(vToken.vPoolWrapper(constants).twapDuration());
         return
             accountStorage.rtPools[vTokenAddress].settings.oracle.getTwapSqrtPriceX96(
                 accountStorage.rtPools[vTokenAddress].settings.twapDuration

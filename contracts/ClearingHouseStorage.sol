@@ -11,27 +11,14 @@ import { LiquidationParams } from './libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { RealTokenLib } from './libraries/RealTokenLib.sol';
 
+import { IClearingHouse } from './interfaces/IClearingHouse.sol';
 import { IOracle } from './interfaces/IOracle.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
-
-struct RageTradePool {
-    IUniswapV3Pool vPool;
-    IVPoolWrapper vPoolWrapper;
-    RageTradePoolSettings settings;
-}
-
-struct RageTradePoolSettings {
-    uint16 initialMarginRatio;
-    uint16 maintainanceMarginRatio;
-    uint32 twapDuration;
-    bool whitelisted;
-    IOracle oracle;
-}
 
 struct AccountStorage {
     mapping(uint32 => VTokenAddress) vTokenAddresses;
     mapping(uint32 => RealTokenLib.RealToken) realTokens;
-    mapping(VTokenAddress => RageTradePool) rtPools;
+    mapping(VTokenAddress => IClearingHouse.RageTradePool) rtPools;
     LiquidationParams liquidationParams;
     uint256 minRequiredMargin;
     uint256 removeLimitOrderFee;
@@ -57,9 +44,9 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     AccountStorage public accountStorage;
 
     error Paused();
-    error NotVPoolFactory();
+    error NotRageTradeFactory();
 
-    address public vPoolFactory;
+    address public rageTradeFactory;
     address public realBase;
     address public insuranceFundAddress;
 }

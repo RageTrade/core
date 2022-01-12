@@ -40,7 +40,7 @@ abstract contract VTokenDeployer {
     }
 
     // returns true if last 4 bytes are non-zero, also extended to add more conditions in VPoolFactory
-    function _isVTokenAddressGood(address addr) internal pure virtual returns (bool) {
+    function _isVTokenAddressGood(address addr) internal view virtual returns (bool) {
         return uint32(uint160(addr)) != 0;
     }
 

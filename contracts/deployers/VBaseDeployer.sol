@@ -11,7 +11,7 @@ abstract contract VBaseDeployer {
             VBase(
                 GoodAddressDeployer.deploy(
                     0,
-                    abi.encodePacked(type(GoodAddressDeployer).creationCode, abi.encode(rBase)),
+                    abi.encodePacked(type(VBase).creationCode, abi.encode(rBase)),
                     _isVBaseAddressGood
                 )
             );

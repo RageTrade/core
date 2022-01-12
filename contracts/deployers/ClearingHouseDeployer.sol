@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.9;
 
+import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
+
 import { TransparentUpgradeableProxy } from '../proxy/TransparentUpgradeableProxy.sol';
 import { ProxyAdmin } from '../proxy/ProxyAdmin.sol';
 
@@ -12,20 +14,23 @@ import { IRageTradeFactory } from '../interfaces/IRageTradeFactory.sol';
 
 /// @notice Manages deployment and logic upgrade for ClearingHouseProxy
 /// @dev ClearingHouse proxy is deployed only once
-abstract contract ClearingHouseDeployer is IRageTradeFactory, ProxyAdmin {
+abstract contract ClearingHouseDeployer is IRageTradeFactory, Ownable {
+    ProxyAdmin public proxyAdmin;
+
     /// @notice Admin method to upgrade implementation while avoiding human error
     /// @param proxy: A VPoolWrapper proxy contract
     /// @param newClearingHouseLogicAddress: new logic address
     /// @dev When a new clearingHouseLogic is deployed, make sure that the initialize method is called.
     function upgradeClearingHouseToLatestLogic(TransparentUpgradeableProxy proxy, address newClearingHouseLogicAddress)
         public
+        onlyOwner
     {
         if (_isClearingHouseAddressGood(address(proxy))) {
             revert ProxyIsNotOfClearingHouse(proxy);
         }
 
         // this public function has onlyOwner modifier
-        upgrade(proxy, newClearingHouseLogicAddress);
+        proxyAdmin.upgrade(proxy, newClearingHouseLogicAddress);
     }
 
     struct DeployClearingHouseParams {
@@ -41,17 +46,19 @@ abstract contract ClearingHouseDeployer is IRageTradeFactory, ProxyAdmin {
     function _deployClearingHouse(DeployClearingHouseParams memory params) internal returns (IClearingHouse) {
         bytes memory bytecode = abi.encodePacked(
             type(TransparentUpgradeableProxy).creationCode,
-            abi.encode(params.clearingHouseLogicAddress),
-            address(this),
-            abi.encodeWithSelector(
-                IClearingHouse.ClearingHouse__init.selector,
-                address(this), // PoolFactory or RageTradeFactory
-                params.rBaseAddress,
-                params.insuranceFundAddress,
-                params.vBaseAddress,
-                params.UNISWAP_V3_FACTORY_ADDRESS,
-                params.UNISWAP_V3_DEFAULT_FEE_TIER,
-                params.UNISWAP_V3_POOL_BYTE_CODE_HASH
+            abi.encode(
+                params.clearingHouseLogicAddress,
+                address(proxyAdmin),
+                abi.encodeWithSelector(
+                    IClearingHouse.ClearingHouse__init.selector,
+                    address(this), // PoolFactory or RageTradeFactory
+                    params.rBaseAddress,
+                    params.insuranceFundAddress,
+                    params.vBaseAddress,
+                    params.UNISWAP_V3_FACTORY_ADDRESS,
+                    params.UNISWAP_V3_DEFAULT_FEE_TIER,
+                    params.UNISWAP_V3_POOL_BYTE_CODE_HASH
+                )
             )
         );
 
