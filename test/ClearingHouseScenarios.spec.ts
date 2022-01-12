@@ -732,7 +732,7 @@ describe('Clearing House Library', () => {
 
   describe('#Scenario 1', async () => {
     it('Timestamp And Oracle Update - 0', async () => {
-      vPoolWrapper.setBlockTimestamp(0);
+      await vPoolWrapper.setBlockTimestamp(0);
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
@@ -780,7 +780,7 @@ describe('Clearing House Library', () => {
 
     it('Timestamp and Oracle Update - 600', async () => {
       const timestampIncrease = 600;
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -832,7 +832,7 @@ describe('Clearing House Library', () => {
     });
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -900,7 +900,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 1900', async () => {
       const timestampIncrease = 1900;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
       await oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -964,7 +964,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 2600', async () => {
       const timestampIncrease = 2600;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1029,7 +1029,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 3300', async () => {
       const timestampIncrease = 3300;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1093,7 +1093,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 4100', async () => {
       const timestampIncrease = 4100;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1158,7 +1158,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 4500', async () => {
       const timestampIncrease = 4500;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2161.41574705594, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1222,7 +1222,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 4600', async () => {
       const timestampIncrease = 4600;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2141.33749022076, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1287,7 +1287,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 5300', async () => {
       const timestampIncrease = 5300;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1350,7 +1350,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 5800', async () => {
       const timestampIncrease = 5800;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2001.24061387234, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1401,7 +1401,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 6200', async () => {
       const timestampIncrease = 6200;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2001.24061387234, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1454,7 +1454,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 6300', async () => {
       const timestampIncrease = 6300;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(1991.25998215442, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1501,7 +1501,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 7200', async () => {
       const timestampIncrease = 7200;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(1942.0979282388, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1548,7 +1548,7 @@ describe('Clearing House Library', () => {
     it('Timestamp and Oracle Update - 7600', async () => {
       const timestampIncrease = 7600;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
-      vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(1915.09933823398, vBase, vToken);
       oracle.setSqrtPrice(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);

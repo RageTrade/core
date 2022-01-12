@@ -117,8 +117,8 @@ describe('Clearing House Library (Liquidation)', () => {
   }
 
   async function changeWrapperTimestampAndCheck(timestampIncrease: number) {
-    vPoolWrapper.setBlockTimestamp(timestampIncrease);
-    vPoolWrapper1.setBlockTimestamp(timestampIncrease);
+    await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+    await vPoolWrapper1.setBlockTimestamp(timestampIncrease);
 
     await network.provider.send('evm_setNextBlockTimestamp', [timestampIncrease + 100 + initialBlockTimestamp]);
     expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
