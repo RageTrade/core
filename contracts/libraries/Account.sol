@@ -13,6 +13,8 @@ import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from './VTokenPositionSet.sol';
+import { RealTokenLib } from './RealTokenLib.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
@@ -28,8 +30,6 @@ import { console } from 'hardhat/console.sol';
 /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position
 /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee
 struct LiquidationParams {
-    uint256 fixFee; //Same number of decimals as accountMarketValue
-    uint256 minRequiredMargin;
     uint16 liquidationFeeFraction;
     uint16 tokenLiquidationPriceDeltaBps;
     uint16 insuranceFundFeeShareBps;
@@ -240,75 +240,70 @@ library Account {
     /// @param account account to deposit balance into
     /// @param vTokenAddress address of token to deposit
     /// @param amount amount of token to deposit
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function addMargin(
         Info storage account,
         VTokenAddress vTokenAddress,
         uint256 amount,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) external {
         // vBASE should be an immutable constant
-        account.tokenDeposits.increaseBalance(vTokenAddress, amount, constants);
+        account.tokenDeposits.increaseBalance(vTokenAddress, amount, accountStorage.constants);
     }
 
     /// @notice reduces deposit balance of 'vTokenAddress' by 'amount'
     /// @param account account to deposit balance into
     /// @param vTokenAddress address of token to remove
     /// @param amount amount of token to remove
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function removeMargin(
         Info storage account,
         VTokenAddress vTokenAddress,
         uint256 amount,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        uint256 minRequiredMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) external {
-        account.tokenDeposits.decreaseBalance(vTokenAddress, amount, constants);
+        account.tokenDeposits.decreaseBalance(vTokenAddress, amount, accountStorage.constants);
 
-        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
+        account.checkIfMarginAvailable(true, accountStorage);
     }
 
     /// @notice removes 'amount' of profit generated in base token
     /// @param account account to remove profit from
     /// @param amount amount of profit(base token) to remove
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function removeProfit(
         Info storage account,
         uint256 amount,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        uint256 minRequiredMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) external {
-        account.updateBaseBalance(-int256(amount), constants);
+        account.updateBaseBalance(-int256(amount), accountStorage.constants);
 
-        account.checkIfProfitAvailable(vTokenAddresses, constants);
-        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
+        account.checkIfProfitAvailable(accountStorage);
+        account.checkIfMarginAvailable(true, accountStorage);
     }
 
     /// @notice returns market value and required margin for the account based on current market conditions
     /// @dev (In case requiredMargin < minRequiredMargin then requiredMargin = minRequiredMargin)
     /// @param account account to check
     /// @param isInitialMargin true to use initial margin factor and false to use maintainance margin factor for calcualtion of required margin
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param minRequiredMargin the floor value of required margin
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
     /// @return totalRequiredMargin total margin required to keep the account above selected margin requirement (intial/maintainance)
     function getAccountValueAndRequiredMargin(
         Info storage account,
         bool isInitialMargin,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        uint256 minRequiredMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
-        accountMarketValue = account.getAccountValue(vTokenAddresses, constants);
+        accountMarketValue = account.getAccountValue(accountStorage);
 
-        totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, vTokenAddresses, constants);
+        totalRequiredMargin = account.tokenPositions.getRequiredMargin(
+            isInitialMargin,
+            accountStorage.vTokenAddresses,
+            accountStorage.constants
+        );
         if (!account.tokenPositions.isEmpty()) {
-            totalRequiredMargin = totalRequiredMargin < int256(minRequiredMargin)
-                ? int256(minRequiredMargin)
+            totalRequiredMargin = totalRequiredMargin < int256(accountStorage.minRequiredMargin)
+                ? int256(accountStorage.minRequiredMargin)
                 : totalRequiredMargin;
         }
         return (accountMarketValue, totalRequiredMargin);
@@ -316,19 +311,24 @@ library Account {
 
     /// @notice returns market value for the account based on current market conditions
     /// @param account account to check
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
-    function getAccountValue(
-        Info storage account,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        Constants memory constants
-    ) internal view returns (int256 accountMarketValue) {
-        accountMarketValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+    function getAccountValue(Info storage account, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (int256 accountMarketValue)
+    {
+        accountMarketValue = account.tokenPositions.getAccountMarketValue(
+            accountStorage.vTokenAddresses,
+            accountStorage.constants
+        );
         //TODO: Remove logs
         // console.log('accountMarketValue w/o deposits');
         // console.logInt(accountMarketValue);
-        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(vTokenAddresses, constants);
+        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(
+            accountStorage.vTokenAddresses,
+            accountStorage.constants
+        );
         // console.log('accountMarketValue with deposits');
         // console.logInt(accountMarketValue);
         return (accountMarketValue);
@@ -337,21 +337,15 @@ library Account {
     /// @notice checks if market value > required margin else revert with InvalidTransactionNotEnoughMargin
     /// @param account account to check
     /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param minRequiredMargin the floor value of required margin
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function checkIfMarginAvailable(
         Info storage account,
         bool isInitialMargin,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        uint256 minRequiredMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view {
         (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
             isInitialMargin,
-            vTokenAddresses,
-            minRequiredMargin,
-            constants
+            accountStorage
         );
         if (accountMarketValue < totalRequiredMargin)
             revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
@@ -359,14 +353,12 @@ library Account {
 
     /// @notice checks if profit is available to withdraw base token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
     /// @param account account to check
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param constants platform constants
-    function checkIfProfitAvailable(
-        Info storage account,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        Constants memory constants
-    ) internal view {
-        int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(vTokenAddresses, constants);
+    /// @param accountStorage set of all constants and token addresses
+    function checkIfProfitAvailable(Info storage account, AccountStorage storage accountStorage) internal view {
+        int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(
+            accountStorage.vTokenAddresses,
+            accountStorage.constants
+        );
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
@@ -378,26 +370,26 @@ library Account {
     /// @param account account to swap tokens for
     /// @param vTokenAddress address of the token to swap
     /// @param swapParams parameters for the swap (Includes - amount, sqrtPriceLimit, isNotional, isPartialAllowed)
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param minRequiredMargin the floor value of required margin
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function swapToken(
         Info storage account,
         VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        uint256 minRequiredMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account fp bill
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
 
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback. an  d send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vTokenAddress, swapParams, constants);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(
+            vTokenAddress,
+            swapParams,
+            accountStorage.constants
+        );
 
         // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
+        account.checkIfMarginAvailable(true, accountStorage);
     }
 
     /// @notice changes range liquidity 'vTokenAddress' of market value equal to 'vTokenNotional'
@@ -407,15 +399,12 @@ library Account {
     /// @param account account to change liquidity
     /// @param vTokenAddress address of token to swap
     /// @param liquidityChangeParams parameters including lower tick, upper tick, liquidity delta, sqrtPriceCurrent, slippageToleranceBps, closeTokenPosition, limit order type
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function liquidityChange(
         Info storage account,
         VTokenAddress vTokenAddress,
         LiquidityChangeParams memory liquidityChangeParams,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        uint256 minRequiredMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants);
 
@@ -423,11 +412,11 @@ library Account {
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
             vTokenAddress,
             liquidityChangeParams,
-            constants
+            accountStorage.constants
         );
 
         // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, vTokenAddresses, minRequiredMargin, constants);
+        account.checkIfMarginAvailable(true, accountStorage);
     }
 
     /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
@@ -441,14 +430,15 @@ library Account {
     function computeLiquidationFees(
         int256 accountMarketValue,
         int256 liquidationFee,
+        uint256 fixFee,
         LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
-        int256 fixFee = int256(liquidationParams.fixFee);
-        keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFee;
-        if (accountMarketValue - fixFee - liquidationFee < 0) {
+        int256 fixFeeInt = int256(fixFee);
+        keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
+        if (accountMarketValue - fixFeeInt - liquidationFee < 0) {
             insuranceFundFee = accountMarketValue - keeperFee;
         } else {
-            insuranceFundFee = liquidationFee - keeperFee + fixFee;
+            insuranceFundFee = liquidationFee - keeperFee + fixFeeInt;
         }
     }
 
@@ -456,48 +446,49 @@ library Account {
     /// @notice charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
     /// @param account account to liquidate
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps, minRequiredMargin, liquidationFeeFraction
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function liquidateLiquidityPositions(
         Info storage account,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        LiquidationParams memory liquidationParams,
-        Constants memory constants
+        uint256 fixFee,
+        AccountStorage storage accountStorage
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         //check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
         int256 notionalAmountClosed;
 
-        (accountMarketValue, totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
-            false,
-            vTokenAddresses,
-            liquidationParams.minRequiredMargin,
-            constants
-        );
+        (accountMarketValue, totalRequiredMargin) = account.getAccountValueAndRequiredMargin(false, accountStorage);
         if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
         // account.tokenPositions.realizeFundingPayment(vTokenAddresses, constants); // also updates checkpoints
-        notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(vTokenAddresses, constants);
+        notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(
+            accountStorage.vTokenAddresses,
+            accountStorage.constants
+        );
 
-        int256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
-        (keeperFee, insuranceFundFee) = computeLiquidationFees(accountMarketValue, liquidationFee, liquidationParams);
+        int256 liquidationFee = notionalAmountClosed.mulDiv(
+            accountStorage.liquidationParams.liquidationFeeFraction,
+            1e5
+        );
+        (keeperFee, insuranceFundFee) = computeLiquidationFees(
+            accountMarketValue,
+            liquidationFee,
+            fixFee,
+            accountStorage.liquidationParams
+        );
 
-        account.updateBaseBalance(-(keeperFee + insuranceFundFee), constants);
+        account.updateBaseBalance(-(keeperFee + insuranceFundFee), accountStorage.constants);
     }
 
     /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
     /// @param tokensToTrade account to liquidate
     /// @param vTokenAddress map of vTokenAddresses allowed on the platform
-    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps, minRequiredMargin, liquidationFeeFraction
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function getLiquidationPriceX128AndFee(
         int256 tokensToTrade,
         VTokenAddress vTokenAddress,
-        LiquidationParams memory liquidationParams,
-        Constants memory constants
+        AccountStorage storage accountStorage
     )
         internal
         view
@@ -507,8 +498,8 @@ library Account {
             int256 insuranceFundFee
         )
     {
-        uint16 maintainanceMarginFactor = vTokenAddress.getMarginRatio(false, constants);
-        uint256 priceX128 = vTokenAddress.getVirtualCurrentPriceX128(constants);
+        uint16 maintainanceMarginFactor = vTokenAddress.getMarginRatio(false, accountStorage.constants);
+        uint256 priceX128 = vTokenAddress.getVirtualCurrentPriceX128(accountStorage.constants);
         // console.log('PriceX128');
         // console.log(priceX128);
         // console.log(
@@ -517,21 +508,20 @@ library Account {
         //     'maintainanceMarginFactor',
         //     maintainanceMarginFactor
         // );
-        uint256 priceDeltaX128 = priceX128.mulDiv(liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
-            maintainanceMarginFactor,
-            1e5
-        );
+        uint256 priceDeltaX128 = priceX128
+            .mulDiv(accountStorage.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4)
+            .mulDiv(maintainanceMarginFactor, 1e5);
         if (tokensToTrade < 0) {
             liquidationPriceX128 = priceX128 - priceDeltaX128;
             liquidatorPriceX128 =
                 priceX128 -
-                priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
+                priceDeltaX128.mulDiv(1e4 - accountStorage.liquidationParams.insuranceFundFeeShareBps, 1e4);
             insuranceFundFee = -tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
         } else {
             liquidationPriceX128 = priceX128 + priceDeltaX128;
             liquidatorPriceX128 =
                 priceX128 +
-                priceDeltaX128.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
+                priceDeltaX128.mulDiv(1e4 - accountStorage.liquidationParams.insuranceFundFeeShareBps, 1e4);
             insuranceFundFee = tokensToTrade.mulDiv(liquidationPriceX128 - liquidatorPriceX128, FixedPoint128.Q128);
         }
     }
@@ -600,16 +590,14 @@ library Account {
     /// @notice liquidates all range positions in case the account is under water
     /// @param account account to liquidate
     /// @param vTokenAddress address of token to swap
-    /// @param vTokenAddresses map of vTokenAddresses allowed on the platform
-    /// @param constants platform constants
+    /// @param accountStorage set of all constants and token addresses
     function liquidateTokenPosition(
         Info storage account,
         Info storage liquidatorAccount,
         uint16 liquidationBps,
         VTokenAddress vTokenAddress,
-        LiquidationParams memory liquidationParams,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        Constants memory constants
+        uint256 fixFee,
+        AccountStorage storage accountStorage
     ) external returns (int256 insuranceFundFee, BalanceAdjustments memory liquidatorBalanceAdjustments) {
         // VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
         //     vTokenAddress,
@@ -617,15 +605,13 @@ library Account {
         //     constants
         // );
 
-        if (account.tokenPositions.getIsTokenRangeActive(vTokenAddress, constants))
+        if (account.tokenPositions.getIsTokenRangeActive(vTokenAddress, accountStorage.constants))
             revert InvalidLiquidationActiveRangePresent(vTokenAddress);
 
         {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
                 false,
-                vTokenAddresses,
-                liquidationParams.minRequiredMargin,
-                constants
+                accountStorage
             );
             // console.log('########## Beginning of Liquidation ##############');
             // console.log('Account Market Value');
@@ -643,7 +629,7 @@ library Account {
             VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
                 vTokenAddress,
                 false,
-                constants
+                accountStorage.constants
             );
             tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
         }
@@ -657,8 +643,7 @@ library Account {
             (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = getLiquidationPriceX128AndFee(
                 tokensToTrade,
                 vTokenAddress,
-                liquidationParams,
-                constants
+                accountStorage
             );
 
             // console.log('LiquidationPriceX128');
@@ -674,26 +659,21 @@ library Account {
                 tokensToTrade,
                 liquidationPriceX128,
                 liquidatorPriceX128,
-                int256(liquidationParams.fixFee),
-                constants
+                int256(fixFee),
+                accountStorage.constants
             );
         }
         {
-            int256 accountMarketValueFinal = account.getAccountValue(vTokenAddresses, constants);
+            int256 accountMarketValueFinal = account.getAccountValue(accountStorage);
 
             if (accountMarketValueFinal < 0) {
                 insuranceFundFee = accountMarketValueFinal;
-                account.updateBaseBalance(-accountMarketValueFinal, constants);
+                account.updateBaseBalance(-accountMarketValueFinal, accountStorage.constants);
             }
         }
         // console.log('#############  Insurance Fund Fee  ##################');
         // console.logInt(insuranceFundFee);
-        liquidatorAccount.checkIfMarginAvailable(
-            false,
-            vTokenAddresses,
-            liquidationParams.minRequiredMargin,
-            constants
-        );
+        liquidatorAccount.checkIfMarginAvailable(false, accountStorage);
         emit Account.LiquidateTokenPosition(
             account.tokenPositions.accountNo,
             liquidatorAccount.tokenPositions.accountNo,

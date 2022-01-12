@@ -13,6 +13,16 @@ contract ClearingHouseTest is ClearingHouse {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
 
+    uint256 public fixFee;
+
+    function setFixFee(uint256 _fixFee) external {
+        fixFee = _fixFee;
+    }
+
+    function _getFixFee() internal view override returns (uint256) {
+        return fixFee;
+    }
+
     constructor(
         address VPoolFactory,
         address _realBase,
@@ -29,9 +39,13 @@ contract ClearingHouseTest is ClearingHouse {
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(constants.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, VTokenAddress.wrap(constants.VBASE_ADDRESS), constants);
+        set.update(
+            balanceAdjustments,
+            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
+            accountStorage.constants
+        );
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -42,7 +56,7 @@ contract ClearingHouseTest is ClearingHouse {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, vTokenAddresses[truncatedAddress], constants);
+            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage.constants);
         }
     }
 
@@ -51,7 +65,7 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (VTokenAddress vTokenAddressInVTokenAddresses)
     {
-        return vTokenAddresses[vTokenAddress.truncate()];
+        return accountStorage.vTokenAddresses[vTokenAddress.truncate()];
     }
 
     function getAccountOwner(uint256 accountNo) external view returns (address owner) {
@@ -112,7 +126,7 @@ contract ClearingHouseTest is ClearingHouse {
 
         (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = VTokenAddress
             .wrap(vTokenAddress)
-            .vPoolWrapper(constants)
+            .vPoolWrapper(accountStorage.constants)
             .getValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
         fundingPayment = liquidityPosition.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
@@ -163,12 +177,6 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 accountMarketValue, int256 requiredMargin)
     {
-        return
-            accounts[accountNo].getAccountValueAndRequiredMargin(
-                isInitialMargin,
-                vTokenAddresses,
-                liquidationParams.minRequiredMargin,
-                constants
-            );
+        return accounts[accountNo].getAccountValueAndRequiredMargin(isInitialMargin, accountStorage);
     }
 }

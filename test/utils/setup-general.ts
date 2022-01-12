@@ -92,7 +92,7 @@ export async function testSetup({
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];
   const vPoolWrapperAddress = events[0].args[2];
-  const constants = await clearingHouse.constants();
+  const constants = (await clearingHouse.accountStorage()).constants;
 
   return {
     realBase,
@@ -148,7 +148,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
-  const constants = await clearingHouse.constants();
+  const constants = (await clearingHouse.accountStorage()).constants;
 
   return {
     realbase: realBase,
