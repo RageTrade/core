@@ -90,7 +90,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         uniswapFeePips = vPool.fee();
 
         // initializes the funding payment variable
-        zeroSwap();
+        updateGlobalFundingState();
     }
 
     // TODO move this to ClearingHouse
@@ -127,6 +127,26 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     {
         (, int24 currentTick, , , , , ) = vPool.slot0();
         FundingPayment.Info memory _fpGlobal = fpGlobal;
+        wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
+        (
+            wrapperValuesInside.sumBInsideX128,
+            wrapperValuesInside.sumFpInsideX128,
+            wrapperValuesInside.sumFeeInsideX128
+        ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
+    }
+
+    function getExtrapolatedValuesInside(int24 tickLower, int24 tickUpper)
+        external
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside)
+    {
+        (, int24 currentTick, , , , , ) = vPool.slot0();
+        FundingPayment.Info memory _fpGlobal = fpGlobal;
+
+        ///@dev update sumA and sumFP to extrapolated values according to current timestamp
+        _fpGlobal.sumAX128 = getExtrapolatedSumAX128();
+        _fpGlobal.sumFpX128 = getExtrapolatedSumFpX128(_fpGlobal.sumAX128);
+
         wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
         (
             wrapperValuesInside.sumBInsideX128,
@@ -337,7 +357,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     // for updating global funding payment
-    function zeroSwap() internal {
+    function updateGlobalFundingState() public {
         uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
         fpGlobal.update(0, 1, _blockTimestamp(), priceX128, vPool.twapSqrtPrice(timeHorizon).toPriceX128());
     }
@@ -402,7 +422,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             WrapperValuesInside memory wrapperValuesInside
         )
     {
-        zeroSwap();
+        updateGlobalFundingState();
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
         if (liquidityDelta > 0) {
             (uint256 _amount0, uint256 _amount1) = vPool.mint({
@@ -464,6 +484,28 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function getSumAX128() external view returns (int256) {
         return fpGlobal.sumAX128;
+    }
+
+    function getExtrapolatedSumAX128() public view returns (int256) {
+        uint256 priceX128 = oracle.getTwapSqrtPriceX96(timeHorizon).toPriceX128();
+        return
+            FundingPayment.extrapolatedSumAX128(
+                fpGlobal.sumAX128,
+                fpGlobal.timestampLast,
+                _blockTimestamp(),
+                priceX128,
+                vPool.twapSqrtPrice(timeHorizon).toPriceX128()
+            );
+    }
+
+    function getExtrapolatedSumFpX128(int256 extrapolatedSumAX128) internal view returns (int256) {
+        return
+            FundingPayment.extrapolatedSumFpX128(
+                fpGlobal.sumAX128,
+                fpGlobal.sumBX128,
+                fpGlobal.sumFpX128,
+                extrapolatedSumAX128
+            );
     }
 
     // used to set time in tests

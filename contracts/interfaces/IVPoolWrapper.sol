@@ -18,6 +18,8 @@ interface IVPoolWrapper {
 
     function vPool() external view returns (IUniswapV3Pool);
 
+    function updateGlobalFundingState() external;
+
     function initialMarginRatio() external view returns (uint16);
 
     function maintainanceMarginRatio() external view returns (uint16);
@@ -25,6 +27,11 @@ interface IVPoolWrapper {
     function whitelisted() external view returns (bool);
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
+        external
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside);
+
+    function getExtrapolatedValuesInside(int24 tickLower, int24 tickUpper)
         external
         view
         returns (WrapperValuesInside memory wrapperValuesInside);
@@ -42,6 +49,8 @@ interface IVPoolWrapper {
         );
 
     function getSumAX128() external view returns (int256);
+
+    function getExtrapolatedSumAX128() external view returns (int256);
 
     function swapToken(
         int256 amount,
