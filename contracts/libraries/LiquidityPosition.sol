@@ -122,11 +122,11 @@ library LiquidityPosition {
 
         if (liquidity > 0) {
             position.liquidity += uint128(liquidity);
+            position.vTokenAmountIn = vTokenPrincipal;
         } else if (liquidity < 0) {
             position.liquidity -= uint128(liquidity * -1);
+            position.vTokenAmountIn = 0;
         }
-
-        (position.vTokenAmountIn, ) = position.tokenAmountsInRange(sqrtPriceCurrent);
     }
 
     function update(
