@@ -852,13 +852,13 @@ describe('Clearing House Library', () => {
       const expectedSumFeeLast = 0n;
 
       const expectedTick199820SumB = 1189490198145n;
-      const expectedTick199820SumA = 746151n;
-      const expectedTick199820SumFp = 0n;
+      const expectedTick199820SumA = 1484140n;
+      const expectedTick199820SumFp = 8778310n;
       const expectedTick199820SumFee = 2542858n;
 
       const expectedTick200310SumB = 1189490198145n;
-      const expectedTick200310SumA = 746151n;
-      const expectedTick200310SumFp = 0n;
+      const expectedTick200310SumA = 1484140n;
+      const expectedTick200310SumFp = 8778310n;
       const expectedTick200310SumFee = 2542858n;
 
       await updateRangeOrderAndCheck(
@@ -921,8 +921,8 @@ describe('Clearing House Library', () => {
       const expectedSumFee = 5300982n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = 746151n;
-      const expectedTickSumFp = 0n;
+      const expectedTickSumA = 1484140n;
+      const expectedTickSumFp = 8778310n;
       const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
@@ -1307,8 +1307,8 @@ describe('Clearing House Library', () => {
       const expectedSumFee = 39796806n + 1n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = 746151n;
-      const expectedTickSumFp = 0n;
+      const expectedTickSumA = 1484140n;
+      const expectedTickSumFp = 8778310n;
       const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
@@ -1362,14 +1362,14 @@ describe('Clearing House Library', () => {
       const liquidityDelta = -22538439850760800n;
       const limitOrderType = 0;
       const expectedEndTokenBalance = 12196020739034000000n;
-      const expectedEndBaseBalance = -24951472603n + 3n;
+      const expectedEndBaseBalance = -24951543167n + 1n;
 
       // const expectedSumALast = 6570998n;
       // const expectedSumBLast = -115618250170n;
       // const expectedSumFpLast = 32327135n;
       // const expectedSumFeeLast = 21572907n;
 
-      const expectedAccount1UnrealizedFunding = -94570n + 2n;
+      const expectedAccount1UnrealizedFunding = -94568n;
       const expectedAccount1UnrealizedFee = 48621967n + 1n;
 
       await checkUnrealizedFundingPaymentAndFee(
