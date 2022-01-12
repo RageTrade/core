@@ -252,7 +252,7 @@ library LiquidityPosition {
             baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees
-        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getValuesInside(
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getExtrapolatedValuesInside(
             position.tickLower,
             position.tickUpper
         );
