@@ -1369,7 +1369,7 @@ describe('Clearing House Library', () => {
       // const expectedSumFpLast = 32327135n;
       // const expectedSumFeeLast = 21572907n;
 
-      const expectedAccount1UnrealizedFunding = -94568n;
+      const expectedAccount1UnrealizedFunding = -165134n;
       const expectedAccount1UnrealizedFee = 48621967n + 1n;
 
       await checkUnrealizedFundingPaymentAndFee(
