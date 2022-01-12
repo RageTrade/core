@@ -223,6 +223,7 @@ library VTokenPositionSet {
     /// @dev realizes funding payment to base balance if vTokenAddress is not for base
     /// @dev activates the token if not already active
     /// @dev deactivates the token if the balance = 0 and there are no range positions active
+    /// @dev IMP: ensure that the global states are updated using zeroSwap or directly through some interaction with pool wrapper
     /// @param set VTokenPositionSet
     /// @param balanceAdjustments platform constants
     /// @param vTokenAddress address of the token
