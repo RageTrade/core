@@ -11,6 +11,7 @@ contract ClearingHouseTest is ClearingHouse {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
+    using VTokenPosition for VTokenPosition.Position;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
 
@@ -110,6 +111,20 @@ contract ClearingHouseTest is ClearingHouse {
         for (num = 0; num < liquidityPositionSet.active.length; num++) {
             if (liquidityPositionSet.active[num] == 0) break;
         }
+    }
+
+    function getAccountTokenPositionFunding(uint256 accountNo, address vTokenAddress)
+        external
+        view
+        returns (int256 fundingPayment)
+    {
+        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
+            VTokenAddress.wrap(vTokenAddress).truncate()
+        ];
+
+        IVPoolWrapper wrapper = VTokenAddress.wrap(vTokenAddress).vPoolWrapper(accountStorage.constants);
+
+        fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
 
     function getAccountLiquidityPositionFundingAndFee(
