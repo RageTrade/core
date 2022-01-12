@@ -35,7 +35,6 @@ contract VToken is ERC20, IVToken {
         if (vPoolWrapper == address(0)) {
             vPoolWrapper = _vPoolWrapper;
         }
-        vPoolWrapper = _vPoolWrapper;
     }
 
     // TODO bring uniswap vPool address in the logic
