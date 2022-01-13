@@ -156,6 +156,17 @@ describe('DepositTokenSet Library', () => {
     testContractAddress = test.address;
 
     // constants = await VPoolFactory.constants();
+
+    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    await test.registerPool(vBase.address, basePoolObj);
+
+    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    await test.registerPool(vTokenAddress, vTokenPoolObj);
+
+    const vTokenPoolObj1 = await clearingHouse.rageTradePools(vTokenAddress1);
+    await test.registerPool(vTokenAddress1, vTokenPoolObj1);
+
+    await test.setVBaseAddress(vBase.address);
   });
 
   describe('#Single Token', () => {
