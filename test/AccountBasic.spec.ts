@@ -144,7 +144,16 @@ describe('Account Library Test Basic', () => {
     });
 
     vPoolWrapperFake.liquidityChange.returns((input: any) => {
-      return [input.liquidityDelta * 4000, input.liquidityDelta];
+      return [
+        input.liquidityDelta * 4000,
+        input.liquidityDelta,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ];
     });
 
     const liquidationParams = {

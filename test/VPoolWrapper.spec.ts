@@ -63,7 +63,7 @@ describe('PoolWrapper', () => {
 
     it('sets tick state to global when tickLower <= tickCurrent', async () => {
       // overwrite the global state
-      const fpGlobal = {
+      let fpGlobal = {
         sumAX128: toQ128(1),
         sumBX128: toQ128(2),
         sumFpX128: toQ128(3),
@@ -78,6 +78,7 @@ describe('PoolWrapper', () => {
 
       await vPoolWrapper.liquidityChange(smallerRange.tickLower, smallerRange.tickUpper, 4_000_000);
 
+      fpGlobal = await getGlobal();
       // lower tick should be set to global state
       const tickLowerState = await vPoolWrapper.ticksExtended(smallerRange.tickLower);
       expect(tickLowerState.sumALastX128).to.eq(fpGlobal.sumAX128);

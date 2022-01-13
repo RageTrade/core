@@ -88,7 +88,16 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 13321.7428693545
     // ReqMargin (InitialMargin) 26643.485738709
     it('Scenario 1 - Add Range', async () => {
-      vPoolWrapperFake.liquidityChange.returns([125271786680, BigNumber.from('30105615887850845791')]);
+      vPoolWrapperFake.liquidityChange.returns([
+        125271786680,
+        BigNumber.from('30105615887850845791'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
       await liqChange(-195660, -193370, 35000);
       await matchNumbers(0, 26643485738, 13321742869);
     });
@@ -115,7 +124,16 @@ describe('Market Value and Required Margin', () => {
     //  ReqMargin (MaintenanceMargin) 42518.0764004743
     // ReqMargin (InitialMargin) 85036.1528009486
     it('Scenario 3 - Add Range Outside', async () => {
-      vPoolWrapperFake.liquidityChange.returns([239585552683, 0]);
+      vPoolWrapperFake.liquidityChange.returns([
+        239585552683,
+        0,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
       await liqChange(-195660, -193370, 35000);
       await matchNumbers(-8656594064, 85036152800, 42518076400);
     });
@@ -142,7 +160,16 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 43881.5805109528
     // ReqMargin (InitialMargin) 87763.1610219056
     it('Scenario 5 - Add Range Outside', async () => {
-      vPoolWrapperFake.liquidityChange.returns([70104066864, BigNumber.from('26954936243705637801')]);
+      vPoolWrapperFake.liquidityChange.returns([
+        70104066864,
+        BigNumber.from('26954936243705637801'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
       await liqChange(-195660, -193370, 25000);
       await matchNumbers(-9383544194, 87763161021, 43881580510);
     });

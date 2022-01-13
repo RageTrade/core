@@ -8,14 +8,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapperMock is IVPoolWrapper {
-    struct ValuesInside {
-        int256 sumAX128;
-        int256 sumBInsideX128;
-        int256 sumFpInsideX128;
-        uint256 sumFeeInsideX128;
-    }
-
-    mapping(int24 => mapping(int24 => ValuesInside)) public override getValuesInside;
+    mapping(int24 => mapping(int24 => IVPoolWrapper.WrapperValuesInside)) _getValuesInside;
 
     struct LiquidityRate {
         uint256 vBasePerLiquidity;
@@ -33,6 +26,24 @@ contract VPoolWrapperMock is IVPoolWrapper {
         (initialMarginRatio, maintainanceMarginRatio, timeHorizon) = (0, 0, 0);
     }
 
+    function updateGlobalFundingState() public {}
+
+    function getValuesInside(int24 tickLower, int24 tickUpper)
+        public
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside)
+    {
+        return _getValuesInside[tickLower][tickUpper];
+    }
+
+    function getExtrapolatedValuesInside(int24 tickLower, int24 tickUpper)
+        public
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside)
+    {
+        return _getValuesInside[tickLower][tickUpper];
+    }
+
     function setValuesInside(
         int24 tickLower,
         int24 tickUpper,
@@ -41,7 +52,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
         int256 sumFpInsideX128,
         uint256 sumFeeInsideX128
     ) external {
-        getValuesInside[tickLower][tickUpper] = ValuesInside(
+        _getValuesInside[tickLower][tickUpper] = IVPoolWrapper.WrapperValuesInside(
             sumAX128,
             sumBInsideX128,
             sumFpInsideX128,
@@ -70,7 +81,14 @@ contract VPoolWrapperMock is IVPoolWrapper {
         int24 tickLower,
         int24 tickUpper,
         int128 liquidity
-    ) external returns (int256 vBaseAmount, int256 vTokenAmount) {
+    )
+        external
+        returns (
+            int256 vBaseAmount,
+            int256 vTokenAmount,
+            WrapperValuesInside memory wrapperValuesInside
+        )
+    {
         if (liquidity > 0) {
             _liquidity += liquidity;
         } else {
@@ -82,6 +100,10 @@ contract VPoolWrapperMock is IVPoolWrapper {
     }
 
     function getSumAX128() external pure returns (int256) {
+        return 20 * (1 << 128);
+    }
+
+    function getExtrapolatedSumAX128() external pure returns (int256) {
         return 20 * (1 << 128);
     }
 

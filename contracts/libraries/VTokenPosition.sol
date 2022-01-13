@@ -92,7 +92,7 @@ library VTokenPosition {
     /// @param position token position
     /// @param wrapper pool wrapper corresponding to position
     function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
-        int256 extrapolatedSumAX128 = wrapper.getSumAX128();
+        int256 extrapolatedSumAX128 = wrapper.getExtrapolatedSumAX128();
         int256 unrealizedFP = (-position.netTraderPosition).mulDiv(
             (extrapolatedSumAX128 - position.sumAX128Ckpt),
             int256(FixedPoint128.Q128)

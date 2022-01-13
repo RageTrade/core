@@ -546,6 +546,8 @@ library Account {
         int256 fixFee,
         Constants memory constants
     ) internal returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
+        vTokenAddress.vPoolWrapper(constants).updateGlobalFundingState();
+
         BalanceAdjustments memory balanceAdjustments = BalanceAdjustments({
             vBaseIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
             vTokenIncrease: tokensToTrade,
@@ -637,21 +639,12 @@ library Account {
         uint256 liquidationPriceX128;
         uint256 liquidatorPriceX128;
         {
-            // console.log('Tokens To Trade');
-            // console.logInt(tokensToTrade);
-
             (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = getLiquidationPriceX128AndFee(
                 tokensToTrade,
                 vTokenAddress,
                 accountStorage
             );
 
-            // console.log('LiquidationPriceX128');
-            // console.log(liquidationPriceX128);
-            // console.log('LiquidatorPriceX128');
-            // console.log(liquidatorPriceX128);
-            // console.log('Insurnace Fund Fee');
-            // console.logInt(insuranceFundFee);
             liquidatorBalanceAdjustments = updateLiquidationAccounts(
                 account,
                 liquidatorAccount,

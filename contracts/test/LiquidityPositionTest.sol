@@ -9,6 +9,7 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 import { VPoolFactory } from '../VPoolFactory.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 import { Constants } from '../utils/Constants.sol';
@@ -30,7 +31,11 @@ contract LiquidityPositionTest {
     }
 
     function updateCheckpoints() external {
-        lp.update(0, VTokenAddress.wrap(address(0)), wrapper, balanceAdjustments);
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getValuesInside(
+            lp.tickLower,
+            lp.tickUpper
+        );
+        lp.update(0, VTokenAddress.wrap(address(0)), wrapperValuesInside, balanceAdjustments);
     }
 
     function netPosition() public view returns (int256) {

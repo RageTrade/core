@@ -3,15 +3,19 @@
 pragma solidity ^0.8.9;
 
 import { ClearingHouse } from '../ClearingHouse.sol';
-import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition } from '../libraries/Account.sol';
+import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition, SignedFullMath } from '../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { console } from 'hardhat/console.sol';
 
 contract ClearingHouseTest is ClearingHouse {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
+    using VTokenPosition for VTokenPosition.Position;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
+    using SignedFullMath for int256;
 
     uint256 public fixFee;
 
@@ -111,6 +115,21 @@ contract ClearingHouseTest is ClearingHouse {
         }
     }
 
+    function getAccountTokenPositionFunding(uint256 accountNo, address vTokenAddress)
+        external
+        view
+        returns (int256 fundingPayment)
+    {
+        VTokenAddress vToken = VTokenAddress.wrap(vTokenAddress);
+        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
+            vToken.truncate()
+        ];
+
+        IVPoolWrapper wrapper = vToken.vPoolWrapper(accountStorage.constants);
+
+        fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
+    }
+
     function getAccountLiquidityPositionFundingAndFee(
         uint256 accountNo,
         address vTokenAddress,
@@ -124,14 +143,17 @@ contract ClearingHouseTest is ClearingHouse {
             liquidityPositionSet.active[num]
         ];
 
-        (int256 sumAX128, int256 sumBInsideX128, int256 sumFpInsideX128, uint256 sumFeeInsideX128) = VTokenAddress
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = VTokenAddress
             .wrap(vTokenAddress)
             .vPoolWrapper(accountStorage.constants)
-            .getValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
+            .getExtrapolatedValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
-        fundingPayment = liquidityPosition.unrealizedFundingPayment(sumAX128, sumFpInsideX128);
+        fundingPayment = liquidityPosition.unrealizedFundingPayment(
+            wrapperValuesInside.sumAX128,
+            wrapperValuesInside.sumFpInsideX128
+        );
 
-        unrealizedLiquidityFee = liquidityPosition.unrealizedFees(sumFeeInsideX128);
+        unrealizedLiquidityFee = liquidityPosition.unrealizedFees(wrapperValuesInside.sumFeeInsideX128);
     }
 
     function getAccountLiquidityPositionDetails(
