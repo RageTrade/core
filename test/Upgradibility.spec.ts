@@ -1,17 +1,19 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { getCreateAddressFor } from './utils/create-addresses';
-import { setupClearingHouse } from './utils/setup-clearinghouse';
+
+import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
+import { setupClearingHouse, initializePool } from './utils/setup-clearinghouse';
 
 describe('Upgradibility', () => {
-  it('upgrades clearing house logic', async () => {
-    const { signer, clearingHouse, rBase, insuranceFund, rageTradeFactory, accountLib } = await setupClearingHouse({});
-    expect(await clearingHouse.insuranceFundAddress()).to.eq(insuranceFund.address);
+  // before(activateMainnetFork);
+  // TODO: for some weird reason above doesn't resolve. figure out why later.
+  before(async () => {
+    await activateMainnetFork();
+  });
+  after(deactivateMainnetFork);
 
-    const newCHAddress = await getCreateAddressFor(signer, 1);
-    const newInsuranceFund = await (
-      await hre.ethers.getContractFactory('InsuranceFund')
-    ).deploy(rBase.address, newCHAddress);
+  it('upgrades clearing house logic', async () => {
+    const { clearingHouse, rageTradeFactory, accountLib } = await setupClearingHouse({});
 
     const newCHLogic = await (
       await hre.ethers.getContractFactory('ClearingHouseDummy', {
@@ -26,5 +28,21 @@ describe('Upgradibility', () => {
     expect(await clearingHouse.getFixFee()).to.eq(1234567890);
   });
 
-  it('upgrades vpoolwrapper');
+  it('upgrades vpoolwrapper', async () => {
+    const { clearingHouse, rageTradeFactory, accountLib } = await setupClearingHouse({});
+
+    const { vPoolWrapper } = await initializePool({ rageTradeFactory });
+
+    // blockTimestamp method does not exist on vPoolWrapper
+    const _vPoolWrapper = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapper.address);
+    expect(_vPoolWrapper.blockTimestamp()).to.be.revertedWith(
+      "function selector was not recognized and there's no fallback function",
+    );
+
+    // upgrading the logic to include the blockTimestamp method
+    const newVPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapperMockRealistic')).deploy();
+    await rageTradeFactory.setVPoolWrapperLogicAddress(newVPoolWrapperLogic.address);
+    await rageTradeFactory.upgradeVPoolWrapperToLatestLogic(_vPoolWrapper.address);
+    expect(await _vPoolWrapper.blockTimestamp()).to.eq(0);
+  });
 });

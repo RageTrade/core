@@ -25,7 +25,7 @@ abstract contract ClearingHouseDeployer is IRageTradeFactory, Ownable {
         public
         onlyOwner
     {
-        if (_isClearingHouseAddressGood(address(proxy))) {
+        if (!_isClearingHouseAddressGood(address(proxy))) {
             revert ProxyIsNotOfClearingHouse(proxy);
         }
 

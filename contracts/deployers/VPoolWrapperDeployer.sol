@@ -32,7 +32,7 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeploy
     /// @notice Admin method to upgrade implementation while avoiding human error
     /// @param proxy: A VPoolWrapper proxy contract
     function upgradeVPoolWrapperToLatestLogic(TransparentUpgradeableProxy proxy) public {
-        if (_isWrapperAddressGood(address(proxy))) {
+        if (!_isWrapperAddressGood(address(proxy))) {
             revert ProxyIsNotOfVPoolWrapper(proxy);
         }
 

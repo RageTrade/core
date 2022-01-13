@@ -31,19 +31,19 @@ interface InitializePoolArgs {
   // DeployVTokenParamsStructOutput
   vTokenName?: string;
   vTokenSymbol?: string;
-  rTokenAddress?: string;
+  // rTokenAddress?: string;
   // oracleAddress?: string;
   vTokenDecimals?: number;
 
   // rage trade pool settings
-  initialMarginRatio: number;
-  maintainanceMarginRatio: number;
-  twapDuration: number;
-  whitelisted: boolean;
+  initialMarginRatio?: number;
+  maintainanceMarginRatio?: number;
+  twapDuration?: number;
+  whitelisted?: boolean;
   // oracle: string;
 
-  vPriceInitial: number;
-  rPriceInitial: number;
+  vPriceInitial?: number;
+  rPriceInitial?: number;
 
   signer?: SignerWithAddress;
 }
@@ -143,7 +143,7 @@ export async function initializePool({
   // DeployVTokenParamsStructOutput
   vTokenName,
   vTokenSymbol,
-  rTokenAddress,
+
   vTokenDecimals,
 
   // rage trade pool settings
@@ -158,10 +158,18 @@ export async function initializePool({
 
   signer,
 }: InitializePoolArgs) {
+  liquidityFeePips = liquidityFeePips ?? 1000;
+  protocolFeePips = protocolFeePips ?? 500;
+  vTokenName = vTokenName ?? 'vTokenName';
+  vTokenSymbol = vTokenSymbol ?? 'vTokenSymbol';
+  vTokenDecimals = vTokenDecimals ?? 18;
+
   initialMarginRatio = initialMarginRatio ?? 20000;
   maintainanceMarginRatio = maintainanceMarginRatio ?? 10000;
   twapDuration = twapDuration ?? 60;
+  whitelisted = whitelisted ?? false;
 
+  vPriceInitial = vPriceInitial ?? 1;
   rPriceInitial = rPriceInitial ?? 1;
 
   const vBaseDecimalsDefault = 6;
