@@ -15,8 +15,9 @@ import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
 import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
-contract DepositTokenSetTest {
+contract DepositTokenSetTest is AccountStorageMock {
     using DepositTokenSet for DepositTokenSet.Info;
     using VTokenLib for VTokenAddress;
     using Uint32L8ArrayLib for uint32[8];
@@ -26,8 +27,6 @@ contract DepositTokenSetTest {
     DepositTokenSet.Info depositTokenSet;
 
     VPoolWrapperMock public wrapper;
-
-    AccountStorage accountStorage;
 
     constructor() {
         wrapper = new VPoolWrapperMock();

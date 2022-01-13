@@ -15,15 +15,15 @@ import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
-contract LiquidityPositionTest {
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+contract LiquidityPositionTest is AccountStorageMock {
     using LiquidityPosition for LiquidityPosition.Info;
     // using Uint48L5ArrayLib for uint48[5];
 
     Account.BalanceAdjustments public balanceAdjustments;
     LiquidityPosition.Info public lp;
     VPoolWrapperMock public wrapper;
-
-    AccountStorage accountStorage;
 
     constructor() {
         wrapper = new VPoolWrapperMock();

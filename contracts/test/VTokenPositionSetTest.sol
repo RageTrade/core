@@ -14,7 +14,9 @@ import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
-contract VTokenPositionSetTest {
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+contract VTokenPositionSetTest is AccountStorageMock {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
@@ -24,8 +26,6 @@ contract VTokenPositionSetTest {
     VTokenPositionSet.Set dummy;
 
     VPoolWrapperMock public wrapper;
-
-    AccountStorage accountStorage;
 
     constructor() {
         wrapper = new VPoolWrapperMock();

@@ -7,10 +7,10 @@ import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
-contract VTokenLibTest {
-    using VTokenLib for VTokenAddress;
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
-    AccountStorage accountStorage;
+contract VTokenLibTest is AccountStorageMock {
+    using VTokenLib for VTokenAddress;
 
     function vPool(VTokenAddress vToken) external view returns (address) {
         return address(vToken.vPool(accountStorage));

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool } from '../typechain-types';
+import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, VBase, ClearingHouse } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
@@ -37,10 +37,14 @@ describe('Market Value and Required Margin', () => {
     await activateMainnetFork();
     let vPoolAddress;
     let vPoolWrapperAddress;
+    let vBase: VBase;
+    let clearingHouse: ClearingHouse;
     ({
       vTokenAddress: vTokenAddress,
       vPoolAddress: vPoolAddress,
       vPoolWrapperAddress: vPoolWrapperAddress,
+      clearingHouse,
+      vBase,
     } = await testSetup({
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
@@ -66,6 +70,14 @@ describe('Market Value and Required Margin', () => {
     const myContractFactory = await smock.mock('VTokenPositionSetTest2');
     VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
     await VTokenPositionSet.init(vTokenAddress);
+
+    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    await VTokenPositionSet.registerPool(vBase.address, basePoolObj);
+
+    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    await VTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
+
+    await VTokenPositionSet.setVBaseAddress(vBase.address);
   });
   after(deactivateMainnetFork);
   describe('MarketValue and RequiredMargin', () => {

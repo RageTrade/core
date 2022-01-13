@@ -13,7 +13,9 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
-contract VTokenPositionSetTest2 {
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+contract VTokenPositionSetTest2 is AccountStorageMock {
     using Uint32L8ArrayLib for uint32[8];
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using VTokenLib for VTokenAddress;
@@ -21,8 +23,6 @@ contract VTokenPositionSetTest2 {
 
     mapping(uint32 => VTokenAddress) vTokenAddresses;
     VTokenPositionSet.Set dummy;
-
-    AccountStorage accountStorage;
 
     function init(VTokenAddress vTokenAddress) external {
         VTokenPositionSet.activate(dummy, vTokenAddress);
