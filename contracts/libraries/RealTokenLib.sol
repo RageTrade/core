@@ -34,6 +34,10 @@ library RealTokenLib {
         return a.tokenAddress == b;
     }
 
+    function truncate(address realTokenAddress) internal pure returns (uint32) {
+        return uint32(uint160(realTokenAddress));
+    }
+
     function truncate(RealToken storage token) internal view returns (uint32) {
         return uint32(uint160(token.tokenAddress));
     }

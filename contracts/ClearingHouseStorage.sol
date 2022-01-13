@@ -34,7 +34,7 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
 
     mapping(address => bool) public realTokenInitilized;
     mapping(VTokenAddress => bool) public supportedVTokens;
-    mapping(VTokenAddress => bool) public supportedDeposits;
+    mapping(address => bool) public supportedDeposits;
 
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;

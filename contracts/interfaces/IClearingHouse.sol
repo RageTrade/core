@@ -33,7 +33,11 @@ interface IClearingHouse {
 
     /// @notice error to denote usage of unsupported token
     /// @param vTokenAddress address of token
-    error UnsupportedToken(VTokenAddress vTokenAddress);
+    error UnsupportedVToken(VTokenAddress vTokenAddress);
+
+    /// @notice error to denote usage of unsupported token
+    /// @param rTokenAddress address of token
+    error UnsupportedRToken(address rTokenAddress);
 
     /// @notice error to denote low notional value of txn
     /// @param notionalValue notional value of txn

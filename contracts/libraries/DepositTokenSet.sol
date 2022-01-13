@@ -6,14 +6,18 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { RealTokenLib } from './RealTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
-    using VTokenLib for VTokenAddress;
+    using RealTokenLib for RealTokenLib.RealToken;
+    using RealTokenLib for address;
+
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
     int256 internal constant Q96 = 0x1000000000000000000000000;
@@ -30,54 +34,51 @@ library DepositTokenSet {
     // add overrides that accept vToken or truncated
     function increaseBalance(
         Info storage info,
-        VTokenAddress vTokenAddress,
+        address realTokenAddress,
         uint256 amount,
         AccountStorage storage accountStorage
     ) internal {
+        uint32 truncated = realTokenAddress.truncate();
+
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
-            info.active.include(vTokenAddress.truncate());
-        }
-        info.deposits[vTokenAddress.truncate()] += amount;
+        info.active.include(truncated);
+
+        info.deposits[realTokenAddress.truncate()] += amount;
     }
 
     function decreaseBalance(
         Info storage info,
-        VTokenAddress vTokenAddress,
+        address realTokenAddress,
         uint256 amount,
         AccountStorage storage accountStorage
     ) internal {
-        uint32 truncated = vTokenAddress.truncate();
-
-        // consider vbase as always active because it is base (actives are needed for margin check)
-        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
-            info.active.include(truncated);
-        }
+        uint32 truncated = realTokenAddress.truncate();
 
         require(info.deposits[truncated] >= amount);
         info.deposits[truncated] -= amount;
+
+        if (info.deposits[truncated] == 0) {
+            info.active.exclude(truncated);
+        }
     }
 
-    function getAllDepositAccountMarketValue(
-        Info storage set,
-        mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        AccountStorage storage accountStorage
-    ) internal view returns (int256) {
+    function getAllDepositAccountMarketValue(Info storage set, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (int256)
+    {
         int256 accountMarketValue;
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            VTokenAddress vTokenAddress = vTokenAddresses[truncated];
+            RealTokenLib.RealToken storage token = accountStorage.realTokens[truncated];
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
-                vTokenAddress.getRealTwapPriceX128(accountStorage),
+                token.getRealTwapPriceX128(),
                 FixedPoint128.Q128
             );
         }
-
-        accountMarketValue += int256(set.deposits[VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()]);
-
         return accountMarketValue;
     }
 }
