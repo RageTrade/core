@@ -211,7 +211,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         Account.Info storage account = accounts[accountNo];
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
-        keeperFee = accountStorage.removeLimitOrderFee + _getFixFee();
+        keeperFee = accountStorage.removeLimitOrderFee + getFixFee();
 
         account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage);
 
@@ -223,7 +223,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     function liquidateLiquidityPositions(uint256 accountNo) external notPaused returns (int256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
         int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(_getFixFee(), accountStorage);
+        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(getFixFee(), accountStorage);
         int256 accountFee = keeperFee + insuranceFundFee;
 
         IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
@@ -248,7 +248,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
             accounts[liquidatorAccountNo],
             liquidationBps,
             vTokenAddress,
-            _getFixFee(),
+            getFixFee(),
             accountStorage
         );
 
@@ -343,7 +343,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     /// @notice Gets fix fee
     /// @dev Allowed to be overriden for specific chain implementations
     /// @return fixFee amount of fixFee in base
-    function _getFixFee() internal view virtual returns (uint256 fixFee) {
+    function getFixFee() public view virtual returns (uint256 fixFee) {
         return 0;
     }
 

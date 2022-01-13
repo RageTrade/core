@@ -29,27 +29,19 @@ contract VTokenPositionSetTest2 {
         vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
     }
 
-    function update(
-        Account.BalanceAdjustments memory balanceAdjustments,
-        VTokenAddress vTokenAddress,
-        Constants memory constants
-    ) external {
+    function update(Account.BalanceAdjustments memory balanceAdjustments, VTokenAddress vTokenAddress) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
     }
 
-    function liquidityChange(
-        VTokenAddress vTokenAddress,
-        LiquidityChangeParams memory liquidityChangeParams,
-        Constants memory constants
-    ) external {
+    function liquidityChange(VTokenAddress vTokenAddress, LiquidityChangeParams memory liquidityChangeParams) external {
         VTokenPositionSet.liquidityChange(dummy, vTokenAddress, liquidityChangeParams, accountStorage);
     }
 
-    function getAllTokenPositionValue(Constants memory constants) external view returns (int256) {
+    function getAllTokenPositionValue() external view returns (int256) {
         return VTokenPositionSet.getAccountMarketValue(dummy, vTokenAddresses, accountStorage);
     }
 
-    function getRequiredMargin(bool isInititalMargin, Constants memory constants) external view returns (int256) {
+    function getRequiredMargin(bool isInititalMargin) external view returns (int256) {
         return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokenAddresses, accountStorage);
     }
 }

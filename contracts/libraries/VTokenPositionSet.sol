@@ -157,7 +157,7 @@ library VTokenPositionSet {
         uint16 marginRatio = vTokenAddress.getMarginRatio(isInitialMargin, accountStorage);
 
         int256 tokenPosition = position.balance;
-        int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition(vTokenAddress));
+        int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition());
 
         longSideRisk = max(tokenPosition + liquidityMaxTokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(
             marginRatio,

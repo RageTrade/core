@@ -61,26 +61,25 @@ library LiquidityPositionSet {
         VTokenAddress vToken,
         AccountStorage storage accountStorage
     ) internal view returns (int256 baseValue_) {
-        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(accountStorage));
+        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(accountStorage));
     }
 
     function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
         IVPoolWrapper wrapper // TODO refactor this
     ) internal view returns (int256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
             if (id == 0) break;
-            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper);
+            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, wrapper);
         }
     }
 
-    function maxNetPosition(Info storage set, VTokenAddress vToken) internal view returns (uint256 risk) {
+    function maxNetPosition(Info storage set) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            risk += set.positions[id].maxNetPosition(vToken);
+            risk += set.positions[id].maxNetPosition();
         }
     }
 

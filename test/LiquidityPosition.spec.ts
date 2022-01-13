@@ -11,7 +11,7 @@ import {
   ADDRESS_ZERO,
   tickToPrice,
 } from '@uniswap/v3-sdk';
-import { constants } from './utils/dummyConstants';
+// import { constants } from './utils/dummyConstants';
 import { LiquidityPositionTest, UniswapV3Pool } from '../typechain-types';
 import JSBI from 'jsbi';
 import { toQ128 } from './utils/fixed-point';
@@ -241,7 +241,7 @@ describe('LiquidityPosition Library', () => {
   describe('#baseValue', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.baseValue(oneSqrtPrice, vTokenAddress, constants)).to.eq(0);
+      expect(await test.baseValue(oneSqrtPrice)).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
@@ -262,7 +262,7 @@ describe('LiquidityPosition Library', () => {
         // TODO: refactor these tests
         const priceX128 = sqrtPriceCurrent.mul(sqrtPriceCurrent).div(ethers.constants.One.shl(64));
 
-        expect(await test.baseValue(sqrtPriceCurrent, vTokenAddress, constants)).to.eq(
+        expect(await test.baseValue(sqrtPriceCurrent)).to.eq(
           baseActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
         );
       });
@@ -272,7 +272,7 @@ describe('LiquidityPosition Library', () => {
   describe('#maxNetPosition', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.maxNetPosition(vTokenAddress, constants)).to.eq(0);
+      expect(await test.maxNetPosition()).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
@@ -290,7 +290,7 @@ describe('LiquidityPosition Library', () => {
         await test.initialize(tickLower, tickUpper);
         await test.liquidityChange(liquidity);
 
-        expect(await test.maxNetPosition(vTokenAddress, constants)).to.eq(maxNetPosition);
+        expect(await test.maxNetPosition()).to.eq(maxNetPosition);
       });
     });
   });

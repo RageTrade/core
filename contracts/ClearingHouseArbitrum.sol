@@ -39,7 +39,7 @@ contract ClearingHouseArbitrum is ClearingHouse {
         ethUsdcOracle = IOracle(_ethUsdcOracle);
     }
 
-    function _getFixFee() internal view override returns (uint256 fixFee) {
+    function getFixFee() public view override returns (uint256 fixFee) {
         uint256 gasCostWei = Arbitrum.getGasCostWei();
         uint256 ethPriceInUsdc = ethUsdcOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
         return gasCostWei.mulDiv(ethPriceInUsdc, FixedPoint128.Q128);

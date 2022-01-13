@@ -16,12 +16,12 @@ describe('VTokenLib Library', () => {
 
   describe('Functions', () => {
     it('vPool', async () => {
-      const result = await vTokenLib.vPool(vTokenAdddres, constants);
+      const result = await vTokenLib.vPool(vTokenAdddres);
       expect(result.toLowerCase()).to.eq(vPoolAddress.toLowerCase());
     });
 
     it('vPoolWrapper', async () => {
-      const result = await vTokenLib.vPoolWrapper(vTokenAdddres, constants);
+      const result = await vTokenLib.vPoolWrapper(vTokenAdddres);
       expect(result.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
     });
   });

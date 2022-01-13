@@ -1,5 +1,5 @@
-import { ConstantsStruct } from '../../typechain-types/ClearingHouse';
-export const constants: ConstantsStruct = {
+// import { ConstantsStruct } from '../../typechain-types/ClearingHouse';
+export const constants = {
   VPOOL_FACTORY: '0xe4E6E50A2f4A6872feC414c0b3C3D1ac1a464Fe3',
   VPOOL_WRAPPER_DEPLOYER: '0xee6568099083a2DF678128cdDe10D5f868337d4A',
   VBASE_ADDRESS: '0xF1A16031d66de124735c920e1F2A6b28240C1A5e',

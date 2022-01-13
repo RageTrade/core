@@ -49,15 +49,11 @@ contract LiquidityPositionTest {
         lp.liquidityChange(0, VTokenAddress.wrap(address(0)), liquidity, wrapper, balanceAdjustments);
     }
 
-    function maxNetPosition(VTokenAddress vToken, Constants memory constants) public view returns (uint256) {
-        return lp.maxNetPosition(vToken);
+    function maxNetPosition() public view returns (uint256) {
+        return lp.maxNetPosition();
     }
 
-    function baseValue(
-        uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
-        Constants memory constants
-    ) public view returns (int256) {
-        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper);
+    function baseValue(uint160 sqrtPriceCurrent) public view returns (int256) {
+        return lp.baseValue(sqrtPriceCurrent, wrapper);
     }
 }

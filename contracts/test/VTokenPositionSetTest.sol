@@ -38,11 +38,7 @@ contract VTokenPositionSetTest {
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
-    function update(
-        Account.BalanceAdjustments memory balanceAdjustments,
-        VTokenAddress vTokenAddress,
-        Constants memory constants
-    ) external {
+    function update(Account.BalanceAdjustments memory balanceAdjustments, VTokenAddress vTokenAddress) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
     }
 
@@ -54,7 +50,7 @@ contract VTokenPositionSetTest {
     //     return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
     // }
 
-    function realizeFundingPaymentToAccount(VTokenAddress vTokenAddress, Constants memory constants) external {
+    function realizeFundingPaymentToAccount(VTokenAddress vTokenAddress) external {
         VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, accountStorage);
     }
 
@@ -62,19 +58,11 @@ contract VTokenPositionSetTest {
     //     dummy.getTokenPosition(vTokenAddress);
     // }
 
-    function swapTokenAmount(
-        VTokenAddress vTokenAddress,
-        int256 vTokenAmount,
-        Constants memory constants
-    ) external {
+    function swapTokenAmount(VTokenAddress vTokenAddress, int256 vTokenAmount) external {
         dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false, false), wrapper, accountStorage);
     }
 
-    function swapTokenNotional(
-        VTokenAddress vTokenAddress,
-        int256 vTokenNotional,
-        Constants memory constants
-    ) external {
+    function swapTokenNotional(VTokenAddress vTokenAddress, int256 vTokenNotional) external {
         dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true, false), wrapper, accountStorage);
     }
 
@@ -82,8 +70,7 @@ contract VTokenPositionSetTest {
         VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidity,
-        Constants memory constants
+        int128 liquidity
     ) external {
         LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
             tickLower,
@@ -97,7 +84,7 @@ contract VTokenPositionSetTest {
         dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, accountStorage);
     }
 
-    function liquidateLiquidityPositions(VTokenAddress vTokenAddress, Constants memory constants) external {
+    function liquidateLiquidityPositions(VTokenAddress vTokenAddress) external {
         dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, accountStorage);
     }
 

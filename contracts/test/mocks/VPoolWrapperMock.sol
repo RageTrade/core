@@ -99,6 +99,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
         vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity;
         vTokenAmount = int256(_liquidityRates[tickLower][tickUpper].vTokenPerLiquidity) * liquidity;
+        wrapperValuesInside = getValuesInside(tickLower, tickUpper);
     }
 
     function getSumAX128() external pure returns (int256) {

@@ -4,9 +4,8 @@ import { getCreateAddressFor } from './utils/create-addresses';
 import { setupClearingHouse } from './utils/setup-clearinghouse';
 
 describe('Upgradibility', () => {
-  it('upgrades to change insurance fund', async () => {
-    const { signer, clearingHouse, rBase, insuranceFund, vPoolFactory, accountLib, upgradeClearingHouse } =
-      await setupClearingHouse({});
+  it('upgrades clearing house logic', async () => {
+    const { signer, clearingHouse, rBase, insuranceFund, rageTradeFactory, accountLib } = await setupClearingHouse({});
     expect(await clearingHouse.insuranceFundAddress()).to.eq(insuranceFund.address);
 
     const newCHAddress = await getCreateAddressFor(signer, 1);
@@ -14,15 +13,18 @@ describe('Upgradibility', () => {
       await hre.ethers.getContractFactory('InsuranceFund')
     ).deploy(rBase.address, newCHAddress);
 
-    const newCH = await (
-      await hre.ethers.getContractFactory('ClearingHouse', {
+    const newCHLogic = await (
+      await hre.ethers.getContractFactory('ClearingHouseDummy', {
         libraries: {
           Account: accountLib.address,
         },
       })
-    ).deploy(vPoolFactory.address, rBase.address, newInsuranceFund.address);
-    await upgradeClearingHouse(newCH.address);
+    ).deploy();
 
-    expect(await clearingHouse.insuranceFundAddress()).to.eq(newInsuranceFund.address);
+    await rageTradeFactory.upgradeClearingHouseToLatestLogic(clearingHouse.address, newCHLogic.address);
+
+    expect(await clearingHouse.getFixFee()).to.eq(1234567890);
   });
+
+  it('upgrades vpoolwrapper');
 });

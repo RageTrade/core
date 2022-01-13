@@ -19,9 +19,9 @@ describe('VToken contract', () => {
 
     vToken = await (
       await hre.ethers.getContractFactory('VToken')
-    ).deploy('', '', rToken.address, ethers.constants.AddressZero, ethers.constants.AddressZero);
+    ).deploy('', '', rToken.address, ethers.constants.AddressZero);
 
-    await vToken.setOwner(signers[0].address);
+    await vToken.setVPoolWrapper(signers[0].address);
   });
 
   describe('#decimals', () => {

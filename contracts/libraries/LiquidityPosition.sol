@@ -194,7 +194,7 @@ library LiquidityPosition {
         );
     }
 
-    function maxNetPosition(Info storage position, VTokenAddress vToken) internal view returns (uint256) {
+    function maxNetPosition(Info storage position) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -207,7 +207,7 @@ library LiquidityPosition {
         VTokenAddress vTokenAddress,
         AccountStorage storage accountStorage
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(sqrtPriceCurrent, vTokenAddress, vTokenAddress.vPoolWrapper(accountStorage));
+        return position.baseValue(sqrtPriceCurrent, vTokenAddress.vPoolWrapper(accountStorage));
     }
 
     function tokenAmountsInRange(Info storage position, uint160 sqrtPriceCurrent)
@@ -238,7 +238,6 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
         IVPoolWrapper wrapper
     ) internal view returns (int256 baseValue_) {
         {

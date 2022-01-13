@@ -12,11 +12,11 @@ contract VTokenLibTest {
 
     AccountStorage accountStorage;
 
-    function vPool(VTokenAddress vToken, Constants memory constants) external view returns (address) {
+    function vPool(VTokenAddress vToken) external view returns (address) {
         return address(vToken.vPool(accountStorage));
     }
 
-    function vPoolWrapper(VTokenAddress vToken, Constants memory constants) external view returns (address) {
+    function vPoolWrapper(VTokenAddress vToken) external view returns (address) {
         return address(vToken.vPoolWrapper(accountStorage));
     }
 
@@ -24,19 +24,15 @@ contract VTokenLibTest {
         return address(vToken.realToken());
     }
 
-    function getVirtualTwapSqrtPrice(VTokenAddress vToken, Constants memory constants) external view returns (uint160) {
+    function getVirtualTwapSqrtPrice(VTokenAddress vToken) external view returns (uint160) {
         return vToken.getVirtualTwapSqrtPriceX96(accountStorage);
     }
 
-    function getRealTwapSqrtPrice(VTokenAddress vToken, Constants memory constants) external view returns (uint160) {
+    function getRealTwapSqrtPrice(VTokenAddress vToken) external view returns (uint160) {
         return vToken.getRealTwapSqrtPriceX96(accountStorage);
     }
 
-    function getMarginRatio(
-        VTokenAddress vToken,
-        bool isInitialMargin,
-        Constants memory constants
-    ) external view returns (uint16) {
+    function getMarginRatio(VTokenAddress vToken, bool isInitialMargin) external view returns (uint16) {
         return vToken.getMarginRatio(isInitialMargin, accountStorage);
     }
 }
