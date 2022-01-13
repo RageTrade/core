@@ -15,12 +15,14 @@ describe('VTokenLib Library', () => {
   });
 
   describe('Functions', () => {
-    it('vPool', async () => {
+    // vPool address is not computed now
+    it.skip('vPool', async () => {
       const result = await vTokenLib.vPool(vTokenAdddres);
       expect(result.toLowerCase()).to.eq(vPoolAddress.toLowerCase());
     });
 
-    it('vPoolWrapper', async () => {
+    // vPoolWrapper address is not computed now
+    it.skip('vPoolWrapper', async () => {
       const result = await vTokenLib.vPoolWrapper(vTokenAdddres);
       expect(result.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
     });
