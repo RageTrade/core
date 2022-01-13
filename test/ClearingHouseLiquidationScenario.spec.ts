@@ -659,6 +659,8 @@ describe('Clearing House Library (Liquidation)', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
+    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+
     // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
     // vBase = await vBaseFactory.deploy(REAL_BASE);
     // vBaseAddress = vBase.address;
@@ -850,8 +852,6 @@ describe('Clearing House Library (Liquidation)', () => {
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
-
-    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
   });
 
   after(deactivateMainnetFork);
