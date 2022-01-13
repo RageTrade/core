@@ -2,7 +2,15 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, RageTradeFactory, VBase, VPoolWrapper, ERC20, UniswapV3Pool } from '../typechain-types';
+import {
+  VTokenPositionSetTest,
+  RageTradeFactory,
+  VBase,
+  VPoolWrapper,
+  ERC20,
+  UniswapV3Pool,
+  ClearingHouse,
+} from '../typechain-types';
 import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -28,6 +36,7 @@ describe('VTokenPositionSet Library', () => {
   let rageTradeFactory: RageTradeFactory;
   let vBase: VBase;
   let VPoolWrapper: VPoolWrapper;
+  let clearingHouse: ClearingHouse;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
   before(async () => {
@@ -71,7 +80,7 @@ describe('VTokenPositionSet Library', () => {
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
-    const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+    clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
     vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
 
     const insuranceFund = await (
@@ -142,9 +151,10 @@ describe('VTokenPositionSet Library', () => {
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-    VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+    VTokenPositionSet = await factory.deploy();
 
     // constants = await VPoolFactory.constants();
+    await setConstants(VTokenPositionSet);
   });
 
   after(deactivateMainnetFork);
@@ -186,7 +196,9 @@ describe('VTokenPositionSet Library', () => {
   describe('Token Swaps (Token Amount)', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      VTokenPositionSet = await factory.deploy();
+
+      await setConstants(VTokenPositionSet);
     });
 
     it('Token1', async () => {
@@ -237,7 +249,9 @@ describe('VTokenPositionSet Library', () => {
   describe('Token Swaps (Token Notional)', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      VTokenPositionSet = await factory.deploy();
+
+      await setConstants(VTokenPositionSet);
     });
 
     it('Token1', async () => {
@@ -288,8 +302,10 @@ describe('VTokenPositionSet Library', () => {
   describe('Liquidity Change', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      VTokenPositionSet = await factory.deploy();
       await VTokenPositionSet.init(vTokenAddress);
+
+      await setConstants(VTokenPositionSet);
     });
 
     it('Add Liquidity', async () => {
@@ -318,6 +334,9 @@ describe('VTokenPositionSet Library', () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
+
+      await setConstants(VTokenPositionSet);
+
       await VTokenPositionSet.liquidityChange(vTokenAddress, -100, 100, 100);
       await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100);
     });
@@ -336,4 +355,17 @@ describe('VTokenPositionSet Library', () => {
       expect(resultVBase.balance).to.eq(0);
     });
   });
+
+  async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
+    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    await vTokenPositionSet.registerPool(vBase.address, basePoolObj);
+
+    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    await vTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
+
+    const vTokenPoolObj1 = await clearingHouse.rageTradePools(vTokenAddress1);
+    await vTokenPositionSet.registerPool(vTokenAddress1, vTokenPoolObj1);
+
+    await vTokenPositionSet.setVBaseAddress(vBase.address);
+  }
 });
