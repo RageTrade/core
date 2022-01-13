@@ -34,6 +34,7 @@ describe('Account Library Test Basic', () => {
   let realBase: FakeContract<ERC20>;
   let vBase: VBase;
   let oracle: OracleMock;
+  let rBaseOracle: OracleMock;
 
   let vBaseAddress: string;
 
@@ -177,18 +178,19 @@ describe('Account Library Test Basic', () => {
   describe('#Initialize', () => {
     it('Init', async () => {
       test.initToken(vTokenAddress);
+      test.initCollateral(realBase.address, rBaseOracle.address, 300);
     });
   });
 
   describe('#Margin', () => {
     it('Add Margin', async () => {
-      await test.addMargin(0, vBaseAddress, '10000000000');
-      await checkDepositBalance(vBaseAddress, '10000000000');
+      await test.addMargin(0, realBase.address, '10000000000');
+      await checkDepositBalance(realBase.address, '10000000000');
     });
 
     it('Remove Margin', async () => {
-      await test.removeMargin(0, vBaseAddress, '50');
-      await checkDepositBalance(vBaseAddress, '9999999950');
+      await test.removeMargin(0, realBase.address, '50');
+      await checkDepositBalance(realBase.address, '9999999950');
     });
   });
 

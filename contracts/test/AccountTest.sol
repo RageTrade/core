@@ -94,14 +94,14 @@ contract AccountTest {
         DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
-        deposit = set.deposits[uint32(uint160(accountStorage.vBaseAddress))];
-        set.decreaseBalance(VTokenAddress.wrap(accountStorage.vBaseAddress), deposit, accountStorage);
+        deposit = set.deposits[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
+        set.decreaseBalance(accountStorage.constants.VBASE_ADDRESS, deposit, accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(accountStorage.vTokenAddresses[truncatedAddress], deposit, accountStorage);
+            set.decreaseBalance(accountStorage.realTokens[truncatedAddress].tokenAddress, deposit, accountStorage);
         }
     }
 
@@ -113,20 +113,29 @@ contract AccountTest {
         accountStorage.vTokenAddresses[truncate(vTokenAddress)] = VTokenAddress.wrap(vTokenAddress);
     }
 
+    function initCollateral(
+        address rTokenAddress,
+        address oracleAddress,
+        uint32 twapDuration
+    ) external {
+        RealTokenLib.RealToken memory token = RealTokenLib.RealToken(rTokenAddress, oracleAddress, twapDuration);
+        accountStorage.realTokens[truncate(token.tokenAddress)] = token;
+    }
+
     function addMargin(
         uint256 accountNo,
-        address vTokenAddress,
+        address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountNo].addMargin(VTokenAddress.wrap(vTokenAddress), amount, accountStorage);
+        accounts[accountNo].addMargin(realTokenAddress, amount, accountStorage);
     }
 
     function removeMargin(
         uint256 accountNo,
-        address vTokenAddress,
+        address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountNo].removeMargin(VTokenAddress.wrap(vTokenAddress), amount, accountStorage);
+        accounts[accountNo].removeMargin(realTokenAddress, amount, accountStorage);
     }
 
     function removeProfit(uint256 accountNo, uint256 amount) external {

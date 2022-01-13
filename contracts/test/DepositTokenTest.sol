@@ -11,17 +11,20 @@ import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { RealTokenLib } from '../libraries/RealTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
 contract DepositTokenSetTest is AccountStorageMock {
     using DepositTokenSet for DepositTokenSet.Info;
-    using VTokenLib for VTokenAddress;
+    using RealTokenLib for RealTokenLib.RealToken;
+    using RealTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
 
-    mapping(uint32 => VTokenAddress) vTokenAddresses;
+    AccountStorage public accountStorage;
 
     DepositTokenSet.Info depositTokenSet;
 
@@ -31,8 +34,21 @@ contract DepositTokenSetTest is AccountStorageMock {
         wrapper = new VPoolWrapperMock();
     }
 
-    function init(VTokenAddress vTokenAddress) external {
-        vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
+    function initConstants(Constants memory constants) external {
+        accountStorage.constants = constants;
+    }
+
+    function initVToken(address vTokenAddress) external {
+        accountStorage.vTokenAddresses[vTokenAddress.truncate()] = VTokenAddress.wrap(vTokenAddress);
+    }
+
+    function init(
+        address rTokenAddress,
+        address oracleAddress,
+        uint32 twapDuration
+    ) external {
+        RealTokenLib.RealToken memory token = RealTokenLib.RealToken(rTokenAddress, oracleAddress, twapDuration);
+        accountStorage.realTokens[token.tokenAddress.truncate()] = token;
     }
 
     function cleanDeposits() external {
@@ -41,31 +57,26 @@ contract DepositTokenSetTest is AccountStorageMock {
             if (truncatedAddress == 0) break;
 
             depositTokenSet.decreaseBalance(
-                vTokenAddresses[truncatedAddress],
+                accountStorage.realTokens[truncatedAddress].tokenAddress,
                 depositTokenSet.deposits[truncatedAddress],
                 accountStorage
             );
         }
-        depositTokenSet.decreaseBalance(
-            VTokenAddress.wrap(accountStorage.vBaseAddress),
-            depositTokenSet.deposits[uint32(uint160(accountStorage.vBaseAddress))],
-            accountStorage
-        );
     }
 
-    function increaseBalance(VTokenAddress vTokenAddress, uint256 amount) external {
-        depositTokenSet.increaseBalance(vTokenAddress, amount, accountStorage);
+    function increaseBalance(address realTokenAddress, uint256 amount) external {
+        depositTokenSet.increaseBalance(realTokenAddress, amount, accountStorage);
     }
 
-    function decreaseBalance(VTokenAddress vTokenAddress, uint256 amount) external {
-        depositTokenSet.decreaseBalance(vTokenAddress, amount, accountStorage);
+    function decreaseBalance(address realTokenAddress, uint256 amount) external {
+        depositTokenSet.decreaseBalance(realTokenAddress, amount, accountStorage);
     }
 
     function getAllDepositAccountMarketValue() external view returns (int256 depositValue) {
-        return depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses, accountStorage);
+        return depositTokenSet.getAllDepositAccountMarketValue(accountStorage);
     }
 
-    function getBalance(VTokenAddress vTokenAddress) external view returns (uint256 balance) {
-        return depositTokenSet.deposits[vTokenAddress.truncate()];
+    function getBalance(address realTokenAddress) external view returns (uint256 balance) {
+        return depositTokenSet.deposits[realTokenAddress.truncate()];
     }
 }
