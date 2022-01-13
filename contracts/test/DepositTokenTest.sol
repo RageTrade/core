@@ -12,7 +12,6 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
-import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
@@ -48,8 +47,8 @@ contract DepositTokenSetTest is AccountStorageMock {
             );
         }
         depositTokenSet.decreaseBalance(
-            VTokenAddress.wrap(accountStorage.VBASE_ADDRESS),
-            depositTokenSet.deposits[uint32(uint160(accountStorage.VBASE_ADDRESS))],
+            VTokenAddress.wrap(accountStorage.vBaseAddress),
+            depositTokenSet.deposits[uint32(uint160(accountStorage.vBaseAddress))],
             accountStorage
         );
     }

@@ -12,8 +12,6 @@ import { SwapParams } from '../libraries/VTokenPositionSet.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
-import { Constants } from '../utils/Constants.sol';
-
 interface IClearingHouse {
     struct RageTradePool {
         IUniswapV3Pool vPool;
@@ -55,10 +53,7 @@ interface IClearingHouse {
         address _vPoolFactory,
         address _realBase,
         address _insuranceFundAddress,
-        address _VBASE_ADDRESS,
-        address _UNISWAP_V3_FACTORY_ADDRESS,
-        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+        address _vBaseAddress
     ) external;
 
     /// @notice creates a new account and adds it to the accounts map
@@ -154,13 +149,6 @@ interface IClearingHouse {
     function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool);
 
     function initRealToken(address _realToken) external;
-
-    // function setConstants(
-    //     address _VBASE_ADDRESS,
-    //     address _UNISWAP_V3_FACTORY_ADDRESS,
-    //     uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-    //     bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
-    // ) external;
 
     function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
         external

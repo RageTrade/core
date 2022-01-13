@@ -14,8 +14,6 @@ import { IOracle } from '../interfaces/IOracle.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { Constants } from '../utils/Constants.sol';
-
 library RealTokenLib {
     struct RealToken {
         address tokenAddress;

@@ -39,7 +39,7 @@ abstract contract AccountStorageMock {
         accountStorage.rtPools[vTokenAddress] = rageTradePool;
     }
 
-    function setVBaseAddress(address VBASE_ADDRESS) external {
-        accountStorage.VBASE_ADDRESS = VBASE_ADDRESS;
+    function setVBaseAddress(address vBaseAddress) external {
+        accountStorage.vBaseAddress = vBaseAddress;
     }
 }

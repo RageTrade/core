@@ -19,8 +19,6 @@ import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { Constants } from '../utils/Constants.sol';
-
 import { console } from 'hardhat/console.sol';
 
 /// @notice parameters to be used for liquidation
@@ -235,7 +233,7 @@ library Account {
         balanceAdjustments = BalanceAdjustments(amount, 0, 0);
         account.tokenPositions.update(
             balanceAdjustments,
-            VTokenAddress.wrap(accountStorage.VBASE_ADDRESS),
+            VTokenAddress.wrap(accountStorage.vBaseAddress),
             accountStorage
         );
     }

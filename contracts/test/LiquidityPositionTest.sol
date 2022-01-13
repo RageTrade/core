@@ -10,12 +10,10 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { console } from 'hardhat/console.sol';
-import { Constants } from '../utils/Constants.sol';
-
 import { AccountStorage } from '../ClearingHouseStorage.sol';
-
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+import { console } from 'hardhat/console.sol';
 
 contract LiquidityPositionTest is AccountStorageMock {
     using LiquidityPosition for LiquidityPosition.Info;

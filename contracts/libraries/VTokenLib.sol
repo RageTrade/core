@@ -14,7 +14,6 @@ import { IOracle } from '../interfaces/IOracle.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { Constants } from '../utils/Constants.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -47,25 +46,6 @@ library VTokenLib {
         return IERC20(vToken.iface().realToken());
     }
 
-    // function vPool(VTokenAddress vToken, Constants memory constants) internal pure returns (IUniswapV3Pool) {
-    //     address token0;
-    //     address token1;
-    //     address vTokenAddress = VTokenAddress.unwrap(vToken);
-
-    //     token0 = vTokenAddress;
-    //     token1 = constants.VBASE_ADDRESS;
-
-    //     return
-    //         IUniswapV3Pool(
-    //             Create2.computeAddress(
-    //                 keccak256(abi.encode(token0, token1, constants.DEFAULT_FEE_TIER)),
-    //                 constants.POOL_BYTE_CODE_HASH,
-    //                 constants.UNISWAP_FACTORY_ADDRESS
-    //             )
-    //         );
-    // }
-
-    // // overload
     function vPool(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
         view

@@ -10,7 +10,6 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 

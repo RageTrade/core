@@ -17,7 +17,6 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { Constants } from '../utils/Constants.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -109,7 +108,7 @@ library VTokenPositionSet {
         }
 
         //Value of the base token balance
-        accountMarketValue += set.positions[VTokenAddress.wrap(accountStorage.VBASE_ADDRESS).truncate()].balance;
+        accountMarketValue += set.positions[VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()].balance;
     }
 
     /// @notice returns the max of two int256 numbers
@@ -236,7 +235,7 @@ library VTokenPositionSet {
         AccountStorage storage accountStorage
     ) internal {
         uint32 truncated = vTokenAddress.truncate();
-        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             set.realizeFundingPayment(vTokenAddress, accountStorage);
             set.active.include(truncated);
         }
@@ -245,7 +244,7 @@ library VTokenPositionSet {
         _VTokenPosition.netTraderPosition += balanceAdjustments.traderPositionIncrease;
 
         VTokenPosition.Position storage _VBasePosition = set.positions[
-            VTokenAddress.wrap(accountStorage.VBASE_ADDRESS).truncate()
+            VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()
         ];
         _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
 
@@ -281,7 +280,7 @@ library VTokenPositionSet {
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
 
         VTokenPosition.Position storage _VBasePosition = set.positions[
-            VTokenAddress.wrap(accountStorage.VBASE_ADDRESS).truncate()
+            VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()
         ];
         int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
         _VBasePosition.balance += fundingPayment;
@@ -304,7 +303,7 @@ library VTokenPositionSet {
         bool createNew,
         AccountStorage storage accountStorage
     ) internal returns (VTokenPosition.Position storage position) {
-        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             if (createNew) {
                 set.activate(vTokenAddress);
             } else if (!set.active.exists(vTokenAddress.truncate())) {

@@ -13,7 +13,6 @@ import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
-import { Constants } from './utils/Constants.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -27,19 +26,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         address _rageTradeFactory,
         address _realBase,
         address _insuranceFundAddress,
-        address _VBASE_ADDRESS,
-        address _UNISWAP_V3_FACTORY_ADDRESS,
-        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+        address _vBaseAddress
     ) public initializer {
         rageTradeFactory = _rageTradeFactory;
         realBase = _realBase;
         insuranceFundAddress = _insuranceFundAddress;
 
-        accountStorage.VBASE_ADDRESS = _VBASE_ADDRESS;
-        accountStorage.UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
-        accountStorage.UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
-        accountStorage.UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
+        accountStorage.vBaseAddress = _vBaseAddress;
 
         Governable__init();
     }
@@ -103,7 +96,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             IERC20(vTokenAddress.realToken()).safeTransferFrom(msg.sender, address(this), amount);
         } else {
             IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
@@ -127,7 +120,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
 
         account.removeMargin(vTokenAddress, amount, accountStorage);
 
-        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             IERC20(vTokenAddress.realToken()).safeTransfer(msg.sender, amount);
         } else {
             IERC20(realBase).safeTransfer(msg.sender, amount);
@@ -285,18 +278,6 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     function initRealToken(address realToken) external onlyRageTradeFactory {
         realTokenInitilized[realToken] = true;
     }
-
-    // function setConstants(
-    //     address _VBASE_ADDRESS,
-    //     address _UNISWAP_V3_FACTORY_ADDRESS,
-    //     uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-    //     bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
-    // ) external onlyVPoolFactory {
-    //     accountStorage.VBASE_ADDRESS = _VBASE_ADDRESS;
-    //     accountStorage.UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
-    //     accountStorage.UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
-    //     accountStorage.UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
-    // }
 
     function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;

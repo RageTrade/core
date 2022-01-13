@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
+
 import { Account, DepositTokenSet, LiquidationParams, SwapParams, VTokenAddress } from '../libraries/Account.sol';
 import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { Constants } from '../utils/Constants.sol';
 import { RealTokenLib } from '../libraries/RealTokenLib.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
@@ -55,8 +55,8 @@ contract AccountTest {
         accountStorage.rtPools[vTokenAddress] = rageTradePool;
     }
 
-    function setVBaseAddress(address VBASE_ADDRESS) external {
-        accountStorage.VBASE_ADDRESS = VBASE_ADDRESS;
+    function setVBaseAddress(address _vBaseAddress) external {
+        accountStorage.vBaseAddress = _vBaseAddress;
     }
 
     function createAccount() external {
@@ -72,9 +72,9 @@ contract AccountTest {
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(accountStorage.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.vBaseAddress))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.VBASE_ADDRESS), accountStorage);
+        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.vBaseAddress), accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -94,8 +94,8 @@ contract AccountTest {
         DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
-        deposit = set.deposits[uint32(uint160(accountStorage.VBASE_ADDRESS))];
-        set.decreaseBalance(VTokenAddress.wrap(accountStorage.VBASE_ADDRESS), deposit, accountStorage);
+        deposit = set.deposits[uint32(uint160(accountStorage.vBaseAddress))];
+        set.decreaseBalance(VTokenAddress.wrap(accountStorage.vBaseAddress), deposit, accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];

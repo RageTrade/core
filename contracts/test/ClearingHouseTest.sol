@@ -27,26 +27,6 @@ contract ClearingHouseTest is ClearingHouse {
         return fixFee;
     }
 
-    // constructor(
-    //     address rageTradeFactory,
-    //     address _realBase,
-    //     address _insuranceFundAddress,
-    //     address _VBASE_ADDRESS,
-    //     address _UNISWAP_V3_FACTORY_ADDRESS,
-    //     uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-    //     bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
-    // ) {
-    //     ClearingHouse__init(
-    //         rageTradeFactory,
-    //         _realBase,
-    //         _insuranceFundAddress,
-    //         _VBASE_ADDRESS,
-    //         _UNISWAP_V3_FACTORY_ADDRESS,
-    //         _UNISWAP_V3_DEFAULT_FEE_TIER,
-    //         _UNISWAP_V3_POOL_BYTE_CODE_HASH
-    //     );
-    // }
-
     // TODO remove
     function getTruncatedTokenAddress(VTokenAddress vTokenAddress) external pure returns (uint32) {
         return vTokenAddress.truncate();
@@ -57,9 +37,9 @@ contract ClearingHouseTest is ClearingHouse {
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(accountStorage.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.vBaseAddress))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.VBASE_ADDRESS), accountStorage);
+        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.vBaseAddress), accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];

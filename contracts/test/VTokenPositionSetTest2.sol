@@ -8,7 +8,6 @@ import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPositio
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
-import { Constants } from '../utils/Constants.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';

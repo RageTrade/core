@@ -3,10 +3,8 @@
 pragma solidity ^0.8.9;
 
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { Constants } from '../utils/Constants.sol';
 
 import { AccountStorage } from '../ClearingHouseStorage.sol';
-
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
 contract VTokenLibTest is AccountStorageMock {

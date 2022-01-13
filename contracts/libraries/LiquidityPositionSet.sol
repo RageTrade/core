@@ -10,7 +10,6 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { Constants } from '../utils/Constants.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';

@@ -8,8 +8,6 @@ import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 
-import { Constants } from '../utils/Constants.sol';
-
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -37,7 +35,7 @@ library DepositTokenSet {
         AccountStorage storage accountStorage
     ) internal {
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             info.active.include(vTokenAddress.truncate());
         }
         info.deposits[vTokenAddress.truncate()] += amount;
@@ -52,7 +50,7 @@ library DepositTokenSet {
         uint32 truncated = vTokenAddress.truncate();
 
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             info.active.include(truncated);
         }
 
@@ -78,7 +76,7 @@ library DepositTokenSet {
             );
         }
 
-        accountMarketValue += int256(set.deposits[VTokenAddress.wrap(accountStorage.VBASE_ADDRESS).truncate()]);
+        accountMarketValue += int256(set.deposits[VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()]);
 
         return accountMarketValue;
     }
