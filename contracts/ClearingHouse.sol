@@ -106,8 +106,6 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         if (!vTokenAddress.eq(accountStorage.VBASE_ADDRESS)) {
             IERC20(vTokenAddress.realToken()).safeTransferFrom(msg.sender, address(this), amount);
         } else {
-            console.log('realBase');
-            console.log(realBase);
             IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
         }
 
