@@ -1352,13 +1352,13 @@ describe('Clearing House Library (Partial Swaps & Notional Swaps)', () => {
       const swapToken1Amount = '699333360';
 
       const expectedToken1Balance = 3110390220n;
-      const expectedBaseBalance = -2387982667543;
+      const expectedBaseBalance = -2387983641896n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
       const expectedBaseAmountOutWithFee = -501952467716n;
-      const expectedFundingPayment = -3900333n;
+      const expectedFundingPayment = -4874686n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1399,16 +1399,16 @@ describe('Clearing House Library (Partial Swaps & Notional Swaps)', () => {
 
       const swapBaseAmount = -501200666715n;
 
-      const swapToken1Amount = '-700410531';
+      const swapToken1Amount = -700410531n - 1n;
 
-      const expectedToken1Balance = 2409979689n;
-      const expectedBaseBalance = -1886037788662n;
+      const expectedToken1Balance = 2409979689n - 1n;
+      const expectedBaseBalance = -1886790907994;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
-      const expectedBaseAmountOutWithFee = 501200666716n;
-      const expectedFundingPayment = -7588835n;
+      const expectedBaseAmountOutWithFee = 501200666715n;
+      const expectedFundingPayment = -7932813n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
