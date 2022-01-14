@@ -88,7 +88,7 @@ describe('Account Library Test Basic', () => {
     let vPoolAddress;
     let vPoolWrapperAddress;
 
-    ({ realBase, vBase, clearingHouse, rageTradeFactory } = await testSetupBase());
+    ({ realBase, vBase, clearingHouse, rageTradeFactory, oracle: rBaseOracle } = await testSetupBase());
 
     ({
       oracle: oracle,

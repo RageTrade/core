@@ -107,7 +107,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         RealTokenLib.RealToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
 
         if (!rToken.eq(accountStorage.vBaseAddress)) {
-            IERC20(vTokenAddress.realToken()).safeTransferFrom(msg.sender, address(this), amount);
+            IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
         } else {
             IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
         }
@@ -131,7 +131,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         account.removeMargin(rToken.tokenAddress, amount, accountStorage);
 
         if (!rToken.eq(accountStorage.vBaseAddress)) {
-            IERC20(vTokenAddress.realToken()).safeTransfer(msg.sender, amount);
+            IERC20(rToken.realToken()).safeTransfer(msg.sender, amount);
         } else {
             IERC20(realBase).safeTransfer(msg.sender, amount);
         }
@@ -296,10 +296,6 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     ) external onlyGovernanceOrTeamMultisig {
         RealTokenLib.RealToken memory token = RealTokenLib.RealToken(rTokenAddress, oracleAddress, twapDuration);
         accountStorage.realTokens[uint32(uint160(token.tokenAddress))] = token;
-    }
-
-    function setConstants(Constants memory _constants) external onlyVPoolFactory {
-        accountStorage.constants = _constants;
     }
 
     function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {

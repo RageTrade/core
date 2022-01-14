@@ -94,8 +94,8 @@ contract AccountTest {
         DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
-        deposit = set.deposits[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
-        set.decreaseBalance(accountStorage.constants.VBASE_ADDRESS, deposit, accountStorage);
+        deposit = set.deposits[uint32(uint160(accountStorage.vBaseAddress))];
+        set.decreaseBalance(accountStorage.vBaseAddress, deposit, accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];

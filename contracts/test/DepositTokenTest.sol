@@ -24,18 +24,12 @@ contract DepositTokenSetTest is AccountStorageMock {
     using RealTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
 
-    AccountStorage public accountStorage;
-
     DepositTokenSet.Info depositTokenSet;
 
     VPoolWrapperMock public wrapper;
 
     constructor() {
         wrapper = new VPoolWrapperMock();
-    }
-
-    function initConstants(Constants memory constants) external {
-        accountStorage.constants = constants;
     }
 
     function initVToken(address vTokenAddress) external {

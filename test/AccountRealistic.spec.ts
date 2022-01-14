@@ -224,7 +224,7 @@ describe('Account Library Test Realistic', () => {
     let vPoolWrapperAddress;
     let vPoolAddress1;
     let vPoolWrapperAddress1;
-    ({ realBase, vBase, clearingHouse: clearingHouse, rageTradeFactory } = await testSetupBase());
+    ({ realBase, vBase, clearingHouse: clearingHouse, rageTradeFactory, oracle: rBaseOracle } = await testSetupBase());
 
     ({
       oracle: oracle,
