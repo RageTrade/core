@@ -52,6 +52,8 @@ describe('Account Library Test Realistic', () => {
   let fixFee: BigNumberish;
 
   let oracle: OracleMock;
+  let rBaseOracle: OracleMock;
+
   let vTokenAddress: string;
   let oracle1: OracleMock;
   let vTokenAddress1: string;
@@ -222,7 +224,7 @@ describe('Account Library Test Realistic', () => {
     let vPoolWrapperAddress;
     let vPoolAddress1;
     let vPoolWrapperAddress1;
-    ({ realBase, vBase, clearingHouse: clearingHouse, rageTradeFactory } = await testSetupBase());
+    ({ realBase, vBase, clearingHouse: clearingHouse, rageTradeFactory, oracle: rBaseOracle } = await testSetupBase());
 
     ({
       oracle: oracle,
@@ -312,13 +314,14 @@ describe('Account Library Test Realistic', () => {
     it('Init', async () => {
       test.initToken(vTokenAddress);
       test.initToken(vTokenAddress1);
+      test.initCollateral(realBase.address, rBaseOracle.address, 300);
     });
   });
 
   describe('Account Market Value and Required Margin', async () => {
     before(async () => {
-      await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
-      await checkDepositBalance(vBaseAddress, tokenAmount(100, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(100, 6));
+      await checkDepositBalance(realBase.address, tokenAmount(100, 6));
     });
     it('No Position', async () => {
       await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), 0);
@@ -341,8 +344,8 @@ describe('Account Library Test Realistic', () => {
       await test.cleanDeposits(0);
     });
     it('Add Margin', async () => {
-      await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
-      await checkDepositBalance(vBaseAddress, tokenAmount(100, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(100, 6));
+      await checkDepositBalance(realBase.address, tokenAmount(100, 6));
       await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(100, 6), 0);
     });
     it('Remove Margin - Fail', async () => {
@@ -353,14 +356,14 @@ describe('Account Library Test Realistic', () => {
       let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, true);
       accountMarketValue = accountMarketValue.sub(tokenAmount(50, 6));
 
-      expect(test.removeMargin(0, vBaseAddress, tokenAmount(50, 6))).to.be.revertedWith(
+      expect(test.removeMargin(0, realBase.address, tokenAmount(50, 6))).to.be.revertedWith(
         'InvalidTransactionNotEnoughMargin(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
     it('Remove Margin - Pass', async () => {
       test.cleanPositions(0);
-      await test.removeMargin(0, vBaseAddress, tokenAmount(50, 6));
-      await checkDepositBalance(vBaseAddress, tokenAmount(50, 6));
+      await test.removeMargin(0, realBase.address, tokenAmount(50, 6));
+      await checkDepositBalance(realBase.address, tokenAmount(50, 6));
       await checkAccountMarketValueAndRequiredMargin(true, tokenAmount(50, 6), 0);
     });
   });
@@ -369,7 +372,7 @@ describe('Account Library Test Realistic', () => {
     describe('#Token Position Profit', () => {
       before(async () => {
         await changeVPoolPriceToNearestTick(4000);
-        await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
+        await test.addMargin(0, realBase.address, tokenAmount(100, 6));
         await test.swapTokenAmount(0, vTokenAddress, tokenAmount(1, 18).div(10));
       });
       after(async () => {
@@ -384,7 +387,7 @@ describe('Account Library Test Realistic', () => {
       });
       it('Remove Profit - Fail (Profit Available | Not Enough Margin)', async () => {
         await changeVPoolPriceToNearestTick(4020);
-        await test.removeMargin(0, vBaseAddress, tokenAmount(21, 6));
+        await test.removeMargin(0, realBase.address, tokenAmount(21, 6));
         let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, true);
         accountMarketValue = accountMarketValue.sub(tokenAmount(1, 6));
         expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
@@ -403,7 +406,7 @@ describe('Account Library Test Realistic', () => {
   describe('#Trade - Swap Token Amount', () => {
     before(async () => {
       await changeVPoolPriceToNearestTick(4000);
-      await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(100, 6));
     });
     after(async () => {
       await test.cleanPositions(0);
@@ -427,7 +430,7 @@ describe('Account Library Test Realistic', () => {
   describe('#Trade - Swap Token Notional', () => {
     before(async () => {
       await changeVPoolPriceToNearestTick(4000);
-      await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(100, 6));
     });
     after(async () => {
       await test.cleanPositions(0);
@@ -481,8 +484,8 @@ describe('Account Library Test Realistic', () => {
     describe('#Token Position Liquidation Scenarios', () => {
       beforeEach(async () => {
         await changeVPoolPriceToNearestTick(4000);
-        await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
-        await test.addMargin(1, vBaseAddress, tokenAmount(1000, 6));
+        await test.addMargin(0, realBase.address, tokenAmount(100, 6));
+        await test.addMargin(1, realBase.address, tokenAmount(1000, 6));
 
         const baseBalance = tokenAmount(500, 6);
 
@@ -507,7 +510,7 @@ describe('Account Library Test Realistic', () => {
       it('Liquidation - Fail (Active Range Present)', async () => {
         await changeVPoolPriceToNearestTick(3500);
 
-        await test.addMargin(0, vTokenAddress, tokenAmount(1000000, 6));
+        await test.addMargin(0, realBase.address, tokenAmount(1000000, 6));
         let tickLower: number;
         let tickUpper: number;
         let liquidity: BigNumber;
@@ -525,7 +528,7 @@ describe('Account Library Test Realistic', () => {
         );
       });
       it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
-        await test.removeMargin(1, vBaseAddress, tokenAmount(1000, 6));
+        await test.removeMargin(1, realBase.address, tokenAmount(1000, 6));
 
         await changeVPoolPriceToNearestTick(3500);
 
@@ -572,12 +575,12 @@ describe('Account Library Test Realistic', () => {
       });
 
       it('Liquidation (Account Negative Afterwards)- Success', async () => {
-        await test.addMargin(1, vBaseAddress, tokenAmount(1000, 6));
+        await test.addMargin(1, realBase.address, tokenAmount(1000, 6));
         await changeVPoolPriceToNearestTick(3000);
 
         const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const startLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-        const startLiquidatedBaseDeposits = await test.getAccountDepositBalance(0, vBaseAddress);
+        const startLiquidatedBaseDeposits = await test.getAccountDepositBalance(0, realBase.address);
 
         await test.liquidateTokenPosition(0, 1, vTokenAddress);
 
@@ -606,8 +609,8 @@ describe('Account Library Test Realistic', () => {
     describe('#Token Position Liquidation Scenarios (Short Position)', () => {
       beforeEach(async () => {
         await changeVPoolPriceToNearestTick(4000);
-        await test.addMargin(0, vBaseAddress, tokenAmount(100, 6));
-        await test.addMargin(1, vBaseAddress, tokenAmount(1000, 6));
+        await test.addMargin(0, realBase.address, tokenAmount(100, 6));
+        await test.addMargin(1, realBase.address, tokenAmount(1000, 6));
 
         const baseBalance = tokenAmount(500, 6).mul(-1);
 
@@ -628,7 +631,7 @@ describe('Account Library Test Realistic', () => {
         );
       });
       it('Liquidation - Fail (Active Range Present)', async () => {
-        await test.addMargin(0, vTokenAddress, tokenAmount(1000000, 6));
+        await test.addMargin(0, realBase.address, tokenAmount(1000000, 6));
 
         let tickLower: number;
         let tickUpper: number;
@@ -649,7 +652,7 @@ describe('Account Library Test Realistic', () => {
         );
       });
       it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
-        await test.removeMargin(1, vBaseAddress, tokenAmount(1000, 6));
+        await test.removeMargin(1, realBase.address, tokenAmount(1000, 6));
 
         await changeVPoolPriceToNearestTick(3500);
 
@@ -689,12 +692,12 @@ describe('Account Library Test Realistic', () => {
       });
 
       it('Liquidation (Account Negative Afterwards)- Success', async () => {
-        await test.addMargin(1, vBaseAddress, tokenAmount(1000, 6));
+        await test.addMargin(1, realBase.address, tokenAmount(1000, 6));
         await changeVPoolPriceToNearestTick(5000);
 
         const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const startLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-        const startLiquidatedBaseDeposits = await test.getAccountDepositBalance(0, vBaseAddress);
+        const startLiquidatedBaseDeposits = await test.getAccountDepositBalance(0, realBase.address);
 
         await test.liquidateTokenPosition(0, 1, vTokenAddress);
 
@@ -733,7 +736,7 @@ describe('Account Library Test Realistic', () => {
       liquidity = tokenAmount(1, 18);
     });
     beforeEach(async () => {
-      await test.addMargin(0, vTokenAddress, tokenAmount(10000000, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(10000000, 6));
     });
     afterEach(async () => {
       await test.cleanDeposits(0);
@@ -798,7 +801,7 @@ describe('Account Library Test Realistic', () => {
       await changeVPoolWrapperFakePrice(4000);
       await changeVPoolPriceToNearestTick(4000);
 
-      await test.addMargin(0, vTokenAddress, tokenAmount(10000000, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(10000000, 6));
       await liquidityChange(tickLower, tickUpper, liquidity, false, 1);
       await checkLiquidityPositionNum(vTokenAddress, 1);
       await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 1, liquidity);
@@ -827,7 +830,7 @@ describe('Account Library Test Realistic', () => {
     beforeEach(async () => {
       await changeVPoolWrapperFakePrice(3000);
       await changeVPoolPriceToNearestTick(3000);
-      await test.addMargin(0, vTokenAddress, tokenAmount(1200000, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(1200000, 6));
       await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
       await checkLiquidityPositionNum(vTokenAddress, 1);
       await checkLiquidityPositionDetails(vTokenAddress, 0, tickLower, tickUpper, 0, liquidity);
@@ -981,7 +984,7 @@ describe('Account Library Test Realistic', () => {
     beforeEach(async () => {
       await changeVPoolWrapperFakePrice(3000);
       await changeVPoolPriceToNearestTick(3000);
-      await test.addMargin(0, vTokenAddress, tokenAmount(1250000, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(1250000, 6));
       await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
       await liquidityChange(tickLower1, tickUpper1, liquidity, false, 0);
       await checkLiquidityPositionNum(vTokenAddress, 2);
@@ -1129,7 +1132,7 @@ describe('Account Library Test Realistic', () => {
       await changeVPoolPriceToNearestTick(4000);
       await changeVPoolWrapperFakePrice(4000);
       liquidity = tokenAmount(100000, 6);
-      await test.addMargin(0, vBaseAddress, tokenAmount(100000, 6));
+      await test.addMargin(0, realBase.address, tokenAmount(100000, 6));
       await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
     });
 

@@ -79,6 +79,7 @@ describe('Clearing House Library', () => {
   let user2AccountNo: BigNumberish;
 
   let rBase: IERC20;
+  let rBaseOracle: OracleMock;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -650,6 +651,8 @@ describe('Clearing House Library', () => {
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
+    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
   });
 
   after(deactivateMainnetFork);
@@ -733,8 +736,8 @@ describe('Clearing House Library', () => {
       expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.true;
     });
     it('Add Base Deposit Support  - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(vBaseAddress, true);
-      expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.true;
+      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
+      expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.true;
     });
   });
 
@@ -746,10 +749,10 @@ describe('Clearing House Library', () => {
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
     });
     it('Acct[0] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user0, user0AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
+      await addMargin(user0, user0AccountNo, rBase.address, tokenAmount(10n ** 5n, 6));
       await checkRealBaseBalance(user0.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
       await checkRealBaseBalance(clearingHouseTest.address, tokenAmount(10n ** 5n, 6));
-      await checkDepositBalance(user0AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
+      await checkDepositBalance(user0AccountNo, rBase.address, tokenAmount(10n ** 5n, 6));
     });
     it('Acct[0] Adds Liq b/w ticks (-200820 to -199360) @ tickCurrent = -199590', async () => {
       const tickLower = -200820;
@@ -795,10 +798,10 @@ describe('Clearing House Library', () => {
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
     it('Acct[2] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user2, user2AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
+      await addMargin(user2, user2AccountNo, rBase.address, tokenAmount(10n ** 5n, 6));
       await checkRealBaseBalance(user2.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
       await checkRealBaseBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 5n, 6));
-      await checkDepositBalance(user2AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
+      await checkDepositBalance(user2AccountNo, rBase.address, tokenAmount(10n ** 5n, 6));
     });
     it('Acct[2] Short ETH : Price Changes (StartTick = -199590, EndTick = -199700)', async () => {
       const startTick = -199590;
@@ -833,10 +836,10 @@ describe('Clearing House Library', () => {
       );
     });
     it('Acct[1] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user1, user1AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
+      await addMargin(user1, user1AccountNo, rBase.address, tokenAmount(10n ** 5n, 6));
       await checkRealBaseBalance(user1.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
       await checkRealBaseBalance(clearingHouseTest.address, tokenAmount(3n * 10n ** 5n, 6));
-      await checkDepositBalance(user1AccountNo, vBaseAddress, tokenAmount(10n ** 5n, 6));
+      await checkDepositBalance(user1AccountNo, rBase.address, tokenAmount(10n ** 5n, 6));
     });
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;

@@ -13,7 +13,7 @@ import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from './VTokenPositionSet.sol';
-import { RealTokenLib } from './RealTokenLib.sol';
+import { RTokenLib } from './RTokenLib.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -70,15 +70,15 @@ library Account {
 
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
-    /// @param vTokenAddress token in which margin is deposited
+    /// @param rTokenAddress token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 accountNo, VTokenAddress vTokenAddress, uint256 amount);
+    event DepositMargin(uint256 accountNo, address rTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of margin
     /// @param accountNo serial number of the account
-    /// @param vTokenAddress token in which margin is withdrawn
+    /// @param rTokenAddress token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 accountNo, VTokenAddress vTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 accountNo, address rTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account
@@ -240,31 +240,29 @@ library Account {
 
     /// @notice increases deposit balance of 'vTokenAddress' by 'amount'
     /// @param account account to deposit balance into
-    /// @param vTokenAddress address of token to deposit
+    /// @param realTokenAddress address of token to deposit
     /// @param amount amount of token to deposit
-    /// @param accountStorage set of all constants and token addresses
     function addMargin(
         Info storage account,
-        VTokenAddress vTokenAddress,
-        uint256 amount,
-        AccountStorage storage accountStorage
+        address realTokenAddress,
+        uint256 amount
     ) external {
         // vBASE should be an immutable constant
-        account.tokenDeposits.increaseBalance(vTokenAddress, amount, accountStorage);
+        account.tokenDeposits.increaseBalance(realTokenAddress, amount);
     }
 
     /// @notice reduces deposit balance of 'vTokenAddress' by 'amount'
     /// @param account account to deposit balance into
-    /// @param vTokenAddress address of token to remove
+    /// @param realTokenAddress address of token to remove
     /// @param amount amount of token to remove
     /// @param accountStorage set of all constants and token addresses
     function removeMargin(
         Info storage account,
-        VTokenAddress vTokenAddress,
+        address realTokenAddress,
         uint256 amount,
         AccountStorage storage accountStorage
     ) external {
-        account.tokenDeposits.decreaseBalance(vTokenAddress, amount, accountStorage);
+        account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
 
         account.checkIfMarginAvailable(true, accountStorage);
     }
@@ -327,10 +325,7 @@ library Account {
         //TODO: Remove logs
         // console.log('accountMarketValue w/o deposits');
         // console.logInt(accountMarketValue);
-        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(
-            accountStorage.vTokenAddresses,
-            accountStorage
-        );
+        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(accountStorage);
         // console.log('accountMarketValue with deposits');
         // console.logInt(accountMarketValue);
         return (accountMarketValue);

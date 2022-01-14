@@ -172,6 +172,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
   const insuranceFund = await (
     await hre.ethers.getContractFactory('InsuranceFund')
   ).deploy(realBase.address, await rageTradeFactory.clearingHouse());
+  const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
 
@@ -184,6 +185,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     clearingHouse,
     rageTradeFactory,
     insuranceFund,
+    oracle,
   };
 }
 

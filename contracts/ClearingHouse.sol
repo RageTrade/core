@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
+import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet, RTokenLib } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
@@ -21,6 +21,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
+    using RTokenLib for RTokenLib.RToken;
 
     function ClearingHouse__init(
         address _rageTradeFactory,
@@ -51,15 +52,24 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         }
     }
 
-    function getTokenAddressWithChecks(uint32 vTokenTruncatedAddress, bool isDepositCheck)
+    function getRTokenWithChecks(uint32 rTokenTruncatedAddress)
+        internal
+        view
+        returns (RTokenLib.RToken storage rToken)
+    {
+        rToken = accountStorage.realTokens[rTokenTruncatedAddress];
+        if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);
+        if (!supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
+    }
+
+    function getVTokenAddressWithChecks(uint32 vTokenTruncatedAddress)
         internal
         view
         returns (VTokenAddress vTokenAddress)
     {
         vTokenAddress = accountStorage.vTokenAddresses[vTokenTruncatedAddress];
         if (vTokenAddress.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
-        if (isDepositCheck && !supportedDeposits[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
-        if (!isDepositCheck && !supportedVTokens[vTokenAddress]) revert UnsupportedToken(vTokenAddress);
+        if (!supportedVTokens[vTokenAddress]) revert UnsupportedVToken(vTokenAddress);
     }
 
     /// @inheritdoc IClearingHouse
@@ -88,45 +98,37 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     /// @inheritdoc IClearingHouse
     function addMargin(
         uint256 accountNo,
-        uint32 vTokenTruncatedAddress,
+        uint32 rTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
+        RTokenLib.RToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
 
-        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
-            IERC20(vTokenAddress.realToken()).safeTransferFrom(msg.sender, address(this), amount);
-        } else {
-            IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
-        }
+        IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
 
-        account.addMargin(vTokenAddress, amount, accountStorage);
+        account.addMargin(rToken.tokenAddress, amount);
 
-        emit Account.DepositMargin(accountNo, vTokenAddress, amount);
+        emit Account.DepositMargin(accountNo, rToken.tokenAddress, amount);
     }
 
     /// @inheritdoc IClearingHouse
     function removeMargin(
         uint256 accountNo,
-        uint32 vTokenTruncatedAddress,
+        uint32 rTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
+        RTokenLib.RToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
 
-        account.removeMargin(vTokenAddress, amount, accountStorage);
+        account.removeMargin(rToken.tokenAddress, amount, accountStorage);
 
-        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
-            IERC20(vTokenAddress.realToken()).safeTransfer(msg.sender, amount);
-        } else {
-            IERC20(realBase).safeTransfer(msg.sender, amount);
-        }
+        IERC20(rToken.realToken()).safeTransfer(msg.sender, amount);
 
-        emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
+        emit Account.WithdrawMargin(accountNo, rToken.tokenAddress, amount);
     }
 
     /// @inheritdoc IClearingHouse
@@ -149,7 +151,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
+        VTokenAddress vTokenAddress = getVTokenAddressWithChecks(vTokenTruncatedAddress);
 
         (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vTokenAddress, swapParams, accountStorage);
 
@@ -173,7 +175,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
+        VTokenAddress vTokenAddress = getVTokenAddressWithChecks(vTokenTruncatedAddress);
 
         checkSlippage(
             vTokenAddress,
@@ -203,7 +205,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     ) external notPaused returns (uint256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
 
-        VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
+        VTokenAddress vTokenAddress = getVTokenAddressWithChecks(vTokenTruncatedAddress);
         keeperFee = accountStorage.removeLimitOrderFee + getFixFee();
 
         account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage);
@@ -235,7 +237,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.Info storage account = accounts[accountNo];
 
-        VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
+        VTokenAddress vTokenAddress = getVTokenAddressWithChecks(vTokenTruncatedAddress);
         int256 insuranceFundFee;
         (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
             accounts[liquidatorAccountNo],
@@ -279,11 +281,20 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         realTokenInitilized[realToken] = true;
     }
 
+    function addCollateralSupport(
+        address rTokenAddress,
+        address oracleAddress,
+        uint32 twapDuration
+    ) external onlyGovernanceOrTeamMultisig {
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
+        accountStorage.realTokens[uint32(uint160(token.tokenAddress))] = token;
+    }
+
     function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;
     }
 
-    function updateSupportedDeposits(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
+    function updateSupportedDeposits(address add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedDeposits[add] = status;
     }
 
