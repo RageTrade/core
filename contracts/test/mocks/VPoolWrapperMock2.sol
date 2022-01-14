@@ -22,4 +22,12 @@ contract VPoolWrapperMock2 is VPoolWrapper {
     function increaseTimestamp(uint48 secs) external {
         blockTimestamp += secs;
     }
+
+    function calculateFees(int256 amount, AmountTypeEnum amountTypeEnum)
+        public
+        view
+        returns (uint256 liquidityFees, uint256 protocolFees)
+    {
+        return _calculateFees(amount, amountTypeEnum);
+    }
 }

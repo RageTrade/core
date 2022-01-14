@@ -54,6 +54,12 @@ describe('VPoolWrapper.swap', () => {
     VBASE_FOR_VTOKEN: false,
   };
 
+  const AMOUNT_TYPE_ENUM = {
+    ZERO_FEE_VBASE_AMOUNT: 0,
+    VBASE_AMOUNT_MINUS_FEES: 1,
+    VBASE_AMOUNT_PLUS_FEES: 2,
+  };
+
   describe('exactIn 1 ETH', () => {
     const amountSpecified = parseEther('1');
     const swapDirection = SWAP.VTOKEN_FOR_VBASE;
@@ -72,12 +78,21 @@ describe('VPoolWrapper.swap', () => {
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
-      ({ fees, liquidityFees } = calculateFees(zeroFeeSim.vBaseIn));
+      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vBaseIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vBase amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
       expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees));
+
+      // fees should be % of the zero fee swap amount
+      expect(fees).to.eq(
+        zeroFeeSim.vBaseIn
+          .abs()
+          .mul(liquidityFee + protocolFee)
+          .div(1e6)
+          .add(1), // round up fees
+      );
     });
 
     it('mint and burn', async () => {
@@ -131,13 +146,24 @@ describe('VPoolWrapper.swap', () => {
     let fees: BigNumber;
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
-      ({ fees, liquidityFees } = calculateFees(amountSpecified));
-      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecified.sub(fees), 0);
+      ({ fees, liquidityFees } = await calculateFees(amountSpecified, AMOUNT_TYPE_ENUM.VBASE_AMOUNT_PLUS_FEES));
+      const amountSpecifiedWithoutFee = amountSpecified.mul(1e6).div(1e6 + liquidityFee + protocolFee);
+      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecifiedWithoutFee, 0);
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vBase amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
+      // TODO there is missmatch in vBase amount.
       expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees));
+
+      // fees should be % of the zero fee swap amount
+      expect(fees).to.eq(
+        zeroFeeSim.vBaseIn
+          .abs()
+          .mul(liquidityFee + protocolFee)
+          .div(1e6)
+          .add(1), // round up fees
+      );
     });
 
     it('mint and burn', async () => {
@@ -194,12 +220,21 @@ describe('VPoolWrapper.swap', () => {
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
-      ({ fees, liquidityFees } = calculateFees(zeroFeeSim.vBaseIn));
+      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vBaseIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vBase amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
       expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees)); // vBaseIn > 0
+
+      // fees should be % of the zero fee swap amount
+      expect(fees).to.eq(
+        zeroFeeSim.vBaseIn
+          .abs()
+          .mul(liquidityFee + protocolFee)
+          .div(1e6)
+          .add(1), // round up fees
+      );
     });
 
     it('mint and burn', async () => {
@@ -250,7 +285,7 @@ describe('VPoolWrapper.swap', () => {
     let fees: BigNumber;
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
-      ({ fees, liquidityFees } = calculateFees(amountSpecified, { scaleUp: true }));
+      ({ fees, liquidityFees } = await calculateFees(amountSpecified, AMOUNT_TYPE_ENUM.VBASE_AMOUNT_MINUS_FEES));
 
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VBASE, amountSpecified.sub(fees), 0); // amountSpecified < 0
 
@@ -258,6 +293,15 @@ describe('VPoolWrapper.swap', () => {
       // and vBase amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
       expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees)); // vBaseIn < 0
+
+      // fees should be % of the zero fee swap amount
+      expect(fees).to.eq(
+        zeroFeeSim.vBaseIn
+          .abs()
+          .mul(liquidityFee + protocolFee)
+          .div(1e6)
+          .add(1), // round up fees
+      );
     });
 
     it('mint and burn', async () => {
@@ -297,18 +341,9 @@ describe('VPoolWrapper.swap', () => {
     return amount.add(amount.mul(uniswapFee).div(1e6 - uniswapFee)).add(1); // round up
   }
 
-  function calculateFees(amount: BigNumberish, options?: { scaleUp: boolean }) {
-    amount = BigNumber.from(amount).abs();
-    if (options?.scaleUp) {
-      amount = amount.mul(1e6).div(1e6 - liquidityFee - protocolFee);
-    }
-    const fees = amount
-      .mul(liquidityFee + protocolFee)
-      .div(1e6)
-      .add(1); // round up
-    const liquidityFees = amount.mul(liquidityFee).div(1e6).add(1); // round up
-    const protocolFees = fees.sub(liquidityFees);
-    return { fees, liquidityFees, protocolFees };
+  async function calculateFees(amount: BigNumberish, AMOUNT_TYPE_ENUM?: number) {
+    const { liquidityFees, protocolFees } = await vPoolWrapper.calculateFees(amount, AMOUNT_TYPE_ENUM ?? 0);
+    return { fees: liquidityFees.add(protocolFees), liquidityFees, protocolFees };
   }
 
   async function liquidityChange(priceLower: number, priceUpper: number, liquidityDelta: BigNumberish) {
