@@ -400,7 +400,6 @@ describe('PoolWrapper', () => {
           expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
           const expectedFeeIncrease = SwapEvent.args.liquidityFees
-            .sub(1) // TODO why this sub 1 is needed, fix this
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);

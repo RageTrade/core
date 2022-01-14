@@ -194,7 +194,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             } else {
                 // CASE: exactIn vBase
                 // fee: remove fee and do smaller swap, so trader gets less vTokens
-                (liquidityFees, protocolFees) = _calculateFees(amountSpecified, CalcFeeEnum.CALCULATE_ON_AMOUNT);
+                // here, amountSpecified == swap amount + fee
+                (liquidityFees, protocolFees) = _calculateFees(amountSpecified, AmountTypeEnum.VBASE_AMOUNT_PLUS_FEES);
                 amountSpecified = _includeFees(
                     amountSpecified,
                     liquidityFees + protocolFees,
@@ -211,7 +212,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             } else {
                 // CASE: exactOut vBase
                 // fee: buy more vBase (short more vToken) so that fee can be removed in vBase
-                (liquidityFees, protocolFees) = _calculateFees(amountSpecified, CalcFeeEnum.CALCULATE_ON_SCALED);
+                // here, amountSpecified + fee == swap amount
+                (liquidityFees, protocolFees) = _calculateFees(amountSpecified, AmountTypeEnum.VBASE_AMOUNT_MINUS_FEES);
                 amountSpecified = _includeFees(amountSpecified, liquidityFees + protocolFees, IncludeFeeEnum.ADD_FEE);
                 // TODO: inflate: no need to inflate now but uniswap will collect fee in vToken, so need to inflate it later
             }
@@ -241,7 +243,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 // deinflate: vToken amount was inflated so that uniswap can collect fee
                 vTokenIn = _deinflate(vTokenIn);
                 // fee: collect the fee, give less vBase to trader
-                (liquidityFees, protocolFees) = _calculateFees(vBaseIn, CalcFeeEnum.CALCULATE_ON_AMOUNT);
+                // here, vBaseIn == swap amount
+                (liquidityFees, protocolFees) = _calculateFees(vBaseIn, AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT);
                 vBaseIn = _includeFees(vBaseIn, liquidityFees + protocolFees, IncludeFeeEnum.SUBTRACT_FEE);
             } else {
                 // CASE: exactIn vBase
@@ -256,7 +259,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 // deinflate: uniswap want to collect fee in vBase and hence ask more, so need to deinflate it
                 vBaseIn = _deinflate(vBaseIn);
                 // fee: collecting fees in vBase
-                (liquidityFees, protocolFees) = _calculateFees(vBaseIn, CalcFeeEnum.CALCULATE_ON_AMOUNT);
+                // here, vBaseIn == swap amount
+                (liquidityFees, protocolFees) = _calculateFees(vBaseIn, AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT);
                 vBaseIn = _includeFees(vBaseIn, liquidityFees + protocolFees, IncludeFeeEnum.ADD_FEE);
             } else {
                 // CASE: exactOut vBase
@@ -282,39 +286,20 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         SimulateSwap.SwapState memory state,
         SimulateSwap.StepComputations memory step
     ) internal {
-        bool exactIn = state.amountCalculated < 0;
-
-        uint256 liquidityFees;
-        // these vBase and vToken amounts are zero fee swap (fee collected by uniswaop is ignored and burned later)
+        // these vBase and vToken amounts are zero fee swap amounts (fee collected by uniswaop is ignored and burned later)
         (uint256 vTokenAmount, uint256 vBaseAmount) = swapVTokenForVBase
             ? (step.amountIn, step.amountOut)
             : (step.amountOut, step.amountIn);
 
-        if (exactIn) {
-            if (swapVTokenForVBase) {
-                // CASE: exactIn vToken
-                uint256 _protocolFees;
-                (liquidityFees, _protocolFees) = _calculateFees(int256(vBaseAmount), CalcFeeEnum.CALCULATE_ON_AMOUNT);
-                vBaseAmount = _includeFees(vBaseAmount, liquidityFees + _protocolFees, IncludeFeeEnum.SUBTRACT_FEE);
-            } else {
-                // CASE: exactIn vBase
-                uint256 _protocolFees;
-                (liquidityFees, _protocolFees) = _calculateFees(int256(vBaseAmount), CalcFeeEnum.CALCULATE_ON_SCALED);
-                vBaseAmount = _includeFees(vBaseAmount, liquidityFees + _protocolFees, IncludeFeeEnum.ADD_FEE);
-            }
-        } else {
-            if (!swapVTokenForVBase) {
-                // CASE: exactOut vToken
-                uint256 _protocolFees;
-                (liquidityFees, _protocolFees) = _calculateFees(int256(vBaseAmount), CalcFeeEnum.CALCULATE_ON_AMOUNT);
-                vBaseAmount = _includeFees(vBaseAmount, liquidityFees + _protocolFees, IncludeFeeEnum.ADD_FEE);
-            } else {
-                // CASE: exactOut vBase
-                uint256 _protocolFees;
-                (liquidityFees, _protocolFees) = _calculateFees(int256(vBaseAmount), CalcFeeEnum.CALCULATE_ON_AMOUNT);
-                vBaseAmount = _includeFees(vBaseAmount, liquidityFees + _protocolFees, IncludeFeeEnum.SUBTRACT_FEE);
-            }
-        }
+        // here, vBaseAmount == swap amount
+        (uint256 liquidityFees, ) = _calculateFees(int256(vBaseAmount), AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT);
+
+        // base amount with fees
+        // vBaseAmount = _includeFees(
+        //     vBaseAmount,
+        //     liquidityFees + protocolFees,
+        //     swapVTokenForVBase ? IncludeFeeEnum.SUBTRACT_FEE : IncludeFeeEnum.ADD_FEE
+        // );
 
         if (state.liquidity > 0 && vTokenAmount > 0) {
             (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
@@ -331,6 +316,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             sumFeeGlobalX128 += liquidityFees.mulDiv(FixedPoint128.Q128, state.liquidity);
         }
 
+        // if we have reached the end price of tick
         if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
             // if the tick is initialized, run the tick transition
             if (step.initialized) {
@@ -523,21 +509,26 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         amount = (inflated * int24(1e6 - uniswapFeePips)) / 1e6;
     }
 
-    enum CalcFeeEnum {
-        CALCULATE_ON_AMOUNT,
-        CALCULATE_ON_SCALED
+    enum AmountTypeEnum {
+        ZERO_FEE_VBASE_AMOUNT,
+        VBASE_AMOUNT_MINUS_FEES,
+        VBASE_AMOUNT_PLUS_FEES
     }
 
-    function _calculateFees(int256 amount, CalcFeeEnum calcFeeEnum)
+    function _calculateFees(int256 amount, AmountTypeEnum amountTypeEnum)
         internal
         view
         returns (uint256 liquidityFees, uint256 protocolFees)
     {
         uint256 amountAbs = uint256(amount.abs());
-        if (calcFeeEnum == CalcFeeEnum.CALCULATE_ON_SCALED) {
-            // if we do not want to charge fees from amount, we scale it up so that
-            // on charging fees on the scaled amount, we should get original amount
+        if (amountTypeEnum == AmountTypeEnum.VBASE_AMOUNT_MINUS_FEES) {
+            // when amount is already subtracted by fees, we need to scale it up, so that
+            // on calculating and subtracting fees on the scaled up value, we should get same amount
             amountAbs = (amountAbs * 1e6) / uint256(1e6 - liquidityFeePips - protocolFeePips);
+        } else if (amountTypeEnum == AmountTypeEnum.VBASE_AMOUNT_PLUS_FEES) {
+            // when amount is already added with fees, we need to scale it down, so that
+            // on calculating and adding fees on the scaled down value, we should get same amount
+            amountAbs = (amountAbs * 1e6) / uint256(1e6 + liquidityFeePips + protocolFeePips);
         }
         uint256 fees = (amountAbs * (liquidityFeePips + protocolFeePips)) / 1e6 + 1; // round up
         liquidityFees = (amountAbs * liquidityFeePips) / 1e6 + 1; // round up
