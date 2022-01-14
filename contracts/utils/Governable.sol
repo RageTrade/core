@@ -27,14 +27,24 @@ abstract contract Governable is Context, Initializable {
         Governable__init();
     }
 
-    function Governable__init() internal initializer {
+    /**
+     * @dev Useful to proxy contracts for initializing
+     */
+    function Governable__init() internal {
         address msgSender = _msgSender();
 
-        _governance = msgSender;
-        emit GovernanceTransferred(address(0), msgSender);
+        Governable__init(msgSender, msgSender);
+    }
 
-        _teamMultisig = msgSender;
-        emit TeamMultisigTransferred(address(0), msgSender);
+    /**
+     * @dev Useful to proxy contracts for initializing with custom addresses
+     */
+    function Governable__init(address initialGovernance, address initialTeamMultisig) internal initializer {
+        _governance = initialGovernance;
+        emit GovernanceTransferred(address(0), initialGovernance);
+
+        _teamMultisig = initialTeamMultisig;
+        emit TeamMultisigTransferred(address(0), initialTeamMultisig);
     }
 
     /**
