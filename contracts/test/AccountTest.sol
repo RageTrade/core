@@ -94,14 +94,11 @@ contract AccountTest {
         DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
-        deposit = set.deposits[uint32(uint160(accountStorage.vBaseAddress))];
-        set.decreaseBalance(accountStorage.vBaseAddress, deposit, accountStorage);
-
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(accountStorage.realTokens[truncatedAddress].tokenAddress, deposit, accountStorage);
+            set.decreaseBalance(accountStorage.realTokens[truncatedAddress].tokenAddress, deposit);
         }
     }
 
@@ -127,7 +124,7 @@ contract AccountTest {
         address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountNo].addMargin(realTokenAddress, amount, accountStorage);
+        accounts[accountNo].addMargin(realTokenAddress, amount);
     }
 
     function removeMargin(

@@ -106,13 +106,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
 
         RealTokenLib.RealToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
 
-        if (!rToken.eq(accountStorage.vBaseAddress)) {
-            IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
-        } else {
-            IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
-        }
+        IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
 
-        account.addMargin(rToken.tokenAddress, amount, accountStorage);
+        account.addMargin(rToken.tokenAddress, amount);
 
         emit Account.DepositMargin(accountNo, rToken.tokenAddress, amount);
     }
@@ -130,11 +126,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
 
         account.removeMargin(rToken.tokenAddress, amount, accountStorage);
 
-        if (!rToken.eq(accountStorage.vBaseAddress)) {
-            IERC20(rToken.realToken()).safeTransfer(msg.sender, amount);
-        } else {
-            IERC20(realBase).safeTransfer(msg.sender, amount);
-        }
+        IERC20(rToken.realToken()).safeTransfer(msg.sender, amount);
 
         emit Account.WithdrawMargin(accountNo, rToken.tokenAddress, amount);
     }

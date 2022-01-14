@@ -35,8 +35,7 @@ library DepositTokenSet {
     function increaseBalance(
         Info storage info,
         address realTokenAddress,
-        uint256 amount,
-        AccountStorage storage accountStorage
+        uint256 amount
     ) internal {
         uint32 truncated = realTokenAddress.truncate();
 
@@ -49,8 +48,7 @@ library DepositTokenSet {
     function decreaseBalance(
         Info storage info,
         address realTokenAddress,
-        uint256 amount,
-        AccountStorage storage accountStorage
+        uint256 amount
     ) internal {
         uint32 truncated = realTokenAddress.truncate();
 

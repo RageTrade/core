@@ -52,18 +52,17 @@ contract DepositTokenSetTest is AccountStorageMock {
 
             depositTokenSet.decreaseBalance(
                 accountStorage.realTokens[truncatedAddress].tokenAddress,
-                depositTokenSet.deposits[truncatedAddress],
-                accountStorage
+                depositTokenSet.deposits[truncatedAddress]
             );
         }
     }
 
     function increaseBalance(address realTokenAddress, uint256 amount) external {
-        depositTokenSet.increaseBalance(realTokenAddress, amount, accountStorage);
+        depositTokenSet.increaseBalance(realTokenAddress, amount);
     }
 
     function decreaseBalance(address realTokenAddress, uint256 amount) external {
-        depositTokenSet.decreaseBalance(realTokenAddress, amount, accountStorage);
+        depositTokenSet.decreaseBalance(realTokenAddress, amount);
     }
 
     function getAllDepositAccountMarketValue() external view returns (int256 depositValue) {

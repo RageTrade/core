@@ -242,15 +242,13 @@ library Account {
     /// @param account account to deposit balance into
     /// @param realTokenAddress address of token to deposit
     /// @param amount amount of token to deposit
-    /// @param accountStorage set of all constants and token addresses
     function addMargin(
         Info storage account,
         address realTokenAddress,
-        uint256 amount,
-        AccountStorage storage accountStorage
+        uint256 amount
     ) external {
         // vBASE should be an immutable constant
-        account.tokenDeposits.increaseBalance(realTokenAddress, amount, accountStorage);
+        account.tokenDeposits.increaseBalance(realTokenAddress, amount);
     }
 
     /// @notice reduces deposit balance of 'vTokenAddress' by 'amount'
@@ -264,7 +262,7 @@ library Account {
         uint256 amount,
         AccountStorage storage accountStorage
     ) external {
-        account.tokenDeposits.decreaseBalance(realTokenAddress, amount, accountStorage);
+        account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
 
         account.checkIfMarginAvailable(true, accountStorage);
     }
