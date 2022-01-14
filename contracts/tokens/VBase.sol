@@ -2,16 +2,17 @@
 
 // pragma solidity ^0.7.6;
 
-// if importing uniswap v3 libraries this might not work
 pragma solidity ^0.8.9;
+
 import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 contract VBase is IVBase, ERC20('Virtual Base Token', 'vBase'), Ownable {
     mapping(address => bool) public isAuth;
 
-    address public immutable realBase;
+    address public immutable realBase; // TODO is this needed to be present here?
     uint8 immutable _decimals;
 
     constructor(address realBase_) {
@@ -22,7 +23,7 @@ contract VBase is IVBase, ERC20('Virtual Base Token', 'vBase'), Ownable {
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 amount
+        uint256
     ) internal view override {
         if (!(from == address(0) || to == address(0) || isAuth[from] || isAuth[to])) {
             revert Unauthorised();

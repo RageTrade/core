@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.9;
 
+import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
 import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
@@ -11,26 +13,36 @@ import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 import { SignedMath } from './libraries/SignedMath.sol';
-import { Constants } from './utils/Constants.sol';
 
-contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
+import { console } from 'hardhat/console.sol';
+
+contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
+    using SafeERC20 for IERC20;
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
 
-    // only initializes immutable vars
-    constructor(
-        address _vPoolFactory,
+    function ClearingHouse__init(
+        address _rageTradeFactory,
         address _realBase,
-        address _insuranceFundAddress
-    ) ClearingHouseStorage(_vPoolFactory, _realBase, _insuranceFundAddress) {}
+        address _insuranceFundAddress,
+        address _vBaseAddress
+    ) public initializer {
+        rageTradeFactory = _rageTradeFactory;
+        realBase = _realBase;
+        insuranceFundAddress = _insuranceFundAddress;
+
+        accountStorage.vBaseAddress = _vBaseAddress;
+
+        Governable__init();
+    }
 
     function checkSlippage(
         VTokenAddress vTokenAddress,
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage.constants);
+        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
@@ -84,10 +96,10 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, true);
 
-        if (!vTokenAddress.eq(accountStorage.constants.VBASE_ADDRESS)) {
-            IERC20(vTokenAddress.realToken()).transferFrom(msg.sender, address(this), amount);
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
+            IERC20(vTokenAddress.realToken()).safeTransferFrom(msg.sender, address(this), amount);
         } else {
-            IERC20(realBase).transferFrom(msg.sender, address(this), amount);
+            IERC20(realBase).safeTransferFrom(msg.sender, address(this), amount);
         }
 
         account.addMargin(vTokenAddress, amount, accountStorage);
@@ -108,10 +120,10 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
 
         account.removeMargin(vTokenAddress, amount, accountStorage);
 
-        if (!vTokenAddress.eq(accountStorage.constants.VBASE_ADDRESS)) {
-            IERC20(vTokenAddress.realToken()).transfer(msg.sender, amount);
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
+            IERC20(vTokenAddress.realToken()).safeTransfer(msg.sender, amount);
         } else {
-            IERC20(realBase).transfer(msg.sender, amount);
+            IERC20(realBase).safeTransfer(msg.sender, amount);
         }
 
         emit Account.WithdrawMargin(accountNo, vTokenAddress, amount);
@@ -176,7 +188,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         );
 
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, accountStorage.constants)
+            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, accountStorage)
         );
 
         if (notionalValueAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
@@ -192,9 +204,9 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         Account.Info storage account = accounts[accountNo];
 
         VTokenAddress vTokenAddress = getTokenAddressWithChecks(vTokenTruncatedAddress, false);
-        keeperFee = accountStorage.removeLimitOrderFee + _getFixFee();
+        keeperFee = accountStorage.removeLimitOrderFee + getFixFee();
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage.constants);
+        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage);
 
         IERC20(realBase).transfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
@@ -204,7 +216,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     function liquidateLiquidityPositions(uint256 accountNo) external notPaused returns (int256 keeperFee) {
         Account.Info storage account = accounts[accountNo];
         int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(_getFixFee(), accountStorage);
+        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(getFixFee(), accountStorage);
         int256 accountFee = keeperFee + insuranceFundFee;
 
         IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
@@ -229,7 +241,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
             accounts[liquidatorAccountNo],
             liquidationBps,
             vTokenAddress,
-            _getFixFee(),
+            getFixFee(),
             accountStorage
         );
 
@@ -252,16 +264,19 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         return realTokenInitilized[realToken];
     }
 
-    function addVTokenAddress(uint32 truncated, address full) external onlyVPoolFactory {
-        accountStorage.vTokenAddresses[truncated] = VTokenAddress.wrap(full);
+    function registerPool(address full, RageTradePool calldata rageTradePool) external onlyRageTradeFactory {
+        VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
+        uint32 truncated = vTokenAddress.truncate();
+
+        // pool will not be registered twice by the rage trade factory
+        assert(accountStorage.vTokenAddresses[truncated].eq(address(0)));
+
+        accountStorage.vTokenAddresses[truncated] = vTokenAddress;
+        accountStorage.rtPools[vTokenAddress] = rageTradePool;
     }
 
-    function initRealToken(address realToken) external onlyVPoolFactory {
+    function initRealToken(address realToken) external onlyRageTradeFactory {
         realTokenInitilized[realToken] = true;
-    }
-
-    function setConstants(Constants memory _constants) external onlyVPoolFactory {
-        accountStorage.constants = _constants;
     }
 
     function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
@@ -276,6 +291,7 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         paused = _pause;
     }
 
+    // TODO: rename to setGlobalSettings
     function setPlatformParameters(
         LiquidationParams calldata _liquidationParams,
         uint256 _removeLimitOrderFee,
@@ -288,8 +304,15 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
         accountStorage.minRequiredMargin = _minRequiredMargin;
     }
 
-    modifier onlyVPoolFactory() {
-        if (vPoolFactory != msg.sender) revert NotVPoolFactory();
+    function updateRageTradePoolSettings(VTokenAddress vTokenAddress, RageTradePoolSettings calldata newSettings)
+        public
+        onlyGovernanceOrTeamMultisig
+    {
+        accountStorage.rtPools[vTokenAddress].settings = newSettings;
+    }
+
+    modifier onlyRageTradeFactory() {
+        if (rageTradeFactory != msg.sender) revert NotRageTradeFactory();
         _;
     }
 
@@ -301,7 +324,20 @@ contract ClearingHouse is ClearingHouseStorage, IClearingHouse {
     /// @notice Gets fix fee
     /// @dev Allowed to be overriden for specific chain implementations
     /// @return fixFee amount of fixFee in base
-    function _getFixFee() internal view virtual returns (uint256 fixFee) {
+    function getFixFee() public view virtual returns (uint256 fixFee) {
         return 0;
+    }
+
+    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+        external
+        view
+        returns (uint256 realPriceX128, uint256 virtualPriceX128)
+    {
+        realPriceX128 = vTokenAddress.getRealTwapPriceX128(accountStorage);
+        virtualPriceX128 = vTokenAddress.getVirtualTwapPriceX128(accountStorage);
+    }
+
+    function rageTradePools(VTokenAddress vTokenAddress) public view returns (RageTradePool memory rageTradePool) {
+        return accountStorage.rtPools[vTokenAddress];
     }
 }

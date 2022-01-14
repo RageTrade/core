@@ -15,19 +15,20 @@ contract ClearingHouseArbitrum is ClearingHouse {
     using FullMath for uint256;
     using PriceMath for uint160;
 
-    // immutable variables do not effect storage layouts
-    IOracle public immutable ethUsdcOracle;
+    IOracle public ethUsdcOracle;
 
-    constructor(
+    function ClearingHouseArbitrum__init(
         address _vPoolFactory,
         address _realBase,
         address _insuranceFundAddress,
+        address _vBaseAddress,
         address _ethUsdcOracle
-    ) ClearingHouse(_vPoolFactory, _realBase, _insuranceFundAddress) {
+    ) public {
+        ClearingHouse__init(_vPoolFactory, _realBase, _insuranceFundAddress, _vBaseAddress);
         ethUsdcOracle = IOracle(_ethUsdcOracle);
     }
 
-    function _getFixFee() internal view override returns (uint256 fixFee) {
+    function getFixFee() public view override returns (uint256 fixFee) {
         uint256 gasCostWei = Arbitrum.getGasCostWei();
         uint256 ethPriceInUsdc = ethUsdcOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
         return gasCostWei.mulDiv(ethPriceInUsdc, FixedPoint128.Q128);

@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool } from '../typechain-types';
+import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, VBase, ClearingHouse } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
-import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { testSetup } from './utils/setup-general';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 
@@ -12,40 +12,39 @@ describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
-  let constants: ConstantsStruct;
+  // let constants: ConstantsStruct;
   let vTokenAddress: string;
 
   const matchNumbers = async (mktVal: number, initialMargin: number, maintMargin: number) => {
-    expect(await VTokenPositionSet.getAllTokenPositionValue(constants)).to.be.eq(BigNumber.from(mktVal));
-    expect(await VTokenPositionSet.getRequiredMargin(true, constants)).to.be.eq(BigNumber.from(initialMargin));
-    expect(await VTokenPositionSet.getRequiredMargin(false, constants)).to.be.eq(BigNumber.from(maintMargin));
+    expect(await VTokenPositionSet.getAllTokenPositionValue()).to.be.eq(BigNumber.from(mktVal));
+    expect(await VTokenPositionSet.getRequiredMargin(true)).to.be.eq(BigNumber.from(initialMargin));
+    expect(await VTokenPositionSet.getRequiredMargin(false)).to.be.eq(BigNumber.from(maintMargin));
   };
 
   const liqChange = async (tickLower: number, tickUpper: number, liq: number) => {
-    await VTokenPositionSet.liquidityChange(
-      vTokenAddress,
-      {
-        tickLower: tickLower,
-        tickUpper: tickUpper,
-        liquidityDelta: BigNumber.from(liq).mul(BigNumber.from(10).pow(12)),
-        closeTokenPosition: false,
-        limitOrderType: 0,
-        sqrtPriceCurrent: 0,
-        slippageToleranceBps: 0,
-      },
-      constants,
-    );
+    await VTokenPositionSet.liquidityChange(vTokenAddress, {
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      liquidityDelta: BigNumber.from(liq).mul(BigNumber.from(10).pow(12)),
+      closeTokenPosition: false,
+      limitOrderType: 0,
+      sqrtPriceCurrent: 0,
+      slippageToleranceBps: 0,
+    });
   };
 
   before(async () => {
     await activateMainnetFork();
     let vPoolAddress;
     let vPoolWrapperAddress;
+    let vBase: VBase;
+    let clearingHouse: ClearingHouse;
     ({
       vTokenAddress: vTokenAddress,
       vPoolAddress: vPoolAddress,
       vPoolWrapperAddress: vPoolWrapperAddress,
-      constants: constants,
+      clearingHouse,
+      vBase,
     } = await testSetup({
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
@@ -63,14 +62,22 @@ describe('Market Value and Required Margin', () => {
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {
       address: vPoolWrapperAddress,
     });
-    vPoolWrapperFake.timeHorizon.returns(60);
-    vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
-    vPoolWrapperFake.initialMarginRatio.returns(20000);
+    // vPoolWrapperFake.timeHorizon.returns(60);
+    // vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
+    // vPoolWrapperFake.initialMarginRatio.returns(20000);
     vPoolWrapperFake.vPool.returns(vPoolFake.address);
 
     const myContractFactory = await smock.mock('VTokenPositionSetTest2');
     VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
     await VTokenPositionSet.init(vTokenAddress);
+
+    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    await VTokenPositionSet.registerPool(vBase.address, basePoolObj);
+
+    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    await VTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
+
+    await VTokenPositionSet.setVBaseAddress(vBase.address);
   });
   after(deactivateMainnetFork);
   describe('MarketValue and RequiredMargin', () => {

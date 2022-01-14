@@ -2,20 +2,29 @@ import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
 import { BigNumber, utils } from 'ethers';
-import { VTokenPositionSetTest, VPoolFactory, VBase, VPoolWrapper, ERC20, UniswapV3Pool } from '../typechain-types';
 import {
-  UNISWAP_FACTORY_ADDRESS,
-  DEFAULT_FEE_TIER,
+  VTokenPositionSetTest,
+  RageTradeFactory,
+  VBase,
+  VPoolWrapper,
+  ERC20,
+  UniswapV3Pool,
+  ClearingHouse,
+} from '../typechain-types';
+import {
+  UNISWAP_V3_FACTORY_ADDRESS,
+  UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
   REAL_BASE,
 } from './utils/realConstants';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
-import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './utils/create-addresses';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
+
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 
@@ -25,72 +34,82 @@ describe('VTokenPositionSet Library', () => {
   let VTokenPositionSet: VTokenPositionSetTest;
   let vTokenAddress: string;
   let vTokenAddress1: string;
-  let VPoolFactory: VPoolFactory;
-  let VBase: VBase;
+  let rageTradeFactory: RageTradeFactory;
+  let vBase: VBase;
   let VPoolWrapper: VPoolWrapper;
-  let constants: ConstantsStruct;
+  let clearingHouse: ClearingHouse;
+  // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
   before(async () => {
     await activateMainnetFork();
 
     const realBase = await smock.fake<ERC20>('ERC20');
     realBase.decimals.returns(10);
-    VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
+    // VBase = await (await hre.ethers.getContractFactory('VBase')).deploy(realBase.address);
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     signers = await hre.ethers.getSigners();
     const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 3);
     const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 4);
 
-    const VPoolWrapperDeployer = await (
-      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
-    ).deploy(futureVPoolFactoryAddress);
+    // const VPoolWrapperDeployer = await (
+    //   await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    // ).deploy(futureVPoolFactoryAddress);
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
-    const clearingHouse = await (
+    const clearingHouseLogic = await (
       await hre.ethers.getContractFactory('ClearingHouse', {
         libraries: {
           Account: accountLib.address,
         },
       })
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
-    VPoolFactory = await (
-      await hre.ethers.getContractFactory('VPoolFactory')
+    ).deploy();
+
+    const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
+
+    const insuranceFundAddressComputed = await getCreateAddressFor(signers[0], 1);
+
+    rageTradeFactory = await (
+      await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
-      VBase.address,
-      clearingHouse.address,
-      VPoolWrapperDeployer.address,
-      UNISWAP_FACTORY_ADDRESS,
-      DEFAULT_FEE_TIER,
+      clearingHouseLogic.address,
+      vPoolWrapperLogic.address,
+      REAL_BASE,
+      insuranceFundAddressComputed,
+      UNISWAP_V3_FACTORY_ADDRESS,
+      UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
-    const InsuranceFund = await (
+    clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+    vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+
+    const insuranceFund = await (
       await hre.ethers.getContractFactory('InsuranceFund')
     ).deploy(realBase.address, clearingHouse.address);
 
-    await VBase.transferOwnership(VPoolFactory.address);
+    // await VBase.transferOwnership(VPoolFactory.address);
 
-    await VPoolFactory.initializePool(
-      {
-        setupVTokenParams: {
-          vTokenName: 'vWETH',
-          vTokenSymbol: 'vWETH',
-          realTokenAddress: realToken0,
-          oracleAddress: oracleAddress,
-        },
-        extendedLpFee: 500,
-        protocolFee: 500,
+    await rageTradeFactory.initializePool({
+      deployVTokenParams: {
+        vTokenName: 'vWETH',
+        vTokenSymbol: 'vWETH',
+        rTokenAddress: realToken0,
+        oracleAddress: oracleAddress,
+      },
+      rageTradePoolInitialSettings: {
         initialMarginRatio: 2,
         maintainanceMarginRatio: 3,
         twapDuration: 2,
         whitelisted: false,
+        oracle: oracleAddress,
       },
-      0,
-    );
+      liquidityFeePips: 500,
+      protocolFeePips: 500,
+    });
 
-    const eventFilter = VPoolFactory.filters.PoolInitlized();
-    const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
+    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     vTokenAddress = events[0].args[1];
     // console.log('vTokenAddres', vTokenAddress);
     // console.log('VPoolFactoryAddress', VPoolFactory.address);
@@ -105,26 +124,26 @@ describe('VTokenPositionSet Library', () => {
     );
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
-    await VPoolFactory.initializePool(
-      {
-        setupVTokenParams: {
-          vTokenName: 'vWETH',
-          vTokenSymbol: 'vWETH',
-          realTokenAddress: realToken1,
-          oracleAddress: oracleAddress,
-        },
-        extendedLpFee: 500,
-        protocolFee: 500,
+    await rageTradeFactory.initializePool({
+      deployVTokenParams: {
+        vTokenName: 'vWETH',
+        vTokenSymbol: 'vWETH',
+        rTokenAddress: realToken1,
+        oracleAddress: oracleAddress,
+      },
+      rageTradePoolInitialSettings: {
         initialMarginRatio: 2,
         maintainanceMarginRatio: 3,
         twapDuration: 2,
         whitelisted: false,
+        oracle: oracleAddress,
       },
-      1,
-    );
+      liquidityFeePips: 500,
+      protocolFeePips: 500,
+    });
 
-    const eventFilter1 = VPoolFactory.filters.PoolInitlized();
-    const events1 = await VPoolFactory.queryFilter(eventFilter1, 'latest');
+    const eventFilter1 = rageTradeFactory.filters.PoolInitlized();
+    const events1 = await rageTradeFactory.queryFilter(eventFilter1, 'latest');
     vTokenAddress1 = events1[0].args[1];
     // console.log('vTokenAddres1', vTokenAddress);
     // console.log('VPoolFactoryAddress1', VPoolFactory.address);
@@ -133,9 +152,10 @@ describe('VTokenPositionSet Library', () => {
     await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
 
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-    VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+    VTokenPositionSet = await factory.deploy();
 
-    constants = await VPoolFactory.constants();
+    // constants = await VPoolFactory.constants();
+    await setConstants(VTokenPositionSet);
   });
 
   after(deactivateMainnetFork);
@@ -144,7 +164,7 @@ describe('VTokenPositionSet Library', () => {
     it('Activate', async () => {
       await VTokenPositionSet.init(vTokenAddress);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(0);
       expect(resultVBase.balance).to.eq(0);
     });
@@ -157,20 +177,19 @@ describe('VTokenPositionSet Library', () => {
           traderPositionIncrease: 30,
         },
         vTokenAddress,
-        constants,
       );
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(20);
       expect(resultVToken.netTraderPosition).to.eq(30);
       expect(resultVBase.balance).to.eq(10);
     });
 
     it('Realized Funding Payment', async () => {
-      await VTokenPositionSet.realizeFundingPaymentToAccount(vTokenAddress, constants);
+      await VTokenPositionSet.realizeFundingPaymentToAccount(vTokenAddress);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
-      expect(resultVToken[1]).to.eq((20n * 1n) << 128n); //sumAChk
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
+      expect(resultVToken.sumACkhpt).to.eq((20n * 1n) << 128n);
       expect(resultVBase.balance).to.eq(-590);
     });
   });
@@ -178,15 +197,17 @@ describe('VTokenPositionSet Library', () => {
   describe('Token Swaps (Token Amount)', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      VTokenPositionSet = await factory.deploy();
+
+      await setConstants(VTokenPositionSet);
     });
 
     it('Token1', async () => {
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
 
-      await VTokenPositionSet.swapTokenAmount(vTokenAddress, 4, constants);
+      await VTokenPositionSet.swapTokenAmount(vTokenAddress, 4);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(4);
       expect(resultVToken.netTraderPosition).to.eq(4);
       expect(resultVBase.balance).to.eq(-16000);
@@ -196,9 +217,9 @@ describe('VTokenPositionSet Library', () => {
     it('Token2', async () => {
       expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.false;
 
-      await VTokenPositionSet.swapTokenAmount(vTokenAddress1, 2, constants);
+      await VTokenPositionSet.swapTokenAmount(vTokenAddress1, 2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress1);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(2);
       expect(resultVToken.netTraderPosition).to.eq(2);
       expect(resultVBase.balance).to.eq(-24000);
@@ -206,9 +227,9 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Token1 Partial Close', async () => {
-      await VTokenPositionSet.swapTokenAmount(vTokenAddress, -2, constants);
+      await VTokenPositionSet.swapTokenAmount(vTokenAddress, -2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(2);
       expect(resultVToken.netTraderPosition).to.eq(2);
       expect(resultVBase.balance).to.eq(-16000);
@@ -216,9 +237,9 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Token1 Close', async () => {
-      await VTokenPositionSet.swapTokenAmount(vTokenAddress, -2, constants);
+      await VTokenPositionSet.swapTokenAmount(vTokenAddress, -2);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(0);
       expect(resultVToken.netTraderPosition).to.eq(0);
       expect(resultVBase.balance).to.eq(-8000);
@@ -229,15 +250,17 @@ describe('VTokenPositionSet Library', () => {
   describe('Token Swaps (Token Notional)', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      VTokenPositionSet = await factory.deploy();
+
+      await setConstants(VTokenPositionSet);
     });
 
     it('Token1', async () => {
       expect(await VTokenPositionSet.getIsActive(vTokenAddress)).to.be.false;
 
-      await VTokenPositionSet.swapTokenNotional(vTokenAddress, 16000, constants);
+      await VTokenPositionSet.swapTokenNotional(vTokenAddress, 16000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(4);
       expect(resultVToken.netTraderPosition).to.eq(4);
       expect(resultVBase.balance).to.eq(-16000);
@@ -247,9 +270,9 @@ describe('VTokenPositionSet Library', () => {
     it('Token2', async () => {
       expect(await VTokenPositionSet.getIsActive(vTokenAddress1)).to.be.false;
 
-      await VTokenPositionSet.swapTokenNotional(vTokenAddress1, 8000, constants);
+      await VTokenPositionSet.swapTokenNotional(vTokenAddress1, 8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress1);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(2);
       expect(resultVToken.netTraderPosition).to.eq(2);
       expect(resultVBase.balance).to.eq(-24000);
@@ -257,9 +280,9 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Token1 Partial Close', async () => {
-      await VTokenPositionSet.swapTokenNotional(vTokenAddress, -8000, constants);
+      await VTokenPositionSet.swapTokenNotional(vTokenAddress, -8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(2);
       expect(resultVToken.netTraderPosition).to.eq(2);
       expect(resultVBase.balance).to.eq(-16000);
@@ -267,9 +290,9 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Token1 Close', async () => {
-      await VTokenPositionSet.swapTokenNotional(vTokenAddress, -8000, constants);
+      await VTokenPositionSet.swapTokenNotional(vTokenAddress, -8000);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(0);
       expect(resultVToken.netTraderPosition).to.eq(0);
       expect(resultVBase.balance).to.eq(-8000);
@@ -280,14 +303,16 @@ describe('VTokenPositionSet Library', () => {
   describe('Liquidity Change', () => {
     before(async () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
-      VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
+      VTokenPositionSet = await factory.deploy();
       await VTokenPositionSet.init(vTokenAddress);
+
+      await setConstants(VTokenPositionSet);
     });
 
     it('Add Liquidity', async () => {
-      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100, constants);
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
 
       expect(resultVToken.balance).to.eq(-100);
       // expect(resultVToken.netTraderPosition).to.eq(-100);
@@ -295,9 +320,9 @@ describe('VTokenPositionSet Library', () => {
     });
 
     it('Remove Liquidity', async () => {
-      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, -50, constants);
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, -50);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      const resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
 
       expect(resultVToken.balance).to.eq(-50);
       // expect(resultVToken.netTraderPosition).to.eq(-50);
@@ -310,22 +335,38 @@ describe('VTokenPositionSet Library', () => {
       const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
       VTokenPositionSet = (await factory.deploy()) as unknown as VTokenPositionSetTest;
       await VTokenPositionSet.init(vTokenAddress);
-      await VTokenPositionSet.liquidityChange(vTokenAddress, -100, 100, 100, constants);
-      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100, constants);
+
+      await setConstants(VTokenPositionSet);
+
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -100, 100, 100);
+      await VTokenPositionSet.liquidityChange(vTokenAddress, -50, 50, 100);
     });
 
     it('Liquidate Liquidity Position', async () => {
       let resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      let resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      let resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(-200);
       expect(resultVBase.balance).to.eq(-800000);
 
-      await VTokenPositionSet.liquidateLiquidityPositions(vTokenAddress, constants);
+      await VTokenPositionSet.liquidateLiquidityPositions(vTokenAddress);
 
       resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
-      resultVBase = await VTokenPositionSet.getPositionDetails(VBase.address);
+      resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
       expect(resultVToken.balance).to.eq(0);
       expect(resultVBase.balance).to.eq(0);
     });
   });
+
+  async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
+    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    await vTokenPositionSet.registerPool(vBase.address, basePoolObj);
+
+    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    await vTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
+
+    const vTokenPoolObj1 = await clearingHouse.rageTradePools(vTokenAddress1);
+    await vTokenPositionSet.registerPool(vTokenAddress1, vTokenPoolObj1);
+
+    await vTokenPositionSet.setVBaseAddress(vBase.address);
+  }
 });

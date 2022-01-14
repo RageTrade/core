@@ -9,7 +9,7 @@ import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork
 import { getCreateAddressFor } from './utils/create-addresses';
 import {
   AccountTest,
-  VPoolFactory,
+  RageTradeFactory,
   ClearingHouse,
   ERC20,
   RealTokenMock,
@@ -25,10 +25,10 @@ import {
 
 import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
 
-import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
-  UNISWAP_FACTORY_ADDRESS,
-  DEFAULT_FEE_TIER,
+  UNISWAP_V3_FACTORY_ADDRESS,
+  UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
   REAL_BASE,
 } from './utils/realConstants';
@@ -62,7 +62,7 @@ describe('Clearing House Library', () => {
   let ownerAddress: string;
   let testContractAddress: string;
   let oracleAddress: string;
-  let constants: ConstantsStruct;
+  // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
@@ -479,7 +479,7 @@ describe('Clearing House Library', () => {
   }
 
   async function initializePool(
-    VPoolFactory: VPoolFactory,
+    rageTradeFactory: RageTradeFactory,
     initialMarginRatio: BigNumberish,
     maintainanceMarginRatio: BigNumberish,
     twapDuration: BigNumberish,
@@ -494,26 +494,26 @@ describe('Clearing House Library', () => {
     const oracle = await oracleFactory.deploy();
     await await oracle.setSqrtPrice(initialPrice);
 
-    await VPoolFactory.initializePool(
-      {
-        setupVTokenParams: {
-          vTokenName: 'vWETH',
-          vTokenSymbol: 'vWETH',
-          realTokenAddress: realToken.address,
-          oracleAddress: oracle.address,
-        },
-        extendedLpFee: lpFee,
-        protocolFee: protocolFee,
+    await rageTradeFactory.initializePool({
+      deployVTokenParams: {
+        vTokenName: 'vWETH',
+        vTokenSymbol: 'vWETH',
+        rTokenAddress: realToken.address,
+        oracleAddress: oracle.address,
+      },
+      rageTradePoolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
         whitelisted: false,
+        oracle: oracle.address,
       },
-      0,
-    );
+      liquidityFeePips: lpFee,
+      protocolFeePips: protocolFee,
+    });
 
-    const eventFilter = VPoolFactory.filters.PoolInitlized();
-    const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
+    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
     const vPoolWrapper = events[0].args[2];
@@ -524,11 +524,13 @@ describe('Clearing House Library', () => {
   before(async () => {
     await activateMainnetFork();
 
+    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
     const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    vBase = await vBaseFactory.deploy(REAL_BASE);
-    vBaseAddress = vBase.address;
+    // vBase = await vBaseFactory.deploy(REAL_BASE);
+    // vBaseAddress = vBase.address;
 
     signers = await hre.ethers.getSigners();
 
@@ -547,40 +549,50 @@ describe('Clearing House Library', () => {
     const futureVPoolFactoryAddress = await getCreateAddressFor(admin, 3);
     const futureInsurnaceFundAddress = await getCreateAddressFor(admin, 4);
 
-    const VPoolWrapperDeployer = await (
-      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
-    ).deploy(futureVPoolFactoryAddress);
+    // const VPoolWrapperDeployer = await (
+    //   await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    // ).deploy(futureVPoolFactoryAddress);
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
-    clearingHouseTest = await (
+    const clearingHouseTestLogic = await (
       await hre.ethers.getContractFactory('ClearingHouseTest', {
         libraries: {
           Account: accountLib.address,
         },
       })
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
+    ).deploy();
 
-    const VPoolFactory = await (
-      await hre.ethers.getContractFactory('VPoolFactory')
+    const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapperMockRealistic')).deploy();
+
+    const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
+
+    const rageTradeFactory = await (
+      await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
-      vBaseAddress,
-      clearingHouseTest.address,
-      VPoolWrapperDeployer.address,
-      UNISWAP_FACTORY_ADDRESS,
-      DEFAULT_FEE_TIER,
+      clearingHouseTestLogic.address,
+      vPoolWrapperLogic.address,
+      rBase.address,
+      insuranceFundAddressComputed,
+      UNISWAP_V3_FACTORY_ADDRESS,
+      UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
-    const InsuranceFund = await (
+    vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+    vBaseAddress = vBase.address;
+
+    clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+
+    const insuranceFund = await (
       await hre.ethers.getContractFactory('InsuranceFund')
     ).deploy(REAL_BASE, clearingHouseTest.address);
 
-    await vBase.transferOwnership(VPoolFactory.address);
-    const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
-    realToken = await realTokenFactory.deploy();
+    // await vBase.transferOwnership(VPoolFactory.address);
+    // const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
+    // realToken = await realTokenFactory.deploy();
 
     let out = await initializePool(
-      VPoolFactory,
+      rageTradeFactory,
       initialMargin,
       maintainanceMargin,
       timeHorizon,
@@ -599,39 +611,37 @@ describe('Clearing House Library', () => {
     vToken = await hre.ethers.getContractAt('VToken', vTokenAddress);
 
     const vPoolWrapperAddress = out.vPoolWrapper;
-    constants = await VPoolFactory.constants();
+    // constants = await VPoolFactory.constants();
 
-    const vPoolWrapperDeployerMock = await (
-      await hre.ethers.getContractFactory('VPoolWrapperDeployerMockRealistic')
-    ).deploy(ADDRESS_ZERO);
-    const vPoolWrapperMockAddress = await vPoolWrapperDeployerMock.callStatic.deployVPoolWrapper(
-      vTokenAddress,
-      vPool.address,
-      oracle.address,
-      lpFee,
-      protocolFee,
-      initialMargin,
-      maintainanceMargin,
-      timeHorizon,
-      false,
-      constants,
-    );
-    await vPoolWrapperDeployerMock.deployVPoolWrapper(
-      vTokenAddress,
-      vPool.address,
-      oracle.address,
-      lpFee,
-      protocolFee,
-      initialMargin,
-      maintainanceMargin,
-      timeHorizon,
-      false,
-      constants,
-    );
+    // const vPoolWrapperDeployerMock = await (
+    //   await hre.ethers.getContractFactory('VPoolWrapperDeployerMockRealistic')
+    // ).deploy(ADDRESS_ZERO);
+    // const vPoolWrapperMockAddress = await vPoolWrapperDeployerMock.callStatic.deployVPoolWrapper(
+    //   vTokenAddress,
+    //   vPool.address,
+    //   oracle.address,
+    //   lpFee,
+    //   protocolFee,
+    //   initialMargin,
+    //   maintainanceMargin,
+    //   timeHorizon,
+    //   false,
+    // );
+    // await vPoolWrapperDeployerMock.deployVPoolWrapper(
+    //   vTokenAddress,
+    //   vPool.address,
+    //   oracle.address,
+    //   lpFee,
+    //   protocolFee,
+    //   initialMargin,
+    //   maintainanceMargin,
+    //   timeHorizon,
+    //   false,
+    // );
 
-    const mockBytecode = await hre.ethers.provider.getCode(vPoolWrapperMockAddress);
+    // const mockBytecode = await hre.ethers.provider.getCode(vPoolWrapperMockAddress);
 
-    await network.provider.send('hardhat_setCode', [vPoolWrapperAddress, mockBytecode]);
+    // await network.provider.send('hardhat_setCode', [vPoolWrapperAddress, mockBytecode]);
 
     vPoolWrapper = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapperAddress);
 
@@ -640,8 +650,6 @@ describe('Clearing House Library', () => {
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
-
-    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
   });
 
   after(deactivateMainnetFork);

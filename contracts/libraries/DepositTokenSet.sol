@@ -8,7 +8,7 @@ import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 
-import { Constants } from '../utils/Constants.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -32,10 +32,10 @@ library DepositTokenSet {
         Info storage info,
         VTokenAddress vTokenAddress,
         uint256 amount,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal {
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             info.active.include(vTokenAddress.truncate());
         }
         info.deposits[vTokenAddress.truncate()] += amount;
@@ -45,12 +45,12 @@ library DepositTokenSet {
         Info storage info,
         VTokenAddress vTokenAddress,
         uint256 amount,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal {
         uint32 truncated = vTokenAddress.truncate();
 
         // consider vbase as always active because it is base (actives are needed for margin check)
-        if (!vTokenAddress.eq(constants.VBASE_ADDRESS)) {
+        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
             info.active.include(truncated);
         }
 
@@ -61,7 +61,7 @@ library DepositTokenSet {
     function getAllDepositAccountMarketValue(
         Info storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (int256) {
         int256 accountMarketValue;
         for (uint8 i = 0; i < set.active.length; i++) {
@@ -71,12 +71,12 @@ library DepositTokenSet {
             VTokenAddress vTokenAddress = vTokenAddresses[truncated];
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
-                vTokenAddress.getRealTwapPriceX128(constants),
+                vTokenAddress.getRealTwapPriceX128(accountStorage),
                 FixedPoint128.Q128
             );
         }
 
-        accountMarketValue += int256(set.deposits[VTokenAddress.wrap(constants.VBASE_ADDRESS).truncate()]);
+        accountMarketValue += int256(set.deposits[VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()]);
 
         return accountMarketValue;
     }

@@ -16,15 +16,17 @@ contract VPoolWrapperMock is IVPoolWrapper {
     }
     mapping(int24 => mapping(int24 => LiquidityRate)) internal _liquidityRates;
 
-    uint16 public immutable override initialMarginRatio;
-    uint16 public immutable override maintainanceMarginRatio;
-    uint32 public immutable override timeHorizon;
-    bool public override whitelisted;
+    // uint16 public immutable initialMarginRatio;
+    // uint16 public immutable maintainanceMarginRatio;
+    // uint32 public immutable twapDuration;
+    // bool public whitelisted;
     IUniswapV3Pool public vPool;
 
-    constructor() {
-        (initialMarginRatio, maintainanceMarginRatio, timeHorizon) = (0, 0, 0);
-    }
+    // constructor() {
+    //     (initialMarginRatio, maintainanceMarginRatio, twapDuration) = (0, 0, 0);
+    // }
+
+    function VPoolWrapper__init(InitializeVPoolWrapperParams calldata params) external {}
 
     function updateGlobalFundingState() public {}
 
@@ -97,6 +99,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
         vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity;
         vTokenAmount = int256(_liquidityRates[tickLower][tickUpper].vTokenPerLiquidity) * liquidity;
+        wrapperValuesInside = getValuesInside(tickLower, tickUpper);
     }
 
     function getSumAX128() external pure returns (int256) {

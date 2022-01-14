@@ -23,15 +23,9 @@ contract ClearingHouseTest is ClearingHouse {
         fixFee = _fixFee;
     }
 
-    function _getFixFee() internal view override returns (uint256) {
+    function getFixFee() public view override returns (uint256) {
         return fixFee;
     }
-
-    constructor(
-        address VPoolFactory,
-        address _realBase,
-        address _insuranceFundAddress
-    ) ClearingHouse(VPoolFactory, _realBase, _insuranceFundAddress) {}
 
     // TODO remove
     function getTruncatedTokenAddress(VTokenAddress vTokenAddress) external pure returns (uint32) {
@@ -43,13 +37,9 @@ contract ClearingHouseTest is ClearingHouse {
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.vBaseAddress))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(
-            balanceAdjustments,
-            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
-            accountStorage.constants
-        );
+        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.vBaseAddress), accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -60,7 +50,7 @@ contract ClearingHouseTest is ClearingHouse {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage.constants);
+            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage);
         }
     }
 
@@ -125,7 +115,7 @@ contract ClearingHouseTest is ClearingHouse {
             vToken.truncate()
         ];
 
-        IVPoolWrapper wrapper = vToken.vPoolWrapper(accountStorage.constants);
+        IVPoolWrapper wrapper = vToken.vPoolWrapper(accountStorage);
 
         fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
@@ -145,7 +135,7 @@ contract ClearingHouseTest is ClearingHouse {
 
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = VTokenAddress
             .wrap(vTokenAddress)
-            .vPoolWrapper(accountStorage.constants)
+            .vPoolWrapper(accountStorage)
             .getExtrapolatedValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
         fundingPayment = liquidityPosition.unrealizedFundingPayment(

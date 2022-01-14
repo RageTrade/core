@@ -8,10 +8,13 @@ import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPositio
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
-import { Constants } from '../utils/Constants.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
-contract VTokenPositionSetTest2 {
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+contract VTokenPositionSetTest2 is AccountStorageMock {
     using Uint32L8ArrayLib for uint32[8];
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using VTokenLib for VTokenAddress;
@@ -25,27 +28,19 @@ contract VTokenPositionSetTest2 {
         vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
     }
 
-    function update(
-        Account.BalanceAdjustments memory balanceAdjustments,
-        VTokenAddress vTokenAddress,
-        Constants memory constants
-    ) external {
-        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
+    function update(Account.BalanceAdjustments memory balanceAdjustments, VTokenAddress vTokenAddress) external {
+        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
     }
 
-    function liquidityChange(
-        VTokenAddress vTokenAddress,
-        LiquidityChangeParams memory liquidityChangeParams,
-        Constants memory constants
-    ) external {
-        VTokenPositionSet.liquidityChange(dummy, vTokenAddress, liquidityChangeParams, constants);
+    function liquidityChange(VTokenAddress vTokenAddress, LiquidityChangeParams memory liquidityChangeParams) external {
+        VTokenPositionSet.liquidityChange(dummy, vTokenAddress, liquidityChangeParams, accountStorage);
     }
 
-    function getAllTokenPositionValue(Constants memory constants) external view returns (int256) {
-        return VTokenPositionSet.getAccountMarketValue(dummy, vTokenAddresses, constants);
+    function getAllTokenPositionValue() external view returns (int256) {
+        return VTokenPositionSet.getAccountMarketValue(dummy, vTokenAddresses, accountStorage);
     }
 
-    function getRequiredMargin(bool isInititalMargin, Constants memory constants) external view returns (int256) {
-        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokenAddresses, constants);
+    function getRequiredMargin(bool isInititalMargin) external view returns (int256) {
+        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokenAddresses, accountStorage);
     }
 }

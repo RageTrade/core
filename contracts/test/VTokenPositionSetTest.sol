@@ -10,9 +10,10 @@ import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { Constants } from '../utils/Constants.sol';
 
-contract VTokenPositionSetTest {
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+contract VTokenPositionSetTest is AccountStorageMock {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
@@ -34,12 +35,8 @@ contract VTokenPositionSetTest {
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
-    function update(
-        Account.BalanceAdjustments memory balanceAdjustments,
-        VTokenAddress vTokenAddress,
-        Constants memory constants
-    ) external {
-        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, constants);
+    function update(Account.BalanceAdjustments memory balanceAdjustments, VTokenAddress vTokenAddress) external {
+        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
     }
 
     // function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
@@ -50,36 +47,27 @@ contract VTokenPositionSetTest {
     //     return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokenAddresses, constants);
     // }
 
-    function realizeFundingPaymentToAccount(VTokenAddress vTokenAddress, Constants memory constants) external {
-        VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, constants);
+    function realizeFundingPaymentToAccount(VTokenAddress vTokenAddress) external {
+        VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, accountStorage);
     }
 
     // function getTokenPosition(address vTokenAddress) external {
     //     dummy.getTokenPosition(vTokenAddress);
     // }
 
-    function swapTokenAmount(
-        VTokenAddress vTokenAddress,
-        int256 vTokenAmount,
-        Constants memory constants
-    ) external {
-        dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false, false), wrapper, constants);
+    function swapTokenAmount(VTokenAddress vTokenAddress, int256 vTokenAmount) external {
+        dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false, false), wrapper, accountStorage);
     }
 
-    function swapTokenNotional(
-        VTokenAddress vTokenAddress,
-        int256 vTokenNotional,
-        Constants memory constants
-    ) external {
-        dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true, false), wrapper, constants);
+    function swapTokenNotional(VTokenAddress vTokenAddress, int256 vTokenNotional) external {
+        dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true, false), wrapper, accountStorage);
     }
 
     function liquidityChange(
         VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidity,
-        Constants memory constants
+        int128 liquidity
     ) external {
         LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
             tickLower,
@@ -90,11 +78,11 @@ contract VTokenPositionSetTest {
             false,
             LimitOrderType.NONE
         );
-        dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, constants);
+        dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, accountStorage);
     }
 
-    function liquidateLiquidityPositions(VTokenAddress vTokenAddress, Constants memory constants) external {
-        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, constants);
+    function liquidateLiquidityPositions(VTokenAddress vTokenAddress) external {
+        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, accountStorage);
     }
 
     // function liquidateTokenPosition(

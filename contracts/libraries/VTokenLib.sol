@@ -14,7 +14,9 @@ import { IOracle } from '../interfaces/IOracle.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { Constants } from '../utils/Constants.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+
+import { console } from 'hardhat/console.sol';
 
 type VTokenAddress is address;
 
@@ -44,105 +46,104 @@ library VTokenLib {
         return IERC20(vToken.iface().realToken());
     }
 
-    function vPool(VTokenAddress vToken, Constants memory constants) internal pure returns (IUniswapV3Pool) {
-        address token0;
-        address token1;
-        address vTokenAddress = VTokenAddress.unwrap(vToken);
+    function vPool(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (IUniswapV3Pool)
+    {
+        return accountStorage.rtPools[vTokenAddress].vPool;
+    }
 
-        token0 = vTokenAddress;
-        token1 = constants.VBASE_ADDRESS;
+    function vPoolWrapper(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (IVPoolWrapper)
+    {
+        return accountStorage.rtPools[vTokenAddress].vPoolWrapper;
+    }
 
+    function getVirtualTwapSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (uint160 sqrtPriceX96)
+    {
         return
-            IUniswapV3Pool(
-                Create2.computeAddress(
-                    keccak256(abi.encode(token0, token1, constants.DEFAULT_FEE_TIER)),
-                    constants.POOL_BYTE_CODE_HASH,
-                    constants.UNISWAP_FACTORY_ADDRESS
-                )
+            accountStorage.rtPools[vTokenAddress].vPool.twapSqrtPrice(
+                accountStorage.rtPools[vTokenAddress].settings.twapDuration
             );
     }
 
-    // // overload
-    // function vPool(VTokenAddress vToken, address VBASE_ADDRESS, ) internal pure returns (IUniswapV3Pool) {
-    //     return vToken.vPool(POOL_BYTE_CODE_HASH, UNISWAP_FACTORY_ADDRESS);
-    // }
+    function getVirtualCurrentSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (uint160 sqrtPriceX96)
+    {
+        return accountStorage.rtPools[vTokenAddress].vPool.sqrtPriceCurrent();
+    }
 
-    function vPoolWrapper(VTokenAddress vToken, Constants memory constants) internal pure returns (IVPoolWrapper) {
+    function getVirtualTwapTick(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (int24 tick)
+    {
         return
-            IVPoolWrapper(
-                Create2.computeAddress(
-                    keccak256(abi.encode(VTokenAddress.unwrap(vToken), constants.VBASE_ADDRESS)),
-                    constants.WRAPPER_BYTE_CODE_HASH,
-                    constants.VPOOL_WRAPPER_DEPLOYER
-                )
+            accountStorage.rtPools[vTokenAddress].vPool.twapTick(
+                accountStorage.rtPools[vTokenAddress].settings.twapDuration
             );
     }
 
-    function getVirtualTwapSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
-        internal
-        view
-        returns (uint160 sqrtPriceX96)
-    {
-        return vToken.vPool(constants).twapSqrtPrice(vToken.vPoolWrapper(constants).timeHorizon());
-    }
-
-    function getVirtualCurrentSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
-        internal
-        view
-        returns (uint160 sqrtPriceX96)
-    {
-        return vToken.vPool(constants).sqrtPriceCurrent();
-    }
-
-    function getVirtualTwapTick(VTokenAddress vToken, Constants memory constants) internal view returns (int24 tick) {
-        return vToken.vPool(constants).twapTick(vToken.vPoolWrapper(constants).timeHorizon());
-    }
-
-    function getVirtualTwapPriceX128(VTokenAddress vToken, Constants memory constants)
+    function getVirtualTwapPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
         view
         returns (uint256 priceX128)
     {
-        return vToken.getVirtualTwapSqrtPriceX96(constants).toPriceX128();
+        return vTokenAddress.getVirtualTwapSqrtPriceX96(accountStorage).toPriceX128();
     }
 
-    function getVirtualCurrentPriceX128(VTokenAddress vToken, Constants memory constants)
+    function getVirtualCurrentPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
         view
         returns (uint256 priceX128)
     {
-        return vToken.getVirtualCurrentSqrtPriceX96(constants).toPriceX128();
+        return vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage).toPriceX128();
     }
 
-    function getRealTwapSqrtPriceX96(VTokenAddress vToken, Constants memory constants)
+    function getRealTwapSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
-        return IOracle(vToken.iface().oracle()).getTwapSqrtPriceX96(vToken.vPoolWrapper(constants).timeHorizon());
+        return
+            accountStorage.rtPools[vTokenAddress].settings.oracle.getTwapSqrtPriceX96(
+                accountStorage.rtPools[vTokenAddress].settings.twapDuration
+            );
     }
 
-    function getRealTwapPriceX128(VTokenAddress vToken, Constants memory constants)
+    function getRealTwapPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
         view
         returns (uint256 priceX128)
     {
-        return vToken.getRealTwapSqrtPriceX96(constants).toPriceX128();
+        return vTokenAddress.getRealTwapSqrtPriceX96(accountStorage).toPriceX128();
     }
 
     function getMarginRatio(
-        VTokenAddress vToken,
+        VTokenAddress vTokenAddress,
         bool isInitialMargin,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (uint16) {
         if (isInitialMargin) {
-            return vToken.vPoolWrapper(constants).initialMarginRatio();
+            return accountStorage.rtPools[vTokenAddress].settings.initialMarginRatio;
         } else {
-            return vToken.vPoolWrapper(constants).maintainanceMarginRatio();
+            return accountStorage.rtPools[vTokenAddress].settings.maintainanceMarginRatio;
         }
     }
 
-    function getWhitelisted(VTokenAddress vToken, Constants memory constants) internal view returns (bool) {
-        return vToken.vPoolWrapper(constants).whitelisted();
+    function getWhitelisted(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+        internal
+        view
+        returns (bool)
+    {
+        return accountStorage.rtPools[vTokenAddress].settings.whitelisted;
     }
 }

@@ -3,14 +3,21 @@ import hre from 'hardhat';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { getCreateAddressFor } from './utils/create-addresses';
-import { DepositTokenSetTest, VPoolFactory, ClearingHouse, OracleMock, RealTokenMock, ERC20 } from '../typechain-types';
+import {
+  DepositTokenSetTest,
+  RageTradeFactory,
+  ClearingHouse,
+  OracleMock,
+  RealTokenMock,
+  ERC20,
+} from '../typechain-types';
 
 import { utils } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
-  UNISWAP_FACTORY_ADDRESS,
-  DEFAULT_FEE_TIER,
+  UNISWAP_V3_FACTORY_ADDRESS,
+  UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
   REAL_BASE,
 } from './utils/realConstants';
@@ -33,12 +40,12 @@ describe('DepositTokenSet Library', () => {
   let realToken: RealTokenMock;
   let realToken1: RealTokenMock;
 
-  let constants: ConstantsStruct;
+  // let constants: ConstantsStruct;
 
   let signers: SignerWithAddress[];
 
   async function initializePool(
-    VPoolFactory: VPoolFactory,
+    rageTradeFactory: RageTradeFactory,
     initialMarginRatio: BigNumberish,
     maintainanceMarginRatio: BigNumberish,
     twapDuration: BigNumberish,
@@ -49,26 +56,26 @@ describe('DepositTokenSet Library', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
 
-    await VPoolFactory.initializePool(
-      {
-        setupVTokenParams: {
-          vTokenName: 'vWETH',
-          vTokenSymbol: 'vWETH',
-          realTokenAddress: realToken.address,
-          oracleAddress: oracle.address,
-        },
-        extendedLpFee: 500,
-        protocolFee: 500,
+    await rageTradeFactory.initializePool({
+      deployVTokenParams: {
+        vTokenName: 'vWETH',
+        vTokenSymbol: 'vWETH',
+        rTokenAddress: realToken.address,
+        oracleAddress: oracle.address,
+      },
+      rageTradePoolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
         whitelisted: false,
+        oracle: oracle.address,
       },
-      0,
-    );
+      liquidityFeePips: 500,
+      protocolFeePips: 500,
+    });
 
-    const eventFilter = VPoolFactory.filters.PoolInitlized();
-    const events = await VPoolFactory.queryFilter(eventFilter, 'latest');
+    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
     const vPoolWrapper = events[0].args[2];
@@ -94,42 +101,48 @@ describe('DepositTokenSet Library', () => {
     const futureVPoolFactoryAddress = await getCreateAddressFor(signers[0], 3);
     const futureInsurnaceFundAddress = await getCreateAddressFor(signers[0], 4);
 
-    const VPoolWrapperDeployer = await (
-      await hre.ethers.getContractFactory('VPoolWrapperDeployer')
-    ).deploy(futureVPoolFactoryAddress);
+    // const VPoolWrapperDeployer = await (
+    //   await hre.ethers.getContractFactory('VPoolWrapperDeployer')
+    // ).deploy(futureVPoolFactoryAddress);
+
+    const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
-    const clearingHouse = await (
+    const clearingHouseLogic = await (
       await hre.ethers.getContractFactory('ClearingHouse', {
         libraries: {
           Account: accountLib.address,
         },
       })
-    ).deploy(futureVPoolFactoryAddress, REAL_BASE, futureInsurnaceFundAddress);
+    ).deploy();
 
-    const VPoolFactory = await (
-      await hre.ethers.getContractFactory('VPoolFactory')
+    const insuranceFundAddressComputed = await getCreateAddressFor(signers[0], 1);
+
+    const rageTradeFactory = await (
+      await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
-      vBaseAddress,
-      clearingHouse.address,
-      VPoolWrapperDeployer.address,
-      UNISWAP_FACTORY_ADDRESS,
-      DEFAULT_FEE_TIER,
+      clearingHouseLogic.address,
+      vPoolWrapperLogic.address,
+      rBase.address,
+      insuranceFundAddressComputed,
+      UNISWAP_V3_FACTORY_ADDRESS,
+      UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
+    const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
 
     const InsuranceFund = await (
       await hre.ethers.getContractFactory('InsuranceFund')
     ).deploy(rBase.address, clearingHouse.address);
 
-    await vBase.transferOwnership(VPoolFactory.address);
+    // await vBase.transferOwnership(VPoolFactory.address);
 
-    let out = await initializePool(VPoolFactory, 20, 10, 1);
+    let out = await initializePool(rageTradeFactory, 20, 10, 1);
     vTokenAddress = out.vTokenAddress;
     oracle = out.oracle;
     realToken = out.realToken;
 
-    out = await initializePool(VPoolFactory, 20, 10, 1);
+    out = await initializePool(rageTradeFactory, 20, 10, 1);
     vTokenAddress1 = out.vTokenAddress;
     oracle1 = out.oracle;
     realToken1 = out.realToken;
@@ -142,26 +155,37 @@ describe('DepositTokenSet Library', () => {
     ownerAddress = await tester.getAddress();
     testContractAddress = test.address;
 
-    constants = await VPoolFactory.constants();
+    // constants = await VPoolFactory.constants();
+
+    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    await test.registerPool(vBase.address, basePoolObj);
+
+    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    await test.registerPool(vTokenAddress, vTokenPoolObj);
+
+    const vTokenPoolObj1 = await clearingHouse.rageTradePools(vTokenAddress1);
+    await test.registerPool(vTokenAddress1, vTokenPoolObj1);
+
+    await test.setVBaseAddress(vBase.address);
   });
 
   describe('#Single Token', () => {
     before(async () => {
-      test.init(vTokenAddress);
+      await test.init(vTokenAddress);
     });
     it('Add Margin', async () => {
-      test.increaseBalance(constants.VBASE_ADDRESS, 100, constants);
-      const balance = await test.getBalance(constants.VBASE_ADDRESS);
+      await test.increaseBalance(vBaseAddress, 100);
+      const balance = await test.getBalance(vBaseAddress);
       expect(balance).to.eq(100);
     });
     it('Remove Margin', async () => {
-      test.decreaseBalance(constants.VBASE_ADDRESS, 50, constants);
-      const balance = await test.getBalance(constants.VBASE_ADDRESS);
+      await test.decreaseBalance(vBaseAddress, 50);
+      const balance = await test.getBalance(vBaseAddress);
       expect(balance).to.eq(50);
     });
     it('Deposit Market Value', async () => {
       // await oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
-      const marketValue = await test.getAllDepositAccountMarketValue(constants);
+      const marketValue = await test.getAllDepositAccountMarketValue();
       expect(marketValue).to.eq(50);
     });
   });
@@ -169,27 +193,27 @@ describe('DepositTokenSet Library', () => {
   describe('#Multiple Tokens', () => {
     before(async () => {
       test.init(vTokenAddress1);
-      test.cleanDeposits(constants);
+      test.cleanDeposits();
     });
     it('Add Margin', async () => {
-      test.increaseBalance(constants.VBASE_ADDRESS, 50, constants);
-      let balance = await test.getBalance(constants.VBASE_ADDRESS);
+      test.increaseBalance(vBaseAddress, 50);
+      let balance = await test.getBalance(vBaseAddress);
       expect(balance).to.eq(50);
 
-      test.increaseBalance(vTokenAddress1, 100, constants);
+      test.increaseBalance(vTokenAddress1, 100);
       balance = await test.getBalance(vTokenAddress1);
       expect(balance).to.eq(100);
     });
     it('Deposit Market Value (Price1)', async () => {
       await oracle1.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
 
-      const marketValue = await test.getAllDepositAccountMarketValue(constants);
+      const marketValue = await test.getAllDepositAccountMarketValue();
       expect(marketValue).to.eq(40050);
     });
     it('Deposit Market Value (Price2)', async () => {
       await oracle1.setSqrtPrice(BigNumber.from(10).mul(BigNumber.from(2).pow(96)));
 
-      const marketValue = await test.getAllDepositAccountMarketValue(constants);
+      const marketValue = await test.getAllDepositAccountMarketValue();
       expect(marketValue).to.eq(10050);
     });
   });

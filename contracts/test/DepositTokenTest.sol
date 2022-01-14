@@ -12,9 +12,11 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
-import { Constants } from '../utils/Constants.sol';
 
-contract DepositTokenSetTest {
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+
+contract DepositTokenSetTest is AccountStorageMock {
     using DepositTokenSet for DepositTokenSet.Info;
     using VTokenLib for VTokenAddress;
     using Uint32L8ArrayLib for uint32[8];
@@ -33,7 +35,7 @@ contract DepositTokenSetTest {
         vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
     }
 
-    function cleanDeposits(Constants memory constants) external {
+    function cleanDeposits() external {
         for (uint256 i = 0; i < depositTokenSet.active.length; i++) {
             uint32 truncatedAddress = depositTokenSet.active[i];
             if (truncatedAddress == 0) break;
@@ -41,34 +43,26 @@ contract DepositTokenSetTest {
             depositTokenSet.decreaseBalance(
                 vTokenAddresses[truncatedAddress],
                 depositTokenSet.deposits[truncatedAddress],
-                constants
+                accountStorage
             );
         }
         depositTokenSet.decreaseBalance(
-            VTokenAddress.wrap(constants.VBASE_ADDRESS),
-            depositTokenSet.deposits[uint32(uint160(constants.VBASE_ADDRESS))],
-            constants
+            VTokenAddress.wrap(accountStorage.vBaseAddress),
+            depositTokenSet.deposits[uint32(uint160(accountStorage.vBaseAddress))],
+            accountStorage
         );
     }
 
-    function increaseBalance(
-        VTokenAddress vTokenAddress,
-        uint256 amount,
-        Constants memory constants
-    ) external {
-        depositTokenSet.increaseBalance(vTokenAddress, amount, constants);
+    function increaseBalance(VTokenAddress vTokenAddress, uint256 amount) external {
+        depositTokenSet.increaseBalance(vTokenAddress, amount, accountStorage);
     }
 
-    function decreaseBalance(
-        VTokenAddress vTokenAddress,
-        uint256 amount,
-        Constants memory constants
-    ) external {
-        depositTokenSet.decreaseBalance(vTokenAddress, amount, constants);
+    function decreaseBalance(VTokenAddress vTokenAddress, uint256 amount) external {
+        depositTokenSet.decreaseBalance(vTokenAddress, amount, accountStorage);
     }
 
-    function getAllDepositAccountMarketValue(Constants memory constants) external view returns (int256 depositValue) {
-        return depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses, constants);
+    function getAllDepositAccountMarketValue() external view returns (int256 depositValue) {
+        return depositTokenSet.getAllDepositAccountMarketValue(vTokenAddresses, accountStorage);
     }
 
     function getBalance(VTokenAddress vTokenAddress) external view returns (uint256 balance) {

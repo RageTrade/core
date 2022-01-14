@@ -2,14 +2,31 @@
 
 pragma solidity ^0.8.9;
 
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { IOracle } from './IOracle.sol';
+import { IVPoolWrapper } from './IVPoolWrapper.sol';
+
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { LiquidityChangeParams, SwapParams } from '../libraries/Account.sol';
+import { LiquidityChangeParams } from '../libraries/LiquidityPositionSet.sol';
+import { SwapParams } from '../libraries/VTokenPositionSet.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
-import { Constants } from '../utils/Constants.sol';
-
 interface IClearingHouse {
+    struct RageTradePool {
+        IUniswapV3Pool vPool;
+        IVPoolWrapper vPoolWrapper;
+        RageTradePoolSettings settings;
+    }
+
+    struct RageTradePoolSettings {
+        uint16 initialMarginRatio;
+        uint16 maintainanceMarginRatio;
+        uint32 twapDuration;
+        bool whitelisted;
+        IOracle oracle;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);
@@ -31,6 +48,13 @@ interface IClearingHouse {
 
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
+
+    function ClearingHouse__init(
+        address _vPoolFactory,
+        address _realBase,
+        address _insuranceFundAddress,
+        address _vBaseAddress
+    ) external;
 
     /// @notice creates a new account and adds it to the accounts map
     /// @return newAccountId - serial number of the new account created
@@ -120,11 +144,14 @@ interface IClearingHouse {
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
 
-    function addVTokenAddress(uint32 truncated, address full) external;
+    function registerPool(address full, RageTradePool calldata rageTradePool) external;
 
     function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool);
 
     function initRealToken(address _realToken) external;
 
-    function setConstants(Constants memory constants) external;
+    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+        external
+        view
+        returns (uint256 realPriceX128, uint256 virtualPriceX128);
 }

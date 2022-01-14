@@ -8,13 +8,14 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
-import { VPoolFactory } from '../VPoolFactory.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { console } from 'hardhat/console.sol';
-import { Constants } from '../utils/Constants.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
-contract LiquidityPositionTest {
+import { console } from 'hardhat/console.sol';
+
+contract LiquidityPositionTest is AccountStorageMock {
     using LiquidityPosition for LiquidityPosition.Info;
     // using Uint48L5ArrayLib for uint48[5];
 
@@ -46,15 +47,11 @@ contract LiquidityPositionTest {
         lp.liquidityChange(0, VTokenAddress.wrap(address(0)), liquidity, wrapper, balanceAdjustments);
     }
 
-    function maxNetPosition(VTokenAddress vToken, Constants memory constants) public view returns (uint256) {
-        return lp.maxNetPosition(vToken, constants);
+    function maxNetPosition() public view returns (uint256) {
+        return lp.maxNetPosition();
     }
 
-    function baseValue(
-        uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
-        Constants memory constants
-    ) public view returns (int256) {
-        return lp.baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
+    function baseValue(uint160 sqrtPriceCurrent) public view returns (int256) {
+        return lp.baseValue(sqrtPriceCurrent, wrapper);
     }
 }

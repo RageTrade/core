@@ -10,7 +10,7 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { Constants } from '../utils/Constants.sol';
+import { AccountStorage } from '../ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -58,33 +58,27 @@ library LiquidityPositionSet {
         Info storage set,
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
-        Constants memory constants
+        AccountStorage storage accountStorage
     ) internal view returns (int256 baseValue_) {
-        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken, vToken.vPoolWrapper(constants), constants);
+        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(accountStorage));
     }
 
     function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
-        IVPoolWrapper wrapper, // TODO refactor this
-        Constants memory constants
+        IVPoolWrapper wrapper // TODO refactor this
     ) internal view returns (int256 baseValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
             if (id == 0) break;
-            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, vToken, wrapper, constants);
+            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, wrapper);
         }
     }
 
-    function maxNetPosition(
-        Info storage set,
-        VTokenAddress vToken,
-        Constants memory constants
-    ) internal view returns (uint256 risk) {
+    function maxNetPosition(Info storage set) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            risk += set.positions[id].maxNetPosition(vToken, constants);
+            risk += set.positions[id].maxNetPosition();
         }
     }
 

@@ -1,15 +1,18 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
+
 import { Account, DepositTokenSet, LiquidationParams, SwapParams, VTokenAddress } from '../libraries/Account.sol';
 import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { Constants } from '../utils/Constants.sol';
 import { RealTokenLib } from '../libraries/RealTokenLib.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 contract AccountTest {
     using Account for Account.Info;
@@ -17,6 +20,7 @@ contract AccountTest {
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using DepositTokenSet for DepositTokenSet.Info;
+    using VTokenLib for VTokenAddress;
 
     mapping(uint256 => Account.Info) accounts;
     AccountStorage public accountStorage;
@@ -27,20 +31,32 @@ contract AccountTest {
     constructor() {}
 
     function setAccountStorage(
-        Constants calldata _constants,
         LiquidationParams calldata _liquidationParams,
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
         uint256 _fixFee
     ) external {
-        accountStorage.constants = _constants;
-
         accountStorage.liquidationParams = _liquidationParams;
         accountStorage.minRequiredMargin = _minRequiredMargin;
         accountStorage.removeLimitOrderFee = _removeLimitOrderFee;
         accountStorage.minimumOrderNotional = _minimumOrderNotional;
         fixFee = _fixFee;
+    }
+
+    function registerPool(address full, IClearingHouse.RageTradePool calldata rageTradePool) external {
+        VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
+        uint32 truncated = vTokenAddress.truncate();
+
+        // pool will not be registered twice by the rage trade factory
+        assert(accountStorage.vTokenAddresses[truncated].eq(address(0)));
+
+        accountStorage.vTokenAddresses[truncated] = vTokenAddress;
+        accountStorage.rtPools[vTokenAddress] = rageTradePool;
+    }
+
+    function setVBaseAddress(address _vBaseAddress) external {
+        accountStorage.vBaseAddress = _vBaseAddress;
     }
 
     function createAccount() external {
@@ -51,21 +67,14 @@ contract AccountTest {
     }
 
     function cleanPositions(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(
-            accountStorage.vTokenAddresses,
-            accountStorage.constants
-        );
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountStorage.vTokenAddresses, accountStorage);
         VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
+        tokenPosition = set.positions[uint32(uint160(accountStorage.vBaseAddress))];
         balanceAdjustments = Account.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(
-            balanceAdjustments,
-            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
-            accountStorage.constants
-        );
+        set.update(balanceAdjustments, VTokenAddress.wrap(accountStorage.vBaseAddress), accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
@@ -76,30 +85,23 @@ contract AccountTest {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage.constants);
+            set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage);
         }
     }
 
     function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(
-            accountStorage.vTokenAddresses,
-            accountStorage.constants
-        );
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountStorage.vTokenAddresses, accountStorage);
         DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
-        deposit = set.deposits[uint32(uint160(accountStorage.constants.VBASE_ADDRESS))];
-        set.decreaseBalance(
-            VTokenAddress.wrap(accountStorage.constants.VBASE_ADDRESS),
-            deposit,
-            accountStorage.constants
-        );
+        deposit = set.deposits[uint32(uint160(accountStorage.vBaseAddress))];
+        set.decreaseBalance(VTokenAddress.wrap(accountStorage.vBaseAddress), deposit, accountStorage);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(accountStorage.vTokenAddresses[truncatedAddress], deposit, accountStorage.constants);
+            set.decreaseBalance(accountStorage.vTokenAddresses[truncatedAddress], deposit, accountStorage);
         }
     }
 
@@ -208,7 +210,7 @@ contract AccountTest {
             tickLower,
             tickUpper,
             removeLimitOrderFee,
-            accountStorage.constants
+            accountStorage
         );
     }
 
@@ -296,10 +298,6 @@ contract AccountTest {
     }
 
     function getAccountProfit(uint256 accountNo) external view returns (int256 profit) {
-        return
-            accounts[accountNo].tokenPositions.getAccountMarketValue(
-                accountStorage.vTokenAddresses,
-                accountStorage.constants
-            );
+        return accounts[accountNo].tokenPositions.getAccountMarketValue(accountStorage.vTokenAddresses, accountStorage);
     }
 }

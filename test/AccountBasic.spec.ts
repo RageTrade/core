@@ -9,12 +9,12 @@ import {
   ERC20,
   VBase,
   OracleMock,
-  VPoolFactory,
+  RageTradeFactory,
   ClearingHouse,
 } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
-import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import { testSetupBase, testSetupToken } from './utils/setup-general';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -25,14 +25,14 @@ describe('Account Library Test Basic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
-  let constants: ConstantsStruct;
+  // let constants: ConstantsStruct;
   let vTokenAddress: string;
   let clearingHouse: ClearingHouse;
-  let vPoolFactory: VPoolFactory;
+  let rageTradeFactory: RageTradeFactory;
 
   let test: AccountTest;
   let realBase: FakeContract<ERC20>;
-  let vBase: FakeContract<VBase>;
+  let vBase: VBase;
   let oracle: OracleMock;
 
   let vBaseAddress: string;
@@ -87,13 +87,7 @@ describe('Account Library Test Basic', () => {
     let vPoolAddress;
     let vPoolWrapperAddress;
 
-    ({
-      realbase: realBase,
-      vBase: vBase,
-      clearingHouse: clearingHouse,
-      vPoolFactory: vPoolFactory,
-      constants: constants,
-    } = await testSetupBase());
+    ({ realBase, vBase, clearingHouse, rageTradeFactory } = await testSetupBase());
 
     ({
       oracle: oracle,
@@ -106,7 +100,7 @@ describe('Account Library Test Basic', () => {
       maintainanceMarginRatio: 10000,
       twapDuration: 60,
       whitelisted: true,
-      vPoolFactory: vPoolFactory,
+      rageTradeFactory,
     }));
 
     vBaseAddress = vBase.address;
@@ -122,9 +116,6 @@ describe('Account Library Test Basic', () => {
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {
       address: vPoolWrapperAddress,
     });
-    vPoolWrapperFake.timeHorizon.returns(60);
-    vPoolWrapperFake.maintainanceMarginRatio.returns(10000);
-    vPoolWrapperFake.initialMarginRatio.returns(20000);
     vPoolWrapperFake.vPool.returns(vPoolFake.address);
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
@@ -167,13 +158,20 @@ describe('Account Library Test Basic', () => {
     const minRequiredMargin = tokenAmount(20, 6);
 
     await test.setAccountStorage(
-      constants,
       liquidationParams,
       removeLimitOrderFee,
       minimumOrderNotional,
       minRequiredMargin,
       fixFee,
     );
+
+    const poolObj = await clearingHouse.rageTradePools(vBase.address);
+    await test.registerPool(vBase.address, poolObj);
+
+    const poolObj2 = await clearingHouse.rageTradePools(vTokenAddress);
+    await test.registerPool(vTokenAddress, poolObj2);
+
+    await test.setVBaseAddress(vBase.address);
   });
   after(deactivateMainnetFork);
   describe('#Initialize', () => {
@@ -199,7 +197,7 @@ describe('Account Library Test Basic', () => {
     it('Swap Token (Token Amount)', async () => {
       await test.swapTokenAmount(0, vTokenAddress, '10');
       await checkTokenBalance(vTokenAddress, '10');
-      await checkTokenBalance(vBaseAddress, -40000);
+      await checkTokenBalance(vBase.address, -40000);
     });
 
     it('Swap Token (Token Notional)', async () => {
