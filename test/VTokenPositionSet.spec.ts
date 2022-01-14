@@ -24,6 +24,7 @@ import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './utils/create-addresses';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
+
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 
@@ -188,7 +189,7 @@ describe('VTokenPositionSet Library', () => {
       await VTokenPositionSet.realizeFundingPaymentToAccount(vTokenAddress);
       const resultVToken = await VTokenPositionSet.getPositionDetails(vTokenAddress);
       const resultVBase = await VTokenPositionSet.getPositionDetails(vBase.address);
-      expect(resultVToken[1]).to.eq((20n * 1n) << 128n); //sumAChk
+      expect(resultVToken.sumACkhpt).to.eq((20n * 1n) << 128n);
       expect(resultVBase.balance).to.eq(-590);
     });
   });

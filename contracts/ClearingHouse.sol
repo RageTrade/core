@@ -333,7 +333,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128)
     {
-        realPriceX128 = vTokenAddress.getRealTwapSqrtPriceX96(accountStorage);
+        realPriceX128 = vTokenAddress.getRealTwapPriceX128(accountStorage);
         virtualPriceX128 = vTokenAddress.getVirtualTwapPriceX128(accountStorage);
     }
 
