@@ -67,7 +67,7 @@ describe('VTokenPositionSet Library', () => {
 
     const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
-    const insuranceFundAddressComputed = await getCreateAddressFor(signers[0], 1);
+    const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
     rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -75,7 +75,7 @@ describe('VTokenPositionSet Library', () => {
       clearingHouseLogic.address,
       vPoolWrapperLogic.address,
       REAL_BASE,
-      insuranceFundAddressComputed,
+      insuranceFundLogic.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -84,9 +84,7 @@ describe('VTokenPositionSet Library', () => {
     clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
     vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
 
-    const insuranceFund = await (
-      await hre.ethers.getContractFactory('InsuranceFund')
-    ).deploy(realBase.address, clearingHouse.address);
+    const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
     // await VBase.transferOwnership(VPoolFactory.address);
 

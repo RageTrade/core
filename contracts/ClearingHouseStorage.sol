@@ -11,6 +11,7 @@ import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { RTokenLib } from './libraries/RTokenLib.sol';
 
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
+import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IOracle } from './interfaces/IOracle.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 
@@ -48,5 +49,5 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
 
     address public rageTradeFactory;
     address public realBase;
-    address public insuranceFundAddress;
+    IInsuranceFund public insuranceFund;
 }

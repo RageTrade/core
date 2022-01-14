@@ -759,7 +759,7 @@ describe('Clearing House Library (Liquidation)', () => {
       })
     ).deploy();
 
-    const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
+    const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
     rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -767,7 +767,7 @@ describe('Clearing House Library (Liquidation)', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       rBase.address,
-      insuranceFundAddressComputed,
+      insuranceFundLogic.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -775,9 +775,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
 
-    insuranceFund = await (
-      await hre.ethers.getContractFactory('InsuranceFund')
-    ).deploy(REAL_BASE, clearingHouseTest.address);
+    insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
     vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
     vBaseAddress = vBase.address;

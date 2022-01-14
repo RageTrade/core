@@ -29,24 +29,19 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeploy
         vPoolWrapperLogicAddress = _vPoolWrapperLogicAddress;
     }
 
-    function _deployVPoolWrapper(IVPoolWrapper.InitializeVPoolWrapperParams memory params)
+    function _deployProxyForVPoolWrapperAndInitialize(IVPoolWrapper.InitializeVPoolWrapperParams memory params)
         internal
-        returns (IVPoolWrapper)
+        returns (IVPoolWrapper vPoolWrapper)
     {
-        bytes memory bytecode = abi.encodePacked(
-            type(TransparentUpgradeableProxy).creationCode,
-            abi.encode(
-                address(vPoolWrapperLogicAddress),
-                address(proxyAdmin),
-                abi.encodeWithSelector(IVPoolWrapper.VPoolWrapper__init.selector, params)
-            )
-        );
-
-        return IVPoolWrapper(GoodAddressDeployer.deploy(0, bytecode, _isWrapperAddressGood));
-    }
-
-    // returns true if most significant hex char of address is "e"
-    function _isWrapperAddressGood(address addr) private pure returns (bool) {
-        return (uint160(addr) >> 156) == 0xe;
+        return
+            IVPoolWrapper(
+                address(
+                    new TransparentUpgradeableProxy(
+                        address(vPoolWrapperLogicAddress),
+                        address(proxyAdmin),
+                        abi.encodeWithSelector(IVPoolWrapper.VPoolWrapper__init.selector, params)
+                    )
+                )
+            );
     }
 }

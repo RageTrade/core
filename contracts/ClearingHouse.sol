@@ -26,12 +26,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     function ClearingHouse__init(
         address _rageTradeFactory,
         address _realBase,
-        address _insuranceFundAddress,
+        address _insuranceFund,
         address _vBaseAddress
     ) public initializer {
         rageTradeFactory = _rageTradeFactory;
         realBase = _realBase;
-        insuranceFundAddress = _insuranceFundAddress;
+        insuranceFund = IInsuranceFund(_insuranceFund);
 
         accountStorage.vBaseAddress = _vBaseAddress;
 
@@ -252,9 +252,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
 
     function transferInsuranceFundFee(int256 insuranceFundFee) internal {
         if (insuranceFundFee > 0) {
-            IERC20(realBase).transfer(insuranceFundAddress, uint256(insuranceFundFee));
+            IERC20(realBase).transfer(address(insuranceFund), uint256(insuranceFundFee));
         } else {
-            IInsuranceFund(insuranceFundAddress).claim(uint256(-insuranceFundFee));
+            insuranceFund.claim(uint256(-insuranceFundFee));
         }
     }
 

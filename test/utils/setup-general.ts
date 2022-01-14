@@ -41,7 +41,7 @@ export async function testSetup({
 
   const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
-  const insuranceFundAddressComputed = await getCreateAddressFor(signer, 1);
+  const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
@@ -49,15 +49,15 @@ export async function testSetup({
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     realBase.address,
-    insuranceFundAddressComputed,
+    insuranceFundLogic.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
-  const insuranceFund = await (
-    await hre.ethers.getContractFactory('InsuranceFund')
-  ).deploy(realBase.address, await rageTradeFactory.clearingHouse());
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+
+  const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
   //VBase
   const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
@@ -72,8 +72,6 @@ export async function testSetup({
   // const vPoolWrapperDeployer = await (
   //   await hre.ethers.getContractFactory('VPoolWrapperDeployer')
   // ).deploy(futureVPoolFactoryAddress);
-
-  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
 
   // const vPoolFactory = await (
   //   await hre.ethers.getContractFactory('VPoolFactory')
@@ -155,7 +153,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
 
   const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
-  const insuranceFundAddressComputed = await getCreateAddressFor(signer, 2);
+  const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
@@ -163,18 +161,16 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     realBase.address,
-    insuranceFundAddressComputed,
+    insuranceFundLogic.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
-  const insuranceFund = await (
-    await hre.ethers.getContractFactory('InsuranceFund')
-  ).deploy(realBase.address, await rageTradeFactory.clearingHouse());
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+
+  const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
   const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
   // const constants = (await clearingHouse.accountStorage()).constants;

@@ -17,12 +17,17 @@ describe('RageTradeFactory', () => {
   after(deactivateMainnetFork);
 
   describe('#constructor', () => {
-    it('deploys VBase, ClearingHouse at good addresses', async () => {
+    it('deploys VBase at good address', async () => {
       for (let i = 0; i < 5; i++) {
-        let { clearingHouse, vBase } = await setupClearingHouse({});
-        expect(clearingHouse.address[2].toLowerCase()).to.eq('f');
-        expect(vBase.address[2].toLowerCase()).to.eq('d');
+        const { vBase } = await setupClearingHouse({});
+        expect(vBase.address[2].toLowerCase()).to.eq('f');
       }
+    });
+
+    // TODO add this test case
+    it.skip('initializes values', async () => {
+      const { vBase, clearingHouse } = await setupClearingHouse({});
+      // expect(await clearingHouse.vBase)
     });
 
     it('governance and teamMultisig is deployer', async () => {
@@ -42,7 +47,7 @@ describe('RageTradeFactory', () => {
   });
 
   describe('#initializePool', () => {
-    it('deploys vToken and vPoolWrapper at good address', async () => {
+    it('deploys vToken at good address', async () => {
       let { rageTradeFactory, vBase } = await setupClearingHouse({});
 
       // todo change rTokenAddress requirement to rTokenDecimals
@@ -74,10 +79,6 @@ describe('RageTradeFactory', () => {
       // vTokenAddress should be such that in UniswapV3Pool it becomes token0 always
       const vTokenAddress = events[0].args.vToken;
       expect(BigNumber.from(vTokenAddress).lt(vBase.address)).to.be.true;
-
-      // first nibble of vPoolWrapper address should be "e"
-      const vPoolWrapperAddress = events[0].args.vPoolWrapper;
-      expect(vPoolWrapperAddress[2].toLowerCase()).to.eq('e');
     });
   });
 

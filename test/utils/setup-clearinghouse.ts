@@ -96,7 +96,7 @@ export async function setupClearingHouse({
   // wrapper
   const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
-  const insuranceFundAddressComputed = await getCreateAddressFor(signer, 1);
+  const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
   // rage trade factory
   const rageTradeFactory = await (
@@ -105,7 +105,7 @@ export async function setupClearingHouse({
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     rBase.address,
-    insuranceFundAddressComputed,
+    insuranceFundLogic.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -121,9 +121,8 @@ export async function setupClearingHouse({
   const proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', await rageTradeFactory.proxyAdmin());
   hre.tracer.nameTags[proxyAdmin.address] = 'proxyAdmin';
 
-  const insuranceFund = await (
-    await hre.ethers.getContractFactory('InsuranceFund')
-  ).deploy(rBase.address, clearingHouse.address);
+  const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
+  hre.tracer.nameTags[insuranceFund.address] = 'insuranceFund';
 
   return {
     signer,
@@ -134,6 +133,7 @@ export async function setupClearingHouse({
     clearingHouseLogic,
     accountLib,
     rageTradeFactory,
+    insuranceFundLogic,
     insuranceFund,
   };
 }
