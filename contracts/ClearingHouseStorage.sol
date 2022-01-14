@@ -24,10 +24,6 @@ struct AccountStorage {
     uint256 removeLimitOrderFee;
     uint256 minimumOrderNotional;
     address vBaseAddress;
-    // // TODO are these constants needed in clearing house ?
-    // address UNISWAP_V3_FACTORY_ADDRESS;
-    // uint24 UNISWAP_V3_DEFAULT_FEE_TIER;
-    // bytes32 UNISWAP_V3_POOL_BYTE_CODE_HASH;
 }
 
 abstract contract ClearingHouseStorage is Initializable, Governable {

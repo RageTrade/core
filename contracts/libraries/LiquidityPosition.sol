@@ -42,7 +42,7 @@ library LiquidityPosition {
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
         LimitOrderType limitOrderType;
-        // the tick range of the position; TODO Is storing ticks needed as it's in the positionId?
+        // the tick range of the position;
         int24 tickLower;
         int24 tickUpper;
         // the liquidity of the position

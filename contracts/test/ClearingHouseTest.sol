@@ -137,7 +137,7 @@ contract ClearingHouseTest is ClearingHouse {
     function getAccountLiquidityPositionFundingAndFee(
         uint256 accountNo,
         address vTokenAddress,
-        uint8 num // TODO change to fetch by ticks
+        uint8 num
     ) external view returns (int256 fundingPayment, uint256 unrealizedLiquidityFee) {
         LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
             .tokenPositions
@@ -163,7 +163,7 @@ contract ClearingHouseTest is ClearingHouse {
     function getAccountLiquidityPositionDetails(
         uint256 accountNo,
         address vTokenAddress,
-        uint8 num // TODO change to fetch by ticks
+        uint8 num
     )
         external
         view

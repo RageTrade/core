@@ -104,7 +104,7 @@ contract RageTradeFactory is
     /// @param initializePoolParams parameters for initializing the pool
     function initializePool(InitializePoolParams calldata initializePoolParams) external onlyGovernance {
         // STEP 1: Deploy the virtual token ERC20, such that it will be token0
-        IVToken vToken = _deployVToken(initializePoolParams.deployVTokenParams); // TODO fix this params
+        IVToken vToken = _deployVToken(initializePoolParams.deployVTokenParams);
 
         // STEP 2: Deploy vPool (token0=vToken, token1=vBase) on actual uniswap
         IUniswapV3Pool vPool = _createUniswapV3Pool(vToken);

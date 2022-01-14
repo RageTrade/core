@@ -71,6 +71,6 @@ library FundingPayment {
     }
 
     function bill(int256 sumFpX128, uint256 liquidity) internal pure returns (int256) {
-        return sumFpX128.mulDiv(int256(liquidity), int256(FixedPoint128.Q128)); // TODO: refactor FullMath signed mulDiv
+        return sumFpX128.mulDiv(liquidity, FixedPoint128.Q128);
     }
 }
