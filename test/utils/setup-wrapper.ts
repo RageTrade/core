@@ -15,13 +15,13 @@ export async function setupWrapper(setupArgs: SetupArgs) {
     address: signer.address,
   });
 
-  setTwapSqrtPricesForSetDuration({
+  await setTwapSqrtPricesForSetDuration({
     realPriceX128: toQ128(setupArgs.rPriceInitial ?? 1),
     virtualPriceX128: toQ128(setupArgs.vPriceInitial ?? 1),
   });
 
   const vPoolWrapper = await (await smock.mock<VPoolWrapperMock2__factory>('VPoolWrapperMock2')).deploy();
-  vPoolWrapper.VPoolWrapper__init({
+  await vPoolWrapper.VPoolWrapper__init({
     clearingHouse: signer.address,
     vTokenAddress: vToken.address,
     vBase: vBase.address,
