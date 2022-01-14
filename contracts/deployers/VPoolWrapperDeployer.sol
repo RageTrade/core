@@ -21,23 +21,12 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeploy
     /// @notice Admin method to set latest implementation logic for VPoolWrapper
     /// @param _vPoolWrapperLogicAddress: new logic address
     /// @dev When a new vPoolWrapperLogic is deployed, make sure that the initialize method is called.
-    function setVPoolWrapperLogicAddress(address _vPoolWrapperLogicAddress) external onlyOwner {
+    function setVPoolWrapperLogicAddress(address _vPoolWrapperLogicAddress) external onlyGovernance {
         if (_vPoolWrapperLogicAddress == address(0)) {
             revert IllegalAddress(address(0));
         }
 
         vPoolWrapperLogicAddress = _vPoolWrapperLogicAddress;
-    }
-
-    /// @notice Admin method to upgrade implementation while avoiding human error
-    /// @param proxy: A VPoolWrapper proxy contract
-    function upgradeVPoolWrapperToLatestLogic(TransparentUpgradeableProxy proxy) public {
-        if (!_isWrapperAddressGood(address(proxy))) {
-            revert ProxyIsNotOfVPoolWrapper(proxy);
-        }
-
-        // this public function has onlyOwner modifier
-        proxyAdmin.upgrade(proxy, vPoolWrapperLogicAddress);
     }
 
     function _deployVPoolWrapper(IVPoolWrapper.InitializeVPoolWrapperParams memory params)

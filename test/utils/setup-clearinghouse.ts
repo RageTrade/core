@@ -72,10 +72,6 @@ export async function setupClearingHouse({
   }
   hre.tracer.nameTags[rBase.address] = 'rBase';
 
-  // virtual base
-  const vBase = await (await hre.ethers.getContractFactory('VBase')).deploy(rBase.address);
-  hre.tracer.nameTags[vBase.address] = 'vBase';
-
   // deploying main contracts
   const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 5);
   const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 6);
@@ -115,7 +111,15 @@ export async function setupClearingHouse({
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
+  // virtual base
+  const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+  hre.tracer.nameTags[vBase.address] = 'vBase';
+
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+  hre.tracer.nameTags[clearingHouse.address] = 'clearingHouse';
+
+  const proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', await rageTradeFactory.proxyAdmin());
+  hre.tracer.nameTags[proxyAdmin.address] = 'proxyAdmin';
 
   const insuranceFund = await (
     await hre.ethers.getContractFactory('InsuranceFund')
@@ -126,6 +130,7 @@ export async function setupClearingHouse({
     rBase,
     vBase,
     clearingHouse,
+    proxyAdmin,
     clearingHouseLogic,
     accountLib,
     rageTradeFactory,

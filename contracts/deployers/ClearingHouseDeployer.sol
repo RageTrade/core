@@ -2,37 +2,20 @@
 
 pragma solidity ^0.8.9;
 
-import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
+import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
-import { TransparentUpgradeableProxy } from '../proxy/TransparentUpgradeableProxy.sol';
-import { ProxyAdmin } from '../proxy/ProxyAdmin.sol';
+import { ProxyAdminDeployer } from './ProxyAdminDeployer.sol';
 
 import { GoodAddressDeployer } from '../libraries/GoodAddressDeployer.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IRageTradeFactory } from '../interfaces/IRageTradeFactory.sol';
 
-/// @notice Manages deployment and logic upgrade for ClearingHouseProxy
+import { Governable } from '../utils/Governable.sol';
+
+/// @notice Manages deployment for ClearingHouseProxy
 /// @dev ClearingHouse proxy is deployed only once
-abstract contract ClearingHouseDeployer is IRageTradeFactory, Ownable {
-    ProxyAdmin public proxyAdmin;
-
-    /// @notice Admin method to upgrade implementation while avoiding human error
-    /// @param proxy: A VPoolWrapper proxy contract
-    /// @param newClearingHouseLogicAddress: new logic address
-    /// @dev When a new clearingHouseLogic is deployed, make sure that the initialize method is called.
-    function upgradeClearingHouseToLatestLogic(TransparentUpgradeableProxy proxy, address newClearingHouseLogicAddress)
-        public
-        onlyOwner
-    {
-        if (!_isClearingHouseAddressGood(address(proxy))) {
-            revert ProxyIsNotOfClearingHouse(proxy);
-        }
-
-        // this public function has onlyOwner modifier
-        proxyAdmin.upgrade(proxy, newClearingHouseLogicAddress);
-    }
-
+abstract contract ClearingHouseDeployer is IRageTradeFactory, Governable, ProxyAdminDeployer {
     struct DeployClearingHouseParams {
         address clearingHouseLogicAddress;
         address rBaseAddress;

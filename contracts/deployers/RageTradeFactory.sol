@@ -3,7 +3,6 @@
 pragma solidity ^0.8.9;
 
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
-import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 
 import { Governable } from '../utils/Governable.sol';
 
@@ -26,7 +25,7 @@ import { BaseOracle } from '../oracles/BaseOracle.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTokenDeployer, VPoolWrapperDeployer {
+contract RageTradeFactory is Governable, ClearingHouseDeployer, VBaseDeployer, VTokenDeployer, VPoolWrapperDeployer {
     using VTokenLib for VTokenAddress;
 
     IVBase public immutable vBase;
@@ -47,7 +46,8 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
         uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
         bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
-        proxyAdmin = new ProxyAdmin();
+        proxyAdmin = _deployProxyAdmin();
+        proxyAdmin.transferOwnership(msg.sender);
 
         UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
         UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
@@ -105,7 +105,7 @@ contract RageTradeFactory is Ownable, ClearingHouseDeployer, VBaseDeployer, VTok
             clearingHouse.isVTokenAddressAvailable(uint32(uint160(addr)));
     }
 
-    function initializePool(InitializePoolParams calldata initializePoolParams) external onlyOwner {
+    function initializePool(InitializePoolParams calldata initializePoolParams) external onlyGovernance {
         // STEP 1: Deploy the virtual token ERC20, such that it will be token0
         IVToken vToken = _deployVToken(initializePoolParams.deployVTokenParams); // TODO fix this params
 
