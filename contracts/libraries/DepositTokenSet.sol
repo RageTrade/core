@@ -6,7 +6,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
-import { RealTokenLib } from './RealTokenLib.sol';
+import { RTokenLib } from './RTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
@@ -15,8 +15,8 @@ import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
-    using RealTokenLib for RealTokenLib.RealToken;
-    using RealTokenLib for address;
+    using RTokenLib for RTokenLib.RToken;
+    using RTokenLib for address;
 
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
@@ -70,7 +70,7 @@ library DepositTokenSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            RealTokenLib.RealToken storage token = accountStorage.realTokens[truncated];
+            RTokenLib.RToken storage token = accountStorage.realTokens[truncated];
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
                 token.getRealTwapPriceX128(),

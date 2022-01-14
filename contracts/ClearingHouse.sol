@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet, RealTokenLib } from './libraries/Account.sol';
+import { Account, LiquidityChangeParams, LiquidationParams, SwapParams, VTokenPositionSet, RTokenLib } from './libraries/Account.sol';
 import { LimitOrderType } from './libraries/LiquidityPosition.sol';
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
@@ -21,7 +21,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     using Account for Account.Info;
     using VTokenLib for VTokenAddress;
     using SignedMath for int256;
-    using RealTokenLib for RealTokenLib.RealToken;
+    using RTokenLib for RTokenLib.RToken;
 
     function ClearingHouse__init(
         address _rageTradeFactory,
@@ -55,7 +55,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
     function getRTokenWithChecks(uint32 rTokenTruncatedAddress)
         internal
         view
-        returns (RealTokenLib.RealToken storage rToken)
+        returns (RTokenLib.RToken storage rToken)
     {
         rToken = accountStorage.realTokens[rTokenTruncatedAddress];
         if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);
@@ -104,7 +104,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        RealTokenLib.RealToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
+        RTokenLib.RToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
 
         IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -122,7 +122,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         Account.Info storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        RealTokenLib.RealToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
+        RTokenLib.RToken storage rToken = getRTokenWithChecks(rTokenTruncatedAddress);
 
         account.removeMargin(rToken.tokenAddress, amount, accountStorage);
 
@@ -286,7 +286,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         address oracleAddress,
         uint32 twapDuration
     ) external onlyGovernanceOrTeamMultisig {
-        RealTokenLib.RealToken memory token = RealTokenLib.RealToken(rTokenAddress, oracleAddress, twapDuration);
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
         accountStorage.realTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 

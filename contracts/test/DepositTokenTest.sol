@@ -11,7 +11,7 @@ import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-import { RealTokenLib } from '../libraries/RealTokenLib.sol';
+import { RTokenLib } from '../libraries/RTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 
@@ -20,8 +20,8 @@ import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
 contract DepositTokenSetTest is AccountStorageMock {
     using DepositTokenSet for DepositTokenSet.Info;
-    using RealTokenLib for RealTokenLib.RealToken;
-    using RealTokenLib for address;
+    using RTokenLib for RTokenLib.RToken;
+    using RTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
 
     DepositTokenSet.Info depositTokenSet;
@@ -41,7 +41,7 @@ contract DepositTokenSetTest is AccountStorageMock {
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RealTokenLib.RealToken memory token = RealTokenLib.RealToken(rTokenAddress, oracleAddress, twapDuration);
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
         accountStorage.realTokens[token.tokenAddress.truncate()] = token;
     }
 

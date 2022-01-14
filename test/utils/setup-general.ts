@@ -185,7 +185,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     clearingHouse,
     rageTradeFactory,
     insuranceFund,
-    oracle: oracle,
+    oracle,
   };
 }
 

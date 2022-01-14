@@ -14,23 +14,23 @@ import { IOracle } from '../interfaces/IOracle.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-library RealTokenLib {
-    struct RealToken {
+library RTokenLib {
+    struct RToken {
         address tokenAddress;
         address oracleAddress;
         uint32 oracleTimeHorizon;
     }
 
-    using RealTokenLib for RealToken;
+    using RTokenLib for RToken;
     using FullMath for uint256;
     using PriceMath for uint160;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    function eq(RealToken storage a, RealToken storage b) internal view returns (bool) {
+    function eq(RToken storage a, RToken storage b) internal view returns (bool) {
         return a.tokenAddress == b.tokenAddress;
     }
 
-    function eq(RealToken storage a, address b) internal view returns (bool) {
+    function eq(RToken storage a, address b) internal view returns (bool) {
         return a.tokenAddress == b;
     }
 
@@ -38,23 +38,23 @@ library RealTokenLib {
         return uint32(uint160(realTokenAddress));
     }
 
-    function truncate(RealToken storage token) internal view returns (uint32) {
+    function truncate(RToken storage token) internal view returns (uint32) {
         return uint32(uint160(token.tokenAddress));
     }
 
-    function realToken(RealToken storage token) internal view returns (IERC20) {
+    function realToken(RToken storage token) internal view returns (IERC20) {
         return IERC20(token.tokenAddress);
     }
 
-    function oracle(RealToken storage token) internal view returns (IOracle) {
+    function oracle(RToken storage token) internal view returns (IOracle) {
         return IOracle(token.oracleAddress);
     }
 
-    function getRealTwapSqrtPriceX96(RealToken storage token) internal view returns (uint160 sqrtPriceX96) {
+    function getRealTwapSqrtPriceX96(RToken storage token) internal view returns (uint160 sqrtPriceX96) {
         return token.oracle().getTwapSqrtPriceX96(token.oracleTimeHorizon);
     }
 
-    function getRealTwapPriceX128(RealToken storage token) internal view returns (uint256 priceX128) {
+    function getRealTwapPriceX128(RToken storage token) internal view returns (uint256 priceX128) {
         return token.getRealTwapSqrtPriceX96().toPriceX128();
     }
 }

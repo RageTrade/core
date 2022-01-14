@@ -8,7 +8,7 @@ import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityP
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { RealTokenLib } from '../libraries/RealTokenLib.sol';
+import { RTokenLib } from '../libraries/RTokenLib.sol';
 import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
@@ -115,7 +115,7 @@ contract AccountTest {
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RealTokenLib.RealToken memory token = RealTokenLib.RealToken(rTokenAddress, oracleAddress, twapDuration);
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
         accountStorage.realTokens[truncate(token.tokenAddress)] = token;
     }
 
