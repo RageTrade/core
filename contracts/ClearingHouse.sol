@@ -225,11 +225,13 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
 
         VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
 
-        _checkSlippage(
-            vTokenAddress,
-            liquidityChangeParams.sqrtPriceCurrent,
-            liquidityChangeParams.slippageToleranceBps
-        );
+        if (liquidityChangeParams.sqrtPriceCurrent != 0) {
+            _checkSlippage(
+                vTokenAddress,
+                liquidityChangeParams.sqrtPriceCurrent,
+                liquidityChangeParams.slippageToleranceBps
+            );
+        }
 
         (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
             vTokenAddress,
@@ -282,7 +284,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
-        if ((slippageToleranceBps * sqrtPriceToCheck) / 1e4 > diff) {
+        if (diff > (slippageToleranceBps * sqrtPriceToCheck) / 1e4) {
             revert SlippageBeyondTolerance();
         }
     }
