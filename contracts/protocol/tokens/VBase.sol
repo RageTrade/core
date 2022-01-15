@@ -23,6 +23,10 @@ contract VBase is IVBase, ERC20('Rage Trade Virtual Base Token', 'vBase'), Ownab
         address to,
         uint256
     ) internal view override {
+        // transfer cases:
+        // - vPoolWrapper mints tokens at uniswap pool address
+        // - uniswap v3 pool transfers tokens to vPoolWrapper
+        // - vPoolWrapper burns all tokens it has, at its own address
         if (!(from == address(0) || to == address(0) || isAuth[from] || isAuth[to])) {
             revert Unauthorised();
         }
