@@ -116,7 +116,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         ///@dev update sumA and sumFP to extrapolated values according to current timestamp
         _fpGlobal.sumAX128 = getExtrapolatedSumAX128();
-        _fpGlobal.sumFpX128 = getExtrapolatedSumFpX128(_fpGlobal.sumAX128);
+        _fpGlobal.sumFpX128 = FundingPayment.extrapolatedSumFpX128(
+            fpGlobal.sumAX128,
+            fpGlobal.sumBX128,
+            fpGlobal.sumFpX128,
+            _fpGlobal.sumAX128
+        );
 
         wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
         (
@@ -457,16 +462,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 _blockTimestamp(),
                 realPriceX128,
                 virtualPriceX128
-            );
-    }
-
-    function getExtrapolatedSumFpX128(int256 extrapolatedSumAX128) internal view returns (int256) {
-        return
-            FundingPayment.extrapolatedSumFpX128(
-                fpGlobal.sumAX128,
-                fpGlobal.sumBX128,
-                fpGlobal.sumFpX128,
-                extrapolatedSumAX128
             );
     }
 

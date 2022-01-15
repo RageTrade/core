@@ -1357,7 +1357,7 @@ describe('Clearing House Library (Liquidation)', () => {
       const netTokenPosition = expectedTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = 393256714158n - 49n;
+      const expectedBaseBalance = 393256714158n - 47n;
 
       const expected_MktVal_preRangeLiquidation = 31114231695n;
       const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
@@ -1405,7 +1405,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
       const netTokenPosition = expectedTokenBalance;
 
-      const expectedBaseBalance = 287844678219n - 48n;
+      const expectedBaseBalance = 287844678219n - 46n;
 
       const tickETH = 193370;
 
@@ -1463,7 +1463,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = -91743367496n - 48n;
+      const expectedBaseBalance = -91743367496n - 46n;
 
       const tickBTC = 66000;
 

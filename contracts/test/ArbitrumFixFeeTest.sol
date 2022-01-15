@@ -9,9 +9,9 @@ contract ArbitrumFixFeeTest {
 
     function emitGasCostWei() external {
         emit Uint('Arbitrum.getTotalL1FeeInWei()', Arbitrum.getTotalL1FeeInWei());
-        emit Uint('tx.gasprice', tx.gasprice);
+        // emit Uint('tx.gasprice', tx.gasprice);
 
-        Arbitrum.printStuff();
+        // Arbitrum.printStuff();
     }
 
     // TODO remove this after arbitrum doubts are clear
