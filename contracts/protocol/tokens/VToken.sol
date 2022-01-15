@@ -5,7 +5,7 @@
 pragma solidity ^0.8.9;
 
 import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import { IVToken } from '../interfaces/IVToken.sol';
+import { IVToken } from '../../interfaces/IVToken.sol';
 
 contract VToken is ERC20, IVToken {
     address public immutable override oracle;

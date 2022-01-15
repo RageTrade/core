@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { VPoolWrapper } from '../../VPoolWrapper.sol';
+import { VPoolWrapper } from '../../protocol/wrapper/VPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 

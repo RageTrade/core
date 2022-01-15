@@ -8,8 +8,8 @@ import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
-import { IClearingHouse } from './interfaces/IClearingHouse.sol';
+import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
+import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 
 contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     using SafeERC20 for IERC20;

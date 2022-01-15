@@ -25,7 +25,7 @@ import { SignedMath } from '../../libraries/SignedMath.sol';
 import { SignedFullMath } from '../../libraries/SignedFullMath.sol';
 import { UniswapV3PoolHelper } from '../../libraries/UniswapV3PoolHelper.sol';
 
-import { VPoolWrapper } from '../../VPoolWrapper.sol';
+import { VPoolWrapper } from '../../protocol/wrapper/VPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 

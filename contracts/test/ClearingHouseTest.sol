@@ -2,10 +2,12 @@
 
 pragma solidity ^0.8.9;
 
-import { ClearingHouse } from '../ClearingHouse.sol';
 import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition, SignedFullMath, DepositTokenSet } from '../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+
+import { ClearingHouse } from '../protocol/clearinghouse/ClearingHouse.sol';
+
 import { console } from 'hardhat/console.sol';
 
 contract ClearingHouseTest is ClearingHouse {

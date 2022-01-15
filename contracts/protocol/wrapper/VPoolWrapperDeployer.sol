@@ -2,14 +2,12 @@
 
 pragma solidity ^0.8.9;
 
-import { TransparentUpgradeableProxy } from '../proxy/TransparentUpgradeableProxy.sol';
-import { ProxyAdmin } from '../proxy/ProxyAdmin.sol';
-import { ClearingHouseDeployer } from './ClearingHouseDeployer.sol';
+import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
-import { GoodAddressDeployer } from '../libraries/GoodAddressDeployer.sol';
+import { ClearingHouseDeployer } from '../clearinghouse/ClearingHouseDeployer.sol';
 
-import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { IRageTradeFactory } from '../interfaces/IRageTradeFactory.sol';
+import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
+import { IRageTradeFactory } from '../../interfaces/IRageTradeFactory.sol';
 
 abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeployer {
     address public vPoolWrapperLogicAddress;

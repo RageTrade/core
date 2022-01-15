@@ -7,8 +7,8 @@ import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullM
 
 import { ClearingHouse } from './ClearingHouse.sol';
 
-import { PriceMath } from './libraries/PriceMath.sol';
-import { Calldata } from './libraries/Calldata.sol';
+import { PriceMath } from '../../libraries/PriceMath.sol';
+import { Calldata } from '../../libraries/Calldata.sol';
 
 /// @notice ClearingHouse with gas fee refunds for liquidations on Ethereum L1 like chains
 contract ClearingHouseEthereum is ClearingHouse {

@@ -10,7 +10,7 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
 import { console } from 'hardhat/console.sol';

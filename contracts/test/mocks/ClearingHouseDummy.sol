@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { ClearingHouse } from '../../ClearingHouse.sol';
+import { ClearingHouse } from '../../protocol/clearinghouse/ClearingHouse.sol';
 
 contract ClearingHouseDummy is ClearingHouse {
     // just to test upgradibility

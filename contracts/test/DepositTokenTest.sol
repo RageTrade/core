@@ -13,9 +13,8 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { RTokenLib } from '../libraries/RTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
-import { AccountStorage } from '../ClearingHouseStorage.sol';
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 
 contract DepositTokenSetTest is AccountStorageMock {

@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.9;
 
-import { IVBase } from '../interfaces/IVBase.sol';
+import { IVBase } from '../../interfaces/IVBase.sol';
 
-import { GoodAddressDeployer } from '../libraries/GoodAddressDeployer.sol';
+import { GoodAddressDeployer } from '../../libraries/GoodAddressDeployer.sol';
 
 import { VBase } from '../tokens/VBase.sol';
 

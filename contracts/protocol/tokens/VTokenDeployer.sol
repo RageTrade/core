@@ -4,9 +4,9 @@ pragma solidity ^0.8.9;
 
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 
-import { GoodAddressDeployer } from '../libraries/GoodAddressDeployer.sol';
+import { GoodAddressDeployer } from '../../libraries/GoodAddressDeployer.sol';
 
-import { VToken, IVToken } from '../tokens/VToken.sol';
+import { VToken, IVToken } from './VToken.sol';
 
 abstract contract VTokenDeployer {
     struct DeployVTokenParams {

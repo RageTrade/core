@@ -6,8 +6,9 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
 import { ClearingHouse } from './ClearingHouse.sol';
-import { Arbitrum } from './libraries/Arbitrum.sol';
-import { PriceMath } from './libraries/PriceMath.sol';
+
+import { Arbitrum } from '../../libraries/Arbitrum.sol';
+import { PriceMath } from '../../libraries/PriceMath.sol';
 
 contract ClearingHouseArbitrum is ClearingHouse {
     using FullMath for uint256;
