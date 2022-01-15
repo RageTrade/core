@@ -4,13 +4,15 @@ pragma solidity ^0.8.9;
 
 import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
+import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
+
+import { Governable } from '../../utils/Governable.sol';
 import { ClearingHouseDeployer } from '../clearinghouse/ClearingHouseDeployer.sol';
 
-import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
-import { IRageTradeFactory } from '../../interfaces/IRageTradeFactory.sol';
-
-abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeployer {
+abstract contract VPoolWrapperDeployer is Governable, ClearingHouseDeployer {
     address public vPoolWrapperLogicAddress;
+
+    error IllegalAddress(address addr);
 
     constructor(address _vPoolWrapperLogicAddress) {
         vPoolWrapperLogicAddress = _vPoolWrapperLogicAddress;

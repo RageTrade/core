@@ -756,8 +756,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     ).deploy(
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
-      rBase.address,
       insuranceFundLogic.address,
+      rBase.address,
       nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,

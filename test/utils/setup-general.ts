@@ -50,8 +50,8 @@ export async function testSetup({
   ).deploy(
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
-    realBase.address,
     insuranceFundLogic.address,
+    realBase.address,
     nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -165,8 +165,8 @@ export async function testSetupBase(signer?: SignerWithAddress) {
   ).deploy(
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
-    realBase.address,
     insuranceFundLogic.address,
+    realBase.address,
     nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,

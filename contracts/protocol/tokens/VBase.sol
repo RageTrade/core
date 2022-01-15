@@ -9,15 +9,13 @@ import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 
-contract VBase is IVBase, ERC20('Virtual Base Token', 'vBase'), Ownable {
+contract VBase is IVBase, ERC20('Rage Trade Virtual Base Token', 'vBase'), Ownable {
     mapping(address => bool) public isAuth;
 
-    address public immutable realBase; // TODO is this needed to be present here?
     uint8 immutable _decimals;
 
-    constructor(address realBase_) {
-        realBase = realBase_;
-        _decimals = ERC20(realBase_).decimals();
+    constructor(uint8 decimals_) {
+        _decimals = decimals_;
     }
 
     function _beforeTokenTransfer(

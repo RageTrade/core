@@ -9,12 +9,12 @@ import { GoodAddressDeployer } from '../../libraries/GoodAddressDeployer.sol';
 import { VBase } from '../tokens/VBase.sol';
 
 abstract contract VBaseDeployer {
-    function _deployVBase(address rBase) internal returns (IVBase vBase) {
+    function _deployVBase(uint8 rBaseDecimals) internal returns (IVBase vBase) {
         return
             IVBase(
                 GoodAddressDeployer.deploy(
                     0,
-                    abi.encodePacked(type(VBase).creationCode, abi.encode(rBase)),
+                    abi.encodePacked(type(VBase).creationCode, abi.encode(rBaseDecimals)),
                     _isVBaseAddressGood
                 )
             );

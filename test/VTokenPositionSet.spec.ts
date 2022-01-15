@@ -76,8 +76,8 @@ describe('VTokenPositionSet Library', () => {
     ).deploy(
       clearingHouseLogic.address,
       vPoolWrapperLogic.address,
-      REAL_BASE,
       insuranceFundLogic.address,
+      REAL_BASE,
       nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
