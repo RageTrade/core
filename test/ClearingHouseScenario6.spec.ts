@@ -501,8 +501,7 @@ describe('Clearing House Scenario 6', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenAddress: realToken.address,
-        oracleAddress: oracle.address,
+        rTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,

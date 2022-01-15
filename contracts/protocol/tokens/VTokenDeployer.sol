@@ -12,8 +12,7 @@ abstract contract VTokenDeployer {
     struct DeployVTokenParams {
         string vTokenName;
         string vTokenSymbol;
-        address rTokenAddress; // TODO remove, not used
-        address oracleAddress; // TODO move this to clearing house
+        uint8 rTokenDecimals;
     }
 
     /// @notice Deploys contract VToken at an address such that the last 4 bytes of contract address is unique
@@ -23,13 +22,7 @@ abstract contract VTokenDeployer {
     function _deployVToken(DeployVTokenParams calldata params) internal returns (IVToken vToken) {
         bytes memory bytecode = abi.encodePacked(
             type(VToken).creationCode,
-            abi.encode(
-                params.vTokenName,
-                params.vTokenSymbol,
-                params.rTokenAddress,
-                params.oracleAddress,
-                address(this)
-            )
+            abi.encode(params.vTokenName, params.vTokenSymbol, params.rTokenDecimals)
         );
 
         vToken = IVToken(GoodAddressDeployer.deploy(0, bytecode, _isVTokenAddressGood));

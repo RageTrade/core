@@ -635,8 +635,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       deployVTokenParams: {
         vTokenName: tokenName,
         vTokenSymbol: tokenSymbol,
-        rTokenAddress: realToken.address,
-        oracleAddress: oracle.address,
+        rTokenDecimals: decimals,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,

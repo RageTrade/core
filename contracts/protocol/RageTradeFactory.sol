@@ -112,7 +112,7 @@ contract RageTradeFactory is
 
         // STEP 3: Initialize the price on the vPool
         vPool.initialize(
-            IOracle(initializePoolParams.deployVTokenParams.oracleAddress).getTwapSqrtPriceX96(
+            initializePoolParams.rageTradePoolInitialSettings.oracle.getTwapSqrtPriceX96(
                 initializePoolParams.rageTradePoolInitialSettings.twapDuration
             )
         );

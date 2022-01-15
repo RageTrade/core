@@ -91,8 +91,7 @@ export async function testSetup({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenAddress: realToken.address,
-      oracleAddress: oracle.address,
+      rTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
@@ -221,8 +220,7 @@ export async function testSetupToken({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenAddress: realToken.address,
-      oracleAddress: oracle.address,
+      rTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,

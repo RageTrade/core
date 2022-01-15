@@ -647,8 +647,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       deployVTokenParams: {
         vTokenName: tokenName,
         vTokenSymbol: tokenSymbol,
-        rTokenAddress: realToken.address,
-        oracleAddress: oracle.address,
+        rTokenDecimals: decimals,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,

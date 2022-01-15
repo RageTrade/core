@@ -194,8 +194,7 @@ export async function initializePool({
     deployVTokenParams: {
       vTokenName: 'vWETH',
       vTokenSymbol: 'vWETH',
-      rTokenAddress: realToken.address,
-      oracleAddress: oracle.address,
+      rTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,

@@ -42,10 +42,6 @@ library VTokenLib {
         return IVToken(VTokenAddress.unwrap(vToken));
     }
 
-    function realToken(VTokenAddress vToken) internal view returns (IERC20) {
-        return IERC20(vToken.iface().realToken());
-    }
-
     function vPool(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
         internal
         view

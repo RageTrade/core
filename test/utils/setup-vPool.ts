@@ -58,7 +58,7 @@ export async function setupVPool({
   realToken.decimals.returns(vTokenDecimals);
   const VToken__factory = await smock.mock<VToken__factory>('VToken', signer); // await hre.ethers.getContractFactory('VToken');
   const vPoolWrapperAddressCalculated = signer.address; // ethers.constants.AddressZero;
-  const vToken = await VToken__factory.deploy('vETH', 'vETH', realToken.address, oracle.address);
+  const vToken = await VToken__factory.deploy('vETH', 'vETH', 18);
   await vToken.setVPoolWrapper(vPoolWrapperAddressCalculated);
   hre.tracer.nameTags[vToken.address] = 'vToken';
 

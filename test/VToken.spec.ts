@@ -17,9 +17,7 @@ describe('VToken contract', () => {
     rToken = await smock.fake<ERC20>('ERC20');
     rToken.decimals.returns(10);
 
-    vToken = await (
-      await hre.ethers.getContractFactory('VToken')
-    ).deploy('', '', rToken.address, ethers.constants.AddressZero);
+    vToken = await (await hre.ethers.getContractFactory('VToken')).deploy('', '', 18);
 
     await vToken.setVPoolWrapper(signers[0].address);
   });

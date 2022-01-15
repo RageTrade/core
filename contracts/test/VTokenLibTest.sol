@@ -19,10 +19,6 @@ contract VTokenLibTest is AccountStorageMock {
         return address(vToken.vPoolWrapper(accountStorage));
     }
 
-    function realToken(VTokenAddress vToken) external view returns (address) {
-        return address(vToken.realToken());
-    }
-
     function getVirtualTwapSqrtPrice(VTokenAddress vToken) external view returns (uint160) {
         return vToken.getVirtualTwapSqrtPriceX96(accountStorage);
     }
