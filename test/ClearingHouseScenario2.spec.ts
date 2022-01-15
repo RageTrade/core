@@ -59,7 +59,7 @@ const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Library (Liquidation)', () => {
+describe('Clearing House Scenario 2 (Liquidation)', () => {
   let vBaseAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
