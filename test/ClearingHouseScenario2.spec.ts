@@ -70,6 +70,7 @@ describe('Clearing House Library (Liquidation)', () => {
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
   let vBase: VBase;
+  let rageTradeFactory: RageTradeFactory;
 
   let signers: SignerWithAddress[];
   let admin: SignerWithAddress;
@@ -118,13 +119,28 @@ describe('Clearing House Library (Liquidation)', () => {
     await clearingHouseTest.connect(user).swapToken(accountNo, truncatedAddress, swapParams);
   }
 
-  async function changeWrapperTimestampAndCheck(timestampIncrease: number) {
-    await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-    await vPoolWrapper1.setBlockTimestamp(timestampIncrease);
+  async function cleanPositionsAllAccounts(accountNum: number) {
+    let i;
+    for (i = 0; i < accountNum; i++) {
+      clearingHouseTest.cleanPositions(i);
+    }
+  }
 
-    await network.provider.send('evm_setNextBlockTimestamp', [timestampIncrease + 100 + initialBlockTimestamp]);
-    expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
-    expect(await vPoolWrapper1.blockTimestamp()).to.eq(timestampIncrease);
+  async function cleanDepositsAllAccounts(accountNum: number) {
+    let i;
+    for (i = 0; i < accountNum; i++) {
+      clearingHouseTest.cleanDeposits(i);
+    }
+  }
+
+  async function changeWrapperTimestampAndCheck(timestampIncrease: number) {
+    const absoluteTimestamp = timestampIncrease + 100 + initialBlockTimestamp;
+    await vPoolWrapper.setBlockTimestamp(absoluteTimestamp);
+    await vPoolWrapper1.setBlockTimestamp(absoluteTimestamp);
+
+    await network.provider.send('evm_setNextBlockTimestamp', [absoluteTimestamp]);
+    expect(await vPoolWrapper.blockTimestamp()).to.eq(absoluteTimestamp);
+    expect(await vPoolWrapper1.blockTimestamp()).to.eq(absoluteTimestamp);
   }
   async function checkVirtualTick(tokenPool: IUniswapV3Pool, expectedTick: number) {
     const { tick } = await tokenPool.slot0();
@@ -655,34 +671,77 @@ describe('Clearing House Library (Liquidation)', () => {
     return { vTokenAddress, realToken, oracle, vPool, vPoolWrapper };
   }
 
-  before(async () => {
-    await activateMainnetFork();
-
-    dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
-
-    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
-
-    // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    // vBase = await vBaseFactory.deploy(REAL_BASE);
-    // vBaseAddress = vBase.address;
-
-    signers = await hre.ethers.getSigners();
-
-    admin = signers[0];
-    user0 = signers[1];
-    user1 = signers[2];
-    user2 = signers[3];
-    keeper = signers[4];
-
+  async function deployWrappers(rageTradeFactory: RageTradeFactory) {
     const initialMargin = 20_000;
     const maintainanceMargin = 10_000;
-    const timeHorizon = 300;
+    const twapDuration = 300;
     const initialPrice = tickToSqrtPriceX96(-194365);
     const initialPrice1 = tickToSqrtPriceX96(64197);
 
     const lpFee = 1000;
     const protocolFee = 500;
 
+    let out = await initializePool(
+      'VETH',
+      'VETH',
+      18,
+      rageTradeFactory,
+      initialMargin,
+      maintainanceMargin,
+      twapDuration,
+      initialPrice,
+      lpFee,
+      protocolFee,
+    );
+
+    vTokenAddress = out.vTokenAddress;
+    oracle = out.oracle;
+    realToken = out.realToken;
+    vPool = (await hre.ethers.getContractAt(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      out.vPool,
+    )) as IUniswapV3Pool;
+    vToken = await hre.ethers.getContractAt('VToken', vTokenAddress);
+
+    const vPoolWrapperAddress = out.vPoolWrapper;
+
+    vPoolWrapper = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapperAddress);
+
+    // increases cardinality for twap
+    await vPool.increaseObservationCardinalityNext(100);
+
+    // Another token initialization
+    let out1 = await initializePool(
+      'vBTC',
+      'vBTC',
+      8,
+      rageTradeFactory,
+      initialMargin,
+      maintainanceMargin,
+      twapDuration,
+      initialPrice1,
+      lpFee,
+      protocolFee,
+    );
+
+    vToken1Address = out1.vTokenAddress;
+    oracle1 = out1.oracle;
+    realToken1 = out1.realToken;
+    vPool1 = (await hre.ethers.getContractAt(
+      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
+      out1.vPool,
+    )) as IUniswapV3Pool;
+    vToken1 = await hre.ethers.getContractAt('VToken', vToken1Address);
+
+    const vPoolWrapper1Address = out1.vPoolWrapper;
+
+    vPoolWrapper1 = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapper1Address);
+
+    // increases cardinality for twap
+    await vPool1.increaseObservationCardinalityNext(100);
+  }
+
+  async function deployClearingHouse() {
     const futureVPoolFactoryAddress = await getCreateAddressFor(admin, 3);
     const futureInsurnaceFundAddress = await getCreateAddressFor(admin, 4);
 
@@ -702,7 +761,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
     const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
 
-    const rageTradeFactory = await (
+    rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
       clearingHouseTestLogic.address,
@@ -724,137 +783,35 @@ describe('Clearing House Library (Liquidation)', () => {
     vBaseAddress = vBase.address;
 
     // await vBase.transferOwnership(VPoolFactory.address);
+    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
 
-    let out = await initializePool(
-      'VETH',
-      'VETH',
-      18,
-      rageTradeFactory,
-      initialMargin,
-      maintainanceMargin,
-      timeHorizon,
-      initialPrice,
-      lpFee,
-      protocolFee,
-    );
-
-    vTokenAddress = out.vTokenAddress;
-    oracle = out.oracle;
-    realToken = out.realToken;
-    vPool = (await hre.ethers.getContractAt(
-      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
-      out.vPool,
-    )) as IUniswapV3Pool;
-    vToken = await hre.ethers.getContractAt('VToken', vTokenAddress);
-
-    const vPoolWrapperAddress = out.vPoolWrapper;
-    // constants = await VPoolFactory.constants();
-
-    // const vPoolWrapperDeployerMock = await (
-    //   await hre.ethers.getContractFactory('VPoolWrapperDeployerMockRealistic')
-    // ).deploy(ADDRESS_ZERO);
-    // const vPoolWrapperMockAddress = await vPoolWrapperDeployerMock.callStatic.deployVPoolWrapper(
-    //   vTokenAddress,
-    //   vPool.address,
-    //   oracle.address,
-    //   lpFee,
-    //   protocolFee,
-    //   initialMargin,
-    //   maintainanceMargin,
-    //   timeHorizon,
-    //   false,
-    //   constants,
-    // );
-    // await vPoolWrapperDeployerMock.deployVPoolWrapper(
-    //   vTokenAddress,
-    //   vPool.address,
-    //   oracle.address,
-    //   lpFee,
-    //   protocolFee,
-    //   initialMargin,
-    //   maintainanceMargin,
-    //   timeHorizon,
-    //   false,
-    //   constants,
-    // );
-
-    // const mockBytecode = await hre.ethers.provider.getCode(vPoolWrapperMockAddress);
-
-    // await network.provider.send('hardhat_setCode', [vPoolWrapperAddress, mockBytecode]);
-
-    vPoolWrapper = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapperAddress);
-
-    // increases cardinality for twap
-    await vPool.increaseObservationCardinalityNext(100);
-
-    // Another token initialization
-    let out1 = await initializePool(
-      'vBTC',
-      'vBTC',
-      8,
-      rageTradeFactory,
-      initialMargin,
-      maintainanceMargin,
-      timeHorizon,
-      initialPrice1,
-      lpFee,
-      protocolFee,
-    );
-
-    vToken1Address = out1.vTokenAddress;
-    oracle1 = out1.oracle;
-    realToken1 = out1.realToken;
-    vPool1 = (await hre.ethers.getContractAt(
-      '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
-      out1.vPool,
-    )) as IUniswapV3Pool;
-    vToken1 = await hre.ethers.getContractAt('VToken', vToken1Address);
-
-    const vPoolWrapper1Address = out1.vPoolWrapper;
-
-    // const vPoolWrapper1DeployerMock = await (
-    //   await hre.ethers.getContractFactory('VPoolWrapperDeployerMockRealistic')
-    // ).deploy(ADDRESS_ZERO);
-
-    // const vPoolWrapper1MockAddress = await vPoolWrapper1DeployerMock.callStatic.deployVPoolWrapper(
-    //   vToken1Address,
-    //   vPool1.address,
-    //   oracle1.address,
-    //   lpFee,
-    //   protocolFee,
-    //   initialMargin,
-    //   maintainanceMargin,
-    //   timeHorizon,
-    //   false,
-    //   constants,
-    // );
-
-    // await vPoolWrapper1DeployerMock.deployVPoolWrapper(
-    //   vToken1Address,
-    //   vPool1.address,
-    //   oracle1.address,
-    //   lpFee,
-    //   protocolFee,
-    //   initialMargin,
-    //   maintainanceMargin,
-    //   timeHorizon,
-    //   false,
-    //   constants,
-    // );
-
-    // const mockBytecode1 = await hre.ethers.provider.getCode(vPoolWrapper1MockAddress);
-
-    // await network.provider.send('hardhat_setCode', [vPoolWrapper1Address, mockBytecode1]);
-
-    vPoolWrapper1 = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapper1Address);
-
-    // increases cardinality for twap
-    await vPool1.increaseObservationCardinalityNext(100);
+    await deployWrappers(rageTradeFactory);
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
-    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
+  }
+
+  before(async () => {
+    await activateMainnetFork();
+
+    dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
+
+    rBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+
+    // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
+    // vBase = await vBaseFactory.deploy(REAL_BASE);
+    // vBaseAddress = vBase.address;
+
+    signers = await hre.ethers.getSigners();
+
+    admin = signers[0];
+    user0 = signers[1];
+    user1 = signers[2];
+    user2 = signers[3];
+    keeper = signers[4];
+
+    await deployClearingHouse();
   });
 
   after(deactivateMainnetFork);
@@ -881,8 +838,6 @@ describe('Clearing House Library (Liquidation)', () => {
       const accountStorage = await clearingHouseTest.accountStorage();
       const curPaused = await clearingHouseTest.paused();
 
-      await vPoolWrapper.setFpGlobalLastTimestamp(0);
-
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(accountStorage.minRequiredMargin).eq(minRequiredMargin);
       expect(accountStorage.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
@@ -895,8 +850,8 @@ describe('Clearing House Library (Liquidation)', () => {
       expect(accountStorage.minimumOrderNotional).eq(minimumOrderNotional);
       expect(curPaused).to.be.false;
 
-      await vPoolWrapper.setFpGlobalLastTimestamp(0);
-      await vPoolWrapper1.setFpGlobalLastTimestamp(0);
+      // await vPoolWrapper.setFpGlobalLastTimestamp(0);
+      // await vPoolWrapper1.setFpGlobalLastTimestamp(0);
     });
   });
 
@@ -963,7 +918,10 @@ describe('Clearing House Library (Liquidation)', () => {
     });
   });
 
-  describe('#Scenario Liquidation', async () => {
+  describe('#Collateral Deposit', async () => {
+    after(async () => {
+      await cleanPositionsAllAccounts(4);
+    });
     it('Acct[0] Initial Collateral Deposit = 2M USDC', async () => {
       await addMargin(user0, user0AccountNo, rBase.address, tokenAmount(2n * 10n ** 6n, 6));
       await checkRealBaseBalance(user0.address, tokenAmount(0n, 6));
@@ -991,7 +949,16 @@ describe('Clearing House Library (Liquidation)', () => {
       await checkRealBaseBalance(clearingHouseTest.address, tokenAmount(13n * 10n ** 6n + 10n ** 5n, 6));
       await checkDepositBalance(keeperAccountNo, rBase.address, tokenAmount(10n ** 6n, 6));
     });
+  });
 
+  describe('#Scenario Liquidation', async () => {
+    before(async () => {
+      const block = await hre.ethers.provider.getBlock('latest');
+      initialBlockTimestamp = block.timestamp;
+    });
+    after(async () => {
+      await cleanPositionsAllAccounts(4);
+    });
     it('Timestamp And Oracle Update - 0', async () => {
       await changeWrapperTimestampAndCheck(0);
       const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);

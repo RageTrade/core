@@ -158,7 +158,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseStorage {
         uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
         if (vBaseAmountOutAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
 
-        if (!swapParams.isPartialAllowed) {
+        if (swapParams.sqrtPriceLimit != 0 && !swapParams.isPartialAllowed) {
             if (
                 !((swapParams.isNotional && vBaseAmountOut.abs() == swapParams.amount.abs()) ||
                     (!swapParams.isNotional && vTokenAmountOut.abs() == swapParams.amount.abs()))

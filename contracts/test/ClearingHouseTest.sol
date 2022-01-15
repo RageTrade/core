@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { ClearingHouse } from '../ClearingHouse.sol';
-import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition, SignedFullMath } from '../libraries/Account.sol';
+import { Account, VTokenPosition, VTokenPositionSet, LimitOrderType, LiquidityPositionSet, LiquidityPosition, SignedFullMath, DepositTokenSet } from '../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { console } from 'hardhat/console.sol';
@@ -16,6 +16,7 @@ contract ClearingHouseTest is ClearingHouse {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
     using SignedFullMath for int256;
+    using DepositTokenSet for DepositTokenSet.Info;
 
     uint256 public fixFee;
 
@@ -51,6 +52,19 @@ contract ClearingHouseTest is ClearingHouse {
                 -tokenPosition.netTraderPosition
             );
             set.update(balanceAdjustments, accountStorage.vTokenAddresses[truncatedAddress], accountStorage);
+        }
+    }
+
+    function cleanDeposits(uint256 accountNo) external {
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountStorage.vTokenAddresses, accountStorage);
+        DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
+        uint256 deposit;
+
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 truncatedAddress = set.active[i];
+            if (truncatedAddress == 0) break;
+            deposit = set.deposits[truncatedAddress];
+            set.decreaseBalance(accountStorage.realTokens[truncatedAddress].tokenAddress, deposit);
         }
     }
 
