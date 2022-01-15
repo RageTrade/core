@@ -1175,6 +1175,38 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       );
     });
 
+    it('Acct[1] Adds Liq to ETH Pool b/w ticks (-195660 to -193370) @ tickCurrent = -194430 (FAIL - Slippage Beyond Tolerance)', async () => {
+      const tickLower = -195660;
+      const tickUpper = -193370;
+      const liquidityDelta = 25000000000000000n;
+      const limitOrderType = 0;
+      const expectedEndToken2Balance = -25559097903887700000n;
+      const expectedEndBaseBalance = -192086890207n;
+
+      const expectedSumALast = 0n;
+      const expectedSumBLast = 0n;
+      const expectedSumFpLast = 0n;
+      const expectedSumFeeLast = 0n;
+
+      const sqrtPriceCurrentToCheck = tickToSqrtPriceX96(-195660);
+      const slippageToleranceBps = 100; //1%
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
+
+      let liquidityChangeParams = {
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        liquidityDelta: liquidityDelta,
+        sqrtPriceCurrent: sqrtPriceCurrentToCheck,
+        slippageToleranceBps: slippageToleranceBps,
+        closeTokenPosition: false,
+        limitOrderType: limitOrderType,
+      };
+
+      expect(
+        clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
+      ).to.be.revertedWith('SlippageBeyondTolerance()');
+    });
+
     it('Timestamp and Oracle Update - 2500', async () => {
       await changeWrapperTimestampAndCheck(2500);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
