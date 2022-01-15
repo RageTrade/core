@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.9;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
 import { ProxyAdminDeployer } from './ProxyAdminDeployer.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../interfaces/IInsuranceFund.sol';
-import { IVBase } from '../interfaces/IVBase.sol';
 
 abstract contract InsuranceFundDeployer is ProxyAdminDeployer {
     function _deployProxyForInsuranceFund(address insuranceFundLogicAddress) internal returns (IInsuranceFund) {
@@ -20,9 +20,9 @@ abstract contract InsuranceFundDeployer is ProxyAdminDeployer {
 
     function _initializeInsuranceFund(
         IInsuranceFund insuranceFund,
-        IVBase vBase,
+        IERC20 rBase,
         IClearingHouse clearingHouse
     ) internal {
-        insuranceFund.__InsuranceFund_init(vBase, clearingHouse, 'RageTrade iBase', 'iBase');
+        insuranceFund.__InsuranceFund_init(rBase, clearingHouse, 'RageTrade iBase', 'iBase');
     }
 }

@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 import { ProxyAdmin } from '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol';
 import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Factory.sol';
@@ -91,7 +92,7 @@ contract RageTradeFactory is
             )
         );
 
-        _initializeInsuranceFund(insuranceFund, vBase, clearingHouse);
+        _initializeInsuranceFund(insuranceFund, IERC20(rBaseAddress), clearingHouse);
     }
 
     struct InitializePoolParams {

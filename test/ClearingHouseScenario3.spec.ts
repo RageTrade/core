@@ -1352,7 +1352,7 @@ describe('Clearing House Library (Underwater Liquidation)', () => {
       const expectedTotalNotionalAmountClosed = 0n;
       const expectedLiquidationFee = 0n;
       const expectedKeeperFee = 4466985550n;
-      const expectedInsuranceFundFee = -11888784007n;
+      const expectedInsuranceFundFee = -11888784007n + 2n;
       const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
 
       const feeDeductedFromLiquidatedAcct = 0n;
