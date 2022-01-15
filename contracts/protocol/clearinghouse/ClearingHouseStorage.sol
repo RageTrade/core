@@ -2,18 +2,17 @@
 pragma solidity ^0.8.9;
 
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
-import { Account } from './libraries/Account.sol';
-import { Governable } from './utils/Governable.sol';
-import { LiquidationParams } from './libraries/Account.sol';
-import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
-import { RTokenLib } from './libraries/RTokenLib.sol';
+import { Account } from '../../libraries/Account.sol';
+import { LiquidationParams } from '../../libraries/Account.sol';
+import { VTokenAddress, VTokenLib } from '../../libraries/VTokenLib.sol';
+import { RTokenLib } from '../../libraries/RTokenLib.sol';
 
-import { IClearingHouse } from './interfaces/IClearingHouse.sol';
-import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
-import { IOracle } from './interfaces/IOracle.sol';
-import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
+import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
+import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
+import { IOracle } from '../../interfaces/IOracle.sol';
+
+import { Governable } from '../../utils/Governable.sol';
 
 struct AccountStorage {
     mapping(uint32 => VTokenAddress) vTokenAddresses;

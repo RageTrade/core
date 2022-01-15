@@ -5,19 +5,17 @@ pragma solidity ^0.8.10;
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+
 import { DepositTokenSet } from './DepositTokenSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
-import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
+import { LiquidityPositionSet, LiquidityChangeParams } from './LiquidityPositionSet.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
-import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from './VTokenPositionSet.sol';
-import { RTokenLib } from './RTokenLib.sol';
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { VTokenPositionSet, SwapParams } from './VTokenPositionSet.sol';
 
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 

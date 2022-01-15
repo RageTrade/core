@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.9;
 
-import { AccountStorage, LiquidationParams } from '../../libraries/Account.sol';
+import { LiquidationParams } from '../../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../../libraries/VTokenLib.sol';
+import { AccountStorage } from '../../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 

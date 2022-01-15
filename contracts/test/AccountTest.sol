@@ -2,14 +2,15 @@
 
 pragma solidity ^0.8.9;
 
-import { Account, DepositTokenSet, LiquidationParams, SwapParams, VTokenAddress } from '../libraries/Account.sol';
-import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
-import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityPositionSet.sol';
+import { Account, DepositTokenSet, LiquidationParams } from '../libraries/Account.sol';
+import { VTokenPositionSet, SwapParams } from '../libraries/VTokenPositionSet.sol';
+import { LiquidityPositionSet, LiquidityChangeParams } from '../libraries/LiquidityPositionSet.sol';
+import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
+import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
 import { RTokenLib } from '../libraries/RTokenLib.sol';
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';

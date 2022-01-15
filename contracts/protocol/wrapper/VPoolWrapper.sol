@@ -8,26 +8,25 @@ import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeC
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
-import { IUniswapV3PoolDeployer } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3PoolDeployer.sol';
+
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
-import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
-import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
-import { IVBase } from './interfaces/IVBase.sol';
-import { IVToken } from './interfaces/IVToken.sol';
-import { IOracle } from './interfaces/IOracle.sol';
-import { IVToken } from './interfaces/IVToken.sol';
-import { IClearingHouse } from './interfaces/IClearingHouse.sol';
+import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
+import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVToken } from '../../interfaces/IVToken.sol';
+import { IVToken } from '../../interfaces/IVToken.sol';
+import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 
-import { FundingPayment } from './libraries/FundingPayment.sol';
-import { SimulateSwap } from './libraries/SimulateSwap.sol';
-import { Tick } from './libraries/Tick.sol';
-import { PriceMath } from './libraries/PriceMath.sol';
-import { SignedMath } from './libraries/SignedMath.sol';
-import { SignedFullMath } from './libraries/SignedFullMath.sol';
-import { UniswapV3PoolHelper } from './libraries/UniswapV3PoolHelper.sol';
+import { VTokenAddress, VTokenLib } from '../../libraries/VTokenLib.sol';
+import { FundingPayment } from '../../libraries/FundingPayment.sol';
+import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
+import { Tick } from '../../libraries/Tick.sol';
+import { PriceMath } from '../../libraries/PriceMath.sol';
+import { SignedMath } from '../../libraries/SignedMath.sol';
+import { SignedFullMath } from '../../libraries/SignedFullMath.sol';
+import { UniswapV3PoolHelper } from '../../libraries/UniswapV3PoolHelper.sol';
 
 import { console } from 'hardhat/console.sol';
 

@@ -10,7 +10,7 @@ import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
 

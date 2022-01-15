@@ -2,22 +2,21 @@
 
 pragma solidity ^0.8.9;
 
-import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+
 import { Account, LiquidationParams } from './Account.sol';
 import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
 import { LiquidityPositionSet, LiquidityChangeParams } from './LiquidityPositionSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
-
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 

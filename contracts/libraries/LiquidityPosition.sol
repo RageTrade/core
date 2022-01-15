@@ -18,7 +18,7 @@ import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../ClearingHouseStorage.sol';
+import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 

@@ -2,24 +2,23 @@
 
 pragma solidity ^0.8.9;
 
-import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
-import { ProxyAdmin } from '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol';
-import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
+import { ProxyAdmin } from '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Factory.sol';
 
-import { ClearingHouseDeployer, IClearingHouse } from './ClearingHouseDeployer.sol';
-import { InsuranceFundDeployer, IInsuranceFund } from './InsuranceFundDeployer.sol';
-import { VBaseDeployer, IVBase } from './VBaseDeployer.sol';
-import { VTokenDeployer, IVToken } from './VTokenDeployer.sol';
-import { VPoolWrapperDeployer, IVPoolWrapper } from './VPoolWrapperDeployer.sol';
+import { ClearingHouseDeployer, IClearingHouse } from './clearinghouse/ClearingHouseDeployer.sol';
+import { InsuranceFundDeployer, IInsuranceFund } from './insurancefund/InsuranceFundDeployer.sol';
+import { VToken } from './tokens/VToken.sol';
+import { VBaseDeployer, IVBase } from './tokens/VBaseDeployer.sol';
+import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
+import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
 
 import { IOracle } from '../interfaces/IOracle.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { BaseOracle } from '../oracles/BaseOracle.sol';
-import { VToken } from '../tokens/VToken.sol';
 import { Governable } from '../utils/Governable.sol';
 
 import { console } from 'hardhat/console.sol';
