@@ -48,7 +48,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     IVToken public vToken;
     IVBase public vBase;
     IUniswapV3Pool public vPool;
-    bool public whitelisted;
 
     uint24 public uniswapFeePips; // fee collected by Uniswap
     uint24 public liquidityFeePips; // fee paid to liquidity providers, in 1e6
@@ -60,6 +59,27 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     uint256 public sumFeeGlobalX128; // extendedFeeGrowthGlobalX128;
 
     mapping(int24 => Tick.Info) public ticksExtended;
+
+    error NotClearingHouse();
+    error NotGovernance();
+
+    modifier onlyClearingHouse() {
+        if (msg.sender != address(clearingHouse)) {
+            revert NotClearingHouse();
+        }
+        _;
+    }
+
+    modifier onlyGovernance() {
+        if (msg.sender != clearingHouse.governance()) {
+            revert NotGovernance();
+        }
+        _;
+    }
+
+    /**
+        PLATFORM FUNCTIONS
+     */
 
     function VPoolWrapper__init(InitializeVPoolWrapperParams calldata params) external initializer {
         clearingHouse = params.clearingHouse;
@@ -75,60 +95,34 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         fpGlobal.update(0, 1, _blockTimestamp(), 1, 1);
     }
 
-    // TODO restrict this to governance
-    function setLiquidityFee(uint24 liquidityFeePips_) external {
-        liquidityFeePips = liquidityFeePips_;
-    }
-
-    // TODO restrict this to governance
-    function setProtocolFee(uint24 protocolFeePips_) external {
-        protocolFeePips = protocolFeePips_;
-    }
-
-    function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast) {
+    function collectAccruedProtocolFee() external onlyClearingHouse returns (uint256 accruedProtocolFeeLast) {
         accruedProtocolFeeLast = accruedProtocolFee - 1;
         accruedProtocolFee = 1;
     }
 
-    function getValuesInside(int24 tickLower, int24 tickUpper)
-        public
-        view
-        returns (WrapperValuesInside memory wrapperValuesInside)
-    {
-        (, int24 currentTick, , , , , ) = vPool.slot0();
-        FundingPayment.Info memory _fpGlobal = fpGlobal;
-        wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
-        (
-            wrapperValuesInside.sumBInsideX128,
-            wrapperValuesInside.sumFpInsideX128,
-            wrapperValuesInside.sumFeeInsideX128
-        ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
-    }
-
-    function getExtrapolatedValuesInside(int24 tickLower, int24 tickUpper)
-        external
-        view
-        returns (WrapperValuesInside memory wrapperValuesInside)
-    {
-        (, int24 currentTick, , , , , ) = vPool.slot0();
-        FundingPayment.Info memory _fpGlobal = fpGlobal;
-
-        ///@dev update sumA and sumFP to extrapolated values according to current timestamp
-        _fpGlobal.sumAX128 = getExtrapolatedSumAX128();
-        _fpGlobal.sumFpX128 = FundingPayment.extrapolatedSumFpX128(
-            fpGlobal.sumAX128,
-            fpGlobal.sumBX128,
-            fpGlobal.sumFpX128,
-            _fpGlobal.sumAX128
+    // for updating global funding payment
+    function updateGlobalFundingState() public {
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
+            VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
         );
-
-        wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
-        (
-            wrapperValuesInside.sumBInsideX128,
-            wrapperValuesInside.sumFpInsideX128,
-            wrapperValuesInside.sumFeeInsideX128
-        ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
+        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
+
+    /**
+        ADMIN FUNCTIONS
+     */
+
+    function setLiquidityFee(uint24 liquidityFeePips_) external onlyGovernance {
+        liquidityFeePips = liquidityFeePips_;
+    }
+
+    function setProtocolFee(uint24 protocolFeePips_) external onlyGovernance {
+        protocolFeePips = protocolFeePips_;
+    }
+
+    /**
+        EXTERNAL UTILITY METHODS
+     */
 
     /// @notice swaps token
     /// @param amount: positive means long, negative means short
@@ -259,6 +253,151 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         emit Swap(vTokenIn, vBaseIn, liquidityFees, protocolFees);
     }
 
+    function liquidityChange(
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta
+    )
+        external
+        returns (
+            int256 basePrincipal,
+            int256 vTokenPrincipal,
+            WrapperValuesInside memory wrapperValuesInside
+        )
+    {
+        updateGlobalFundingState();
+        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
+        if (liquidityDelta > 0) {
+            (uint256 _amount0, uint256 _amount1) = vPool.mint({
+                recipient: address(this),
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                amount: uint128(liquidityDelta),
+                data: ''
+            });
+            vTokenPrincipal = _amount0.toInt256();
+            basePrincipal = _amount1.toInt256();
+        } else {
+            (uint256 _amount0, uint256 _amount1) = vPool.burn({
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                amount: uint128(liquidityDelta * -1)
+            });
+            vTokenPrincipal = _amount0.toInt256() * -1;
+            basePrincipal = _amount1.toInt256() * -1;
+            // review : do we want final amount here with fees included or just the am for liq ?
+            // As per spec its am for liq only
+            _collect(tickLower, tickUpper);
+        }
+    }
+
+    /**
+        UNISWAP V3 POOL CALLBACkS
+     */
+
+    function uniswapV3SwapCallback(
+        int256 amount0Delta,
+        int256 amount1Delta,
+        bytes calldata
+    ) external virtual {
+        require(msg.sender == address(vPool));
+        if (amount0Delta > 0) {
+            IVToken(vPool.token0()).mint(address(vPool), uint256(amount0Delta));
+        }
+        if (amount1Delta > 0) {
+            IVToken(vPool.token1()).mint(address(vPool), uint256(amount1Delta));
+        }
+    }
+
+    function uniswapV3MintCallback(
+        uint256 vTokenAmount,
+        uint256 vBaseAmount,
+        bytes calldata
+    ) external override {
+        require(msg.sender == address(vPool));
+        if (vBaseAmount > 0) vBase.mint(msg.sender, vBaseAmount);
+        if (vTokenAmount > 0) vToken.mint(msg.sender, vTokenAmount);
+    }
+
+    /**
+        VIEW METHODS
+     */
+
+    function getSumAX128() external view returns (int256) {
+        return fpGlobal.sumAX128;
+    }
+
+    function getExtrapolatedSumAX128() public view returns (int256) {
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
+            VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
+        );
+        return
+            FundingPayment.extrapolatedSumAX128(
+                fpGlobal.sumAX128,
+                fpGlobal.timestampLast,
+                _blockTimestamp(),
+                realPriceX128,
+                virtualPriceX128
+            );
+    }
+
+    function getValuesInside(int24 tickLower, int24 tickUpper)
+        public
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside)
+    {
+        (, int24 currentTick, , , , , ) = vPool.slot0();
+        FundingPayment.Info memory _fpGlobal = fpGlobal;
+        wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
+        (
+            wrapperValuesInside.sumBInsideX128,
+            wrapperValuesInside.sumFpInsideX128,
+            wrapperValuesInside.sumFeeInsideX128
+        ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
+    }
+
+    function getExtrapolatedValuesInside(int24 tickLower, int24 tickUpper)
+        external
+        view
+        returns (WrapperValuesInside memory wrapperValuesInside)
+    {
+        (, int24 currentTick, , , , , ) = vPool.slot0();
+        FundingPayment.Info memory _fpGlobal = fpGlobal;
+
+        ///@dev update sumA and sumFP to extrapolated values according to current timestamp
+        _fpGlobal.sumAX128 = getExtrapolatedSumAX128();
+        _fpGlobal.sumFpX128 = FundingPayment.extrapolatedSumFpX128(
+            fpGlobal.sumAX128,
+            fpGlobal.sumBX128,
+            fpGlobal.sumFpX128,
+            _fpGlobal.sumAX128
+        );
+
+        wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
+        (
+            wrapperValuesInside.sumBInsideX128,
+            wrapperValuesInside.sumFpInsideX128,
+            wrapperValuesInside.sumFeeInsideX128
+        ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
+    }
+
+    /**
+        INTERNAL HELPERS
+     */
+
+    function _collect(int24 tickLower, int24 tickUpper) internal {
+        // (uint256 amount0, uint256 amount1) =
+        vPool.collect({
+            recipient: address(this),
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount0Requested: type(uint128).max,
+            amount1Requested: type(uint128).max
+        });
+
+        _vBurn();
+    }
+
     function _onSwapStep(
         bool swapVTokenForVBase,
         SimulateSwap.SwapCache memory,
@@ -302,28 +441,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 ticksExtended.cross(step.tickNext, fpGlobal, sumFeeGlobalX128);
             }
         }
-    }
-
-    function uniswapV3SwapCallback(
-        int256 amount0Delta,
-        int256 amount1Delta,
-        bytes calldata
-    ) external virtual {
-        require(msg.sender == address(vPool));
-        if (amount0Delta > 0) {
-            IVToken(vPool.token0()).mint(address(vPool), uint256(amount0Delta));
-        }
-        if (amount1Delta > 0) {
-            IVToken(vPool.token1()).mint(address(vPool), uint256(amount1Delta));
-        }
-    }
-
-    // for updating global funding payment
-    function updateGlobalFundingState() public {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
-        );
-        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
 
     function _updateTicks(
@@ -374,67 +491,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         }
     }
 
-    function liquidityChange(
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidityDelta
-    )
-        external
-        returns (
-            int256 basePrincipal,
-            int256 vTokenPrincipal,
-            WrapperValuesInside memory wrapperValuesInside
-        )
-    {
-        updateGlobalFundingState();
-        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
-        if (liquidityDelta > 0) {
-            (uint256 _amount0, uint256 _amount1) = vPool.mint({
-                recipient: address(this),
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount: uint128(liquidityDelta),
-                data: ''
-            });
-            vTokenPrincipal = _amount0.toInt256();
-            basePrincipal = _amount1.toInt256();
-        } else {
-            (uint256 _amount0, uint256 _amount1) = vPool.burn({
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount: uint128(liquidityDelta * -1)
-            });
-            vTokenPrincipal = _amount0.toInt256() * -1;
-            basePrincipal = _amount1.toInt256() * -1;
-            // review : do we want final amount here with fees included or just the am for liq ?
-            // As per spec its am for liq only
-            collect(tickLower, tickUpper);
-        }
-    }
-
-    function uniswapV3MintCallback(
-        uint256 vTokenAmount,
-        uint256 vBaseAmount,
-        bytes calldata
-    ) external override {
-        require(msg.sender == address(vPool));
-        if (vBaseAmount > 0) vBase.mint(msg.sender, vBaseAmount);
-        if (vTokenAmount > 0) vToken.mint(msg.sender, vTokenAmount);
-    }
-
-    function collect(int24 tickLower, int24 tickUpper) internal {
-        // (uint256 amount0, uint256 amount1) =
-        vPool.collect({
-            recipient: address(this),
-            tickLower: tickLower,
-            tickUpper: tickUpper,
-            amount0Requested: type(uint128).max,
-            amount1Requested: type(uint128).max
-        });
-
-        _vBurn();
-    }
-
     function _vBurn() internal {
         uint256 vBaseBal = vBase.balanceOf(address(this));
         if (vBaseBal > 0) {
@@ -444,24 +500,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (vTokenBal > 0) {
             vToken.burn(vTokenBal);
         }
-    }
-
-    function getSumAX128() external view returns (int256) {
-        return fpGlobal.sumAX128;
-    }
-
-    function getExtrapolatedSumAX128() public view returns (int256) {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
-        );
-        return
-            FundingPayment.extrapolatedSumAX128(
-                fpGlobal.sumAX128,
-                fpGlobal.timestampLast,
-                _blockTimestamp(),
-                realPriceX128,
-                virtualPriceX128
-            );
     }
 
     // used to set time in tests
@@ -518,18 +556,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             amountAfterFees = amount + int256(fees);
         } else {
             amountAfterFees = amount - int256(fees);
-        }
-    }
-
-    function _includeFees(
-        uint256 amount,
-        uint256 fees,
-        IncludeFeeEnum includeFeeEnum
-    ) internal pure returns (uint256 amountAfterFees) {
-        if ((amount > 0) == (includeFeeEnum == IncludeFeeEnum.ADD_FEE)) {
-            amountAfterFees = amount + fees;
-        } else {
-            amountAfterFees = amount - fees;
         }
     }
 }

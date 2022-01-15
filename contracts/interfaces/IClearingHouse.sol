@@ -3,6 +3,8 @@
 pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+
+import { IGovernable } from './IGovernable.sol';
 import { IOracle } from './IOracle.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 
@@ -12,7 +14,7 @@ import { SwapParams } from '../libraries/VTokenPositionSet.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
-interface IClearingHouse {
+interface IClearingHouse is IGovernable {
     struct RageTradePool {
         IUniswapV3Pool vPool;
         IVPoolWrapper vPoolWrapper;

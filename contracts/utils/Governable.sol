@@ -5,12 +5,14 @@ pragma solidity ^0.8.9;
 import { Context } from '@openzeppelin/contracts/utils/Context.sol';
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
+import { IGovernable } from '../interfaces/IGovernable.sol';
+
 /**
  * This module is used through inheritance. It will make available the modifier
  * `onlyGovernance` and `onlyGovernanceOrTeamMultisig`, which can be applied to your functions
  * to restrict their use to the caller.
  */
-abstract contract Governable is Context, Initializable {
+abstract contract Governable is IGovernable, Context, Initializable {
     address private _governance;
     address private _teamMultisig;
 

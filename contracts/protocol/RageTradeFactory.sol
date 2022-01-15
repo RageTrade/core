@@ -77,8 +77,8 @@ contract RageTradeFactory is
                 nativeOracle
             )
         );
-        Governable(address(clearingHouse)).transferGovernance(msg.sender);
-        Governable(address(clearingHouse)).transferTeamMultisig(msg.sender);
+        clearingHouse.transferGovernance(msg.sender);
+        clearingHouse.transferTeamMultisig(msg.sender);
 
         // TODO refactor the code such that registering vBase as a pool is not needed
         clearingHouse.registerPool(
