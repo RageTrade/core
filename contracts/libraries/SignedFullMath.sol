@@ -11,7 +11,7 @@ library SignedFullMath {
     ) internal pure returns (int256 result) {
         result = int256(FullMath.mulDiv(a < 0 ? uint256(-1 * a) : uint256(a), b, denominator));
         if (a < 0) {
-            result *= -1;
+            result = -result;
         }
     }
 
@@ -26,13 +26,13 @@ library SignedFullMath {
         uint256 _denominator;
         if (a < 0) {
             resultPositive = !resultPositive;
-            _a = uint256(-1 * a);
+            _a = uint256(-a);
         } else {
             _a = uint256(a);
         }
         if (b < 0) {
             resultPositive = !resultPositive;
-            _b = uint256(-1 * b);
+            _b = uint256(-b);
         } else {
             _b = uint256(b);
         }
@@ -44,7 +44,33 @@ library SignedFullMath {
         }
         result = int256(FullMath.mulDiv(_a, _b, _denominator));
         if (!resultPositive) {
-            result *= -1;
+            result = -result;
+        }
+    }
+
+    /// @notice Rounds down towards negative infinity
+    /// @dev In Solidity -3/2 is -1. But this method result is -2
+    function mulDivRoundingDown(
+        int256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (int256 result) {
+        result = mulDiv(a, b, denominator);
+        if (result < 0) {
+            result += -1;
+        }
+    }
+
+    /// @notice Rounds down towards negative infinity
+    /// @dev In Solidity -3/2 is -1. But this method result is -2
+    function mulDivRoundingDown(
+        int256 a,
+        int256 b,
+        int256 denominator
+    ) internal pure returns (int256 result) {
+        result = mulDiv(a, b, denominator);
+        if (result < 0) {
+            result += -1;
         }
     }
 }

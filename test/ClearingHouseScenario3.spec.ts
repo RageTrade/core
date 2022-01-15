@@ -60,7 +60,7 @@ const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Library (Underwater Liquidation)', () => {
+describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
   let vBaseAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
@@ -747,7 +747,9 @@ describe('Clearing House Library (Underwater Liquidation)', () => {
       })
     ).deploy();
 
-    const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
+    const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
+
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -755,7 +757,8 @@ describe('Clearing House Library (Underwater Liquidation)', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       rBase.address,
-      insuranceFundAddressComputed,
+      insuranceFundLogic.address,
+      nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -763,9 +766,7 @@ describe('Clearing House Library (Underwater Liquidation)', () => {
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
 
-    insuranceFund = await (
-      await hre.ethers.getContractFactory('InsuranceFund')
-    ).deploy(REAL_BASE, clearingHouseTest.address);
+    insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
     vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
     vBaseAddress = vBase.address;
@@ -1351,7 +1352,7 @@ describe('Clearing House Library (Underwater Liquidation)', () => {
       const expectedTotalNotionalAmountClosed = 0n;
       const expectedLiquidationFee = 0n;
       const expectedKeeperFee = 4466985550n;
-      const expectedInsuranceFundFee = -11888784007n;
+      const expectedInsuranceFundFee = -11888784007n + 2n;
       const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
 
       const feeDeductedFromLiquidatedAcct = 0n;

@@ -257,7 +257,7 @@ contract AccountTest {
     function getAccountLiquidityPositionDetails(
         uint256 accountNo,
         address vTokenAddress,
-        uint8 num // TODO change to fetch by ticks
+        uint8 num
     )
         external
         view

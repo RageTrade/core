@@ -7,7 +7,7 @@ import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract FullMathTest {
+contract SignedFullMathTest {
     function mulDiv(
         uint256 a,
         uint256 b,
@@ -38,5 +38,21 @@ contract FullMathTest {
         uint256 denominator
     ) public pure returns (uint256 result) {
         return FullMath.mulDivRoundingUp(a, b, denominator);
+    }
+
+    function mulDivRoundingDown(
+        int256 a,
+        uint256 b,
+        uint256 denominator
+    ) public pure returns (int256 result) {
+        return SignedFullMath.mulDivRoundingDown(a, b, denominator);
+    }
+
+    function mulDivRoundingDown(
+        int256 a,
+        int256 b,
+        int256 denominator
+    ) public pure returns (int256 result) {
+        return SignedFullMath.mulDivRoundingDown(a, b, denominator);
     }
 }

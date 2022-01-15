@@ -8,7 +8,10 @@ contract ArbitrumFixFeeTest {
     event Uint(string str, uint256 val);
 
     function emitGasCostWei() external {
-        emit Uint('Arbitrum.getGasCostWei()', Arbitrum.getGasCostWei());
+        emit Uint('Arbitrum.getTotalL1FeeInWei()', Arbitrum.getTotalL1FeeInWei());
+        // emit Uint('tx.gasprice', tx.gasprice);
+
+        // Arbitrum.printStuff();
     }
 
     // TODO remove this after arbitrum doubts are clear
@@ -20,7 +23,7 @@ contract ArbitrumFixFeeTest {
 
     function run() public {
         emit Arbitrum.Uint('gasleft()', gasleft());
-        uint256 cost = Arbitrum.getGasCostWei();
+        uint256 cost = Arbitrum.getTotalL1FeeInWei();
         emit Arbitrum.Uint('gasleft()', gasleft());
         emit Arbitrum.Uint('cost', cost);
         emit Arbitrum.Uint('gasleft()', gasleft());

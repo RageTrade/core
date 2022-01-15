@@ -7,12 +7,14 @@ import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickM
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
-import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -42,7 +44,7 @@ library LiquidityPosition {
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
         LimitOrderType limitOrderType;
-        // the tick range of the position; TODO Is storing ticks needed as it's in the positionId?
+        // the tick range of the position;
         int24 tickLower;
         int24 tickUpper;
         // the liquidity of the position
@@ -172,15 +174,20 @@ library LiquidityPosition {
         return (sumBInsideX128 - position.sumBInsideLastX128).mulDiv(position.liquidity, FixedPoint128.Q128);
     }
 
+    // use funding payment lib
     function unrealizedFundingPayment(
         Info storage position,
         int256 sumAX128,
         int256 sumFpInsideX128
     ) internal view returns (int256 vBaseIncrease) {
-        vBaseIncrease = -(sumFpInsideX128 -
-            (position.sumFpInsideLastX128 +
-                position.sumBInsideLastX128.mulDiv(sumAX128 - position.sumALastX128, int256(FixedPoint128.Q128))))
-            .mulDiv(position.liquidity, FixedPoint128.Q128);
+        vBaseIncrease = -FundingPayment.bill(
+            sumAX128,
+            sumFpInsideX128,
+            position.sumALastX128,
+            position.sumBInsideLastX128,
+            position.sumFpInsideLastX128,
+            position.liquidity
+        );
     }
 
     function unrealizedFees(Info storage position, uint256 sumFeeInsideX128)

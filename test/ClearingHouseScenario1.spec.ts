@@ -57,7 +57,7 @@ const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Library', () => {
+describe('Clearing House Scenario 1', () => {
   let vBaseAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
@@ -565,7 +565,9 @@ describe('Clearing House Library', () => {
 
     const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapperMockRealistic')).deploy();
 
-    const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
+    const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
+
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     const rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -573,7 +575,8 @@ describe('Clearing House Library', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       rBase.address,
-      insuranceFundAddressComputed,
+      insuranceFundLogic.address,
+      nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -584,9 +587,7 @@ describe('Clearing House Library', () => {
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
 
-    const insuranceFund = await (
-      await hre.ethers.getContractFactory('InsuranceFund')
-    ).deploy(REAL_BASE, clearingHouseTest.address);
+    const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
     // await vBase.transferOwnership(VPoolFactory.address);
     // const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');

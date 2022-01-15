@@ -59,7 +59,7 @@ const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Library (Liquidation)', () => {
+describe('Clearing House Scenario 2 (Liquidation)', () => {
   let vBaseAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
@@ -759,7 +759,9 @@ describe('Clearing House Library (Liquidation)', () => {
       })
     ).deploy();
 
-    const insuranceFundAddressComputed = await getCreateAddressFor(admin, 1);
+    const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
+
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -767,7 +769,8 @@ describe('Clearing House Library (Liquidation)', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       rBase.address,
-      insuranceFundAddressComputed,
+      insuranceFundLogic.address,
+      nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -775,9 +778,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
 
-    insuranceFund = await (
-      await hre.ethers.getContractFactory('InsuranceFund')
-    ).deploy(REAL_BASE, clearingHouseTest.address);
+    insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
     vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
     vBaseAddress = vBase.address;
@@ -1356,7 +1357,7 @@ describe('Clearing House Library (Liquidation)', () => {
       const netTokenPosition = expectedTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = 393256714158n - 49n;
+      const expectedBaseBalance = 393256714158n - 47n;
 
       const expected_MktVal_preRangeLiquidation = 31114231695n;
       const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
@@ -1404,7 +1405,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
       const netTokenPosition = expectedTokenBalance;
 
-      const expectedBaseBalance = 287844678219n - 48n;
+      const expectedBaseBalance = 287844678219n - 46n;
 
       const tickETH = 193370;
 
@@ -1462,7 +1463,7 @@ describe('Clearing House Library (Liquidation)', () => {
 
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = -91743367496n - 48n;
+      const expectedBaseBalance = -91743367496n - 46n;
 
       const tickBTC = 66000;
 

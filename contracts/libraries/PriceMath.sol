@@ -11,9 +11,6 @@ library PriceMath {
 
     error IllegalSqrtPrice(uint160 sqrtPriceX96);
 
-    // TODO remove this if not needed
-    // function toSqrtPriceX96(uint256 priceX128) internal pure returns (uint160 sqrtPriceX96) {}
-
     function toPriceX128(uint160 sqrtPriceX96) internal pure returns (uint256 priceX128) {
         if (sqrtPriceX96 < TickMath.MIN_SQRT_RATIO || sqrtPriceX96 >= TickMath.MAX_SQRT_RATIO) {
             revert IllegalSqrtPrice(sqrtPriceX96);

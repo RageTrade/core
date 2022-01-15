@@ -109,8 +109,6 @@ library Tick {
         uint256 sumFeeGlobal0X128,
         IUniswapV3Pool vPool
     ) internal returns (bool flipped) {
-        // TODO if tick is flipped (when changing liquidity) then handle that case
-
         Tick.Info storage info = self[tick];
 
         (uint128 liquidityGrossBefore, , , , , , , ) = vPool.ticks(tick);

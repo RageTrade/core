@@ -72,10 +72,6 @@ export async function setupClearingHouse({
   }
   hre.tracer.nameTags[rBase.address] = 'rBase';
 
-  // virtual base
-  const vBase = await (await hre.ethers.getContractFactory('VBase')).deploy(rBase.address);
-  hre.tracer.nameTags[vBase.address] = 'vBase';
-
   // deploying main contracts
   const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 5);
   const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 6);
@@ -100,7 +96,9 @@ export async function setupClearingHouse({
   // wrapper
   const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
-  const insuranceFundAddressComputed = await getCreateAddressFor(signer, 1);
+  const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
+
+  const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
   // rage trade factory
   const rageTradeFactory = await (
@@ -109,26 +107,36 @@ export async function setupClearingHouse({
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     rBase.address,
-    insuranceFundAddressComputed,
+    insuranceFundLogic.address,
+    nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
-  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+  // virtual base
+  const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+  hre.tracer.nameTags[vBase.address] = 'vBase';
 
-  const insuranceFund = await (
-    await hre.ethers.getContractFactory('InsuranceFund')
-  ).deploy(rBase.address, clearingHouse.address);
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+  hre.tracer.nameTags[clearingHouse.address] = 'clearingHouse';
+
+  const proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', await rageTradeFactory.proxyAdmin());
+  hre.tracer.nameTags[proxyAdmin.address] = 'proxyAdmin';
+
+  const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
+  hre.tracer.nameTags[insuranceFund.address] = 'insuranceFund';
 
   return {
     signer,
     rBase,
     vBase,
     clearingHouse,
+    proxyAdmin,
     clearingHouseLogic,
     accountLib,
     rageTradeFactory,
+    insuranceFundLogic,
     insuranceFund,
   };
 }

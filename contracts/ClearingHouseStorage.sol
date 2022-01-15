@@ -11,6 +11,7 @@ import { VTokenAddress, VTokenLib } from './libraries/VTokenLib.sol';
 import { RTokenLib } from './libraries/RTokenLib.sol';
 
 import { IClearingHouse } from './interfaces/IClearingHouse.sol';
+import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
 import { IOracle } from './interfaces/IOracle.sol';
 import { IVPoolWrapper } from './interfaces/IVPoolWrapper.sol';
 
@@ -23,10 +24,6 @@ struct AccountStorage {
     uint256 removeLimitOrderFee;
     uint256 minimumOrderNotional;
     address vBaseAddress;
-    // // TODO are these constants needed in clearing house ?
-    // address UNISWAP_V3_FACTORY_ADDRESS;
-    // uint24 UNISWAP_V3_DEFAULT_FEE_TIER;
-    // bytes32 UNISWAP_V3_POOL_BYTE_CODE_HASH;
 }
 
 abstract contract ClearingHouseStorage is Initializable, Governable {
@@ -48,5 +45,9 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
 
     address public rageTradeFactory;
     address public realBase;
-    address public insuranceFundAddress;
+    IInsuranceFund public insuranceFund;
+
+    // Oracle for the chain's native currency in terms of rBase
+    // Used to provide gas refund in rBase to the liquidators
+    IOracle public nativeOracle;
 }

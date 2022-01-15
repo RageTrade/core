@@ -9,28 +9,25 @@ import { ClearingHouse } from './ClearingHouse.sol';
 import { Arbitrum } from './libraries/Arbitrum.sol';
 import { PriceMath } from './libraries/PriceMath.sol';
 
-import { IOracle } from './interfaces/IOracle.sol';
-
 contract ClearingHouseArbitrum is ClearingHouse {
     using FullMath for uint256;
     using PriceMath for uint160;
 
-    IOracle public ethUsdcOracle;
+    function getFixFee(uint256 l2ComputationUnits) public view override returns (uint256 fixFee) {
+        uint256 totalL1FeeInWei;
 
-    function ClearingHouseArbitrum__init(
-        address _vPoolFactory,
-        address _realBase,
-        address _insuranceFundAddress,
-        address _vBaseAddress,
-        address _ethUsdcOracle
-    ) public {
-        ClearingHouse__init(_vPoolFactory, _realBase, _insuranceFundAddress, _vBaseAddress);
-        ethUsdcOracle = IOracle(_ethUsdcOracle);
-    }
+        // if call from EOA then include L1 fee, i.e. do not refund L1 fee to calls from contract
+        // this is due to a single contract can make multiple liquidations in single tx.
+        // TODO is there a way to refund L1 fee once to contracts?
+        if (msg.sender == tx.origin) {
+            totalL1FeeInWei = Arbitrum.getTotalL1FeeInWei();
+        }
 
-    function getFixFee() public view override returns (uint256 fixFee) {
-        uint256 gasCostWei = Arbitrum.getGasCostWei();
-        uint256 ethPriceInUsdc = ethUsdcOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
-        return gasCostWei.mulDiv(ethPriceInUsdc, FixedPoint128.Q128);
+        // TODO put a upper limit to tx.gasprice
+        uint256 l2ComputationFeeInWei = l2ComputationUnits * tx.gasprice;
+        uint256 l2StorageFeeInWei; // TODO figure out this thing
+
+        uint256 ethPriceInUsdc = nativeOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
+        return (totalL1FeeInWei + l2ComputationFeeInWei + l2StorageFeeInWei).mulDiv(ethPriceInUsdc, FixedPoint128.Q128);
     }
 }

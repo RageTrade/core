@@ -45,20 +45,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using UniswapV3PoolHelper for IUniswapV3Pool;
     using VTokenLib for VTokenAddress;
 
-    // TODO move this to ClearingHouse
-    // uint16 public initialMarginRatio;
-    // uint16 public maintainanceMarginRatio;
-    // uint32 public twapDuration;
-
     IClearingHouse public clearingHouse;
     IVToken public vToken;
     IVBase public vBase;
     IUniswapV3Pool public vPool;
     bool public whitelisted;
-
-    // TODO move this to clearing house
-    // oracle for real prices
-    // IOracle public oracle;
 
     uint24 public uniswapFeePips; // fee collected by Uniswap
     uint24 public liquidityFeePips; // fee paid to liquidity providers, in 1e6
@@ -70,9 +61,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     uint256 public sumFeeGlobalX128; // extendedFeeGrowthGlobalX128;
 
     mapping(int24 => Tick.Info) public ticksExtended;
-
-    // TODO only vBase address is needed, so no need to keep all the constants
-    // Constants public constants;
 
     function VPoolWrapper__init(InitializeVPoolWrapperParams calldata params) external initializer {
         clearingHouse = params.clearingHouse;
@@ -87,18 +75,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // initializes the funding payment state
         fpGlobal.update(0, 1, _blockTimestamp(), 1, 1);
     }
-
-    // TODO move this to ClearingHouse
-    // TODO restrict this to governance
-    // function setOracle(address oracle_) external {
-    //     oracle = IOracle(oracle_);
-    // }
-
-    // TODO move this to ClearingHouse
-    // TODO restrict this to governance
-    // function setWhitelisted(bool whitelisted_) external {
-    //     whitelisted = whitelisted_;
-    // }
 
     // TODO restrict this to governance
     function setLiquidityFee(uint24 liquidityFeePips_) external {
@@ -140,7 +116,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         ///@dev update sumA and sumFP to extrapolated values according to current timestamp
         _fpGlobal.sumAX128 = getExtrapolatedSumAX128();
-        _fpGlobal.sumFpX128 = getExtrapolatedSumFpX128(_fpGlobal.sumAX128);
+        _fpGlobal.sumFpX128 = FundingPayment.extrapolatedSumFpX128(
+            fpGlobal.sumAX128,
+            fpGlobal.sumBX128,
+            fpGlobal.sumFpX128,
+            _fpGlobal.sumAX128
+        );
 
         wrapperValuesInside.sumAX128 = _fpGlobal.sumAX128;
         (
@@ -215,7 +196,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 // here, amountSpecified + fee == swap amount
                 (liquidityFees, protocolFees) = _calculateFees(amountSpecified, AmountTypeEnum.VBASE_AMOUNT_MINUS_FEES);
                 amountSpecified = _includeFees(amountSpecified, liquidityFees + protocolFees, IncludeFeeEnum.ADD_FEE);
-                // TODO: inflate: no need to inflate now but uniswap will collect fee in vToken, so need to inflate it later
             }
         }
 
@@ -482,16 +462,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 _blockTimestamp(),
                 realPriceX128,
                 virtualPriceX128
-            );
-    }
-
-    function getExtrapolatedSumFpX128(int256 extrapolatedSumAX128) internal view returns (int256) {
-        return
-            FundingPayment.extrapolatedSumFpX128(
-                fpGlobal.sumAX128,
-                fpGlobal.sumBX128,
-                fpGlobal.sumFpX128,
-                extrapolatedSumAX128
             );
     }
 

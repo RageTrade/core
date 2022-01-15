@@ -23,7 +23,8 @@ describe('InsuranceFund', () => {
     signer2Address = await signers[2].getAddress();
 
     const factory = await hre.ethers.getContractFactory('InsuranceFund');
-    InsuranceFund = (await factory.deploy(realBase, signer2Address)) as unknown as InsuranceFund;
+    InsuranceFund = await factory.deploy();
+    await InsuranceFund.__InsuranceFund_init(realBase, signer2Address, 'Rage Trade iBase', 'iBase');
     Base = await hre.ethers.getContractAt('IERC20', realBase);
 
     await stealFunds(realBase, 6, signer0Address, '10000', whaleForBase);
@@ -34,7 +35,7 @@ describe('InsuranceFund', () => {
 
   describe('Functions', () => {
     it('Is initilized Correctly', async () => {
-      const _baseAdd = await InsuranceFund.base();
+      const _baseAdd = await InsuranceFund.rBase();
       const _clearingHouse = await InsuranceFund.clearingHouse();
       expect(_baseAdd.toLowerCase()).to.be.eq(realBase);
       expect(_clearingHouse).to.be.eq(signer2Address);

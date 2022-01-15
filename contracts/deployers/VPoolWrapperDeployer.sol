@@ -21,7 +21,7 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeploy
     /// @notice Admin method to set latest implementation logic for VPoolWrapper
     /// @param _vPoolWrapperLogicAddress: new logic address
     /// @dev When a new vPoolWrapperLogic is deployed, make sure that the initialize method is called.
-    function setVPoolWrapperLogicAddress(address _vPoolWrapperLogicAddress) external onlyOwner {
+    function setVPoolWrapperLogicAddress(address _vPoolWrapperLogicAddress) external onlyGovernance {
         if (_vPoolWrapperLogicAddress == address(0)) {
             revert IllegalAddress(address(0));
         }
@@ -29,35 +29,19 @@ abstract contract VPoolWrapperDeployer is IRageTradeFactory, ClearingHouseDeploy
         vPoolWrapperLogicAddress = _vPoolWrapperLogicAddress;
     }
 
-    /// @notice Admin method to upgrade implementation while avoiding human error
-    /// @param proxy: A VPoolWrapper proxy contract
-    function upgradeVPoolWrapperToLatestLogic(TransparentUpgradeableProxy proxy) public {
-        if (!_isWrapperAddressGood(address(proxy))) {
-            revert ProxyIsNotOfVPoolWrapper(proxy);
-        }
-
-        // this public function has onlyOwner modifier
-        proxyAdmin.upgrade(proxy, vPoolWrapperLogicAddress);
-    }
-
-    function _deployVPoolWrapper(IVPoolWrapper.InitializeVPoolWrapperParams memory params)
+    function _deployProxyForVPoolWrapperAndInitialize(IVPoolWrapper.InitializeVPoolWrapperParams memory params)
         internal
-        returns (IVPoolWrapper)
+        returns (IVPoolWrapper vPoolWrapper)
     {
-        bytes memory bytecode = abi.encodePacked(
-            type(TransparentUpgradeableProxy).creationCode,
-            abi.encode(
-                address(vPoolWrapperLogicAddress),
-                address(proxyAdmin),
-                abi.encodeWithSelector(IVPoolWrapper.VPoolWrapper__init.selector, params)
-            )
-        );
-
-        return IVPoolWrapper(GoodAddressDeployer.deploy(0, bytecode, _isWrapperAddressGood));
-    }
-
-    // returns true if most significant hex char of address is "e"
-    function _isWrapperAddressGood(address addr) private pure returns (bool) {
-        return (uint160(addr) >> 156) == 0xe;
+        return
+            IVPoolWrapper(
+                address(
+                    new TransparentUpgradeableProxy(
+                        address(vPoolWrapperLogicAddress),
+                        address(proxyAdmin),
+                        abi.encodeWithSelector(IVPoolWrapper.VPoolWrapper__init.selector, params)
+                    )
+                )
+            );
     }
 }

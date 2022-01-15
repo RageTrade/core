@@ -9,6 +9,7 @@ import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -89,16 +90,17 @@ library VTokenPosition {
         return position.balance > 0 ? RISK_SIDE.LONG : RISK_SIDE.SHORT;
     }
 
-    /// @notice returns the unrealized funding payment for the position
+    /// @notice returns the unrealized funding payment for the trader position
     /// @param position token position
     /// @param wrapper pool wrapper corresponding to position
     function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
         int256 extrapolatedSumAX128 = wrapper.getExtrapolatedSumAX128();
-        int256 unrealizedFP = (-position.netTraderPosition).mulDiv(
-            (extrapolatedSumAX128 - position.sumAX128Ckpt),
-            int256(FixedPoint128.Q128)
+        int256 unrealizedFpBill = -FundingPayment.bill(
+            extrapolatedSumAX128,
+            position.sumAX128Ckpt,
+            position.netTraderPosition
         );
-        return unrealizedFP;
+        return unrealizedFpBill;
     }
 
     /// @notice returns the unrealized funding payment for the position

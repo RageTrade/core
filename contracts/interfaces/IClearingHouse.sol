@@ -57,7 +57,8 @@ interface IClearingHouse {
         address _vPoolFactory,
         address _realBase,
         address _insuranceFundAddress,
-        address _vBaseAddress
+        address _vBaseAddress,
+        address _nativeOracle
     ) external;
 
     /// @notice creates a new account and adds it to the accounts map
@@ -120,6 +121,7 @@ interface IClearingHouse {
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
     /// @param tickLower liquidity change parameters
     /// @param tickUpper liquidity change parameters
+    // @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     function removeLimitOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -130,6 +132,7 @@ interface IClearingHouse {
     /// @notice keeper call for liquidation of range position
     /// @dev removes all the active range positions and gives liquidator a percent of notional amount closed + fixedFee
     /// @param accountNo account number
+    // @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     function liquidateLiquidityPositions(uint256 accountNo) external returns (int256 keeperFee);
 
     /// @notice keeper call for liquidation of token position
@@ -138,6 +141,7 @@ interface IClearingHouse {
     /// @param accountNo account number
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
+    // @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
@@ -145,6 +149,8 @@ interface IClearingHouse {
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
     ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments);
+
+    function getFixFee(uint256) external view returns (uint256 fixFee);
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
 

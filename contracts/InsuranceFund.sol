@@ -2,25 +2,41 @@
 
 pragma solidity ^0.8.9;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './interfaces/IInsuranceFund.sol';
+import { ERC20Upgradeable } from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-contract InsuranceFund is IInsuranceFund, ERC20 {
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
+import { IInsuranceFund } from './interfaces/IInsuranceFund.sol';
+import { IClearingHouse } from './interfaces/IClearingHouse.sol';
+
+contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     using SafeERC20 for IERC20;
-    IERC20 public base;
-    address public clearingHouse;
+
+    IERC20 public rBase;
+    IClearingHouse public clearingHouse;
 
     error Unauthorised();
 
-    constructor(IERC20 _base, address _clearingHouse) ERC20('iBase', 'iBase') {
-        base = _base;
+    /// @notice Initializer for Insurance Fund
+    /// @param _rBase real base token
+    /// @param _clearingHouse address of clearing house (proxy) contract
+    /// @param name "Rage Trade iBase"
+    /// @param symbol "iBase"
+    function __InsuranceFund_init(
+        IERC20 _rBase,
+        IClearingHouse _clearingHouse,
+        string calldata name,
+        string calldata symbol
+    ) external initializer {
+        rBase = _rBase;
         clearingHouse = _clearingHouse;
+        __ERC20_init(name, symbol);
     }
 
     function deposit(uint256 amount) external {
-        uint256 totalBase = base.balanceOf(address(this));
+        uint256 totalBase = rBase.balanceOf(address(this));
         uint256 totalShares = totalSupply();
         uint256 toMint;
         if (totalShares == 0 || totalBase == 0) {
@@ -28,20 +44,20 @@ contract InsuranceFund is IInsuranceFund, ERC20 {
         } else {
             toMint = (amount * totalShares) / totalBase;
         }
-        base.safeTransferFrom(msg.sender, address(this), amount);
+        rBase.safeTransferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, toMint);
     }
 
     function withdraw(uint256 shares) external {
-        uint256 totalBase = base.balanceOf(address(this));
+        uint256 totalBase = rBase.balanceOf(address(this));
         uint256 totalShares = totalSupply();
         uint256 toWithdraw = (shares * totalBase) / totalShares;
         _burn(msg.sender, shares);
-        base.safeTransfer(msg.sender, toWithdraw);
+        rBase.safeTransfer(msg.sender, toWithdraw);
     }
 
     function claim(uint256 amount) external {
-        if (clearingHouse != msg.sender) revert Unauthorised();
-        base.safeTransfer(msg.sender, amount);
+        if (address(clearingHouse) != msg.sender) revert Unauthorised();
+        rBase.safeTransfer(msg.sender, amount);
     }
 }
