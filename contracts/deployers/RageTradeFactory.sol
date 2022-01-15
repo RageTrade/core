@@ -50,6 +50,7 @@ contract RageTradeFactory is
         address _vPoolWrapperLogicAddress,
         address rBaseAddress,
         address insuranceFundLogicAddress,
+        address nativeOracle,
         address _UNISWAP_V3_FACTORY_ADDRESS,
         uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
         bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
@@ -73,7 +74,8 @@ contract RageTradeFactory is
                 clearingHouseLogicAddress,
                 rBaseAddress,
                 address(insuranceFund),
-                address(vBase)
+                address(vBase),
+                nativeOracle
             )
         );
         Governable(address(clearingHouse)).transferGovernance(msg.sender);

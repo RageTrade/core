@@ -21,6 +21,7 @@ abstract contract ClearingHouseDeployer is IRageTradeFactory, Governable, ProxyA
         address rBaseAddress;
         address insuranceFundAddress;
         address vBaseAddress;
+        address nativeOracle;
     }
 
     function _deployProxyForClearingHouseAndInitialize(DeployClearingHouseParams memory params)
@@ -38,7 +39,8 @@ abstract contract ClearingHouseDeployer is IRageTradeFactory, Governable, ProxyA
                             address(this), // RageTradeFactory
                             params.rBaseAddress,
                             params.insuranceFundAddress,
-                            params.vBaseAddress
+                            params.vBaseAddress,
+                            params.nativeOracle
                         )
                     )
                 )

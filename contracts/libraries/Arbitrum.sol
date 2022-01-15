@@ -15,7 +15,7 @@ library Arbitrum {
     ArbSys constant arbSys = ArbSys(0x0000000000000000000000000000000000000064);
     ArbGasInfo constant arbGasInfo = ArbGasInfo(0x000000000000000000000000000000000000006C);
 
-    function getGasCostWei() internal view returns (uint256) {
+    function getTotalL1FeeInWei() internal view returns (uint256) {
         return arbGasInfo.getCurrentTxL1GasFees();
 
         // uint256 calldataUnits = Calldata.calculateCostUnits(data);
@@ -27,6 +27,10 @@ library Arbitrum {
         // emit Uint('weiPerCalldataUnits', weiPerCalldataUnits);
         // emit Bytes('data', data);
         // return intrinsicWei + calldataUnits * weiPerCalldataUnits;
+    }
+
+    function getTxGasPrice() internal view returns (uint256) {
+        return tx.gasprice;
     }
 
     // TODO remove this after arbitrum doubts are clear

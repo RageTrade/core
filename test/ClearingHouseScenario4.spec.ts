@@ -745,6 +745,8 @@ describe('Clearing House Library (Partial Swaps & Notional Swaps)', () => {
 
     const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+
     rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
@@ -752,6 +754,7 @@ describe('Clearing House Library (Partial Swaps & Notional Swaps)', () => {
       vPoolWrapperLogic.address,
       rBase.address,
       insuranceFundLogic.address,
+      nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,

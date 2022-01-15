@@ -96,7 +96,7 @@ describe('RageTradeFactory', () => {
 
       await proxyAdmin.upgrade(clearingHouse.address, newCHLogic.address);
 
-      expect(await clearingHouse.getFixFee()).to.eq(1234567890);
+      expect(await clearingHouse.getFixFee(0)).to.eq(1234567890);
     });
 
     it('upgrades vpoolwrapper', async () => {

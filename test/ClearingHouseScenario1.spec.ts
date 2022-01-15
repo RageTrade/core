@@ -567,6 +567,8 @@ describe('Clearing House Library', () => {
 
     const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+
     const rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
     ).deploy(
@@ -574,6 +576,7 @@ describe('Clearing House Library', () => {
       vPoolWrapperLogic.address,
       rBase.address,
       insuranceFundLogic.address,
+      nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
       UNISWAP_V3_POOL_BYTE_CODE_HASH,

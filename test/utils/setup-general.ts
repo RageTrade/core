@@ -43,6 +43,8 @@ export async function testSetup({
 
   const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
+  const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
   ).deploy(
@@ -50,6 +52,7 @@ export async function testSetup({
     vPoolWrapperLogic.address,
     realBase.address,
     insuranceFundLogic.address,
+    nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
@@ -155,6 +158,8 @@ export async function testSetupBase(signer?: SignerWithAddress) {
 
   const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
+  const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
   ).deploy(
@@ -162,6 +167,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     vPoolWrapperLogic.address,
     realBase.address,
     insuranceFundLogic.address,
+    nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
     UNISWAP_V3_POOL_BYTE_CODE_HASH,
