@@ -11,7 +11,7 @@ import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { RTokenLib } from '../../libraries/RTokenLib.sol';
-// import { Calldata } from './libraries/Calldata.sol';
+import { Calldata } from '../../libraries/Calldata.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
@@ -26,7 +26,7 @@ import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseView {
+contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedClaim {
     using SafeERC20 for IERC20;
     using Account for Account.UserInfo;
     using VTokenLib for IVToken;
@@ -275,6 +275,52 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
     }
 
     /**
+        ALTERNATE LIQUIDATION METHODS FOR FIX FEE CLAIM
+     */
+
+    function removeLimitOrder(
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 gasComputationUnitsClaim
+    ) external checkGasUsedClaim(gasComputationUnitsClaim) returns (uint256 keeperFee) {
+        Calldata.limit(4 + 5 * 0x20);
+        return _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, gasComputationUnitsClaim);
+    }
+
+    function liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
+        external
+        checkGasUsedClaim(gasComputationUnitsClaim)
+        returns (int256 keeperFee)
+    {
+        Calldata.limit(4 + 2 * 0x20);
+        return _liquidateLiquidityPositions(accountNo, gasComputationUnitsClaim);
+    }
+
+    function liquidateTokenPosition(
+        uint256 liquidatorAccountNo,
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        uint16 liquidationBps,
+        uint256 gasComputationUnitsClaim
+    )
+        external
+        checkGasUsedClaim(gasComputationUnitsClaim)
+        returns (BalanceAdjustments memory liquidatorBalanceAdjustments)
+    {
+        Calldata.limit(4 + 5 * 0x20);
+        return
+            _liquidateTokenPosition(
+                liquidatorAccountNo,
+                accountNo,
+                vTokenTruncatedAddress,
+                liquidationBps,
+                gasComputationUnitsClaim
+            );
+    }
+
+    /**
         INTERNAL HELPERS
      */
 
@@ -313,8 +359,6 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
         notPaused
         returns (int256 keeperFee)
     {
-        // Calldata.limit(0x4 + 2 * 0x20);
-
         Account.UserInfo storage account = accounts[accountNo];
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
@@ -336,8 +380,6 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        // Calldata.limit(0x4 + 5 * 0x20);
-
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.UserInfo storage account = accounts[accountNo];
 
@@ -361,9 +403,6 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (uint256 keeperFee) {
-        // TODO remove
-        // Calldata.limit(0x4 + 5 * 0x20);
-
         Account.UserInfo storage account = accounts[accountNo];
 
         IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
