@@ -135,7 +135,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
             emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
-        rBase.transfer(teamMultisig(), totalProtocolFee);
+        rBase.safeTransfer(teamMultisig(), totalProtocolFee);
     }
 
     /**
@@ -196,7 +196,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         account.removeProfit(amount, protocol);
-        rBase.transfer(msg.sender, amount);
+        rBase.safeTransfer(msg.sender, amount);
 
         emit Account.WithdrawProfit(accountNo, amount);
     }
@@ -323,7 +323,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
-        rBase.transfer(msg.sender, uint256(keeperFee));
+        rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
@@ -371,13 +371,13 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseV
 
         account.removeLimitOrder(vToken, tickLower, tickUpper, keeperFee, protocol);
 
-        rBase.transfer(msg.sender, keeperFee);
+        rBase.safeTransfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function _transferInsuranceFundFee(int256 insuranceFundFee) internal {
         if (insuranceFundFee > 0) {
-            rBase.transfer(address(insuranceFund), uint256(insuranceFundFee));
+            rBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
         } else {
             insuranceFund.claim(uint256(-insuranceFundFee));
         }
