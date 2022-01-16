@@ -17,15 +17,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     }
     mapping(int24 => mapping(int24 => LiquidityRate)) internal _liquidityRates;
 
-    // uint16 public immutable initialMarginRatio;
-    // uint16 public immutable maintainanceMarginRatio;
-    // uint32 public immutable twapDuration;
-    // bool public whitelisted;
     IUniswapV3Pool public vPool;
-
-    // constructor() {
-    //     (initialMarginRatio, maintainanceMarginRatio, twapDuration) = (0, 0, 0);
-    // }
 
     function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external {}
 
@@ -135,9 +127,5 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
     function collectAccruedProtocolFee() external pure returns (uint256 accruedProtocolFeeLast) {
         accruedProtocolFeeLast = 0;
-    }
-
-    function setOracle(address _oracle) external pure {
-        //Do nothing
     }
 }

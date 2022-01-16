@@ -29,29 +29,11 @@ interface IVPoolWrapper {
         uint24 UNISWAP_V3_DEFAULT_FEE_TIER;
     }
 
-    // address _vToken,
-    // address _vPoolAddress,
-    // address _oracleAddress,
-    // uint24 _liquidityFeePips,
-    // uint24 _protocolFeePips,
-    // uint16 _initialMarginRatio,
-    // uint16 _maintainanceMarginRatio,
-    // uint32 _twapDuration,
-    // bool _whitelisted,
-    // address _vBaseAddress
     function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external;
-
-    // function twapDuration() external view returns (uint32);
 
     function vPool() external view returns (IUniswapV3Pool);
 
     function updateGlobalFundingState() external;
-
-    // function initialMarginRatio() external view returns (uint16);
-
-    // function maintainanceMarginRatio() external view returns (uint16);
-
-    // function whitelisted() external view returns (bool);
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
         external
@@ -86,6 +68,4 @@ interface IVPoolWrapper {
     ) external returns (int256 vTokenAmount, int256 vBaseAmount);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
-
-    // function setOracle(address oracle_) external;
 }

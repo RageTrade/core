@@ -48,14 +48,7 @@ library VTokenPosition {
         uint256 priceX128,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
-        //TODO: Remove logs
-        // console.log('Token Position Balance:');
-        // console.logInt(position.balance);
-        // console.log('Token PriceX128:');
-        // console.logInt(int256(priceX128));
         value = position.balance.mulDiv(priceX128, FixedPoint128.Q128);
-        // console.log('Token Value:');
-        // console.logInt(value);
         value += unrealizedFundingPayment(position, wrapper);
     }
 

@@ -42,21 +42,9 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         VTokenPositionSet.update(dummy, balanceAdjustments, vToken, protocol);
     }
 
-    // function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
-    //     external
-    //     view
-    //     returns (int256, int256)
-    // {
-    //     return VTokenPositionSet.getAllTokenPositionValueAndMargin(dummy, isInitialMargin, vTokens, constants);
-    // }
-
     function realizeFundingPaymentToAccount(IVToken vToken) external {
         VTokenPositionSet.realizeFundingPayment(dummy, vToken, wrapper, protocol);
     }
-
-    // function getTokenPosition(address vToken) external {
-    //     dummy.getTokenPosition(vToken);
-    // }
 
     function swapTokenAmount(IVToken vToken, int256 vTokenAmount) external {
         dummy.swapToken(vToken, IClearingHouse.SwapParams(vTokenAmount, 0, false, false), wrapper, protocol);
@@ -87,23 +75,6 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
     function liquidateLiquidityPositions(IVToken vToken) external {
         dummy.liquidateLiquidityPositions(vToken, wrapper, protocol);
     }
-
-    // function liquidateTokenPosition(
-    //     IVToken vToken,
-    //     uint16 liquidationFeeFraction,
-    //     uint256 liquidationMinSizeBaseAmount,
-    //     uint8 targetMarginRation,
-    //     uint256 fixFee,
-    //     Constants memory constants
-    // ) external {
-    //     LiquidationParams memory liquidationParams = LiquidationParams(
-    //         liquidationFeeFraction,
-    //         liquidationMinSizeBaseAmount,
-    //         targetMarginRation,
-    //         fixFee
-    //     );
-    //     dummy.getTokenPositionToLiquidate(vToken, liquidationParams, vTokens, constants);
-    // }
 
     function getIsActive(address vToken) external view returns (bool) {
         return dummy.active.exists(uint32(uint160(vToken)));

@@ -10,7 +10,6 @@ import { console } from 'hardhat/console.sol';
 contract LiquidityPositionSetTest {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
-    // using Uint48L5ArrayLib for uint48[5];
 
     LiquidityPositionSet.Info liquidityPositions;
     VPoolWrapperMock public wrapper;

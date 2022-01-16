@@ -308,12 +308,7 @@ library Account {
         returns (int256 accountMarketValue)
     {
         accountMarketValue = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
-        //TODO: Remove logs
-        // console.log('accountMarketValue w/o deposits');
-        // console.logInt(accountMarketValue);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
-        // console.log('accountMarketValue with deposits');
-        // console.logInt(accountMarketValue);
         return (accountMarketValue);
     }
 
@@ -357,11 +352,8 @@ library Account {
         IClearingHouse.SwapParams memory swapParams,
         Account.ProtocolInfo storage protocol
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        // account fp bill
-        // account.tokenPositions.realizeFundingPayment(vTokens, constants); // also updates checkpoints
-
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
-        // mints erc20 tokens in callback. an  d send to the pool
+        // mints erc20 tokens in callback and send to the pool
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vToken, swapParams, protocol);
 
         // after all the stuff, account should be above water
@@ -382,8 +374,6 @@ library Account {
         IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
         Account.ProtocolInfo storage protocol
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        // account.tokenPositions.realizeFundingPayment(vTokens, constants);
-
         // mint/burn tokens + fee + funding payment
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
             vToken,
@@ -428,7 +418,7 @@ library Account {
         uint256 fixFee,
         Account.ProtocolInfo storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
-        //check basis maintanace margin
+        // check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
         int256 notionalAmountClosed;
@@ -437,7 +427,6 @@ library Account {
         if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        // account.tokenPositions.realizeFundingPayment(vTokens, constants); // also updates checkpoints
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
 
         int256 liquidationFee = notionalAmountClosed.mulDiv(protocol.liquidationParams.liquidationFeeFraction, 1e5);
@@ -470,14 +459,6 @@ library Account {
     {
         uint16 maintainanceMarginFactor = vToken.getMarginRatio(false, protocol);
         uint256 priceX128 = vToken.getVirtualCurrentPriceX128(protocol);
-        // console.log('PriceX128');
-        // console.log(priceX128);
-        // console.log(
-        //     'tokenLiquidationPriceDeltaBps',
-        //     liquidationParams.tokenLiquidationPriceDeltaBps,
-        //     'maintainanceMarginFactor',
-        //     maintainanceMarginFactor
-        // );
         uint256 priceDeltaX128 = priceX128.mulDiv(protocol.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
             maintainanceMarginFactor,
             1e5
@@ -525,11 +506,6 @@ library Account {
             traderPositionIncrease: tokensToTrade
         });
 
-        // console.log('Liquidation Account Update Values');
-        // console.logInt(balanceAdjustments.vBaseIncrease);
-        // console.logInt(balanceAdjustments.vTokenIncrease);
-        // console.logInt(balanceAdjustments.traderPositionIncrease);
-
         account.tokenPositions.update(balanceAdjustments, vToken, protocol);
         emit Account.TokenPositionChange(
             account.tokenPositions.accountNo,
@@ -543,11 +519,6 @@ library Account {
             vTokenIncrease: -tokensToTrade,
             traderPositionIncrease: -tokensToTrade
         });
-
-        // console.log('Liquidator Account Update Values');
-        // console.logInt(balanceAdjustments.vBaseIncrease);
-        // console.logInt(balanceAdjustments.vTokenIncrease);
-        // console.logInt(balanceAdjustments.traderPositionIncrease);
 
         liquidatorAccount.tokenPositions.update(balanceAdjustments, vToken, protocol);
         emit Account.TokenPositionChange(
@@ -575,12 +546,6 @@ library Account {
         external
         returns (int256 insuranceFundFee, IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments)
     {
-        // VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-        //     vToken,
-        //     false,
-        //     constants
-        // );
-
         if (account.tokenPositions.getIsTokenRangeActive(vToken, protocol))
             revert InvalidLiquidationActiveRangePresent(vToken);
 
@@ -589,11 +554,6 @@ library Account {
                 false,
                 protocol
             );
-            // console.log('########## Beginning of Liquidation ##############');
-            // console.log('Account Market Value');
-            // console.logInt(accountMarketValue);
-            // console.log('Required Margin');
-            // console.logInt(totalRequiredMargin);
 
             if (accountMarketValue > totalRequiredMargin) {
                 revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
@@ -638,8 +598,7 @@ library Account {
                 account.updateBaseBalance(-accountMarketValueFinal, protocol);
             }
         }
-        // console.log('#############  Insurance Fund Fee  ##################');
-        // console.logInt(insuranceFundFee);
+
         liquidatorAccount.checkIfMarginAvailable(false, protocol);
         emit Account.LiquidateTokenPosition(
             account.tokenPositions.accountNo,

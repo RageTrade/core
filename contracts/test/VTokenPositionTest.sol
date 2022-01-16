@@ -10,6 +10,7 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionTest {
     using VTokenPosition for VTokenPosition.Position;
+
     uint256 num;
     mapping(uint256 => VTokenPosition.Position) internal dummys;
 

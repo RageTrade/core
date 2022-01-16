@@ -330,7 +330,7 @@ library VTokenPositionSet {
         return
             set.swapToken(
                 vToken,
-                ///@dev 0 means no price limit and false means amount mentioned is token amount
+                /// @dev 0 means no price limit and false means amount mentioned is token amount
                 IClearingHouse.SwapParams(vTokenAmount, 0, false, false),
                 vToken.vPoolWrapper(protocol),
                 protocol
@@ -415,27 +415,16 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        // TODO: remove this after testing
-        // console.log('Amount In:');
-        // console.logInt(swapParams.amount);
-
-        // console.log('Is Notional:');
-        // console.log(swapParams.isNotional);
-
         (vTokenAmountOut, vBaseAmountOut) = wrapper.swapToken(
             swapParams.amount,
             swapParams.sqrtPriceLimit,
             swapParams.isNotional
         );
-        //Change direction basis uniswap to balance increase
+
+        // change direction basis uniswap to balance increase
         vTokenAmountOut = -vTokenAmountOut;
         vBaseAmountOut = -vBaseAmountOut;
-        // TODO: remove this after testing
-        // console.log('Token Amount Out:');
-        // console.logInt(vTokenAmountOut);
 
-        // console.log('VBase Amount Out:');
-        // console.logInt(vBaseAmountOut);
         IClearingHouse.BalanceAdjustments memory balanceAdjustments = IClearingHouse.BalanceAdjustments(
             vBaseAmountOut,
             vTokenAmountOut,

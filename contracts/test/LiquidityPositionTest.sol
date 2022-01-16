@@ -17,7 +17,6 @@ import { console } from 'hardhat/console.sol';
 
 contract LiquidityPositionTest is AccountProtocolInfoMock {
     using LiquidityPosition for LiquidityPosition.Info;
-    // using Uint48L5ArrayLib for uint48[5];
 
     IClearingHouse.BalanceAdjustments public balanceAdjustments;
     LiquidityPosition.Info public lp;
