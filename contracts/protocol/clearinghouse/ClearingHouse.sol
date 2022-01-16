@@ -278,7 +278,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         ALTERNATE LIQUIDATION METHODS FOR FIX FEE CLAIM
      */
 
-    function removeLimitOrder(
+    function removeLimitOrderWithGasClaim(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
@@ -289,7 +289,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         return _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, gasComputationUnitsClaim);
     }
 
-    function liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
+    function liquidateLiquidityPositionsWithGasClaim(uint256 accountNo, uint256 gasComputationUnitsClaim)
         external
         checkGasUsedClaim(gasComputationUnitsClaim)
         returns (int256 keeperFee)
@@ -298,7 +298,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         return _liquidateLiquidityPositions(accountNo, gasComputationUnitsClaim);
     }
 
-    function liquidateTokenPosition(
+    function liquidateTokenPositionWithGasClaim(
         uint256 liquidatorAccountNo,
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
