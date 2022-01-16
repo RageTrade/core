@@ -142,13 +142,7 @@ library LiquidityPosition {
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
         emit Account.FundingPayment(accountNo, vToken, position.tickLower, position.tickUpper, fundingPayment);
-        emit Account.LiquidityFee(
-            accountNo,
-            vToken,
-            position.tickLower,
-            position.tickUpper,
-            unrealizedLiquidityFee
-        );
+        emit Account.LiquidityFee(accountNo, vToken, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
         // updating checkpoints
         position.sumALastX128 = wrapperValuesInside.sumAX128;
         position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;

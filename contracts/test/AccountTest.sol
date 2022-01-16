@@ -146,11 +146,7 @@ contract AccountTest {
         address vToken,
         int256 amount
     ) external {
-        accounts[accountNo].swapToken(
-            IVToken(vToken),
-            IClearingHouse.SwapParams(amount, 0, false, false),
-            protocol
-        );
+        accounts[accountNo].swapToken(IVToken(vToken), IClearingHouse.SwapParams(amount, 0, false, false), protocol);
     }
 
     function swapTokenNotional(
@@ -158,11 +154,7 @@ contract AccountTest {
         address vToken,
         int256 amount
     ) external {
-        accounts[accountNo].swapToken(
-            IVToken(vToken),
-            IClearingHouse.SwapParams(amount, 0, true, false),
-            protocol
-        );
+        accounts[accountNo].swapToken(IVToken(vToken), IClearingHouse.SwapParams(amount, 0, true, false), protocol);
     }
 
     function liquidityChange(
@@ -213,13 +205,7 @@ contract AccountTest {
         int24 tickUpper,
         uint256 removeLimitOrderFee
     ) external {
-        accounts[accountNo].removeLimitOrder(
-            IVToken(vToken),
-            tickLower,
-            tickUpper,
-            removeLimitOrderFee,
-            protocol
-        );
+        accounts[accountNo].removeLimitOrder(IVToken(vToken), tickLower, tickUpper, removeLimitOrderFee, protocol);
     }
 
     function getAccountDepositBalance(uint256 accountNo, address vToken) external view returns (uint256) {
@@ -235,17 +221,11 @@ contract AccountTest {
             int256 sumACkpt
         )
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
-            truncate(vToken)
-        ];
+        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[truncate(vToken)];
         return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Ckpt);
     }
 
-    function getAccountLiquidityPositionNum(uint256 accountNo, address vToken)
-        external
-        view
-        returns (uint8 num)
-    {
+    function getAccountLiquidityPositionNum(uint256 accountNo, address vToken) external view returns (uint8 num) {
         LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
             .tokenPositions
             .positions[truncate(vToken)]

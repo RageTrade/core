@@ -233,11 +233,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
-            _checkSlippage(
-                vToken,
-                liquidityChangeParams.sqrtPriceCurrent,
-                liquidityChangeParams.slippageToleranceBps
-            );
+            _checkSlippage(vToken, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
         }
 
         (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(vToken, liquidityChangeParams, protocol);

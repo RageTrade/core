@@ -37,19 +37,11 @@ library VTokenLib {
         return IVToken(address(vToken));
     }
 
-    function vPool(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (IUniswapV3Pool)
-    {
+    function vPool(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (IUniswapV3Pool) {
         return protocol.pools[vToken].vPool;
     }
 
-    function vPoolWrapper(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (IVPoolWrapper)
-    {
+    function vPoolWrapper(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (IVPoolWrapper) {
         return protocol.pools[vToken].vPoolWrapper;
     }
 
@@ -98,10 +90,7 @@ library VTokenLib {
         view
         returns (uint160 sqrtPriceX96)
     {
-        return
-            protocol.pools[vToken].settings.oracle.getTwapSqrtPriceX96(
-                protocol.pools[vToken].settings.twapDuration
-            );
+        return protocol.pools[vToken].settings.oracle.getTwapSqrtPriceX96(protocol.pools[vToken].settings.twapDuration);
     }
 
     function getRealTwapPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)

@@ -366,8 +366,7 @@ library VTokenPositionSet {
         IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        return
-            set.liquidityChange(vToken, liquidityChangeParams, vToken.vPoolWrapper(protocol), protocol);
+        return set.liquidityChange(vToken, liquidityChangeParams, vToken.vPoolWrapper(protocol), protocol);
     }
 
     /// @notice function to liquidate liquidity positions for a particular token
@@ -540,13 +539,7 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, vToken, protocol);
 
-        return
-            getNotionalValue(
-                vToken,
-                balanceAdjustments.vTokenIncrease,
-                balanceAdjustments.vBaseIncrease,
-                protocol
-            );
+        return getNotionalValue(vToken, balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease, protocol);
     }
 
     /// @notice function to liquidate all liquidity positions

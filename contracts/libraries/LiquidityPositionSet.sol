@@ -194,14 +194,7 @@ library LiquidityPositionSet {
         IVPoolWrapper wrapper,
         IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        set.liquidityChange(
-            accountNo,
-            vToken,
-            position,
-            -int128(position.liquidity),
-            wrapper,
-            balanceAdjustments
-        );
+        set.liquidityChange(accountNo, vToken, position, -int128(position.liquidity), wrapper, balanceAdjustments);
     }
 
     function removeLimitOrder(
