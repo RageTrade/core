@@ -7,24 +7,20 @@ import hre from 'hardhat';
 import { ERC20, VToken } from '../typechain-types';
 
 describe('VToken contract', () => {
-  let rToken: FakeContract<ERC20>;
   let vToken: VToken;
   let signers: SignerWithAddress[];
 
   beforeEach(async () => {
     signers = await hre.ethers.getSigners();
 
-    rToken = await smock.fake<ERC20>('ERC20');
-    rToken.decimals.returns(10);
-
-    vToken = await (await hre.ethers.getContractFactory('VToken')).deploy('', '', 18);
+    vToken = await (await hre.ethers.getContractFactory('VToken')).deploy('', '', 17);
 
     await vToken.setVPoolWrapper(signers[0].address);
   });
 
   describe('#decimals', () => {
-    it('inherits decimals of real token', async () => {
-      expect(await vToken.decimals()).to.eq(await rToken.decimals());
+    it('sets decimals correctly', async () => {
+      expect(await vToken.decimals()).to.eq(17);
     });
   });
 
