@@ -27,9 +27,11 @@ import { SignedMath } from '../../libraries/SignedMath.sol';
 import { SignedFullMath } from '../../libraries/SignedFullMath.sol';
 import { UniswapV3PoolHelper } from '../../libraries/UniswapV3PoolHelper.sol';
 
+import { Extsload } from '../../utils/Extsload.sol';
+
 import { console } from 'hardhat/console.sol';
 
-contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback, Initializable {
+contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback, Initializable, Extsload {
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
     using SignedMath for int256;
