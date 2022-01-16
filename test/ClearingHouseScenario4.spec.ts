@@ -819,21 +819,21 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         minRequiredMargin,
       );
       await clearingHouseTest.setFixFee(fixFee);
-      const accountStorage = await clearingHouseTest.accountStorage();
+      const protocol = await clearingHouseTest.protocol();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
 
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
-      expect(accountStorage.minRequiredMargin).eq(minRequiredMargin);
-      expect(accountStorage.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
-      expect(accountStorage.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
+      expect(protocol.minRequiredMargin).eq(minRequiredMargin);
+      expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
+      expect(protocol.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
         liquidationParams.tokenLiquidationPriceDeltaBps,
       );
-      expect(accountStorage.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
+      expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
-      expect(accountStorage.removeLimitOrderFee).eq(removeLimitOrderFee);
-      expect(accountStorage.minimumOrderNotional).eq(minimumOrderNotional);
+      expect(protocol.removeLimitOrderFee).eq(removeLimitOrderFee);
+      expect(protocol.minimumOrderNotional).eq(minimumOrderNotional);
       expect(curPaused).to.be.false;
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);

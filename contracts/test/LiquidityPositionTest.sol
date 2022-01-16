@@ -10,12 +10,11 @@ import { VTokenAddress } from '../libraries/VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
-import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract LiquidityPositionTest is AccountStorageMock {
+contract LiquidityPositionTest is AccountProtocolInfoMock {
     using LiquidityPosition for LiquidityPosition.Info;
     // using Uint48L5ArrayLib for uint48[5];
 

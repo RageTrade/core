@@ -15,16 +15,16 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 library RTokenLib {
+    using RTokenLib for RToken;
+    using FullMath for uint256;
+    using PriceMath for uint160;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
+
     struct RToken {
         address tokenAddress;
         address oracleAddress;
         uint32 oracleTimeHorizon;
     }
-
-    using RTokenLib for RToken;
-    using FullMath for uint256;
-    using PriceMath for uint160;
-    using UniswapV3PoolHelper for IUniswapV3Pool;
 
     function eq(RToken storage a, RToken storage b) internal view returns (bool) {
         return a.tokenAddress == b.tokenAddress;

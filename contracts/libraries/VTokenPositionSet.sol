@@ -5,9 +5,9 @@ pragma solidity ^0.8.9;
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
-import { Account, LiquidationParams } from './Account.sol';
-import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
-import { LiquidityPositionSet, LiquidityChangeParams } from './LiquidityPositionSet.sol';
+import { Account } from './Account.sol';
+import { LiquidityPosition } from './LiquidityPosition.sol';
+import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
@@ -16,21 +16,7 @@ import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
-
 import { console } from 'hardhat/console.sol';
-
-/// @notice swaps params for specifying the swap params
-/// @param amount amount of tokens/base to swap
-/// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
-/// @param isNotional specifies whether the amount represents token amount (false) or base amount(true)
-/// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
-struct SwapParams {
-    int256 amount;
-    uint160 sqrtPriceLimit;
-    bool isNotional;
-    bool isPartialAllowed;
-}
 
 library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
@@ -58,7 +44,19 @@ library VTokenPositionSet {
         uint256 accountNo;
         uint32[8] active;
         mapping(uint32 => VTokenPosition.Position) positions;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
+    }
+
+    /// @notice swaps params for specifying the swap params
+    /// @param amount amount of tokens/base to swap
+    /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
+    /// @param isNotional specifies whether the amount represents token amount (false) or base amount(true)
+    /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
+    struct SwapParams {
+        int256 amount;
+        uint160 sqrtPriceLimit;
+        bool isNotional;
+        bool isPartialAllowed;
     }
 
     /// @notice returns true if the set does not have any token position active
@@ -71,26 +69,26 @@ library VTokenPositionSet {
     /// @notice returns true if range position is active for 'vTokenAddress'
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of the token
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return isRangeActive
     function getIsTokenRangeActive(
         Set storage set,
         VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (bool isRangeActive) {
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, accountStorage);
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, protocol);
         isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();
     }
 
     /// @notice returns account market value of active positions
     /// @param set VTokenPositionSet
     /// @param vTokenAddresses mapping from truncated token address to token address for all active tokens
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return accountMarketValue
     function getAccountMarketValue(
         Set storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 accountMarketValue) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
@@ -99,15 +97,15 @@ library VTokenPositionSet {
             VTokenPosition.Position storage position = set.positions[truncated];
 
             //Value of token position for current vToken
-            accountMarketValue += position.marketValue(vToken, accountStorage);
+            accountMarketValue += position.marketValue(vToken, protocol);
 
-            uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(accountStorage);
+            uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(protocol);
             //Value of all active range position for the current vToken
-            accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPriceX96, vToken, accountStorage));
+            accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPriceX96, vToken, protocol));
         }
 
         //Value of the base token balance
-        accountMarketValue += set.positions[VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()].balance;
+        accountMarketValue += set.positions[VTokenAddress.wrap(address(protocol.vBase)).truncate()].balance;
     }
 
     /// @notice returns the max of two int256 numbers
@@ -123,16 +121,16 @@ library VTokenPositionSet {
     /// @param vTokenAddress address of the token
     /// @param vTokenAmount amount of tokens
     /// @param vBaseAmount amount of base
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return notionalAmountClosed for the given token and base amounts
     function getNotionalValue(
         VTokenAddress vTokenAddress,
         int256 vTokenAmount,
         int256 vBaseAmount,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 notionalAmountClosed) {
         notionalAmountClosed =
-            vTokenAmount.abs().mulDiv(vTokenAddress.getVirtualTwapPriceX128(accountStorage), FixedPoint128.Q128) +
+            vTokenAmount.abs().mulDiv(vTokenAddress.getVirtualTwapPriceX128(protocol), FixedPoint128.Q128) +
             vBaseAmount.abs();
     }
 
@@ -140,19 +138,19 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)
     /// @param vTokenAddress address of the token
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return longSideRisk - risk if the token price goes down
     /// @return shortSideRisk - risk if the token price goes up
     function getLongShortSideRisk(
         Set storage set,
         bool isInitialMargin,
         VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
         VTokenPosition.Position storage position = set.positions[vTokenAddress.truncate()];
 
-        uint256 price = vTokenAddress.getVirtualTwapPriceX128(accountStorage);
-        uint16 marginRatio = vTokenAddress.getMarginRatio(isInitialMargin, accountStorage);
+        uint256 price = vTokenAddress.getVirtualTwapPriceX128(protocol);
+        uint16 marginRatio = vTokenAddress.getMarginRatio(isInitialMargin, protocol);
 
         int256 tokenPosition = position.balance;
         int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition());
@@ -170,13 +168,13 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)
     /// @param vTokenAddresses mapping from truncated token address to token address for all active tokens
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return requiredMargin - required margin value based on the current active positions
     function getRequiredMargin(
         Set storage set,
         bool isInitialMargin,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 requiredMargin) {
         int256 longSideRiskTotal;
         int256 shortSideRiskTotal;
@@ -185,9 +183,9 @@ library VTokenPositionSet {
         for (uint8 i = 0; i < set.active.length; i++) {
             if (set.active[i] == 0) break;
             VTokenAddress vTokenAddress = vTokenAddresses[set.active[i]];
-            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vTokenAddress, accountStorage);
+            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vTokenAddress, protocol);
 
-            if (vTokenAddress.getWhitelisted(accountStorage)) {
+            if (vTokenAddress.getWhitelisted(protocol)) {
                 longSideRiskTotal += longSideRisk;
                 shortSideRiskTotal += shortSideRisk;
             } else {
@@ -226,16 +224,16 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param balanceAdjustments platform constants
     /// @param vTokenAddress address of the token
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function update(
         Set storage set,
         Account.BalanceAdjustments memory balanceAdjustments,
         VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal {
         uint32 truncated = vTokenAddress.truncate();
-        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
-            set.realizeFundingPayment(vTokenAddress, accountStorage);
+        if (!vTokenAddress.eq(address(protocol.vBase))) {
+            set.realizeFundingPayment(vTokenAddress, protocol);
             set.active.include(truncated);
         }
         VTokenPosition.Position storage _VTokenPosition = set.positions[truncated];
@@ -243,7 +241,7 @@ library VTokenPositionSet {
         _VTokenPosition.netTraderPosition += balanceAdjustments.traderPositionIncrease;
 
         VTokenPosition.Position storage _VBasePosition = set.positions[
-            VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()
+            VTokenAddress.wrap(address(protocol.vBase)).truncate()
         ];
         _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
 
@@ -255,31 +253,31 @@ library VTokenPositionSet {
     /// @notice realizes funding payment to base balance
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of the token
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function realizeFundingPayment(
         Set storage set,
         VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal {
-        set.realizeFundingPayment(vTokenAddress, accountStorage.rtPools[vTokenAddress].vPoolWrapper, accountStorage);
+        set.realizeFundingPayment(vTokenAddress, protocol.pools[vTokenAddress].vPoolWrapper, protocol);
     }
 
     /// @notice realizes funding payment to base balance
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of the token
     /// @param wrapper VPoolWrapper to override the set wrapper
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function realizeFundingPayment(
         Set storage set,
         VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal {
         VTokenPosition.Position storage _VTokenPosition = set.positions[vTokenAddress.truncate()];
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
 
         VTokenPosition.Position storage _VBasePosition = set.positions[
-            VTokenAddress.wrap(accountStorage.vBaseAddress).truncate()
+            VTokenAddress.wrap(address(protocol.vBase)).truncate()
         ];
         int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
         _VBasePosition.balance += fundingPayment;
@@ -294,15 +292,15 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of the token
     /// @param createNew if 'vTokenAddress' is inactive then activates (true) else reverts with TokenInactive(false)
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return position - VTokenPosition corresponding to 'vTokenAddress'
     function getTokenPosition(
         Set storage set,
         VTokenAddress vTokenAddress,
         bool createNew,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (VTokenPosition.Position storage position) {
-        if (!vTokenAddress.eq(accountStorage.vBaseAddress)) {
+        if (!vTokenAddress.eq(address(protocol.vBase))) {
             if (createNew) {
                 set.activate(vTokenAddress);
             } else if (!set.active.exists(vTokenAddress.truncate())) {
@@ -317,16 +315,16 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of the token
     /// @param swapParams parameters for swap
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
     /// @return vBaseAmountOut - base amount coming out of pool
     function swapToken(
         Set storage set,
         VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        return set.swapToken(vTokenAddress, swapParams, vTokenAddress.vPoolWrapper(accountStorage), accountStorage);
+        return set.swapToken(vTokenAddress, swapParams, vTokenAddress.vPoolWrapper(protocol), protocol);
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount
@@ -334,22 +332,22 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of the token
     /// @param vTokenAmount amount of the token
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
     /// @return vBaseAmountOut - base amount coming out of pool
     function swapTokenAmount(
         Set storage set,
         VTokenAddress vTokenAddress,
         int256 vTokenAmount,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
             set.swapToken(
                 vTokenAddress,
                 ///@dev 0 means no price limit and false means amount mentioned is token amount
                 SwapParams(vTokenAmount, 0, false, false),
-                vTokenAddress.vPoolWrapper(accountStorage),
-                accountStorage
+                vTokenAddress.vPoolWrapper(protocol),
+                protocol
             );
     }
 
@@ -359,21 +357,15 @@ library VTokenPositionSet {
     /// @param vTokenAddress address of token
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function removeLimitOrder(
         Set storage set,
         VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal {
-        set.removeLimitOrder(
-            vTokenAddress,
-            tickLower,
-            tickUpper,
-            vTokenAddress.vPoolWrapper(accountStorage),
-            accountStorage
-        );
+        set.removeLimitOrder(vTokenAddress, tickLower, tickUpper, vTokenAddress.vPoolWrapper(protocol), protocol);
     }
 
     /// @notice function for liquidity add/remove
@@ -385,47 +377,41 @@ library VTokenPositionSet {
     function liquidityChange(
         Set storage set,
         VTokenAddress vTokenAddress,
-        LiquidityChangeParams memory liquidityChangeParams,
-        AccountStorage storage accountStorage
+        LiquidityPositionSet.LiquidityChangeParams memory liquidityChangeParams,
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
-            set.liquidityChange(
-                vTokenAddress,
-                liquidityChangeParams,
-                vTokenAddress.vPoolWrapper(accountStorage),
-                accountStorage
-            );
+            set.liquidityChange(vTokenAddress, liquidityChangeParams, vTokenAddress.vPoolWrapper(protocol), protocol);
     }
 
     /// @notice function to liquidate liquidity positions for a particular token
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of token
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 notionalAmountClosed) {
-        return
-            set.liquidateLiquidityPositions(vTokenAddress, vTokenAddress.vPoolWrapper(accountStorage), accountStorage);
+        return set.liquidateLiquidityPositions(vTokenAddress, vTokenAddress.vPoolWrapper(protocol), protocol);
     }
 
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param vTokenAddresses mapping from truncated token address to token address for all active tokens
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 notionalAmountClosed) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
-            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], accountStorage);
+            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], protocol);
         }
     }
 
@@ -434,7 +420,7 @@ library VTokenPositionSet {
     /// @param vTokenAddress address of the token
     /// @param swapParams parameters for swap
     /// @param wrapper VPoolWrapper to override the set wrapper
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
     /// @return vBaseAmountOut - base amount coming out of pool
     function swapToken(
@@ -442,7 +428,7 @@ library VTokenPositionSet {
         VTokenAddress vTokenAddress,
         SwapParams memory swapParams,
         IVPoolWrapper wrapper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // TODO: remove this after testing
         // console.log('Amount In:');
@@ -471,7 +457,7 @@ library VTokenPositionSet {
             vTokenAmountOut
         );
 
-        set.update(balanceAdjustments, vTokenAddress, accountStorage);
+        set.update(balanceAdjustments, vTokenAddress, protocol);
 
         emit Account.TokenPositionChange(set.accountNo, vTokenAddress, vTokenAmountOut, vBaseAmountOut);
     }
@@ -486,11 +472,11 @@ library VTokenPositionSet {
     function liquidityChange(
         Set storage set,
         VTokenAddress vTokenAddress,
-        LiquidityChangeParams memory liquidityChangeParams,
+        LiquidityPositionSet.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, accountStorage);
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, true, protocol);
 
         Account.BalanceAdjustments memory balanceAdjustments;
 
@@ -502,10 +488,10 @@ library VTokenPositionSet {
             balanceAdjustments
         );
 
-        set.update(balanceAdjustments, vTokenAddress, accountStorage);
+        set.update(balanceAdjustments, vTokenAddress, protocol);
 
         if (liquidityChangeParams.closeTokenPosition) {
-            set.swapTokenAmount(vTokenAddress, -balanceAdjustments.traderPositionIncrease, accountStorage);
+            set.swapTokenAmount(vTokenAddress, -balanceAdjustments.traderPositionIncrease, protocol);
         }
 
         return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease);
@@ -518,19 +504,19 @@ library VTokenPositionSet {
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
     /// @param wrapper VPoolWrapper to override the set wrapper
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function removeLimitOrder(
         Set storage set,
         VTokenAddress vTokenAddress,
         int24 tickLower,
         int24 tickUpper,
         IVPoolWrapper wrapper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal {
-        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, accountStorage);
+        VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vTokenAddress, false, protocol);
 
         Account.BalanceAdjustments memory balanceAdjustments;
-        int24 currentTick = vTokenAddress.getVirtualTwapTick(accountStorage);
+        int24 currentTick = vTokenAddress.getVirtualTwapTick(protocol);
 
         vTokenPosition.liquidityPositions.removeLimitOrder(
             set.accountNo,
@@ -542,61 +528,57 @@ library VTokenPositionSet {
             balanceAdjustments
         );
 
-        set.update(balanceAdjustments, vTokenAddress, accountStorage);
+        set.update(balanceAdjustments, vTokenAddress, protocol);
     }
 
     /// @notice function to liquidate liquidity positions for a particular token
     /// @param set VTokenPositionSet
     /// @param vTokenAddress address of token
     /// @param wrapper VPoolWrapper to override the set wrapper
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         VTokenAddress vTokenAddress,
         IVPoolWrapper wrapper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 notionalAmountClosed) {
         Account.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(vTokenAddress, false, accountStorage).liquidityPositions.closeAllLiquidityPositions(
+        set.getTokenPosition(vTokenAddress, false, protocol).liquidityPositions.closeAllLiquidityPositions(
             set.accountNo,
             vTokenAddress,
             wrapper,
             balanceAdjustments
         );
 
-        set.update(balanceAdjustments, vTokenAddress, accountStorage);
+        set.update(balanceAdjustments, vTokenAddress, protocol);
 
         return
             getNotionalValue(
                 vTokenAddress,
                 balanceAdjustments.vTokenIncrease,
                 balanceAdjustments.vBaseIncrease,
-                accountStorage
+                protocol
             );
     }
 
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param vTokenAddresses mapping from truncated token address to token address for all active tokens
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         mapping(uint32 => VTokenAddress) storage vTokenAddresses,
         IVPoolWrapper wrapper,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal returns (int256 notionalAmountClosed) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
-            notionalAmountClosed += set.liquidateLiquidityPositions(
-                vTokenAddresses[set.active[i]],
-                wrapper,
-                accountStorage
-            );
+            notionalAmountClosed += set.liquidateLiquidityPositions(vTokenAddresses[set.active[i]], wrapper, protocol);
         }
     }
 }

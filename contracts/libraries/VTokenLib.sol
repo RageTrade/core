@@ -7,14 +7,12 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
-import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
+import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
+import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
-
-// TODO remove dependency from protocol
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -42,104 +40,99 @@ library VTokenLib {
         return IVToken(VTokenAddress.unwrap(vToken));
     }
 
-    function vPool(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function vPool(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (IUniswapV3Pool)
     {
-        return accountStorage.rtPools[vTokenAddress].vPool;
+        return protocol.pools[vTokenAddress].vPool;
     }
 
-    function vPoolWrapper(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function vPoolWrapper(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (IVPoolWrapper)
     {
-        return accountStorage.rtPools[vTokenAddress].vPoolWrapper;
+        return protocol.pools[vTokenAddress].vPoolWrapper;
     }
 
-    function getVirtualTwapSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getVirtualTwapSqrtPriceX96(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
         return
-            accountStorage.rtPools[vTokenAddress].vPool.twapSqrtPrice(
-                accountStorage.rtPools[vTokenAddress].settings.twapDuration
-            );
+            protocol.pools[vTokenAddress].vPool.twapSqrtPrice(protocol.pools[vTokenAddress].settings.twapDuration);
     }
 
-    function getVirtualCurrentSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getVirtualCurrentSqrtPriceX96(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
-        return accountStorage.rtPools[vTokenAddress].vPool.sqrtPriceCurrent();
+        return protocol.pools[vTokenAddress].vPool.sqrtPriceCurrent();
     }
 
-    function getVirtualTwapTick(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getVirtualTwapTick(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (int24 tick)
     {
-        return
-            accountStorage.rtPools[vTokenAddress].vPool.twapTick(
-                accountStorage.rtPools[vTokenAddress].settings.twapDuration
-            );
+        return protocol.pools[vTokenAddress].vPool.twapTick(protocol.pools[vTokenAddress].settings.twapDuration);
     }
 
-    function getVirtualTwapPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getVirtualTwapPriceX128(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (uint256 priceX128)
     {
-        return vTokenAddress.getVirtualTwapSqrtPriceX96(accountStorage).toPriceX128();
+        return vTokenAddress.getVirtualTwapSqrtPriceX96(protocol).toPriceX128();
     }
 
-    function getVirtualCurrentPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getVirtualCurrentPriceX128(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (uint256 priceX128)
     {
-        return vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage).toPriceX128();
+        return vTokenAddress.getVirtualCurrentSqrtPriceX96(protocol).toPriceX128();
     }
 
-    function getRealTwapSqrtPriceX96(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getRealTwapSqrtPriceX96(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
         return
-            accountStorage.rtPools[vTokenAddress].settings.oracle.getTwapSqrtPriceX96(
-                accountStorage.rtPools[vTokenAddress].settings.twapDuration
+            protocol.pools[vTokenAddress].settings.oracle.getTwapSqrtPriceX96(
+                protocol.pools[vTokenAddress].settings.twapDuration
             );
     }
 
-    function getRealTwapPriceX128(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getRealTwapPriceX128(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (uint256 priceX128)
     {
-        return vTokenAddress.getRealTwapSqrtPriceX96(accountStorage).toPriceX128();
+        return vTokenAddress.getRealTwapSqrtPriceX96(protocol).toPriceX128();
     }
 
     function getMarginRatio(
         VTokenAddress vTokenAddress,
         bool isInitialMargin,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (uint16) {
         if (isInitialMargin) {
-            return accountStorage.rtPools[vTokenAddress].settings.initialMarginRatio;
+            return protocol.pools[vTokenAddress].settings.initialMarginRatio;
         } else {
-            return accountStorage.rtPools[vTokenAddress].settings.maintainanceMarginRatio;
+            return protocol.pools[vTokenAddress].settings.maintainanceMarginRatio;
         }
     }
 
-    function getWhitelisted(VTokenAddress vTokenAddress, AccountStorage storage accountStorage)
+    function getWhitelisted(VTokenAddress vTokenAddress, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (bool)
     {
-        return accountStorage.rtPools[vTokenAddress].settings.whitelisted;
+        return protocol.pools[vTokenAddress].settings.whitelisted;
     }
 }

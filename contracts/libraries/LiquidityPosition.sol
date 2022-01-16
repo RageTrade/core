@@ -18,15 +18,7 @@ import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
-
 import { console } from 'hardhat/console.sol';
-
-enum LimitOrderType {
-    NONE,
-    LOWER_LIMIT,
-    UPPER_LIMIT
-}
 
 library LiquidityPosition {
     using PriceMath for uint160;
@@ -38,8 +30,11 @@ library LiquidityPosition {
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    error AlreadyInitialized();
-    error IneligibleLimitOrderRemoval();
+    enum LimitOrderType {
+        NONE,
+        LOWER_LIMIT,
+        UPPER_LIMIT
+    }
 
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
@@ -56,8 +51,11 @@ library LiquidityPosition {
         int256 sumFpInsideLastX128;
         // fee growth inside
         uint256 sumFeeInsideLastX128;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
+
+    error AlreadyInitialized();
+    error IneligibleLimitOrderRemoval();
 
     function isInitialized(Info storage info) internal view returns (bool) {
         return info.tickLower != 0 || info.tickUpper != 0;
@@ -212,9 +210,9 @@ library LiquidityPosition {
         Info storage position,
         uint160 sqrtPriceCurrent,
         VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(sqrtPriceCurrent, vTokenAddress.vPoolWrapper(accountStorage));
+        return position.baseValue(sqrtPriceCurrent, vTokenAddress.vPoolWrapper(protocol));
     }
 
     function tokenAmountsInRange(Info storage position, uint160 sqrtPriceCurrent)

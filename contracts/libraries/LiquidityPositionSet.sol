@@ -3,26 +3,14 @@
 pragma solidity ^0.8.9;
 
 import { Account } from './Account.sol';
-import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
+import { LiquidityPosition } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
 import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
-
 import { console } from 'hardhat/console.sol';
-
-struct LiquidityChangeParams {
-    int24 tickLower;
-    int24 tickUpper;
-    int128 liquidityDelta;
-    uint160 sqrtPriceCurrent;
-    uint16 slippageToleranceBps;
-    bool closeTokenPosition;
-    LimitOrderType limitOrderType;
-}
 
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
@@ -30,17 +18,27 @@ library LiquidityPositionSet {
     using Uint48L5ArrayLib for uint48[5];
     using VTokenLib for VTokenAddress;
 
-    error IllegalTicks(int24 tickLower, int24 tickUpper);
-    error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
-    error InactiveRange();
+    struct LiquidityChangeParams {
+        int24 tickLower;
+        int24 tickUpper;
+        int128 liquidityDelta;
+        uint160 sqrtPriceCurrent;
+        uint16 slippageToleranceBps;
+        bool closeTokenPosition;
+        LiquidityPosition.LimitOrderType limitOrderType;
+    }
 
     struct Info {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
         uint48[5] active;
         // concat(tickLow,tickHigh)
         mapping(uint48 => LiquidityPosition.Info) positions;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
+
+    error IllegalTicks(int24 tickLower, int24 tickUpper);
+    error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
+    error InactiveRange();
 
     function isEmpty(Info storage set) internal view returns (bool) {
         return set.active[0] == 0;
@@ -58,9 +56,9 @@ library LiquidityPositionSet {
         Info storage set,
         uint160 sqrtPriceCurrent,
         VTokenAddress vToken,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(accountStorage));
+        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(protocol));
     }
 
     function baseValue(

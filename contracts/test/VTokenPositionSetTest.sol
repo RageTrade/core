@@ -2,18 +2,18 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet, LiquidityChangeParams, SwapParams } from '../libraries/VTokenPositionSet.sol';
+import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
-import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
+import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
-import { Account, LiquidationParams } from '../libraries/Account.sol';
+import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
-import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
-contract VTokenPositionSetTest is AccountStorageMock {
+contract VTokenPositionSetTest is AccountProtocolInfoMock {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using VTokenLib for VTokenAddress;
     using VTokenPositionSet for VTokenPositionSet.Set;
@@ -36,7 +36,7 @@ contract VTokenPositionSetTest is AccountStorageMock {
     }
 
     function update(Account.BalanceAdjustments memory balanceAdjustments, VTokenAddress vTokenAddress) external {
-        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
+        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, protocol);
     }
 
     // function getAllTokenPositionValueAndMargin(bool isInitialMargin, Constants memory constants)
@@ -48,7 +48,7 @@ contract VTokenPositionSetTest is AccountStorageMock {
     // }
 
     function realizeFundingPaymentToAccount(VTokenAddress vTokenAddress) external {
-        VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, accountStorage);
+        VTokenPositionSet.realizeFundingPayment(dummy, vTokenAddress, wrapper, protocol);
     }
 
     // function getTokenPosition(address vTokenAddress) external {
@@ -56,11 +56,11 @@ contract VTokenPositionSetTest is AccountStorageMock {
     // }
 
     function swapTokenAmount(VTokenAddress vTokenAddress, int256 vTokenAmount) external {
-        dummy.swapToken(vTokenAddress, SwapParams(vTokenAmount, 0, false, false), wrapper, accountStorage);
+        dummy.swapToken(vTokenAddress, VTokenPositionSet.SwapParams(vTokenAmount, 0, false, false), wrapper, protocol);
     }
 
     function swapTokenNotional(VTokenAddress vTokenAddress, int256 vTokenNotional) external {
-        dummy.swapToken(vTokenAddress, SwapParams(vTokenNotional, 0, true, false), wrapper, accountStorage);
+        dummy.swapToken(vTokenAddress, VTokenPositionSet.SwapParams(vTokenNotional, 0, true, false), wrapper, protocol);
     }
 
     function liquidityChange(
@@ -69,20 +69,13 @@ contract VTokenPositionSetTest is AccountStorageMock {
         int24 tickUpper,
         int128 liquidity
     ) external {
-        LiquidityChangeParams memory liquidityChangeParams = LiquidityChangeParams(
-            tickLower,
-            tickUpper,
-            liquidity,
-            0,
-            0,
-            false,
-            LimitOrderType.NONE
-        );
-        dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, accountStorage);
+        LiquidityPositionSet.LiquidityChangeParams memory liquidityChangeParams = LiquidityPositionSet
+            .LiquidityChangeParams(tickLower, tickUpper, liquidity, 0, 0, false, LiquidityPosition.LimitOrderType.NONE);
+        dummy.liquidityChange(vTokenAddress, liquidityChangeParams, wrapper, protocol);
     }
 
     function liquidateLiquidityPositions(VTokenAddress vTokenAddress) external {
-        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, accountStorage);
+        dummy.liquidateLiquidityPositions(vTokenAddress, wrapper, protocol);
     }
 
     // function liquidateTokenPosition(

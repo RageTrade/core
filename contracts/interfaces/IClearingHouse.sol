@@ -4,13 +4,17 @@ pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { IGovernable } from './IGovernable.sol';
+import { IInsuranceFund } from './IInsuranceFund.sol';
 import { IOracle } from './IOracle.sol';
+import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 
-import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { LiquidityChangeParams } from '../libraries/LiquidityPositionSet.sol';
-import { SwapParams } from '../libraries/VTokenPositionSet.sol';
+// TODO move these to interface
+import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
+import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
@@ -56,11 +60,11 @@ interface IClearingHouse is IGovernable {
     error SlippageBeyondTolerance();
 
     function ClearingHouse__init(
-        address _vPoolFactory,
-        address _realBase,
-        address _insuranceFundAddress,
-        address _vBaseAddress,
-        address _nativeOracle
+        address _rageTradeFactoryAddress,
+        IERC20 _rBase,
+        IInsuranceFund _insuranceFund,
+        IVBase _vBase,
+        IOracle _nativeOracle
     ) external;
 
     /// @notice creates a new account and adds it to the accounts map
@@ -103,7 +107,7 @@ interface IClearingHouse is IGovernable {
     function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        SwapParams memory swapParams
+        VTokenPositionSet.SwapParams memory swapParams
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     /// @notice updates range order of token associated with 'vTokenTruncatedAddress' by 'liquidityDelta' (Adds if amount>0 else Removes)
@@ -114,7 +118,7 @@ interface IClearingHouse is IGovernable {
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        LiquidityChangeParams calldata liquidityChangeParams
+        LiquidityPositionSet.LiquidityChangeParams calldata liquidityChangeParams
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     /// @notice keeper call to remove a limit order
