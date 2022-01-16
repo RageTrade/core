@@ -7,9 +7,9 @@ describe('StorageLayout', () => {
   describe('#ClearingHouse', () => {
     const sourceName = 'contracts/protocol/clearinghouse/ClearingHouse.sol';
     const contractName = 'ClearingHouse';
-    it('accountStorage', async () => {
+    it('Account.ProtocolInfo protocol', async () => {
       const { storage } = await getStorageLayout(sourceName, contractName);
-      const protocol = getEntryFromStorage(storage, 'accountStorage');
+      const protocol = getEntryFromStorage(storage, 'protocol');
       expect(protocol.slot).to.eq('100');
     });
   });
