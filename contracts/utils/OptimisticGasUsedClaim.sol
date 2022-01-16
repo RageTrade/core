@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-contract OptimisticGasUsedClaim {
+abstract contract OptimisticGasUsedClaim {
     error ExcessGasUsedClaim(uint256 gasUsedClaim, uint256 gasUsedActual);
 
     modifier checkGasUsedClaim(uint256 gasUsedClaim) {
