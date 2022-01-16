@@ -4,13 +4,12 @@ pragma solidity ^0.8.9;
 
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
-
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
@@ -19,7 +18,7 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 
-import { VTokenAddress, VTokenLib } from '../../libraries/VTokenLib.sol';
+import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { Tick } from '../../libraries/Tick.sol';
@@ -42,7 +41,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
     using UniswapV3PoolHelper for IUniswapV3Pool;
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
 
     IClearingHouse public clearingHouse;
     IVToken public vToken;
@@ -83,7 +82,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external initializer {
         clearingHouse = params.clearingHouse;
-        vToken = params.vTokenAddress;
+        vToken = params.vToken;
         vBase = params.vBase;
         vPool = params.vPool;
 
@@ -103,7 +102,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     // for updating global funding payment
     function updateGlobalFundingState() public {
         (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
+            IVToken(address(vToken)) // TODO use IVToken as custom type
         );
         fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
@@ -329,7 +328,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function getExtrapolatedSumAX128() public view returns (int256) {
         (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
+            IVToken(address(vToken)) // TODO use IVToken as custom type
         );
         return
             FundingPayment.extrapolatedSumAX128(
@@ -421,7 +420,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         if (state.liquidity > 0 && vTokenAmount > 0) {
             (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-                VTokenAddress.wrap(address(vToken)) // TODO use IVToken as custom type
+                IVToken(address(vToken)) // TODO use IVToken as custom type
             );
             fpGlobal.update(
                 swapVTokenForVBase ? int256(vTokenAmount) : -int256(vTokenAmount), // when trader goes long, LP goes short

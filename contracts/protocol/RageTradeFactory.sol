@@ -16,7 +16,7 @@ import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
 import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
 
 import { IOracle } from '../interfaces/IOracle.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
@@ -30,7 +30,7 @@ contract RageTradeFactory is
     VPoolWrapperDeployer,
     VTokenDeployer
 {
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
 
     address public immutable UNISWAP_V3_FACTORY_ADDRESS;
     uint24 public immutable UNISWAP_V3_DEFAULT_FEE_TIER;
@@ -152,9 +152,9 @@ contract RageTradeFactory is
             );
     }
 
-    function _isVTokenAddressGood(address addr) internal view virtual override returns (bool) {
+    function _isIVTokenAddressGood(address addr) internal view virtual override returns (bool) {
         return
-            super._isVTokenAddressGood(addr) &&
+            super._isIVTokenAddressGood(addr) &&
             (uint160(addr) < uint160(address(vBase))) &&
             clearingHouse.isVTokenAddressAvailable(uint32(uint160(addr)));
     }

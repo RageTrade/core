@@ -9,7 +9,7 @@ import { Account } from '../../libraries/Account.sol';
 import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
-import { VTokenAddress, VTokenLib } from '../../libraries/VTokenLib.sol';
+import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { RTokenLib } from '../../libraries/RTokenLib.sol';
 // import { Calldata } from './libraries/Calldata.sol';
 
@@ -18,6 +18,7 @@ import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
 
@@ -28,7 +29,7 @@ import { console } from 'hardhat/console.sol';
 contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseStorage {
     using SafeERC20 for IERC20;
     using Account for Account.UserInfo;
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
     using SignedMath for int256;
     using RTokenLib for RTokenLib.RToken;
 
@@ -67,14 +68,14 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     }
 
     function registerPool(address full, RageTradePool calldata rageTradePool) external onlyRageTradeFactory {
-        VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
-        uint32 truncated = vTokenAddress.truncate();
+        IVToken vToken = IVToken(full);
+        uint32 truncated = vToken.truncate();
 
         // pool will not be registered twice by the rage trade factory
-        assert(protocol.vTokenAddresses[truncated].eq(address(0)));
+        assert(protocol.vTokens[truncated].eq(address(0)));
 
-        protocol.vTokenAddresses[truncated] = vTokenAddress;
-        protocol.pools[vTokenAddress] = rageTradePool;
+        protocol.vTokens[truncated] = vToken;
+        protocol.pools[vToken] = rageTradePool;
     }
 
     function initRealToken(address realToken) external onlyRageTradeFactory {
@@ -94,7 +95,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         protocol.rTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 
-    function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
+    function updateSupportedVTokens(IVToken add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;
     }
 
@@ -119,11 +120,11 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         protocol.minRequiredMargin = _minRequiredMargin;
     }
 
-    function updateRageTradePoolSettings(VTokenAddress vTokenAddress, RageTradePoolSettings calldata newSettings)
+    function updateRageTradePoolSettings(IVToken vToken, RageTradePoolSettings calldata newSettings)
         public
         onlyGovernanceOrTeamMultisig
     {
-        protocol.pools[vTokenAddress].settings = newSettings;
+        protocol.pools[vToken].settings = newSettings;
     }
 
     /// @inheritdoc IClearingHouse
@@ -200,14 +201,14 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        VTokenPositionSet.SwapParams memory swapParams
+        IClearingHouse.SwapParams memory swapParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
 
-        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vTokenAddress, swapParams, protocol);
+        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vToken, swapParams, protocol);
 
         uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
         if (vBaseAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
@@ -224,25 +225,25 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        LiquidityPositionSet.LiquidityChangeParams calldata liquidityChangeParams
+        IClearingHouse.LiquidityChangeParams calldata liquidityChangeParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
             _checkSlippage(
-                vTokenAddress,
+                vToken,
                 liquidityChangeParams.sqrtPriceCurrent,
                 liquidityChangeParams.slippageToleranceBps
             );
         }
 
-        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(vTokenAddress, liquidityChangeParams, protocol);
+        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(vToken, liquidityChangeParams, protocol);
 
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, protocol)
+            VTokenPositionSet.getNotionalValue(vToken, vTokenAmountOut, vBaseAmountOut, protocol)
         );
 
         if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
@@ -269,7 +270,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) external returns (IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments) {
         return _liquidateTokenPosition(liquidatorAccountNo, accountNo, vTokenTruncatedAddress, liquidationBps, 0);
     }
 
@@ -278,11 +279,11 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
      */
 
     function _checkSlippage(
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(protocol);
+        uint160 sqrtPriceCurrent = vToken.getVirtualCurrentSqrtPriceX96(protocol);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
@@ -301,14 +302,10 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         if (!supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
     }
 
-    function _getVTokenAddressWithChecks(uint32 vTokenTruncatedAddress)
-        internal
-        view
-        returns (VTokenAddress vTokenAddress)
-    {
-        vTokenAddress = protocol.vTokenAddresses[vTokenTruncatedAddress];
-        if (vTokenAddress.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedVToken(vTokenAddress);
+    function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
+        vToken = protocol.vTokens[vTokenTruncatedAddress];
+        if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
+        if (!supportedVTokens[vToken]) revert UnsupportedVToken(vToken);
     }
 
     function _liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
@@ -338,18 +335,18 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    ) internal notPaused returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) internal notPaused returns (IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments) {
         // Calldata.limit(0x4 + 5 * 0x20);
 
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.UserInfo storage account = accounts[accountNo];
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
         int256 insuranceFundFee;
         (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
             accounts[liquidatorAccountNo],
             liquidationBps,
-            vTokenAddress,
+            vToken,
             getFixFee(gasComputationUnitsClaim),
             protocol
         );
@@ -369,10 +366,10 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
 
         Account.UserInfo storage account = accounts[accountNo];
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
         keeperFee = protocol.removeLimitOrderFee + getFixFee(gasComputationUnitsClaim);
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, protocol);
+        account.removeLimitOrder(vToken, tickLower, tickUpper, keeperFee, protocol);
 
         rBase.transfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
@@ -397,13 +394,13 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         return 0;
     }
 
-    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+    function getTwapSqrtPricesForSetDuration(IVToken vToken)
         external
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128)
     {
-        realPriceX128 = vTokenAddress.getRealTwapPriceX128(protocol);
-        virtualPriceX128 = vTokenAddress.getVirtualTwapPriceX128(protocol);
+        realPriceX128 = vToken.getRealTwapPriceX128(protocol);
+        virtualPriceX128 = vToken.getVirtualTwapPriceX128(protocol);
     }
 
     function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
@@ -411,10 +408,10 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     }
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
-        return protocol.vTokenAddresses[truncated].eq(address(0));
+        return protocol.vTokens[truncated].eq(address(0));
     }
 
-    function rageTradePools(VTokenAddress vTokenAddress) public view returns (RageTradePool memory rageTradePool) {
-        return protocol.pools[vTokenAddress];
+    function rageTradePools(IVToken vToken) public view returns (RageTradePool memory rageTradePool) {
+        return protocol.pools[vToken];
     }
 }

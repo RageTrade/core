@@ -5,9 +5,11 @@ pragma solidity ^0.8.9;
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { RTokenLib } from '../libraries/RTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
+
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
@@ -25,8 +27,8 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
         wrapper = new VPoolWrapperMock();
     }
 
-    function initVToken(address vTokenAddress) external {
-        protocol.vTokenAddresses[vTokenAddress.truncate()] = VTokenAddress.wrap(vTokenAddress);
+    function initVToken(address vToken) external {
+        protocol.vTokens[vToken.truncate()] = IVToken(vToken);
     }
 
     function init(

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { IVToken } from '../libraries/VTokenLib.sol';
 
 import { IVBase } from './IVBase.sol';
 import { IVToken } from './IVToken.sol';
@@ -21,7 +21,7 @@ interface IVPoolWrapper {
 
     struct InitializeVPoolWrapperParams {
         IClearingHouse clearingHouse;
-        IVToken vTokenAddress;
+        IVToken vToken;
         IVBase vBase;
         IUniswapV3Pool vPool;
         uint24 liquidityFeePips;
@@ -29,7 +29,7 @@ interface IVPoolWrapper {
         uint24 UNISWAP_V3_DEFAULT_FEE_TIER;
     }
 
-    // address _vTokenAddress,
+    // address _vToken,
     // address _vPoolAddress,
     // address _oracleAddress,
     // uint24 _liquidityFeePips,

@@ -8,15 +8,16 @@ import { Account } from './Account.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { VTokenLib } from './VTokenLib.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
     using FullMath for uint256;
     using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
@@ -65,7 +66,7 @@ library VTokenPosition {
     /// @param protocol platform constants
     function marketValue(
         Position storage position,
-        VTokenAddress vToken,
+        IVToken vToken,
         uint256 priceX128,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256 value) {
@@ -78,7 +79,7 @@ library VTokenPosition {
     /// @param protocol platform constants
     function marketValue(
         Position storage position,
-        VTokenAddress vToken,
+        IVToken vToken,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
         uint256 priceX128 = vToken.getVirtualTwapPriceX128(protocol);
@@ -108,7 +109,7 @@ library VTokenPosition {
     /// @param protocol platform constants
     function unrealizedFundingPayment(
         Position storage position,
-        VTokenAddress vToken,
+        IVToken vToken,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
         return unrealizedFundingPayment(position, vToken.vPoolWrapper(protocol));

@@ -5,9 +5,10 @@ pragma solidity ^0.8.9;
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { VTokenAddress } from '../libraries/VTokenLib.sol';
-import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { IVToken } from '../libraries/VTokenLib.sol';
+import { IVToken } from '../libraries/VTokenLib.sol';
 
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
@@ -18,7 +19,7 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
     using LiquidityPosition for LiquidityPosition.Info;
     // using Uint48L5ArrayLib for uint48[5];
 
-    Account.BalanceAdjustments public balanceAdjustments;
+    IClearingHouse.BalanceAdjustments public balanceAdjustments;
     LiquidityPosition.Info public lp;
     VPoolWrapperMock public wrapper;
 
@@ -35,7 +36,7 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
             lp.tickLower,
             lp.tickUpper
         );
-        lp.update(0, VTokenAddress.wrap(address(0)), wrapperValuesInside, balanceAdjustments);
+        lp.update(0, IVToken(address(0)), wrapperValuesInside, balanceAdjustments);
     }
 
     function netPosition() public view returns (int256) {
@@ -43,7 +44,7 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
     }
 
     function liquidityChange(int128 liquidity) public {
-        lp.liquidityChange(0, VTokenAddress.wrap(address(0)), liquidity, wrapper, balanceAdjustments);
+        lp.liquidityChange(0, IVToken(address(0)), liquidity, wrapper, balanceAdjustments);
     }
 
     function maxNetPosition() public view returns (uint256) {

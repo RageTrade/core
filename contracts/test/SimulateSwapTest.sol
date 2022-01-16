@@ -5,15 +5,17 @@ pragma solidity ^0.8.9;
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
-import { FundingPayment } from '../libraries/FundingPayment.sol';
-import { SimulateSwap } from '../libraries/SimulateSwap.sol';
-import { Tick } from '../libraries/Tick.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
-
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
+import { FundingPayment } from '../libraries/FundingPayment.sol';
+import { SimulateSwap } from '../libraries/SimulateSwap.sol';
+import { Tick } from '../libraries/Tick.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
+
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -22,7 +24,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     using FundingPayment for FundingPayment.Info;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
 
     IUniswapV3Pool vPool;
 

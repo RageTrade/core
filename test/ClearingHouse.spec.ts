@@ -319,13 +319,13 @@ describe('Clearing House Library', () => {
 
   describe('#InitializeToken', () => {
     it('vToken Intialized', async () => {
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vTokenAddress)).to.eq(vTokenAddress);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
     });
     it('vBase Intialized', async () => {
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vBaseAddress)).to.eq(vBaseAddress);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
     });
     it('Other Address Not Intialized', async () => {
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(dummyTokenAddress)).to.eq(ADDRESS_ZERO);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(dummyTokenAddress)).to.eq(ADDRESS_ZERO);
     });
   });
 

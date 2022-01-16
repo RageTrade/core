@@ -11,11 +11,9 @@ import { IInsuranceFund } from './IInsuranceFund.sol';
 import { IOracle } from './IOracle.sol';
 import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
+import { IVToken } from './IVToken.sol';
 
 // TODO move these to interface
-import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
-import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
-import { VTokenAddress } from '../libraries/VTokenLib.sol';
 import { Account } from '../libraries/Account.sol';
 
 interface IClearingHouse is IGovernable {
@@ -33,13 +31,51 @@ interface IClearingHouse is IGovernable {
         IOracle oracle;
     }
 
+    enum LimitOrderType {
+        NONE,
+        LOWER_LIMIT,
+        UPPER_LIMIT
+    }
+
+    struct LiquidityChangeParams {
+        int24 tickLower;
+        int24 tickUpper;
+        int128 liquidityDelta;
+        uint160 sqrtPriceCurrent;
+        uint16 slippageToleranceBps;
+        bool closeTokenPosition;
+        LimitOrderType limitOrderType;
+    }
+
+    /// @notice swaps params for specifying the swap params
+    /// @param amount amount of tokens/base to swap
+    /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
+    /// @param isNotional specifies whether the amount represents token amount (false) or base amount(true)
+    /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
+    struct SwapParams {
+        int256 amount;
+        uint160 sqrtPriceLimit;
+        bool isNotional;
+        bool isPartialAllowed;
+    }
+
+    /// @notice parameters to be used for account balance update
+    /// @param vBaseIncrease specifies the increase in base balance
+    /// @param vTokenIncrease specifies the increase in token balance
+    /// @param traderPositionIncrease specifies the increase in trader position
+    struct BalanceAdjustments {
+        int256 vBaseIncrease;
+        int256 vTokenIncrease;
+        int256 traderPositionIncrease;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);
 
     /// @notice error to denote usage of unsupported token
-    /// @param vTokenAddress address of token
-    error UnsupportedVToken(VTokenAddress vTokenAddress);
+    /// @param vToken address of token
+    error UnsupportedVToken(IVToken vToken);
 
     /// @notice error to denote usage of unsupported token
     /// @param rTokenAddress address of token
@@ -107,7 +143,7 @@ interface IClearingHouse is IGovernable {
     function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        VTokenPositionSet.SwapParams memory swapParams
+        SwapParams memory swapParams
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     /// @notice updates range order of token associated with 'vTokenTruncatedAddress' by 'liquidityDelta' (Adds if amount>0 else Removes)
@@ -118,7 +154,7 @@ interface IClearingHouse is IGovernable {
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        LiquidityPositionSet.LiquidityChangeParams calldata liquidityChangeParams
+        LiquidityChangeParams calldata liquidityChangeParams
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     /// @notice keeper call to remove a limit order
@@ -154,7 +190,7 @@ interface IClearingHouse is IGovernable {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments);
+    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
 
     function getFixFee(uint256) external view returns (uint256 fixFee);
 
@@ -166,7 +202,7 @@ interface IClearingHouse is IGovernable {
 
     function initRealToken(address _realToken) external;
 
-    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+    function getTwapSqrtPricesForSetDuration(IVToken vToken)
         external
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128);

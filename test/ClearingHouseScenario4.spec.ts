@@ -254,7 +254,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     const event = eventList[0];
     expect(event.args.accountNo).to.eq(expectedUserAccountNo);
-    expect(event.args.vTokenAddress).to.eq(expectedTokenAddress);
+    expect(event.args.vToken).to.eq(expectedTokenAddress);
     expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
     expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
   }
@@ -284,7 +284,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     const event = eventList[0];
 
     expect(event.args.accountNo).to.eq(expectedUserAccountNo);
-    expect(event.args.vTokenAddress).to.eq(expectedTokenAddress);
+    expect(event.args.vToken).to.eq(expectedTokenAddress);
     expect(event.args.tickLower).to.eq(expectedTickLower);
     expect(event.args.tickUpper).to.eq(expectedTickUpper);
     expect(event.args.amount).to.eq(expectedFundingPayment);
@@ -884,8 +884,8 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     });
 
     it('Tokens Intialized', async () => {
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vTokenAddress)).to.eq(vTokenAddress);
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vBaseAddress)).to.eq(vBaseAddress);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
     });
 
     it('Add Token 1 Position Support - Pass', async () => {

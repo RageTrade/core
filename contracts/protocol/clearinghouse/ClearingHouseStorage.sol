@@ -5,7 +5,7 @@ import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import { Account } from '../../libraries/Account.sol';
-import { VTokenAddress } from '../../libraries/VTokenLib.sol';
+import { IVToken } from '../../libraries/VTokenLib.sol';
 
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
@@ -21,7 +21,7 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     Account.ProtocolInfo public protocol;
 
     mapping(address => bool) public realTokenInitilized;
-    mapping(VTokenAddress => bool) public supportedVTokens;
+    mapping(IVToken => bool) public supportedVTokens;
     mapping(address => bool) public supportedDeposits;
 
     uint256 public numAccounts;

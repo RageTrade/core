@@ -25,11 +25,11 @@ abstract contract VTokenDeployer {
             abi.encode(params.vTokenName, params.vTokenSymbol, params.rTokenDecimals)
         );
 
-        vToken = IVToken(GoodAddressDeployer.deploy(0, bytecode, _isVTokenAddressGood));
+        vToken = IVToken(GoodAddressDeployer.deploy(0, bytecode, _isIVTokenAddressGood));
     }
 
     // returns true if last 4 bytes are non-zero, also extended to add more conditions in VPoolFactory
-    function _isVTokenAddressGood(address addr) internal view virtual returns (bool) {
+    function _isIVTokenAddressGood(address addr) internal view virtual returns (bool) {
         return uint32(uint160(addr)) != 0;
     }
 }
