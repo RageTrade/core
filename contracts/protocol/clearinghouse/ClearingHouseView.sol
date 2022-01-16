@@ -37,7 +37,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     /**
         Account.ProtocolInfo VIEW
      */
-    function getProtocolInfo()
+    function protocolInfo()
         public
         view
         returns (
@@ -55,7 +55,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         minimumOrderNotional = protocol.minimumOrderNotional;
     }
 
-    function getProtocolPool(IVToken vToken) public view returns (RageTradePool memory) {
+    function pools(IVToken vToken) public view returns (RageTradePool memory) {
         return protocol.pools[vToken];
     }
 

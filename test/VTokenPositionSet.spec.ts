@@ -357,13 +357,13 @@ describe('VTokenPositionSet Library', () => {
   });
 
   async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
-    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    const basePoolObj = await clearingHouse.pools(vBase.address);
     await vTokenPositionSet.registerPool(vBase.address, basePoolObj);
 
-    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    const vTokenPoolObj = await clearingHouse.pools(vTokenAddress);
     await vTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouse.rageTradePools(vTokenAddress1);
+    const vTokenPoolObj1 = await clearingHouse.pools(vTokenAddress1);
     await vTokenPositionSet.registerPool(vTokenAddress1, vTokenPoolObj1);
 
     await vTokenPositionSet.setVBaseAddress(vBase.address);

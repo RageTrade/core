@@ -835,7 +835,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         minRequiredMargin,
       );
       await clearingHouseTest.setFixFee(fixFee);
-      const protocol = await clearingHouseTest.protocol();
+      const protocol = await clearingHouseTest.protocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       expect(await clearingHouseTest.fixFee()).eq(fixFee);

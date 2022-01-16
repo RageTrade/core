@@ -678,7 +678,7 @@ describe('Clearing House Scenario 6', () => {
         minRequiredMargin,
       );
       await clearingHouseTest.setFixFee(fixFee);
-      const protocol = await clearingHouseTest.protocol();
+      const protocol = await clearingHouseTest.protocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);

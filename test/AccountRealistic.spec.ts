@@ -298,13 +298,13 @@ describe('Account Library Test Realistic', () => {
       fixFee,
     );
 
-    const basePoolObj = await clearingHouse.rageTradePools(vBase.address);
+    const basePoolObj = await clearingHouse.pools(vBase.address);
     await test.registerPool(vBase.address, basePoolObj);
 
-    const vTokenPoolObj = await clearingHouse.rageTradePools(vTokenAddress);
+    const vTokenPoolObj = await clearingHouse.pools(vTokenAddress);
     await test.registerPool(vTokenAddress, vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouse.rageTradePools(vTokenAddress1);
+    const vTokenPoolObj1 = await clearingHouse.pools(vTokenAddress1);
     await test.registerPool(vTokenAddress1, vTokenPoolObj1);
 
     await test.setVBaseAddress(vBase.address);
