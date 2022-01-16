@@ -2,36 +2,32 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
-import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
-contract VTokenLibTest is AccountStorageMock {
-    using VTokenLib for VTokenAddress;
+contract VTokenLibTest is AccountProtocolInfoMock {
+    using VTokenLib for IVToken;
 
-    function vPool(VTokenAddress vToken) external view returns (address) {
-        return address(vToken.vPool(accountStorage));
+    function vPool(IVToken vToken) external view returns (address) {
+        return address(vToken.vPool(protocol));
     }
 
-    function vPoolWrapper(VTokenAddress vToken) external view returns (address) {
-        return address(vToken.vPoolWrapper(accountStorage));
+    function vPoolWrapper(IVToken vToken) external view returns (address) {
+        return address(vToken.vPoolWrapper(protocol));
     }
 
-    function realToken(VTokenAddress vToken) external view returns (address) {
-        return address(vToken.realToken());
+    function getVirtualTwapSqrtPrice(IVToken vToken) external view returns (uint160) {
+        return vToken.getVirtualTwapSqrtPriceX96(protocol);
     }
 
-    function getVirtualTwapSqrtPrice(VTokenAddress vToken) external view returns (uint160) {
-        return vToken.getVirtualTwapSqrtPriceX96(accountStorage);
+    function getRealTwapSqrtPrice(IVToken vToken) external view returns (uint160) {
+        return vToken.getRealTwapSqrtPriceX96(protocol);
     }
 
-    function getRealTwapSqrtPrice(VTokenAddress vToken) external view returns (uint160) {
-        return vToken.getRealTwapSqrtPriceX96(accountStorage);
-    }
-
-    function getMarginRatio(VTokenAddress vToken, bool isInitialMargin) external view returns (uint16) {
-        return vToken.getMarginRatio(isInitialMargin, accountStorage);
+    function getMarginRatio(IVToken vToken, bool isInitialMargin) external view returns (uint16) {
+        return vToken.getMarginRatio(isInitialMargin, protocol);
     }
 }

@@ -4,21 +4,18 @@ pragma solidity ^0.8.9;
 
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 
+import { Account } from './Account.sol';
 import { RTokenLib } from './RTokenLib.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
-
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
     using RTokenLib for RTokenLib.RToken;
     using RTokenLib for address;
-
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
-    int256 internal constant Q96 = 0x1000000000000000000000000;
 
     struct Info {
         // fixed length array of truncate(tokenAddress)
@@ -26,7 +23,7 @@ library DepositTokenSet {
         // single per pool because it's fungible, allows for having
         uint32[8] active;
         mapping(uint32 => uint256) deposits;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
     // add overrides that accept vToken or truncated
@@ -58,7 +55,7 @@ library DepositTokenSet {
         }
     }
 
-    function getAllDepositAccountMarketValue(Info storage set, AccountStorage storage accountStorage)
+    function getAllDepositAccountMarketValue(Info storage set, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (int256)
@@ -68,7 +65,7 @@ library DepositTokenSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            RTokenLib.RToken storage token = accountStorage.realTokens[truncated];
+            RTokenLib.RToken storage token = protocol.rTokens[truncated];
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
                 token.getRealTwapPriceX128(),

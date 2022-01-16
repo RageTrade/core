@@ -1,11 +1,16 @@
 //SPDX-License-Identifier: UNLICENSED
 
 pragma solidity ^0.8.9;
-import { VTokenAddress, VTokenPosition } from '../libraries/VTokenPosition.sol';
+
+import { VTokenPosition } from '../libraries/VTokenPosition.sol';
+
+import { IVToken } from '../interfaces/IVToken.sol';
+
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionTest {
     using VTokenPosition for VTokenPosition.Position;
+
     uint256 num;
     mapping(uint256 => VTokenPosition.Position) internal dummys;
 

@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
+import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import { ProxyAdmin } from '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
@@ -17,7 +16,7 @@ import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
 import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
 
 import { IOracle } from '../interfaces/IOracle.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
@@ -31,7 +30,7 @@ contract RageTradeFactory is
     VPoolWrapperDeployer,
     VTokenDeployer
 {
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
 
     address public immutable UNISWAP_V3_FACTORY_ADDRESS;
     uint24 public immutable UNISWAP_V3_DEFAULT_FEE_TIER;
@@ -48,8 +47,8 @@ contract RageTradeFactory is
     constructor(
         address clearingHouseLogicAddress,
         address _vPoolWrapperLogicAddress,
-        address rBaseAddress,
         address insuranceFundLogicAddress,
+        IERC20Metadata rBase,
         address nativeOracle,
         address _UNISWAP_V3_FACTORY_ADDRESS,
         uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -63,7 +62,7 @@ contract RageTradeFactory is
         UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
 
         // deploys VBase contract at an address which has most significant nibble as "f"
-        vBase = _deployVBase(rBaseAddress);
+        vBase = _deployVBase(rBase.decimals());
 
         // deploys InsuranceFund proxy
         IInsuranceFund insuranceFund = _deployProxyForInsuranceFund(insuranceFundLogicAddress);
@@ -72,14 +71,14 @@ contract RageTradeFactory is
         clearingHouse = _deployProxyForClearingHouseAndInitialize(
             ClearingHouseDeployer.DeployClearingHouseParams(
                 clearingHouseLogicAddress,
-                rBaseAddress,
+                address(rBase),
                 address(insuranceFund),
                 address(vBase),
                 nativeOracle
             )
         );
-        Governable(address(clearingHouse)).transferGovernance(msg.sender);
-        Governable(address(clearingHouse)).transferTeamMultisig(msg.sender);
+        clearingHouse.transferGovernance(msg.sender);
+        clearingHouse.transferTeamMultisig(msg.sender);
 
         // TODO refactor the code such that registering vBase as a pool is not needed
         clearingHouse.registerPool(
@@ -91,7 +90,7 @@ contract RageTradeFactory is
             )
         );
 
-        _initializeInsuranceFund(insuranceFund, IERC20(rBaseAddress), clearingHouse);
+        _initializeInsuranceFund(insuranceFund, rBase, clearingHouse);
     }
 
     struct InitializePoolParams {
@@ -113,7 +112,7 @@ contract RageTradeFactory is
 
         // STEP 3: Initialize the price on the vPool
         vPool.initialize(
-            IOracle(initializePoolParams.deployVTokenParams.oracleAddress).getTwapSqrtPriceX96(
+            initializePoolParams.rageTradePoolInitialSettings.oracle.getTwapSqrtPriceX96(
                 initializePoolParams.rageTradePoolInitialSettings.twapDuration
             )
         );
@@ -153,9 +152,9 @@ contract RageTradeFactory is
             );
     }
 
-    function _isVTokenAddressGood(address addr) internal view virtual override returns (bool) {
+    function _isIVTokenAddressGood(address addr) internal view virtual override returns (bool) {
         return
-            super._isVTokenAddressGood(addr) &&
+            super._isIVTokenAddressGood(addr) &&
             (uint160(addr) < uint160(address(vBase))) &&
             clearingHouse.isVTokenAddressAvailable(uint32(uint160(addr)));
     }

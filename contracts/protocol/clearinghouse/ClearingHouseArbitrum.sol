@@ -14,7 +14,7 @@ contract ClearingHouseArbitrum is ClearingHouse {
     using FullMath for uint256;
     using PriceMath for uint160;
 
-    function getFixFee(uint256 l2ComputationUnits) public view override returns (uint256 fixFee) {
+    function _getFixFee(uint256 l2ComputationUnits) internal view override returns (uint256 fixFee) {
         uint256 totalL1FeeInWei;
 
         // if call from EOA then include L1 fee, i.e. do not refund L1 fee to calls from contract

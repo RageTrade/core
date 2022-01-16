@@ -12,21 +12,15 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
-import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { VTokenLib } from './VTokenLib.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
-
-enum LimitOrderType {
-    NONE,
-    LOWER_LIMIT,
-    UPPER_LIMIT
-}
 
 library LiquidityPosition {
     using PriceMath for uint160;
@@ -34,16 +28,13 @@ library LiquidityPosition {
     using FullMath for uint256;
     using SafeCast for uint256;
     using LiquidityPosition for Info;
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    error AlreadyInitialized();
-    error IneligibleLimitOrderRemoval();
-
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
-        LimitOrderType limitOrderType;
+        IClearingHouse.LimitOrderType limitOrderType;
         // the tick range of the position;
         int24 tickLower;
         int24 tickUpper;
@@ -56,8 +47,11 @@ library LiquidityPosition {
         int256 sumFpInsideLastX128;
         // fee growth inside
         uint256 sumFeeInsideLastX128;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
+
+    error AlreadyInitialized();
+    error IneligibleLimitOrderRemoval();
 
     function isInitialized(Info storage info) internal view returns (bool) {
         return info.tickLower != 0 || info.tickUpper != 0;
@@ -65,8 +59,8 @@ library LiquidityPosition {
 
     function checkValidLimitOrderRemoval(Info storage info, int24 currentTick) internal view {
         if (
-            !((currentTick >= info.tickUpper && info.limitOrderType == LimitOrderType.UPPER_LIMIT) ||
-                (currentTick <= info.tickLower && info.limitOrderType == LimitOrderType.LOWER_LIMIT))
+            !((currentTick >= info.tickUpper && info.limitOrderType == IClearingHouse.LimitOrderType.UPPER_LIMIT) ||
+                (currentTick <= info.tickLower && info.limitOrderType == IClearingHouse.LimitOrderType.LOWER_LIMIT))
         ) {
             revert IneligibleLimitOrderRemoval();
         }
@@ -88,10 +82,10 @@ library LiquidityPosition {
     function liquidityChange(
         Info storage position,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         int128 liquidity,
         IVPoolWrapper wrapper,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
         (
             int256 basePrincipal,
@@ -99,14 +93,14 @@ library LiquidityPosition {
             IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside
         ) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
 
-        position.update(accountNo, vTokenAddress, wrapperValuesInside, balanceAdjustments);
+        position.update(accountNo, vToken, wrapperValuesInside, balanceAdjustments);
 
         balanceAdjustments.vBaseIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
         emit Account.LiquidityChange(
             accountNo,
-            vTokenAddress,
+            vToken,
             position.tickLower,
             position.tickUpper,
             liquidity,
@@ -134,9 +128,9 @@ library LiquidityPosition {
     function update(
         Info storage position,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
         int256 fundingPayment = position.unrealizedFundingPayment(
             wrapperValuesInside.sumAX128,
@@ -147,14 +141,8 @@ library LiquidityPosition {
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
-        emit Account.FundingPayment(accountNo, vTokenAddress, position.tickLower, position.tickUpper, fundingPayment);
-        emit Account.LiquidityFee(
-            accountNo,
-            vTokenAddress,
-            position.tickLower,
-            position.tickUpper,
-            unrealizedLiquidityFee
-        );
+        emit Account.FundingPayment(accountNo, vToken, position.tickLower, position.tickUpper, fundingPayment);
+        emit Account.LiquidityFee(accountNo, vToken, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
         // updating checkpoints
         position.sumALastX128 = wrapperValuesInside.sumAX128;
         position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
@@ -211,10 +199,10 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vTokenAddress,
-        AccountStorage storage accountStorage
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(sqrtPriceCurrent, vTokenAddress.vPoolWrapper(accountStorage));
+        return position.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(protocol));
     }
 
     function tokenAmountsInRange(Info storage position, uint160 sqrtPriceCurrent)

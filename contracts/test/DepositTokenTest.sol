@@ -2,22 +2,18 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
-import { VTokenPosition } from '../libraries/VTokenPosition.sol';
-import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
-import { Account, LiquidationParams } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { RTokenLib } from '../libraries/RTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
 
-import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
-contract DepositTokenSetTest is AccountStorageMock {
+import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
+
+contract DepositTokenSetTest is AccountProtocolInfoMock {
     using DepositTokenSet for DepositTokenSet.Info;
     using RTokenLib for RTokenLib.RToken;
     using RTokenLib for address;
@@ -31,8 +27,8 @@ contract DepositTokenSetTest is AccountStorageMock {
         wrapper = new VPoolWrapperMock();
     }
 
-    function initVToken(address vTokenAddress) external {
-        accountStorage.vTokenAddresses[vTokenAddress.truncate()] = VTokenAddress.wrap(vTokenAddress);
+    function initVToken(address vToken) external {
+        protocol.vTokens[vToken.truncate()] = IVToken(vToken);
     }
 
     function init(
@@ -41,7 +37,7 @@ contract DepositTokenSetTest is AccountStorageMock {
         uint32 twapDuration
     ) external {
         RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
-        accountStorage.realTokens[token.tokenAddress.truncate()] = token;
+        protocol.rTokens[token.tokenAddress.truncate()] = token;
     }
 
     function cleanDeposits() external {
@@ -50,7 +46,7 @@ contract DepositTokenSetTest is AccountStorageMock {
             if (truncatedAddress == 0) break;
 
             depositTokenSet.decreaseBalance(
-                accountStorage.realTokens[truncatedAddress].tokenAddress,
+                protocol.rTokens[truncatedAddress].tokenAddress,
                 depositTokenSet.deposits[truncatedAddress]
             );
         }
@@ -65,7 +61,7 @@ contract DepositTokenSetTest is AccountStorageMock {
     }
 
     function getAllDepositAccountMarketValue() external view returns (int256 depositValue) {
-        return depositTokenSet.getAllDepositAccountMarketValue(accountStorage);
+        return depositTokenSet.getAllDepositAccountMarketValue(protocol);
     }
 
     function getBalance(address realTokenAddress) external view returns (uint256 balance) {

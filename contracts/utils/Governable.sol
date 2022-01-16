@@ -5,12 +5,14 @@ pragma solidity ^0.8.9;
 import { Context } from '@openzeppelin/contracts/utils/Context.sol';
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
+import { IGovernable } from '../interfaces/IGovernable.sol';
+
 /**
  * This module is used through inheritance. It will make available the modifier
  * `onlyGovernance` and `onlyGovernanceOrTeamMultisig`, which can be applied to your functions
  * to restrict their use to the caller.
  */
-abstract contract Governable is Context, Initializable {
+abstract contract Governable is IGovernable, Context, Initializable {
     address private _governance;
     address private _teamMultisig;
 
@@ -24,22 +26,22 @@ abstract contract Governable is Context, Initializable {
      * @dev Initializes the contract setting the deployer as the initial governance and team multisig.
      */
     constructor() {
-        Governable__init();
+        __Governable_init();
     }
 
     /**
      * @dev Useful to proxy contracts for initializing
      */
-    function Governable__init() internal {
+    function __Governable_init() internal {
         address msgSender = _msgSender();
 
-        Governable__init(msgSender, msgSender);
+        __Governable_init(msgSender, msgSender);
     }
 
     /**
      * @dev Useful to proxy contracts for initializing with custom addresses
      */
-    function Governable__init(address initialGovernance, address initialTeamMultisig) internal initializer {
+    function __Governable_init(address initialGovernance, address initialTeamMultisig) internal initializer {
         _governance = initialGovernance;
         emit GovernanceTransferred(address(0), initialGovernance);
 

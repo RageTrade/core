@@ -50,8 +50,8 @@ export async function testSetup({
   ).deploy(
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
-    realBase.address,
     insuranceFundLogic.address,
+    realBase.address,
     nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -91,8 +91,7 @@ export async function testSetup({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenAddress: realToken.address,
-      oracleAddress: oracle.address,
+      rTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
@@ -110,7 +109,7 @@ export async function testSetup({
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];
   const vPoolWrapperAddress = events[0].args[2];
-  // const constants = (await clearingHouse.accountStorage()).constants;
+  // const constants = (await clearingHouse.protocolInfo()).constants;
 
   return {
     realBase,
@@ -165,8 +164,8 @@ export async function testSetupBase(signer?: SignerWithAddress) {
   ).deploy(
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
-    realBase.address,
     insuranceFundLogic.address,
+    realBase.address,
     nativeOracle.address,
     UNISWAP_V3_FACTORY_ADDRESS,
     UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -179,7 +178,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
   const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
-  // const constants = (await clearingHouse.accountStorage()).constants;
+  // const constants = (await clearingHouse.protocolInfo()).constants;
 
   return {
     realBase,
@@ -221,8 +220,7 @@ export async function testSetupToken({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenAddress: realToken.address,
-      oracleAddress: oracle.address,
+      rTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,

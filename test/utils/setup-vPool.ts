@@ -46,19 +46,15 @@ export async function setupVPool({
 
   if (!vBase) {
     // setting up virtual base
-    const realBase = await smock.fake<ERC20>('ERC20');
-    realBase.decimals.returns(vBaseDecimals);
     const VBase__factory = await smock.mock<VBase__factory>('VBase', signer); // await hre.ethers.getContractFactory('VBase');
-    vBase = await VBase__factory.deploy(realBase.address);
+    vBase = await VBase__factory.deploy(vBaseDecimals);
     hre.tracer.nameTags[vBase.address] = 'vBase';
   }
 
   // setting up virtual token
-  const realToken = await smock.fake<ERC20>('ERC20');
-  realToken.decimals.returns(vTokenDecimals);
   const VToken__factory = await smock.mock<VToken__factory>('VToken', signer); // await hre.ethers.getContractFactory('VToken');
   const vPoolWrapperAddressCalculated = signer.address; // ethers.constants.AddressZero;
-  const vToken = await VToken__factory.deploy('vETH', 'vETH', realToken.address, oracle.address);
+  const vToken = await VToken__factory.deploy('vETH', 'vETH', vTokenDecimals);
   await vToken.setVPoolWrapper(vPoolWrapperAddressCalculated);
   hre.tracer.nameTags[vToken.address] = 'vToken';
 

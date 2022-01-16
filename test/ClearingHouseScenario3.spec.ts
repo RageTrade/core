@@ -254,7 +254,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     const event = eventList[0];
     expect(event.args.accountNo).to.eq(expectedUserAccountNo);
-    expect(event.args.vTokenAddress).to.eq(expectedTokenAddress);
+    expect(event.args.vToken).to.eq(expectedTokenAddress);
     expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
     expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
   }
@@ -284,7 +284,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     const event = eventList[0];
 
     expect(event.args.accountNo).to.eq(expectedUserAccountNo);
-    expect(event.args.vTokenAddress).to.eq(expectedTokenAddress);
+    expect(event.args.vToken).to.eq(expectedTokenAddress);
     expect(event.args.tickLower).to.eq(expectedTickLower);
     expect(event.args.tickUpper).to.eq(expectedTickUpper);
     expect(event.args.amount).to.eq(expectedFundingPayment);
@@ -635,8 +635,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       deployVTokenParams: {
         vTokenName: tokenName,
         vTokenSymbol: tokenSymbol,
-        rTokenAddress: realToken.address,
-        oracleAddress: oracle.address,
+        rTokenDecimals: decimals,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,
@@ -756,8 +755,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     ).deploy(
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
-      rBase.address,
       insuranceFundLogic.address,
+      rBase.address,
       nativeOracle.address,
       UNISWAP_V3_FACTORY_ADDRESS,
       UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -824,21 +823,21 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         minRequiredMargin,
       );
       await clearingHouseTest.setFixFee(fixFee);
-      const accountStorage = await clearingHouseTest.accountStorage();
+      const protocol = await clearingHouseTest.protocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
 
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
-      expect(accountStorage.minRequiredMargin).eq(minRequiredMargin);
-      expect(accountStorage.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
-      expect(accountStorage.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
+      expect(protocol.minRequiredMargin).eq(minRequiredMargin);
+      expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
+      expect(protocol.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
         liquidationParams.tokenLiquidationPriceDeltaBps,
       );
-      expect(accountStorage.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
+      expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
-      expect(accountStorage.removeLimitOrderFee).eq(removeLimitOrderFee);
-      expect(accountStorage.minimumOrderNotional).eq(minimumOrderNotional);
+      expect(protocol.removeLimitOrderFee).eq(removeLimitOrderFee);
+      expect(protocol.minimumOrderNotional).eq(minimumOrderNotional);
       expect(curPaused).to.be.false;
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
@@ -890,8 +889,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     });
 
     it('Tokens Intialized', async () => {
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vTokenAddress)).to.eq(vTokenAddress);
-      expect(await clearingHouseTest.getTokenAddressInVTokenAddresses(vBaseAddress)).to.eq(vBaseAddress);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
+      expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
     });
 
     it('Add Token 1 Position Support - Pass', async () => {

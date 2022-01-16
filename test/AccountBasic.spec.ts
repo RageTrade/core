@@ -166,10 +166,10 @@ describe('Account Library Test Basic', () => {
       fixFee,
     );
 
-    const poolObj = await clearingHouse.rageTradePools(vBase.address);
+    const poolObj = await clearingHouse.pools(vBase.address);
     await test.registerPool(vBase.address, poolObj);
 
-    const poolObj2 = await clearingHouse.rageTradePools(vTokenAddress);
+    const poolObj2 = await clearingHouse.pools(vTokenAddress);
     await test.registerPool(vTokenAddress, poolObj2);
 
     await test.setVBaseAddress(vBase.address);

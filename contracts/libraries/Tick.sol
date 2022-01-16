@@ -2,18 +2,18 @@
 
 pragma solidity ^0.8.9;
 
-import { FundingPayment } from './FundingPayment.sol';
-import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
-
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { LiquidityMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
+
+import { FundingPayment } from './FundingPayment.sol';
+import { VTokenLib } from './VTokenLib.sol';
+
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
 // extended tick state
 library Tick {
-    using VTokenLib for VTokenAddress;
-
     struct Info {
         int256 sumALastX128;
         int256 sumBOutsideX128;

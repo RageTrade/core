@@ -59,8 +59,7 @@ describe('RageTradeFactory', () => {
         deployVTokenParams: {
           vTokenName: 'vTest',
           vTokenSymbol: 'vTest',
-          rTokenAddress: realToken.address,
-          oracleAddress: oracle.address,
+          rTokenDecimals: 18,
         },
         rageTradePoolInitialSettings: {
           initialMarginRatio: 1,
@@ -96,7 +95,9 @@ describe('RageTradeFactory', () => {
 
       await proxyAdmin.upgrade(clearingHouse.address, newCHLogic.address);
 
-      expect(await clearingHouse.getFixFee(0)).to.eq(1234567890);
+      const clearingHouse_ = await hre.ethers.getContractAt('ClearingHouseDummy', clearingHouse.address);
+
+      expect(await clearingHouse_.newMethodAdded()).to.eq(1234567890);
     });
 
     it('upgrades vpoolwrapper', async () => {

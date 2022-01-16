@@ -2,27 +2,32 @@
 
 pragma solidity ^0.8.9;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+
 import { FundingPayment } from '../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
 import { Tick } from '../libraries/Tick.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 
-import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
 contract SimulateSwapTest is IUniswapV3SwapCallback {
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
+    using SafeERC20 for IERC20;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
 
     IUniswapV3Pool vPool;
 
@@ -120,10 +125,10 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         require(msg.sender == address(vPool));
         address receipient = abi.decode(data, (address));
         if (amount0Delta > 0) {
-            IERC20(vPool.token0()).transferFrom(receipient, address(vPool), uint256(amount0Delta));
+            IERC20(vPool.token0()).safeTransferFrom(receipient, address(vPool), uint256(amount0Delta));
         }
         if (amount1Delta > 0) {
-            IERC20(vPool.token1()).transferFrom(receipient, address(vPool), uint256(amount1Delta));
+            IERC20(vPool.token1()).safeTransferFrom(receipient, address(vPool), uint256(amount1Delta));
         }
     }
 }

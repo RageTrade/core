@@ -5,11 +5,11 @@ pragma solidity ^0.8.9;
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import { Account, LiquidationParams } from '../../libraries/Account.sol';
-import { LiquidityChangeParams } from '../../libraries/LiquidityPositionSet.sol';
-import { VTokenPositionSet, SwapParams } from '../../libraries/VTokenPositionSet.sol';
+import { Account } from '../../libraries/Account.sol';
+import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
+import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
-import { VTokenAddress, VTokenLib } from '../../libraries/VTokenLib.sol';
+import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { RTokenLib } from '../../libraries/RTokenLib.sol';
 // import { Calldata } from './libraries/Calldata.sol';
 
@@ -17,22 +17,27 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
+import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
 
-import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
+import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseStorage {
+contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseView {
     using SafeERC20 for IERC20;
-    using Account for Account.Info;
-    using VTokenLib for VTokenAddress;
+    using Account for Account.UserInfo;
+    using VTokenLib for IVToken;
     using SignedMath for int256;
     using RTokenLib for RTokenLib.RToken;
 
+    error Paused();
+    error NotRageTradeFactory();
+
     modifier onlyRageTradeFactory() {
-        if (rageTradeFactory != msg.sender) revert NotRageTradeFactory();
+        if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
         _;
     }
 
@@ -45,32 +50,32 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         PLATFORM FUNCTIONS
      */
 
-    function ClearingHouse__init(
-        address _rageTradeFactory,
-        address _realBase,
-        address _insuranceFund,
-        address _vBaseAddress,
-        address _nativeOracle
+    function __ClearingHouse_init(
+        address _rageTradeFactoryAddress,
+        IERC20 _rBase,
+        IInsuranceFund _insuranceFund,
+        IVBase _vBase,
+        IOracle _nativeOracle
     ) external initializer {
-        rageTradeFactory = _rageTradeFactory;
-        realBase = _realBase;
-        insuranceFund = IInsuranceFund(_insuranceFund);
-        nativeOracle = IOracle(_nativeOracle);
+        rageTradeFactoryAddress = _rageTradeFactoryAddress;
+        rBase = _rBase;
+        insuranceFund = _insuranceFund;
+        nativeOracle = _nativeOracle;
 
-        accountStorage.vBaseAddress = _vBaseAddress;
+        protocol.vBase = _vBase;
 
-        Governable__init();
+        __Governable_init();
     }
 
     function registerPool(address full, RageTradePool calldata rageTradePool) external onlyRageTradeFactory {
-        VTokenAddress vTokenAddress = VTokenAddress.wrap(full);
-        uint32 truncated = vTokenAddress.truncate();
+        IVToken vToken = IVToken(full);
+        uint32 truncated = vToken.truncate();
 
         // pool will not be registered twice by the rage trade factory
-        assert(accountStorage.vTokenAddresses[truncated].eq(address(0)));
+        assert(protocol.vTokens[truncated].eq(address(0)));
 
-        accountStorage.vTokenAddresses[truncated] = vTokenAddress;
-        accountStorage.rtPools[vTokenAddress] = rageTradePool;
+        protocol.vTokens[truncated] = vToken;
+        protocol.pools[vToken] = rageTradePool;
     }
 
     function initRealToken(address realToken) external onlyRageTradeFactory {
@@ -87,10 +92,10 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 twapDuration
     ) external onlyGovernanceOrTeamMultisig {
         RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
-        accountStorage.realTokens[uint32(uint160(token.tokenAddress))] = token;
+        protocol.rTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 
-    function updateSupportedVTokens(VTokenAddress add, bool status) external onlyGovernanceOrTeamMultisig {
+    function updateSupportedVTokens(IVToken add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;
     }
 
@@ -104,22 +109,22 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
 
     // TODO: rename to setGlobalSettings
     function setPlatformParameters(
-        LiquidationParams calldata _liquidationParams,
+        Account.LiquidationParams calldata _liquidationParams,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
         uint256 _minRequiredMargin
     ) external onlyGovernanceOrTeamMultisig {
-        accountStorage.liquidationParams = _liquidationParams;
-        accountStorage.removeLimitOrderFee = _removeLimitOrderFee;
-        accountStorage.minimumOrderNotional = _minimumOrderNotional;
-        accountStorage.minRequiredMargin = _minRequiredMargin;
+        protocol.liquidationParams = _liquidationParams;
+        protocol.removeLimitOrderFee = _removeLimitOrderFee;
+        protocol.minimumOrderNotional = _minimumOrderNotional;
+        protocol.minRequiredMargin = _minRequiredMargin;
     }
 
-    function updateRageTradePoolSettings(VTokenAddress vTokenAddress, RageTradePoolSettings calldata newSettings)
+    function updateRageTradePoolSettings(IVToken vToken, RageTradePoolSettings calldata newSettings)
         public
         onlyGovernanceOrTeamMultisig
     {
-        accountStorage.rtPools[vTokenAddress].settings = newSettings;
+        protocol.pools[vToken].settings = newSettings;
     }
 
     /// @inheritdoc IClearingHouse
@@ -130,15 +135,19 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
             emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
-        IERC20(realBase).transfer(teamMultisig(), totalProtocolFee);
+        rBase.safeTransfer(teamMultisig(), totalProtocolFee);
     }
+
+    /**
+        USER FUNCTIONS
+     */
 
     /// @inheritdoc IClearingHouse
     function createAccount() external notPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
 
-        Account.Info storage newAccount = accounts[newAccountId];
+        Account.UserInfo storage newAccount = accounts[newAccountId];
         newAccount.owner = msg.sender;
         newAccount.tokenPositions.accountNo = newAccountId;
 
@@ -151,7 +160,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 rTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress);
@@ -169,12 +178,12 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 rTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
         RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress);
 
-        account.removeMargin(rToken.tokenAddress, amount, accountStorage);
+        account.removeMargin(rToken.tokenAddress, amount, protocol);
 
         IERC20(rToken.realToken()).safeTransfer(msg.sender, amount);
 
@@ -183,11 +192,11 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
 
     /// @inheritdoc IClearingHouse
     function removeProfit(uint256 accountNo, uint256 amount) external notPaused {
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        account.removeProfit(amount, accountStorage);
-        IERC20(realBase).transfer(msg.sender, amount);
+        account.removeProfit(amount, protocol);
+        rBase.safeTransfer(msg.sender, amount);
 
         emit Account.WithdrawProfit(accountNo, amount);
     }
@@ -198,15 +207,15 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 vTokenTruncatedAddress,
         SwapParams memory swapParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
 
-        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vTokenAddress, swapParams, accountStorage);
+        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vToken, swapParams, protocol);
 
         uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
-        if (vBaseAmountOutAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
+        if (vBaseAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
 
         if (swapParams.sqrtPriceLimit != 0 && !swapParams.isPartialAllowed) {
             if (
@@ -222,30 +231,22 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 vTokenTruncatedAddress,
         LiquidityChangeParams calldata liquidityChangeParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
-            _checkSlippage(
-                vTokenAddress,
-                liquidityChangeParams.sqrtPriceCurrent,
-                liquidityChangeParams.slippageToleranceBps
-            );
+            _checkSlippage(vToken, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
         }
 
-        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
-            vTokenAddress,
-            liquidityChangeParams,
-            accountStorage
-        );
+        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(vToken, liquidityChangeParams, protocol);
 
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(vTokenAddress, vTokenAmountOut, vBaseAmountOut, accountStorage)
+            VTokenPositionSet.getNotionalValue(vToken, vTokenAmountOut, vBaseAmountOut, protocol)
         );
 
-        if (notionalValueAbs < accountStorage.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
+        if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
     /// @inheritdoc IClearingHouse
@@ -269,7 +270,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         return _liquidateTokenPosition(liquidatorAccountNo, accountNo, vTokenTruncatedAddress, liquidationBps, 0);
     }
 
@@ -278,11 +279,11 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
      */
 
     function _checkSlippage(
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = vTokenAddress.getVirtualCurrentSqrtPriceX96(accountStorage);
+        uint160 sqrtPriceCurrent = vToken.getVirtualCurrentSqrtPriceX96(protocol);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
@@ -296,19 +297,15 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         view
         returns (RTokenLib.RToken storage rToken)
     {
-        rToken = accountStorage.realTokens[rTokenTruncatedAddress];
+        rToken = protocol.rTokens[rTokenTruncatedAddress];
         if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);
         if (!supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
     }
 
-    function _getVTokenAddressWithChecks(uint32 vTokenTruncatedAddress)
-        internal
-        view
-        returns (VTokenAddress vTokenAddress)
-    {
-        vTokenAddress = accountStorage.vTokenAddresses[vTokenTruncatedAddress];
-        if (vTokenAddress.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
-        if (!supportedVTokens[vTokenAddress]) revert UnsupportedVToken(vTokenAddress);
+    function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
+        vToken = protocol.vTokens[vTokenTruncatedAddress];
+        if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
+        if (!supportedVTokens[vToken]) revert UnsupportedVToken(vToken);
     }
 
     function _liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
@@ -318,15 +315,15 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     {
         // Calldata.limit(0x4 + 2 * 0x20);
 
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
-            getFixFee(gasComputationUnitsClaim),
-            accountStorage
+            _getFixFee(gasComputationUnitsClaim),
+            protocol
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
-        IERC20(realBase).transfer(msg.sender, uint256(keeperFee));
+        rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
@@ -338,20 +335,20 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    ) internal notPaused returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) internal notPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         // Calldata.limit(0x4 + 5 * 0x20);
 
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
         int256 insuranceFundFee;
         (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
             accounts[liquidatorAccountNo],
             liquidationBps,
-            vTokenAddress,
-            getFixFee(gasComputationUnitsClaim),
-            accountStorage
+            vToken,
+            _getFixFee(gasComputationUnitsClaim),
+            protocol
         );
 
         _transferInsuranceFundFee(insuranceFundFee);
@@ -367,54 +364,29 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         // TODO remove
         // Calldata.limit(0x4 + 5 * 0x20);
 
-        Account.Info storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountNo];
 
-        VTokenAddress vTokenAddress = _getVTokenAddressWithChecks(vTokenTruncatedAddress);
-        keeperFee = accountStorage.removeLimitOrderFee + getFixFee(gasComputationUnitsClaim);
+        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
+        keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);
 
-        account.removeLimitOrder(vTokenAddress, tickLower, tickUpper, keeperFee, accountStorage);
+        account.removeLimitOrder(vToken, tickLower, tickUpper, keeperFee, protocol);
 
-        IERC20(realBase).transfer(msg.sender, keeperFee);
+        rBase.safeTransfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function _transferInsuranceFundFee(int256 insuranceFundFee) internal {
         if (insuranceFundFee > 0) {
-            IERC20(realBase).transfer(address(insuranceFund), uint256(insuranceFundFee));
+            rBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
         } else {
             insuranceFund.claim(uint256(-insuranceFundFee));
         }
     }
 
-    /**
-        VIEW FUNCTIONS
-     */
-
     /// @notice Gets fix fee
     /// @dev Allowed to be overriden for specific chain implementations
     /// @return fixFee amount of fixFee in base
-    function getFixFee(uint256) public view virtual returns (uint256 fixFee) {
+    function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
         return 0;
-    }
-
-    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
-        external
-        view
-        returns (uint256 realPriceX128, uint256 virtualPriceX128)
-    {
-        realPriceX128 = vTokenAddress.getRealTwapPriceX128(accountStorage);
-        virtualPriceX128 = vTokenAddress.getVirtualTwapPriceX128(accountStorage);
-    }
-
-    function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
-        return realTokenInitilized[realToken];
-    }
-
-    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
-        return accountStorage.vTokenAddresses[truncated].eq(address(0));
-    }
-
-    function rageTradePools(VTokenAddress vTokenAddress) public view returns (RageTradePool memory rageTradePool) {
-        return accountStorage.rtPools[vTokenAddress];
     }
 }

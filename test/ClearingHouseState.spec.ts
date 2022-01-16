@@ -25,8 +25,8 @@ describe('ClearingHouseState', () => {
   describe.skip('Functions', () => {
     // it('AddKey and isKeyAvailable', async () => {
     //   expect(await state.connect(signers[1]).isVTokenAddressAvailable(2)).to.be.true;
-    //   expect(state.connect(signers[1]).addVTokenAddress(2, dummyAdd)).revertedWith('NotVPoolFactory()');
-    //   await state.addVTokenAddress(2, dummyAdd);
+    //   expect(state.connect(signers[1]).addIVToken(2, dummyAdd)).revertedWith('NotVPoolFactory()');
+    //   await state.addIVToken(2, dummyAdd);
     //   expect(await state.connect(signers[1]).isVTokenAddressAvailable(2)).to.be.false;
     // });
     // it('initRealToken and isRealTokenAlreadyInitilized', async () => {

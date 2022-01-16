@@ -11,17 +11,16 @@ abstract contract Extsload {
     }
 
     function extsload(bytes32[] memory slots) external view returns (bytes32[] memory) {
-        uint256 len = slots.length;
-
         assembly {
+            let end := add(0x20, add(slots, mul(mload(slots), 0x20)))
             for {
-                let i := 0
-            } lt(i, len) {
-                i := add(i, 1)
+                let pointer := slots
+            } lt(pointer, end) {
+
             } {
-                let offset := mul(i, 0x20)
-                let value := sload(mload(add(slots, offset)))
-                mstore(add(slots, offset), value)
+                pointer := add(pointer, 0x20)
+                let value := sload(mload(pointer))
+                mstore(pointer, value)
             }
         }
 

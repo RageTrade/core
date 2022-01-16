@@ -3,16 +3,20 @@
 pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { IOracle } from './IOracle.sol';
-import { IVPoolWrapper } from './IVPoolWrapper.sol';
 
-import { LimitOrderType } from '../libraries/LiquidityPosition.sol';
-import { LiquidityChangeParams } from '../libraries/LiquidityPositionSet.sol';
-import { SwapParams } from '../libraries/VTokenPositionSet.sol';
-import { VTokenAddress } from '../libraries/VTokenLib.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
+import { IGovernable } from './IGovernable.sol';
+import { IInsuranceFund } from './IInsuranceFund.sol';
+import { IOracle } from './IOracle.sol';
+import { IVBase } from './IVBase.sol';
+import { IVPoolWrapper } from './IVPoolWrapper.sol';
+import { IVToken } from './IVToken.sol';
+
+// TODO move these to interface
 import { Account } from '../libraries/Account.sol';
 
-interface IClearingHouse {
+interface IClearingHouse is IGovernable {
     struct RageTradePool {
         IUniswapV3Pool vPool;
         IVPoolWrapper vPoolWrapper;
@@ -27,13 +31,51 @@ interface IClearingHouse {
         IOracle oracle;
     }
 
+    enum LimitOrderType {
+        NONE,
+        LOWER_LIMIT,
+        UPPER_LIMIT
+    }
+
+    struct LiquidityChangeParams {
+        int24 tickLower;
+        int24 tickUpper;
+        int128 liquidityDelta;
+        uint160 sqrtPriceCurrent;
+        uint16 slippageToleranceBps;
+        bool closeTokenPosition;
+        LimitOrderType limitOrderType;
+    }
+
+    /// @notice swaps params for specifying the swap params
+    /// @param amount amount of tokens/base to swap
+    /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
+    /// @param isNotional specifies whether the amount represents token amount (false) or base amount(true)
+    /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
+    struct SwapParams {
+        int256 amount;
+        uint160 sqrtPriceLimit;
+        bool isNotional;
+        bool isPartialAllowed;
+    }
+
+    /// @notice parameters to be used for account balance update
+    /// @param vBaseIncrease specifies the increase in base balance
+    /// @param vTokenIncrease specifies the increase in token balance
+    /// @param traderPositionIncrease specifies the increase in trader position
+    struct BalanceAdjustments {
+        int256 vBaseIncrease;
+        int256 vTokenIncrease;
+        int256 traderPositionIncrease;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);
 
     /// @notice error to denote usage of unsupported token
-    /// @param vTokenAddress address of token
-    error UnsupportedVToken(VTokenAddress vTokenAddress);
+    /// @param vToken address of token
+    error UnsupportedVToken(IVToken vToken);
 
     /// @notice error to denote usage of unsupported token
     /// @param rTokenAddress address of token
@@ -53,12 +95,12 @@ interface IClearingHouse {
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
 
-    function ClearingHouse__init(
-        address _vPoolFactory,
-        address _realBase,
-        address _insuranceFundAddress,
-        address _vBaseAddress,
-        address _nativeOracle
+    function __ClearingHouse_init(
+        address _rageTradeFactoryAddress,
+        IERC20 _rBase,
+        IInsuranceFund _insuranceFund,
+        IVBase _vBase,
+        IOracle _nativeOracle
     ) external;
 
     /// @notice creates a new account and adds it to the accounts map
@@ -148,9 +190,7 @@ interface IClearingHouse {
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external returns (Account.BalanceAdjustments memory liquidatorBalanceAdjustments);
-
-    function getFixFee(uint256) external view returns (uint256 fixFee);
+    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
 
@@ -160,7 +200,7 @@ interface IClearingHouse {
 
     function initRealToken(address _realToken) external;
 
-    function getTwapSqrtPricesForSetDuration(VTokenAddress vTokenAddress)
+    function getTwapSqrtPricesForSetDuration(IVToken vToken)
         external
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128);

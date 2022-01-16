@@ -8,18 +8,16 @@ import { Account } from './Account.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { VTokenLib } from './VTokenLib.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
-    error AlreadyInitialized();
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
     using FullMath for uint256;
     using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
@@ -36,8 +34,10 @@ library VTokenPosition {
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPositionSet.Info liquidityPositions;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
+
+    error AlreadyInitialized();
 
     /// @notice returns the market value of the supplied token position
     /// @param position token position
@@ -48,14 +48,7 @@ library VTokenPosition {
         uint256 priceX128,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
-        //TODO: Remove logs
-        // console.log('Token Position Balance:');
-        // console.logInt(position.balance);
-        // console.log('Token PriceX128:');
-        // console.logInt(int256(priceX128));
         value = position.balance.mulDiv(priceX128, FixedPoint128.Q128);
-        // console.log('Token Value:');
-        // console.logInt(value);
         value += unrealizedFundingPayment(position, wrapper);
     }
 
@@ -63,27 +56,27 @@ library VTokenPosition {
     /// @param position token position
     /// @param priceX128 price in fixed point 128
     /// @param vToken tokenAddress corresponding to the position
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function marketValue(
         Position storage position,
-        VTokenAddress vToken,
+        IVToken vToken,
         uint256 priceX128,
-        AccountStorage storage accountStorage
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 value) {
-        return marketValue(position, priceX128, vToken.vPoolWrapper(accountStorage));
+        return marketValue(position, priceX128, vToken.vPoolWrapper(protocol));
     }
 
     /// @notice returns the market value of the supplied token position
     /// @param position token position
     /// @param vToken tokenAddress corresponding to the position
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function marketValue(
         Position storage position,
-        VTokenAddress vToken,
-        AccountStorage storage accountStorage
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
-        uint256 priceX128 = vToken.getVirtualTwapPriceX128(accountStorage);
-        return marketValue(position, vToken, priceX128, accountStorage);
+        uint256 priceX128 = vToken.getVirtualTwapPriceX128(protocol);
+        return marketValue(position, vToken, priceX128, protocol);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {
@@ -106,12 +99,12 @@ library VTokenPosition {
     /// @notice returns the unrealized funding payment for the position
     /// @param position token position
     /// @param vToken tokenAddress corresponding to the position
-    /// @param accountStorage platform constants
+    /// @param protocol platform constants
     function unrealizedFundingPayment(
         Position storage position,
-        VTokenAddress vToken,
-        AccountStorage storage accountStorage
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, vToken.vPoolWrapper(accountStorage));
+        return unrealizedFundingPayment(position, vToken.vPoolWrapper(protocol));
     }
 }

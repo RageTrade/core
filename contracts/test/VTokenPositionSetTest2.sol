@@ -2,45 +2,47 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet, LiquidityChangeParams } from '../libraries/VTokenPositionSet.sol';
-import { VTokenPosition } from '../libraries/VTokenPosition.sol';
-import { LiquidityPosition, LimitOrderType } from '../libraries/LiquidityPosition.sol';
+import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
+import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
-import { Account, LiquidationParams } from '../libraries/Account.sol';
-import { VTokenAddress, VTokenLib } from '../libraries/VTokenLib.sol';
+import { Account } from '../libraries/Account.sol';
+import { VTokenLib } from '../libraries/VTokenLib.sol';
 
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
-import { AccountStorageMock } from './mocks/AccountStorageMock.sol';
+import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
-contract VTokenPositionSetTest2 is AccountStorageMock {
+contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
     using Uint32L8ArrayLib for uint32[8];
     using LiquidityPositionSet for LiquidityPositionSet.Info;
-    using VTokenLib for VTokenAddress;
+    using VTokenLib for IVToken;
     using VTokenPositionSet for VTokenPositionSet.Set;
 
-    mapping(uint32 => VTokenAddress) vTokenAddresses;
+    mapping(uint32 => IVToken) vTokens;
     VTokenPositionSet.Set dummy;
 
-    function init(VTokenAddress vTokenAddress) external {
-        VTokenPositionSet.activate(dummy, vTokenAddress);
-        vTokenAddresses[vTokenAddress.truncate()] = vTokenAddress;
+    function init(IVToken vToken) external {
+        VTokenPositionSet.activate(dummy, vToken);
+        vTokens[vToken.truncate()] = vToken;
     }
 
-    function update(Account.BalanceAdjustments memory balanceAdjustments, VTokenAddress vTokenAddress) external {
-        VTokenPositionSet.update(dummy, balanceAdjustments, vTokenAddress, accountStorage);
+    function update(IClearingHouse.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
+        VTokenPositionSet.update(dummy, balanceAdjustments, vToken, protocol);
     }
 
-    function liquidityChange(VTokenAddress vTokenAddress, LiquidityChangeParams memory liquidityChangeParams) external {
-        VTokenPositionSet.liquidityChange(dummy, vTokenAddress, liquidityChangeParams, accountStorage);
+    function liquidityChange(IVToken vToken, IClearingHouse.LiquidityChangeParams memory liquidityChangeParams)
+        external
+    {
+        VTokenPositionSet.liquidityChange(dummy, vToken, liquidityChangeParams, protocol);
     }
 
     function getAllTokenPositionValue() external view returns (int256) {
-        return VTokenPositionSet.getAccountMarketValue(dummy, vTokenAddresses, accountStorage);
+        return VTokenPositionSet.getAccountMarketValue(dummy, vTokens, protocol);
     }
 
     function getRequiredMargin(bool isInititalMargin) external view returns (int256) {
-        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokenAddresses, accountStorage);
+        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, vTokens, protocol);
     }
 }

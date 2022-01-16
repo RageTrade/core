@@ -3,44 +3,34 @@
 pragma solidity ^0.8.9;
 
 import { Account } from './Account.sol';
-import { LiquidityPosition, LimitOrderType } from './LiquidityPosition.sol';
+import { LiquidityPosition } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
-import { VTokenAddress, VTokenLib } from './VTokenLib.sol';
+import { VTokenLib } from './VTokenLib.sol';
 
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-
-import { AccountStorage } from '../protocol/clearinghouse/ClearingHouseStorage.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
-
-struct LiquidityChangeParams {
-    int24 tickLower;
-    int24 tickUpper;
-    int128 liquidityDelta;
-    uint160 sqrtPriceCurrent;
-    uint16 slippageToleranceBps;
-    bool closeTokenPosition;
-    LimitOrderType limitOrderType;
-}
 
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for Info;
     using Uint48L5ArrayLib for uint48[5];
-    using VTokenLib for VTokenAddress;
-
-    error IllegalTicks(int24 tickLower, int24 tickUpper);
-    error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
-    error InactiveRange();
+    using VTokenLib for IVToken;
 
     struct Info {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
         uint48[5] active;
         // concat(tickLow,tickHigh)
         mapping(uint48 => LiquidityPosition.Info) positions;
-        uint256[100] emptySlots; // reserved for adding variables when upgrading logic
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
+
+    error IllegalTicks(int24 tickLower, int24 tickUpper);
+    error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
+    error InactiveRange();
 
     function isEmpty(Info storage set) internal view returns (bool) {
         return set.active[0] == 0;
@@ -57,10 +47,10 @@ library LiquidityPositionSet {
     function baseValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
-        VTokenAddress vToken,
-        AccountStorage storage accountStorage
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(accountStorage));
+        baseValue_ = set.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(protocol));
     }
 
     function baseValue(
@@ -150,10 +140,10 @@ library LiquidityPositionSet {
     function liquidityChange(
         Info storage set,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
-        LiquidityChangeParams memory liquidityChangeParams,
+        IVToken vToken,
+        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
         LiquidityPosition.Info storage position = set.activate(
             liquidityChangeParams.tickLower,
@@ -164,7 +154,7 @@ library LiquidityPositionSet {
 
         set.liquidityChange(
             accountNo,
-            vTokenAddress,
+            vToken,
             position,
             liquidityChangeParams.liquidityDelta,
             wrapper,
@@ -175,17 +165,17 @@ library LiquidityPositionSet {
     function liquidityChange(
         Info storage set,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         LiquidityPosition.Info storage position,
         int128 liquidity,
         IVPoolWrapper wrapper,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        position.liquidityChange(accountNo, vTokenAddress, liquidity, wrapper, balanceAdjustments);
+        position.liquidityChange(accountNo, vToken, liquidity, wrapper, balanceAdjustments);
 
         emit Account.LiquidityTokenPositionChange(
             accountNo,
-            vTokenAddress,
+            vToken,
             position.tickLower,
             position.tickUpper,
             balanceAdjustments.vTokenIncrease
@@ -199,51 +189,44 @@ library LiquidityPositionSet {
     function closeLiquidityPosition(
         Info storage set,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         LiquidityPosition.Info storage position,
         IVPoolWrapper wrapper,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        set.liquidityChange(
-            accountNo,
-            vTokenAddress,
-            position,
-            -int128(position.liquidity),
-            wrapper,
-            balanceAdjustments
-        );
+        set.liquidityChange(accountNo, vToken, position, -int128(position.liquidity), wrapper, balanceAdjustments);
     }
 
     function removeLimitOrder(
         Info storage set,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         int24 currentTick,
         int24 tickLower,
         int24 tickUpper,
         IVPoolWrapper wrapper,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
         LiquidityPosition.Info storage position = set.getLiquidityPosition(tickLower, tickUpper);
         position.checkValidLimitOrderRemoval(currentTick);
-        set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustments);
+        set.closeLiquidityPosition(accountNo, vToken, position, wrapper, balanceAdjustments);
     }
 
     function closeAllLiquidityPositions(
         Info storage set,
         uint256 accountNo,
-        VTokenAddress vTokenAddress,
+        IVToken vToken,
         IVPoolWrapper wrapper,
-        Account.BalanceAdjustments memory balanceAdjustments
+        IClearingHouse.BalanceAdjustments memory balanceAdjustments
     ) internal {
         LiquidityPosition.Info storage position;
 
         while (set.active[0] != 0) {
-            Account.BalanceAdjustments memory balanceAdjustmentsCurrent;
+            IClearingHouse.BalanceAdjustments memory balanceAdjustmentsCurrent;
 
             position = set.positions[set.active[0]];
 
-            set.closeLiquidityPosition(accountNo, vTokenAddress, position, wrapper, balanceAdjustmentsCurrent);
+            set.closeLiquidityPosition(accountNo, vToken, position, wrapper, balanceAdjustmentsCurrent);
 
             balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
             balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;

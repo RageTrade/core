@@ -9,8 +9,10 @@ import 'hardhat-deploy';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-etherscan';
 import { ethers } from 'ethers';
+
 config();
-const { MNEMONIC, ALCHEMY_KEY } = process.env;
+const { ALCHEMY_KEY } = process.env;
+
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task('accounts', 'Prints the list of accounts', async (args, hre) => {
@@ -21,14 +23,14 @@ task('accounts', 'Prints the list of accounts', async (args, hre) => {
   }
 });
 
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
-
 if (!process.env.ALCHEMY_KEY) {
   console.warn('PLEASE NOTE: The env var ALCHEMY_KEY is not set');
 }
 
 const pk = process.env.PRIVATE_KEY || ethers.utils.hexlify(ethers.utils.randomBytes(32));
+
+// You need to export an object to set up your config
+// Go to https://hardhat.org/config/ to learn more
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -38,7 +40,6 @@ export default {
     hardhat: {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
-      accounts: { mnemonic: MNEMONIC },
       allowUnlimitedContractSize: true, // TODO: remove this
     },
     rinkeby: {
@@ -63,6 +64,12 @@ export default {
             enabled: true,
             runs: 200,
           },
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.8.10/metadata.html
+            bytecodeHash: 'none',
+          },
           outputSelection: {
             '*': {
               '*': ['storageLayout'],
@@ -77,6 +84,12 @@ export default {
             enabled: true,
             runs: 200,
           },
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.7.6/metadata.html
+            bytecodeHash: 'none',
+          },
           outputSelection: {
             '*': {
               '*': ['storageLayout'],
@@ -88,15 +101,14 @@ export default {
   },
   typechain: {
     target: 'ethers-v5',
-    alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
+    alwaysGenerateOverloads: false,
     externalArtifacts: [
       'node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json',
       'node_modules/@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3PoolDeployer.sol/IUniswapV3PoolDeployer.json',
-    ], // optional array of glob patterns with external artifacts to process (for example external libs from node_modules)
+    ],
   },
   etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
+    // https://info.etherscan.com/api-keys/
     apiKey: process.env.ETHERSCAN_KEY,
   },
   mocha: {

@@ -6,6 +6,7 @@ import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeC
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3PoolDeployer } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3PoolDeployer.sol';
 import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
@@ -16,7 +17,7 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
-import { VTokenAddress, VTokenLib, IUniswapV3Pool } from '../../libraries/VTokenLib.sol';
+import { VTokenLib, IUniswapV3Pool } from '../../libraries/VTokenLib.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { Tick } from '../../libraries/Tick.sol';

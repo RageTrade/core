@@ -7,13 +7,10 @@ import { TransparentUpgradeableProxy } from '@openzeppelin/contracts/proxy/trans
 import { ProxyAdminDeployer } from '../../utils/ProxyAdminDeployer.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
-import { IRageTradeFactory } from '../../interfaces/IRageTradeFactory.sol';
-
-import { Governable } from '../../utils/Governable.sol';
 
 /// @notice Manages deployment for ClearingHouseProxy
 /// @dev ClearingHouse proxy is deployed only once
-abstract contract ClearingHouseDeployer is IRageTradeFactory, Governable, ProxyAdminDeployer {
+abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
     struct DeployClearingHouseParams {
         address clearingHouseLogicAddress;
         address rBaseAddress;
@@ -33,7 +30,7 @@ abstract contract ClearingHouseDeployer is IRageTradeFactory, Governable, ProxyA
                         params.clearingHouseLogicAddress,
                         address(proxyAdmin),
                         abi.encodeWithSelector(
-                            IClearingHouse.ClearingHouse__init.selector,
+                            IClearingHouse.__ClearingHouse_init.selector,
                             address(this), // RageTradeFactory
                             params.rBaseAddress,
                             params.insuranceFundAddress,
