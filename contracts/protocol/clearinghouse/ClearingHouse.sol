@@ -22,11 +22,11 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
 
-import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
+import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseStorage {
+contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseView {
     using SafeERC20 for IERC20;
     using Account for Account.UserInfo;
     using VTokenLib for IVToken;
@@ -138,6 +138,10 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         rBase.transfer(teamMultisig(), totalProtocolFee);
     }
 
+    /**
+        USER FUNCTIONS
+     */
+
     /// @inheritdoc IClearingHouse
     function createAccount() external notPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
@@ -201,7 +205,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        IClearingHouse.SwapParams memory swapParams
+        SwapParams memory swapParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
@@ -225,7 +229,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
-        IClearingHouse.LiquidityChangeParams calldata liquidityChangeParams
+        LiquidityChangeParams calldata liquidityChangeParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
@@ -266,7 +270,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
-    ) external returns (IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         return _liquidateTokenPosition(liquidatorAccountNo, accountNo, vTokenTruncatedAddress, liquidationBps, 0);
     }
 
@@ -314,7 +318,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         Account.UserInfo storage account = accounts[accountNo];
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
-            getFixFee(gasComputationUnitsClaim),
+            _getFixFee(gasComputationUnitsClaim),
             protocol
         );
         int256 accountFee = keeperFee + insuranceFundFee;
@@ -331,7 +335,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    ) internal notPaused returns (IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) internal notPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         // Calldata.limit(0x4 + 5 * 0x20);
 
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
@@ -343,7 +347,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
             accounts[liquidatorAccountNo],
             liquidationBps,
             vToken,
-            getFixFee(gasComputationUnitsClaim),
+            _getFixFee(gasComputationUnitsClaim),
             protocol
         );
 
@@ -363,7 +367,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         Account.UserInfo storage account = accounts[accountNo];
 
         IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
-        keeperFee = protocol.removeLimitOrderFee + getFixFee(gasComputationUnitsClaim);
+        keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);
 
         account.removeLimitOrder(vToken, tickLower, tickUpper, keeperFee, protocol);
 
@@ -379,35 +383,10 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         }
     }
 
-    /**
-        VIEW FUNCTIONS
-     */
-
     /// @notice Gets fix fee
     /// @dev Allowed to be overriden for specific chain implementations
     /// @return fixFee amount of fixFee in base
-    function getFixFee(uint256) public view virtual returns (uint256 fixFee) {
+    function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
         return 0;
-    }
-
-    function getTwapSqrtPricesForSetDuration(IVToken vToken)
-        external
-        view
-        returns (uint256 realPriceX128, uint256 virtualPriceX128)
-    {
-        realPriceX128 = vToken.getRealTwapPriceX128(protocol);
-        virtualPriceX128 = vToken.getVirtualTwapPriceX128(protocol);
-    }
-
-    function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
-        return realTokenInitilized[realToken];
-    }
-
-    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
-        return protocol.vTokens[truncated].eq(address(0));
-    }
-
-    function rageTradePools(IVToken vToken) public view returns (RageTradePool memory rageTradePool) {
-        return protocol.pools[vToken];
     }
 }

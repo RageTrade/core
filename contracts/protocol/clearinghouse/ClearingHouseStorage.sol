@@ -15,10 +15,10 @@ import { Governable } from '../../utils/Governable.sol';
 abstract contract ClearingHouseStorage is Initializable, Governable {
     // 2 slots are consumed from inheritance
     // rest slots reserved for any states from inheritance in future
-    uint256[98] _emptySlots1;
+    uint256[98] private _emptySlots1;
 
     // at slot # 100
-    Account.ProtocolInfo public protocol;
+    Account.ProtocolInfo internal protocol;
 
     mapping(address => bool) public realTokenInitilized;
     mapping(IVToken => bool) public supportedVTokens;
@@ -39,5 +39,5 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     IOracle public nativeOracle;
 
     // reserved for adding slots in future
-    uint256[100] _emptySlots2;
+    uint256[100] private _emptySlots2;
 }

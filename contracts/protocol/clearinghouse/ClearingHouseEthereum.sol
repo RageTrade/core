@@ -15,7 +15,7 @@ contract ClearingHouseEthereum is ClearingHouse {
     using FullMath for uint256;
     using PriceMath for uint160;
 
-    function getFixFee(uint256 gasUnits) public view override returns (uint256 fixFee) {
+    function _getFixFee(uint256 gasUnits) internal view override returns (uint256 fixFee) {
         // incase user does not want refund, use zero
         if (gasUnits == 0) return 0;
 

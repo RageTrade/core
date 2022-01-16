@@ -35,7 +35,7 @@ contract ClearingHouseTest is ClearingHouse {
         fixFee = _fixFee;
     }
 
-    function getFixFee(uint256) public view override returns (uint256) {
+    function _getFixFee(uint256) internal view override returns (uint256) {
         return fixFee;
     }
 

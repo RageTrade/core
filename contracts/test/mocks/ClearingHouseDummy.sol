@@ -6,7 +6,7 @@ import { ClearingHouse } from '../../protocol/clearinghouse/ClearingHouse.sol';
 
 contract ClearingHouseDummy is ClearingHouse {
     // just to test upgradibility
-    function getFixFee(uint256) public pure override returns (uint256) {
+    function newMethodAdded() public pure returns (uint256) {
         return 1234567890;
     }
 }

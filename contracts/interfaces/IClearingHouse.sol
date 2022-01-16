@@ -192,8 +192,6 @@ interface IClearingHouse is IGovernable {
         uint16 liquidationBps
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
 
-    function getFixFee(uint256) external view returns (uint256 fixFee);
-
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
 
     function registerPool(address full, RageTradePool calldata rageTradePool) external;
