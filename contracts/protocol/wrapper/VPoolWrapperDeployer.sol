@@ -39,7 +39,7 @@ abstract contract VPoolWrapperDeployer is Governable, ClearingHouseDeployer {
                     new TransparentUpgradeableProxy(
                         address(vPoolWrapperLogicAddress),
                         address(proxyAdmin),
-                        abi.encodeWithSelector(IVPoolWrapper.VPoolWrapper__init.selector, params)
+                        abi.encodeWithSelector(IVPoolWrapper.__VPoolWrapper_init.selector, params)
                     )
                 )
             );

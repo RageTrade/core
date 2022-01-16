@@ -39,7 +39,7 @@ interface IVPoolWrapper {
     // uint32 _twapDuration,
     // bool _whitelisted,
     // address _vBaseAddress
-    function VPoolWrapper__init(InitializeVPoolWrapperParams calldata params) external;
+    function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external;
 
     // function twapDuration() external view returns (uint32);
 

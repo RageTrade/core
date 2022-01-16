@@ -26,22 +26,22 @@ abstract contract Governable is IGovernable, Context, Initializable {
      * @dev Initializes the contract setting the deployer as the initial governance and team multisig.
      */
     constructor() {
-        Governable__init();
+        __Governable_init();
     }
 
     /**
      * @dev Useful to proxy contracts for initializing
      */
-    function Governable__init() internal {
+    function __Governable_init() internal {
         address msgSender = _msgSender();
 
-        Governable__init(msgSender, msgSender);
+        __Governable_init(msgSender, msgSender);
     }
 
     /**
      * @dev Useful to proxy contracts for initializing with custom addresses
      */
-    function Governable__init(address initialGovernance, address initialTeamMultisig) internal initializer {
+    function __Governable_init(address initialGovernance, address initialTeamMultisig) internal initializer {
         _governance = initialGovernance;
         emit GovernanceTransferred(address(0), initialGovernance);
 

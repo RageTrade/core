@@ -49,7 +49,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
         PLATFORM FUNCTIONS
      */
 
-    function ClearingHouse__init(
+    function __ClearingHouse_init(
         address _rageTradeFactoryAddress,
         IERC20 _rBase,
         IInsuranceFund _insuranceFund,
@@ -63,7 +63,7 @@ contract ClearingHouse is IClearingHouse, OptimisticGasUsedClaim, ClearingHouseS
 
         protocol.vBase = _vBase;
 
-        Governable__init();
+        __Governable_init();
     }
 
     function registerPool(address full, RageTradePool calldata rageTradePool) external onlyRageTradeFactory {

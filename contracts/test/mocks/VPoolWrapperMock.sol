@@ -27,7 +27,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     //     (initialMarginRatio, maintainanceMarginRatio, twapDuration) = (0, 0, 0);
     // }
 
-    function VPoolWrapper__init(InitializeVPoolWrapperParams calldata params) external {}
+    function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external {}
 
     function updateGlobalFundingState() public {}
 
