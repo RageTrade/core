@@ -1201,7 +1201,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         limitOrderType: limitOrderType,
       };
 
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
       ).to.be.revertedWith('SlippageBeyondTolerance()');
     });
@@ -1328,7 +1328,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         isNotional: false,
         isPartialAllowed: false,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).swapToken(user2AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('SlippageBeyondTolerance()');
     });

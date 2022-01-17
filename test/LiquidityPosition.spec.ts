@@ -51,7 +51,7 @@ describe('LiquidityPosition Library', () => {
 
     it('again reverts', async () => {
       await test.initialize(-1, 1);
-      expect(test.initialize(-1, 1)).to.be.revertedWith('AlreadyInitialized()');
+      await expect(test.initialize(-1, 1)).to.be.revertedWith('AlreadyInitialized()');
     });
   });
 
@@ -111,7 +111,7 @@ describe('LiquidityPosition Library', () => {
 
     it('overflow', async () => {
       await test.initialize(-1, 1);
-      expect(test.liquidityChange(-1)).to.be.revertedWith('panic code 0x11');
+      await expect(test.liquidityChange(-1)).to.be.revertedWith('panic code 0x11');
     });
   });
 

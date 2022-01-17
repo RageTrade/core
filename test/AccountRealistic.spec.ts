@@ -356,7 +356,7 @@ describe('Account Library Test Realistic', () => {
       let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, true);
       accountMarketValue = accountMarketValue.sub(tokenAmount(50, 6));
 
-      expect(test.removeMargin(0, realBase.address, tokenAmount(50, 6))).to.be.revertedWith(
+      await expect(test.removeMargin(0, realBase.address, tokenAmount(50, 6))).to.be.revertedWith(
         'InvalidTransactionNotEnoughMargin(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
@@ -381,7 +381,7 @@ describe('Account Library Test Realistic', () => {
       });
       it('Remove Profit - Fail (No Profit | Enough Margin)', async () => {
         let profit = (await test.getAccountProfit(0)).sub(tokenAmount(1, 6));
-        expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
+        await expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
           'InvalidTransactionNotEnoughProfit(' + profit + ')',
         );
       });
@@ -390,7 +390,7 @@ describe('Account Library Test Realistic', () => {
         await test.removeMargin(0, realBase.address, tokenAmount(21, 6));
         let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, true);
         accountMarketValue = accountMarketValue.sub(tokenAmount(1, 6));
-        expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
+        await expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
           'InvalidTransactionNotEnoughMargin(' + accountMarketValue + ', ' + requiredMargin + ')',
         );
       });
@@ -523,7 +523,7 @@ describe('Account Library Test Realistic', () => {
 
         await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationActiveRangePresent("' + vTokenAddress + '")',
         );
       });
@@ -537,7 +537,7 @@ describe('Account Library Test Realistic', () => {
       it('Liquidation Fail (No Token Position)', async () => {
         await changeVPoolPriceToNearestTick(3500);
 
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress1)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress1)).to.be.revertedWith(
           'TokenInactive("' + vTokenAddress1 + '")',
         );
       });
@@ -626,7 +626,7 @@ describe('Account Library Test Realistic', () => {
         await changeVPoolPriceToNearestTick(4000);
 
         let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
         );
       });
@@ -647,7 +647,7 @@ describe('Account Library Test Realistic', () => {
 
         await changeVPoolPriceToNearestTick(3500);
 
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationActiveRangePresent("' + vTokenAddress + '")',
         );
       });
@@ -809,9 +809,9 @@ describe('Account Library Test Realistic', () => {
       await changeVPoolWrapperFakePrice(4600);
       await changeVPoolPriceToNearestTick(4600);
 
-      expect(test.removeLimitOrder(0, vTokenAddress, tickLower - 10, tickUpper, tokenAmount(5, 6))).to.be.revertedWith(
-        'InactiveRange()',
-      );
+      await expect(
+        test.removeLimitOrder(0, vTokenAddress, tickLower - 10, tickUpper, tokenAmount(5, 6)),
+      ).to.be.revertedWith('InactiveRange()');
     });
   });
 
@@ -837,7 +837,7 @@ describe('Account Library Test Realistic', () => {
     });
     it('Liquidation - Fail (Account Above Water)', async () => {
       const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-      expect(test.liquidateLiquidityPositions(0)).to.be.revertedWith(
+      await expect(test.liquidateLiquidityPositions(0)).to.be.revertedWith(
         'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
@@ -993,7 +993,7 @@ describe('Account Library Test Realistic', () => {
     });
     it('Liquidation - Fail (Account Above Water)', async () => {
       const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-      expect(test.liquidateLiquidityPositions(0)).to.be.revertedWith(
+      await expect(test.liquidateLiquidityPositions(0)).to.be.revertedWith(
         'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
