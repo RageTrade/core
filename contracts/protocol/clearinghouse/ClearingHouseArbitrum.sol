@@ -2,6 +2,10 @@
 
 pragma solidity ^0.8.9;
 
+import { ArbAggregator } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbAggregator.sol';
+import { ArbSys } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbSys.sol';
+import { ArbGasInfo } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbGasInfo.sol';
+
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
@@ -16,6 +20,22 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
     using FullMath for uint256;
     using PriceMath for uint160;
 
+    modifier checkGasUsedClaim(uint256 l2GasUsedClaim) override {
+        if (l2GasUsedClaim > 0) {
+            // computation + storage
+            uint256 initialL2Gas = gasleft() + Arbitrum.getStorageGasAvailable();
+            _;
+            uint256 l2GasUsedActual = initialL2Gas - (gasleft() + Arbitrum.getStorageGasAvailable());
+            if (l2GasUsedClaim > l2GasUsedActual) {
+                revert ExcessGasUsedClaim(l2GasUsedClaim, l2GasUsedActual);
+            }
+        } else {
+            _;
+        }
+    }
+
+    /// @notice Gives Fix Fee in Base denomination for the tx
+    /// @param l2GasUnits: includes L2 computation and storage gas units
     function _getFixFee(uint256 l2GasUnits)
         internal
         view
@@ -25,20 +45,19 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
     {
         if (l2GasUnits == 0 || address(nativeOracle) == address(0)) return 0;
 
-        uint256 totalL1FeeInWei;
+        uint256 l1FeeInWei;
 
         // if call from EOA then include L1 fee, i.e. do not refund L1 fee to calls from contract
         // this is due to a single contract can make multiple liquidations in single tx.
         // TODO is there a way to refund L1 fee once to contracts?
         if (msg.sender == tx.origin) {
-            totalL1FeeInWei = Arbitrum.getTotalL1FeeInWei();
+            l1FeeInWei = Arbitrum.getCurrentTxL1GasFees();
         }
 
         // TODO put a upper limit to tx.gasprice
-        uint256 l2ComputationFeeInWei = l2GasUnits * tx.gasprice;
-        uint256 l2StorageFeeInWei; // TODO figure out this thing
+        uint256 l2FeeInWei = l2GasUnits * tx.gasprice;
 
         uint256 ethPriceInUsdc = nativeOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
-        return (totalL1FeeInWei + l2ComputationFeeInWei + l2StorageFeeInWei).mulDiv(ethPriceInUsdc, FixedPoint128.Q128);
+        return (l1FeeInWei + l2FeeInWei).mulDiv(ethPriceInUsdc, FixedPoint128.Q128);
     }
 }
