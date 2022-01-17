@@ -337,7 +337,7 @@ describe('Clearing House Library', () => {
       expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
-      expect(clearingHouseTest.connect(user1).updateSupportedVTokens(vTokenAddress, true)).to.be.revertedWith(
+      await expect(clearingHouseTest.connect(user1).updateSupportedVTokens(vTokenAddress, true)).to.be.revertedWith(
         'Unauthorised()',
       );
     });
@@ -346,7 +346,7 @@ describe('Clearing House Library', () => {
       expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.true;
     });
     it('Add Token Deposit Support - Fail - Unauthorized', async () => {
-      expect(clearingHouseTest.connect(user1).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
+      await expect(clearingHouseTest.connect(user1).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
         'Unauthorised()',
       );
     });
@@ -397,7 +397,7 @@ describe('Clearing House Library', () => {
     });
 
     it('Create Account', async () => {
-      expect(clearingHouseTest.createAccount()).to.be.revertedWith('Paused()');
+      await expect(clearingHouseTest.createAccount()).to.be.revertedWith('Paused()');
       await clearingHouseTest.paused();
     });
 
@@ -409,47 +409,49 @@ describe('Clearing House Library', () => {
     });
 
     it('Withdraw', async () => {
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, amount),
       ).to.be.revertedWith('Paused()');
       await clearingHouseTest.paused();
     });
 
     it('Profit', async () => {
-      expect(clearingHouseTest.connect(user1).removeProfit(user1AccountNo, amount)).to.be.revertedWith('Paused()');
+      await expect(clearingHouseTest.connect(user1).removeProfit(user1AccountNo, amount)).to.be.revertedWith(
+        'Paused()',
+      );
       await clearingHouseTest.paused();
     });
 
     it('Token Position', async () => {
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('Paused()');
       await clearingHouseTest.paused();
     });
 
     it('Range Position', async () => {
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
       ).to.be.revertedWith('Paused()');
       await clearingHouseTest.paused();
     });
 
     it('Token Liquidation', async () => {
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).liquidateTokenPosition(user2AccountNo, user1AccountNo, truncatedAddress, 5000),
       ).to.be.revertedWith('Paused()');
       await clearingHouseTest.paused();
     });
 
     it('Range Liquidation', async () => {
-      expect(clearingHouseTest.connect(user2).liquidateLiquidityPositions(user1AccountNo)).to.be.revertedWith(
+      await expect(clearingHouseTest.connect(user2).liquidateLiquidityPositions(user1AccountNo)).to.be.revertedWith(
         'Paused()',
       );
       await clearingHouseTest.paused();
     });
 
     it('Remove Limit Order', async () => {
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).removeLimitOrder(user1AccountNo, truncatedAddress, -100, 100),
       ).to.be.revertedWith('Paused()');
       await clearingHouseTest.paused();
@@ -466,19 +468,19 @@ describe('Clearing House Library', () => {
   describe('#Deposit', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('UnsupportedRToken("' + rBase1.address + '")');
     });
@@ -498,19 +500,19 @@ describe('Clearing House Library', () => {
   describe('#Withdraw', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase.address);
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('UnsupportedRToken("' + rBase1.address + '")');
     });
@@ -562,7 +564,7 @@ describe('Clearing House Library', () => {
         isNotional: false,
         isPartialAllowed: false,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
@@ -574,7 +576,7 @@ describe('Clearing House Library', () => {
         isNotional: false,
         isPartialAllowed: false,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
@@ -586,7 +588,7 @@ describe('Clearing House Library', () => {
         isNotional: false,
         isPartialAllowed: false,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
     });
@@ -628,7 +630,7 @@ describe('Clearing House Library', () => {
         isPartialAllowed: false,
       };
 
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
@@ -641,7 +643,7 @@ describe('Clearing House Library', () => {
         isPartialAllowed: false,
       };
 
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
@@ -653,7 +655,7 @@ describe('Clearing House Library', () => {
         isNotional: true,
         isPartialAllowed: false,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
     });
@@ -667,7 +669,7 @@ describe('Clearing House Library', () => {
         isNotional: true,
         isPartialAllowed: false,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
       ).to.be.revertedWith('LowNotionalValue(' + amount + ')');
     });
@@ -709,7 +711,7 @@ describe('Clearing House Library', () => {
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user2).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
@@ -724,7 +726,7 @@ describe('Clearing House Library', () => {
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
@@ -739,7 +741,7 @@ describe('Clearing House Library', () => {
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
       };
-      expect(
+      await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
       ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
     });

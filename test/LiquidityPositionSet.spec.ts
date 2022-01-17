@@ -25,7 +25,7 @@ describe('LiquidityPositionSet Library', () => {
     });
 
     it('invalid', async () => {
-      expect(test.createEmptyPosition(1, -1)).to.be.revertedWith('IllegalTicks(1, -1)');
+      await expect(test.createEmptyPosition(1, -1)).to.be.revertedWith('IllegalTicks(1, -1)');
     });
   });
 });

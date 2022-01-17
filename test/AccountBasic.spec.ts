@@ -251,19 +251,19 @@ describe('Account Library Test Basic', () => {
       });
       it('Remove Failure - Inside Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Below Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Above Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
@@ -289,13 +289,13 @@ describe('Account Library Test Basic', () => {
       });
       it('Remove Failure - Inside Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Above Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
@@ -330,14 +330,14 @@ describe('Account Library Test Basic', () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
 
         vPoolFake.observe.returns([[0, 194430 * 60], []]);
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
       it('Remove Failure - Below Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
 
-        expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
         );
       });
