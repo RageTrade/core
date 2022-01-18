@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: [3.9]
         node-version: [14.x]
 
     steps:
@@ -60,7 +60,7 @@ jobs:
         run: |
           sudo snap install solc
           python -m pip install --upgrade pip
-          pip install slither-analyzer==0.8.1 solc-select==0.2.1
+          pip install slither-analyzer==0.8.2 solc-select==0.2.1
       - name: Summary of static ananlysis
         run: |
           slither . --print human-summary
