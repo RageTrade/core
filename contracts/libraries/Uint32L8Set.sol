@@ -4,20 +4,18 @@ pragma solidity ^0.8.9;
 
 import { console } from 'hardhat/console.sol';
 
-type Uint32L8Set is uint256;
-
 library Uint32L8SetLib {
-    using Uint32L8SetLib for Uint32L8Set;
+    using Uint32L8SetLib for uint256;
 
     /**
      * Library methods
      */
 
-    function exists(Uint32L8Set set, uint32 element) internal view returns (bool) {
+    function exists(uint256 set, uint32 element) internal view returns (bool) {
         return set._indexOf(element) != type(uint8).max;
     }
 
-    function include(Uint32L8Set set, uint32 element) internal view returns (Uint32L8Set) {
+    function include(uint256 set, uint32 element) internal view returns (uint256) {
         require(element != 0, 'does not support zero elements');
         console.log('hello', element);
 
@@ -32,10 +30,10 @@ library Uint32L8SetLib {
         uint256 emptyIndex = accumulatedValue >> 32;
         require(emptyIndex != 255, 'limit of 8 vtokens exceeded, pls close positions to create new');
 
-        return Uint32L8Set.wrap(Uint32L8Set.unwrap(set) | (uint256(element) << (emptyIndex * 32)));
+        return set | (uint256(element) << (emptyIndex * 32));
     }
 
-    function exclude(Uint32L8Set set, uint32 element) internal view returns (Uint32L8Set) {
+    function exclude(uint256 set, uint32 element) internal view returns (uint256) {
         uint8 index = set._indexOf(element);
         console.log('exclude:index', index);
         assembly {
@@ -47,12 +45,12 @@ library Uint32L8SetLib {
     }
 
     // Since this is a set, and order does not matter, index should not be exposed
-    function _indexOf(Uint32L8Set set, uint32 element) internal view returns (uint8 index) {
+    function _indexOf(uint256 set, uint32 element) internal view returns (uint8 index) {
         uint256 accumulatedValue = set.reduce(_indexOfReducer, uint256(255 << 32) | uint256(element));
         index = uint8(accumulatedValue >> 32);
     }
 
-    function _get(Uint32L8Set set, uint8 index) internal pure returns (uint32 element) {
+    function _get(uint256 set, uint8 index) internal pure returns (uint32 element) {
         assembly {
             let intermediate := shr(set, mul(index, 32))
             intermediate := shl(intermediate, 224)
@@ -64,7 +62,7 @@ library Uint32L8SetLib {
      *  Core methods
      */
 
-    function reduce(Uint32L8Set set, function(uint256, uint32, uint8) view returns (uint256, bool) fn)
+    function reduce(uint256 set, function(uint256, uint32, uint8) view returns (uint256, bool) fn)
         internal
         view
         returns (uint256 accumulatedValue)
@@ -73,13 +71,13 @@ library Uint32L8SetLib {
     }
 
     function reduce(
-        Uint32L8Set set,
+        uint256 set,
         function(uint256, uint32, uint8) view returns (uint256, bool) fn,
         uint256 initialAccumulatedValue
     ) internal view returns (uint256 accumulatedValue) {
         unchecked {
             accumulatedValue = initialAccumulatedValue;
-            uint256 unwrapped = Uint32L8Set.unwrap(set);
+            uint256 unwrapped = set;
             uint32 val;
             console.log('reduce-unwrapped', unwrapped);
             for (uint8 i; i < 8; i++) {
