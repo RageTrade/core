@@ -46,11 +46,11 @@ export default {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
-    arbitrum: {
+    arbmain: {
       url: `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
-    arbitrumRinkeby: {
+    arbtest: {
       url: `https://arb-rinkeby.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
