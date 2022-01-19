@@ -39,8 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
-        node-version: [14.x]
+        python-version: [3.9]
+        node-version: [16.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -63,16 +63,16 @@ jobs:
           pip install slither-analyzer==0.8.2 solc-select==0.2.0
       - name: Summary of static ananlysis
         run: |
-          slither ./contracts/. --print human-summary
+          slither ./contracts/ --print human-summary
       - name: Contract summary of static ananlysis
         run: |
-          slither ./contracts/. --print contract-summary
+          slither ./contracts/ --print contract-summary
       - name: Function summary
         run: |
-          slither ./contracts/. --print function-summary
+          slither ./contracts/ --print function-summary
       - name: Inheritance
         run: |
-          slither ./contracts/. --print inheritance
+          slither ./contracts/ --print inheritance
       - name: Data dependency
         run: |
-          slither ./contracts/. --print data-dependency
+          slither ./contracts/ --print data-dependency
