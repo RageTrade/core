@@ -63,16 +63,16 @@ jobs:
           pip install slither-analyzer==0.8.2 solc-select==0.2.0
       - name: Summary of static ananlysis
         run: |
-          slither . --print human-summary
+          slither ./contracts/. --print human-summary
       - name: Contract summary of static ananlysis
         run: |
-          slither . --print contract-summary
+          slither ./contracts/. --print contract-summary
       - name: Function summary
         run: |
-          slither . --print function-summary
+          slither ./contracts/. --print function-summary
       - name: Inheritance
         run: |
-          slither . --print inheritance
+          slither ./contracts/. --print inheritance
       - name: Data dependency
         run: |
-          slither . --print data-dependency
+          slither ./contracts/. --print data-dependency
