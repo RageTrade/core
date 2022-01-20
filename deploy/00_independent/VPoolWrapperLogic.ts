@@ -9,11 +9,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  await deploy('VPoolWrapperLogic', {
+  const deployment = await deploy('VPoolWrapperLogic', {
     contract: 'VPoolWrapper',
     from: deployer,
     log: true,
   });
+
+  if (deployment.newlyDeployed) {
+    await hre.tenderly.verify({
+      name: 'VPoolWrapper',
+      address: deployment.address,
+    });
+  }
 };
 
 export default func;

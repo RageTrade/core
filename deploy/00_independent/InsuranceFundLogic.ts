@@ -9,11 +9,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  await deploy('InsuranceFundLogic', {
+  const deployment = await deploy('InsuranceFundLogic', {
     contract: 'InsuranceFund',
     from: deployer,
     log: true,
   });
+
+  if (deployment.newlyDeployed) {
+    await hre.tenderly.verify({
+      name: 'InsuranceFund',
+      address: deployment.address,
+    });
+  }
 };
 
 export default func;

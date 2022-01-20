@@ -10,11 +10,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  await deploy('NativeOracle', {
+  const deployment = await deploy('NativeOracle', {
     contract: 'OracleMock',
     from: deployer,
     log: true,
   });
+
+  if (deployment.newlyDeployed) {
+    await hre.tenderly.verify({
+      name: 'OracleMock',
+      address: deployment.address,
+    });
+  }
 };
 
 export default func;
