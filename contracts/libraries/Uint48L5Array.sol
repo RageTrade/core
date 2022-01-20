@@ -69,4 +69,13 @@ library Uint48L5ArrayLib {
     function exists(uint48[5] storage array, uint48 element) internal view returns (bool) {
         return array.indexOf(element) != 255;
     }
+
+    function numberOfNonZeroElements(uint48[5] storage array) internal view returns (uint256) {
+        for (uint8 i; i < 5; i++) {
+            if (array[i] == 0) {
+                return i;
+            }
+        }
+        return 5;
+    }
 }

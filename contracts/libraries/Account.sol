@@ -625,4 +625,19 @@ library Account {
 
         account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
     }
+
+    function getView(UserInfo storage account, Account.ProtocolInfo storage protocol)
+        external
+        view
+        returns (
+            address owner,
+            int256 vBaseBalance,
+            IClearingHouse.DepositTokenView[] memory tokenDeposits,
+            IClearingHouse.VTokenPositionView[] memory tokenPositions
+        )
+    {
+        owner = account.owner;
+        tokenDeposits = account.tokenDeposits.getView(protocol);
+        (vBaseBalance, tokenPositions) = account.tokenPositions.getView(protocol);
+    }
 }
