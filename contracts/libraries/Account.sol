@@ -93,7 +93,7 @@ library Account {
     /// @notice denotes new account creation
     /// @param ownerAddress wallet address of account owner
     /// @param accountNo serial number of the account
-    event AccountCreated(address ownerAddress, uint256 accountNo);
+    event AccountCreated(address indexed ownerAddress, uint256 accountNo);
 
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
