@@ -56,6 +56,11 @@ export default {
       accounts: [pk],
       chainId: 421611,
     },
+    optest: {
+      url: `https://opt-kovan.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      accounts: [pk],
+      chainId: 69,
+    },
   },
   solidity: {
     compilers: [

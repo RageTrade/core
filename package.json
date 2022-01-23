@@ -11,6 +11,7 @@
     "deploy:goerli": "hardhat deploy --network goerli",
     "deploy:rinkeby": "hardhat deploy --network rinkeby",
     "deploy:arbtest": "hardhat deploy --network arbtest",
+    "deploy:optest": "hardhat deploy --network optest",
     "deploy:localhost": "hardhat --network localhost deploy",
     "etherscan": "hardhat etherscan-verify",
     "format": "prettier --check contracts test",
