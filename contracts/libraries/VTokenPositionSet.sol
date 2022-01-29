@@ -490,7 +490,7 @@ library VTokenPositionSet {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vToken, false, protocol);
 
         IClearingHouse.BalanceAdjustments memory balanceAdjustments;
-        int24 currentTick = vToken.getVirtualTwapTick(protocol);
+        int24 currentTick = vToken.getVirtualCurrentTick(protocol);
 
         vTokenPosition.liquidityPositions.removeLimitOrder(
             set.accountNo,
