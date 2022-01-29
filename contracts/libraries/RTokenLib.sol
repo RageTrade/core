@@ -50,8 +50,8 @@ library RTokenLib {
         return IOracle(token.oracleAddress);
     }
 
-    function getRealTwapPrice(RToken storage token) internal view returns (uint256 price) {
-        return token.oracle().getPrice(token.oracleTimeHorizon);
+    function getRealTwapPriceX128(RToken storage token) internal view returns (uint256 price) {
+        return token.oracle().getPrice(token.oracleTimeHorizon) << 128;
     }
 /*
     function getRealTwapSqrtPriceX96(RToken storage token) internal view returns (uint160 sqrtPriceX96) {
