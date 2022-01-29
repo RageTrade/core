@@ -1334,7 +1334,7 @@ describe('Account Library Test Realistic', () => {
     });
 
     for (let index = 0; index < 10; index++) {
-      let liqNum = randomInt(20);
+      let liqNum = randomInt(20) + 1;
       let smallLiqAddNum = randomInt(50);
       let smallLiqRemoveNum = randomInt(50);
       it('Test #' + (index + 1) + ' (' + liqNum + ', ' + smallLiqAddNum + ', ' + smallLiqRemoveNum + ')', async () => {
