@@ -110,11 +110,10 @@ library LiquidityPosition {
         );
 
         uint160 sqrtPriceCurrent = wrapper.vPool().sqrtPriceCurrent();
-        int256 netTokenPosition;
+        int256 tokenAmountCurrent;
         {
-            (int256 tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
-            netTokenPosition = tokenAmountCurrent - position.vTokenAmountIn;
-            balanceAdjustments.traderPositionIncrease += netTokenPosition;
+            (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
+            balanceAdjustments.traderPositionIncrease += (tokenAmountCurrent - position.vTokenAmountIn);
         }
 
         if (liquidity > 0) {
@@ -123,7 +122,7 @@ library LiquidityPosition {
             position.liquidity -= uint128(liquidity * -1);
         }
 
-        position.vTokenAmountIn = position.vTokenAmountIn + vTokenPrincipal + netTokenPosition;
+        position.vTokenAmountIn = tokenAmountCurrent + vTokenPrincipal;
     }
 
     function update(
