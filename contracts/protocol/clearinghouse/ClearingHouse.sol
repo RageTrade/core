@@ -163,7 +163,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress);
+        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, true);
 
         IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -181,7 +181,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress);
+        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, false);
 
         account.removeMargin(rToken.tokenAddress, amount, protocol);
 
@@ -338,14 +338,14 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         }
     }
 
-    function _getRTokenWithChecks(uint32 rTokenTruncatedAddress)
+    function _getRTokenWithChecks(uint32 rTokenTruncatedAddress, bool checkSupported)
         internal
         view
         returns (RTokenLib.RToken storage rToken)
     {
         rToken = protocol.rTokens[rTokenTruncatedAddress];
         if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);
-        if (!supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
+        if (checkSupported && !supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
     }
 
     function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
