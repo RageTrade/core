@@ -58,6 +58,7 @@ describe('Market Value and Required Margin', () => {
       },
     );
     vPoolFake.observe.returns([[0, -194430 * 60], []]);
+    vPoolFake.slot0.returns([0, -194430, 0, 0, 0, 0, false]);
 
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {
       address: vPoolWrapperAddress,
@@ -118,6 +119,7 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 30221.0403938581
     it('Scenario 2 - Price Moves', async () => {
       vPoolFake.observe.returns([[0, -193170 * 60], []]);
+      vPoolFake.slot0.returns([0, -193170, 0, 0, 0, 0, false]);
       await matchNumbers(-8656594064, 30221040393, 15110520196);
     });
 
@@ -154,6 +156,8 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 73045.613802876
     it('Scenario 4 - Price Moves', async () => {
       vPoolFake.observe.returns([[0, -194690 * 60], []]);
+      vPoolFake.slot0.returns([0, -194690, 0, 0, 0, 0, false]);
+
       await matchNumbers(-9383544194, 73045613802, 36522806901);
     });
 
@@ -190,6 +194,8 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 73379.953383
     it('Scenario 6 - Price Moves', async () => {
       vPoolFake.observe.returns([[0, -196480 * 60], []]);
+      vPoolFake.slot0.returns([0, -196480, 0, 0, 0, 0, false]);
+
       await matchNumbers(-68061639307, 73379953383, 36689976691);
     });
   });
