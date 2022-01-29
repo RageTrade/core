@@ -3,6 +3,5 @@
 pragma solidity ^0.8.9;
 
 interface IOracle {
-    // TODO change to X128 instead of X96
-    function getTwapSqrtPriceX96(uint32 twapDuration) external view returns (uint160 sqrtPriceX96);
+    function getPrice(uint256 interval) external view returns (uint160);
 }
