@@ -76,12 +76,12 @@ library LiquidityPositionSet {
         Info storage set,
         int24 tickLower,
         int24 tickUpper
-    ) internal returns (LiquidityPosition.Info storage position) {
+    ) internal view returns (LiquidityPosition.Info storage position) {
         if (tickLower > tickUpper) {
             revert IllegalTicks(tickLower, tickUpper);
         }
 
-        uint48 positionId = _include(set.active, tickLower, tickUpper);
+        uint48 positionId = Uint48Lib.concat(tickLower, tickUpper);
         position = set.positions[positionId];
 
         if (!position.isInitialized()) revert InactiveRange();
