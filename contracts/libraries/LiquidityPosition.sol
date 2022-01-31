@@ -198,11 +198,11 @@ library LiquidityPosition {
 
     function baseValue(
         Info storage position,
-        uint160 valuationSqrtPrice,
+        uint160 valuationSqrtPriceX96,
         IVToken vToken,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(valuationSqrtPrice, vToken.vPoolWrapper(protocol));
+        return position.baseValue(valuationSqrtPriceX96, vToken.vPoolWrapper(protocol));
     }
 
     function tokenAmountsInRange(
@@ -232,7 +232,7 @@ library LiquidityPosition {
 
     function baseValue(
         Info storage position,
-        uint160 valuationSqrtPrice,
+        uint160 valuationSqrtPriceX96,
         IVPoolWrapper wrapper
     ) internal view returns (int256 baseValue_) {
         {
@@ -240,7 +240,7 @@ library LiquidityPosition {
                 wrapper.vPool().sqrtPriceCurrent(),
                 false
             );
-            uint256 priceX128 = valuationSqrtPrice.toPriceX128();
+            uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
             baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees
