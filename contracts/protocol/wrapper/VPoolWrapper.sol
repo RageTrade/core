@@ -63,6 +63,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     error NotClearingHouse();
     error NotGovernance();
+    error NotUniswapV3Pool();
 
     modifier onlyClearingHouse() {
         if (msg.sender != address(clearingHouse)) {
@@ -74,6 +75,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     modifier onlyGovernance() {
         if (msg.sender != clearingHouse.governance()) {
             revert NotGovernance();
+        }
+        _;
+    }
+
+    modifier onlyUniswapV3Pool() {
+        if (msg.sender != address(vPool)) {
+            revert NotUniswapV3Pool();
         }
         _;
     }
@@ -149,7 +157,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         bool swapVTokenForVBase, // zeroForOne
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    ) public returns (int256 vTokenIn, int256 vBaseIn) {
+    ) public onlyClearingHouse returns (int256 vTokenIn, int256 vBaseIn) {
         bool exactIn = amountSpecified >= 0;
 
         if (sqrtPriceLimitX96 == 0) {
@@ -260,6 +268,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int128 liquidityDelta
     )
         external
+        onlyClearingHouse
         returns (
             int256 basePrincipal,
             int256 vTokenPrincipal,
@@ -300,8 +309,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         int256 amount0Delta,
         int256 amount1Delta,
         bytes calldata
-    ) external virtual {
-        require(msg.sender == address(vPool));
+    ) external virtual onlyUniswapV3Pool {
         if (amount0Delta > 0) {
             IVToken(vPool.token0()).mint(address(vPool), uint256(amount0Delta));
         }
@@ -314,8 +322,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         uint256 vTokenAmount,
         uint256 vBaseAmount,
         bytes calldata
-    ) external override {
-        require(msg.sender == address(vPool));
+    ) external override onlyUniswapV3Pool {
         if (vBaseAmount > 0) vBase.mint(msg.sender, vBaseAmount);
         if (vTokenAmount > 0) vToken.mint(msg.sender, vTokenAmount);
     }

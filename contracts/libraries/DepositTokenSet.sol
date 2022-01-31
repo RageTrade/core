@@ -9,6 +9,8 @@ import { RTokenLib } from './RTokenLib.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+
 import { console } from 'hardhat/console.sol';
 
 library DepositTokenSet {
@@ -73,5 +75,19 @@ library DepositTokenSet {
             );
         }
         return accountMarketValue;
+    }
+
+    function getView(Info storage set, Account.ProtocolInfo storage protocol)
+        internal
+        view
+        returns (IClearingHouse.DepositTokenView[] memory depositTokens)
+    {
+        uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
+        depositTokens = new IClearingHouse.DepositTokenView[](numberOfTokenPositions);
+
+        for (uint256 i = 0; i < numberOfTokenPositions; i++) {
+            depositTokens[i].rTokenAddress = address(protocol.rTokens[set.active[i]].tokenAddress);
+            depositTokens[i].balance = set.deposits[set.active[i]];
+        }
     }
 }

@@ -69,6 +69,35 @@ interface IClearingHouse is IGovernable {
         int256 traderPositionIncrease;
     }
 
+    struct DepositTokenView {
+        address rTokenAddress;
+        uint256 balance;
+    }
+
+    struct VTokenPositionView {
+        address vTokenAddress;
+        int256 balance; // vTokenLong - vTokenShort
+        int256 netTraderPosition;
+        int256 sumAX128Ckpt;
+        LiquidityPositionView[] liquidityPositions;
+    }
+
+    struct LiquidityPositionView {
+        LimitOrderType limitOrderType;
+        // the tick range of the position;
+        int24 tickLower;
+        int24 tickUpper;
+        // the liquidity of the position
+        uint128 liquidity;
+        int256 vTokenAmountIn;
+        // funding payment checkpoints
+        int256 sumALastX128;
+        int256 sumBInsideLastX128;
+        int256 sumFpInsideLastX128;
+        // fee growth inside
+        uint256 sumFeeInsideLastX128;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);

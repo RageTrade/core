@@ -549,4 +549,23 @@ library VTokenPositionSet {
             notionalAmountClosed += set.liquidateLiquidityPositions(vTokens[set.active[i]], wrapper, protocol);
         }
     }
+
+    function getView(Set storage set, Account.ProtocolInfo storage protocol)
+        internal
+        view
+        returns (int256 vBaseBalance, IClearingHouse.VTokenPositionView[] memory vTokenPositions)
+    {
+        vBaseBalance = set.positions[IVToken(address(protocol.vBase)).truncate()].balance;
+
+        uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
+        vTokenPositions = new IClearingHouse.VTokenPositionView[](numberOfTokenPositions);
+
+        for (uint256 i = 0; i < numberOfTokenPositions; i++) {
+            vTokenPositions[i].vTokenAddress = address(protocol.vTokens[set.active[i]]);
+            vTokenPositions[i].balance = set.positions[set.active[i]].balance;
+            vTokenPositions[i].netTraderPosition = set.positions[set.active[i]].netTraderPosition;
+            vTokenPositions[i].sumAX128Ckpt = set.positions[set.active[i]].sumAX128Ckpt;
+            vTokenPositions[i].liquidityPositions = set.positions[set.active[i]].liquidityPositions.getView();
+        }
+    }
 }

@@ -70,4 +70,13 @@ library Uint32L8ArrayLib {
     function exists(uint32[8] storage array, uint32 element) internal view returns (bool) {
         return array.indexOf(element) != 255;
     }
+
+    function numberOfNonZeroElements(uint32[8] storage array) internal view returns (uint256) {
+        for (uint8 i; i < 8; i++) {
+            if (array[i] == 0) {
+                return i;
+            }
+        }
+        return 8;
+    }
 }

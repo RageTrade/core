@@ -7,6 +7,8 @@ import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
+import { DepositTokenSet } from '../../libraries/DepositTokenSet.sol';
+import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { RTokenLib } from '../../libraries/RTokenLib.sol';
 
@@ -15,6 +17,9 @@ import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 import { Extsload } from '../../utils/Extsload.sol';
 
 abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Extsload {
+    using Account for Account.UserInfo;
+    using DepositTokenSet for DepositTokenSet.Info;
+    using VTokenPositionSet for VTokenPositionSet.Set;
     using VTokenLib for IVToken;
 
     function getTwapSqrtPricesForSetDuration(IVToken vToken)
@@ -65,5 +70,37 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
 
     function vTokens(uint32 vTokenAddressTruncated) public view returns (IVToken) {
         return protocol.vTokens[vTokenAddressTruncated];
+    }
+
+    /**
+        Account.UserInfo VIEW
+     */
+
+    // adds about 3KB to bytecode
+    function getAccountView(uint256 accountNo)
+        public
+        view
+        returns (
+            address owner,
+            int256 vBaseBalance,
+            DepositTokenView[] memory tokenDeposits,
+            VTokenPositionView[] memory tokenPositions
+        )
+    {
+        Account.UserInfo storage account = accounts[accountNo];
+        owner = account.owner;
+        tokenDeposits = account.tokenDeposits.getView(protocol);
+        (vBaseBalance, tokenPositions) = account.tokenPositions.getView(protocol);
+    }
+
+    function getAccountMarketValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+        public
+        view
+        returns (int256 accountMarketValue, int256 requiredMargin)
+    {
+        (accountMarketValue, requiredMargin) = accounts[accountNo].getAccountValueAndRequiredMargin(
+            isInitialMargin,
+            protocol
+        );
     }
 }

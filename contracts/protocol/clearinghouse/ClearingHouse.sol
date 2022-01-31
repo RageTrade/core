@@ -132,7 +132,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
             uint256 wrapperFee = IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
-            emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
+            emit Account.ProtocolFeeWithdrawn(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
         rBase.safeTransfer(teamMultisig(), totalProtocolFee);
