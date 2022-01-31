@@ -20,7 +20,6 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     // at slot # 100
     Account.ProtocolInfo internal protocol;
 
-    mapping(address => bool) public realTokenInitilized;
     mapping(IVToken => bool) public supportedVTokens;
     mapping(address => bool) public supportedDeposits;
 

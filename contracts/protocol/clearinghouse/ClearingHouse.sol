@@ -78,10 +78,6 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         protocol.pools[vToken] = rageTradePool;
     }
 
-    function initRealToken(address realToken) external onlyRageTradeFactory {
-        realTokenInitilized[realToken] = true;
-    }
-
     /**
         ADMIN FUNCTIONS
      */

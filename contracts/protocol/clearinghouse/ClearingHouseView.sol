@@ -26,10 +26,6 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         virtualPriceX128 = vToken.getVirtualTwapPriceX128(protocol);
     }
 
-    function isRealTokenAlreadyInitilized(address realToken) external view returns (bool) {
-        return realTokenInitilized[realToken];
-    }
-
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool) {
         return protocol.vTokens[truncated].eq(address(0));
     }
