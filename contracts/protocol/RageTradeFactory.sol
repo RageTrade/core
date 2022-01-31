@@ -98,6 +98,7 @@ contract RageTradeFactory is
         IClearingHouse.RageTradePoolSettings rageTradePoolInitialSettings;
         uint24 liquidityFeePips;
         uint24 protocolFeePips;
+        uint16 slotsToInitialize;
     }
 
     /// @notice Sets up a new Rage Trade Pool by deploying necessary contracts
@@ -116,6 +117,8 @@ contract RageTradeFactory is
                 initializePoolParams.rageTradePoolInitialSettings.twapDuration
             )
         );
+
+        vPool.increaseObservationCardinalityNext(initializePoolParams.slotsToInitialize);
 
         // STEP 4: Deploys a proxy for the wrapper contract for the vPool, and initialize it as well
         IVPoolWrapper vPoolWrapper = _deployProxyForVPoolWrapperAndInitialize(

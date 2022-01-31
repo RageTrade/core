@@ -646,6 +646,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       },
       liquidityFeePips: lpFee,
       protocolFeePips: protocolFee,
+      slotsToInitialize: 100,
     });
 
     const eventFilter = rageTradeFactory.filters.PoolInitlized();

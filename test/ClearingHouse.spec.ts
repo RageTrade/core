@@ -144,6 +144,7 @@ describe('Clearing House Library', () => {
       },
       liquidityFeePips: 500,
       protocolFeePips: 500,
+      slotsToInitialize: 100,
     });
 
     const eventFilter = rageTradeFactory.filters.PoolInitlized();
