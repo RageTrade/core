@@ -48,6 +48,8 @@ library Uint32L8ArrayLib {
             }
         }
 
+        i = i == 8 ? 7 : i;
+
         if (elementIndex != 8) {
             if (i == elementIndex) {
                 array[elementIndex] = 0;
