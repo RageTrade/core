@@ -1335,7 +1335,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       const netTokenPosition = expectedTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = 409602595146n - 49n;
+      const expectedBaseBalance = 409602591142n;
 
       const expected_MktVal_preRangeLiquidation = -7421798457n;
       const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
@@ -1351,7 +1351,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       const expectedTotalNotionalAmountClosed = 0n;
       const expectedLiquidationFee = 0n;
       const expectedKeeperFee = 4466985550n;
-      const expectedInsuranceFundFee = -11888784007n + 2n;
+      const expectedInsuranceFundFee = -11888780050n;
       const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
 
       const feeDeductedFromLiquidatedAcct = 0n;
@@ -1406,7 +1406,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       const expectedLiquidatorPriceX128 = 4063.81112882778;
       const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
 
-      const expectedInsuranceFundFee = -3088724988n;
+      const expectedInsuranceFundFee = -3088728943n;
 
       const liquidatorBaseBalance = 103877346504n;
       const liquidatorTokenPosition = -25559097903887700000n;
