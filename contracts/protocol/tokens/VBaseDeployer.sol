@@ -20,7 +20,7 @@ abstract contract VBaseDeployer {
             );
     }
 
-    // returns true if most significant hex char of address is "d"
+    // returns true if most significant hex char of address is "f"
     function _isVBaseAddressGood(address addr) private pure returns (bool) {
         return (uint160(addr) >> 156) == 0xf;
     }
