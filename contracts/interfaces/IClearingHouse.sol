@@ -160,7 +160,7 @@ interface IClearingHouse is IGovernable {
     /// @notice withdraws 'amount' of base token from the profit made
     /// @param accountNo account number
     /// @param amount amount of token to withdraw
-    function removeProfit(uint256 accountNo, uint256 amount) external;
+    function updateProfit(uint256 accountNo, int256 amount) external;
 
     /// @notice swaps token associated with 'vTokenTruncatedAddress' by 'amount' (Long if amount>0 else Short)
     /// @param accountNo account number

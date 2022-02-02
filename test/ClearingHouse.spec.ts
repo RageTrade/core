@@ -415,7 +415,7 @@ describe('Clearing House Library', () => {
     });
 
     it('Profit', async () => {
-      await expect(clearingHouseTest.connect(user1).removeProfit(user1AccountNo, amount)).to.be.revertedWith(
+      await expect(clearingHouseTest.connect(user1).updateProfit(user1AccountNo, amount)).to.be.revertedWith(
         'Paused()',
       );
       await clearingHouseTest.paused();
@@ -537,6 +537,32 @@ describe('Clearing House Library', () => {
 
       expect(await rBase1.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
       expect(await rBase1.balanceOf(clearingHouseTest.address)).to.eq(0);
+    });
+  });
+
+  describe('#Profit', () => {
+    it('Fail - Access Denied', async () => {
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase.address);
+      await expect(
+        clearingHouseTest.connect(user2).updateProfit(user1AccountNo, tokenAmount('1000000', 6)),
+      ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
+    });
+
+    it('Pass - Cover Loss', async () => {
+      await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('100000', 6));
+      await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, tokenAmount('100000', 6));
+      expect(await rBase.balanceOf(user1.address)).to.eq(0);
+      expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
+      expect(accountTokenPosition.balance).to.eq(tokenAmount('100000', 6));
+    });
+
+    it('Pass - Remove Profit', async () => {
+      await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, -tokenAmount('100000', 6));
+      expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
+      expect(await rBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
+      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
+      expect(accountTokenPosition.balance).to.eq(0);
     });
   });
   describe('#InitLiquidity', async () => {

@@ -382,7 +382,7 @@ describe('Account Library Test Realistic', () => {
       });
       it('Remove Profit - Fail (No Profit | Enough Margin)', async () => {
         let profit = (await test.getAccountProfit(0)).sub(tokenAmount(1, 6));
-        await expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
+        await expect(test.updateProfit(0, -tokenAmount(1, 6))).to.be.revertedWith(
           'InvalidTransactionNotEnoughProfit(' + profit + ')',
         );
       });
@@ -391,15 +391,21 @@ describe('Account Library Test Realistic', () => {
         await test.removeMargin(0, realBase.address, tokenAmount(21, 6));
         let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, true);
         accountMarketValue = accountMarketValue.sub(tokenAmount(1, 6));
-        await expect(test.removeProfit(0, tokenAmount(1, 6))).to.be.revertedWith(
+        await expect(test.updateProfit(0, -tokenAmount(1, 6))).to.be.revertedWith(
           'InvalidTransactionNotEnoughMargin(' + accountMarketValue + ', ' + requiredMargin + ')',
         );
       });
       it('Remove Profit - Pass', async () => {
         await changeVPoolPriceToNearestTick(4050);
         const baseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-        await test.removeProfit(0, tokenAmount(1, 6));
+        await test.updateProfit(0, -tokenAmount(1, 6));
         checkTokenBalance(vBaseAddress, baseDetails.balance.sub(tokenAmount(1, 6)));
+      });
+      it('Deposit Loss - Pass', async () => {
+        await changeVPoolPriceToNearestTick(4050);
+        const baseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
+        await test.updateProfit(0, tokenAmount(1, 6));
+        checkTokenBalance(vBaseAddress, baseDetails.balance.add(tokenAmount(1, 6)));
       });
     });
   });

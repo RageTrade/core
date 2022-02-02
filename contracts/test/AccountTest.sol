@@ -137,8 +137,8 @@ contract AccountTest {
         accounts[accountNo].removeMargin(realTokenAddress, amount, protocol);
     }
 
-    function removeProfit(uint256 accountNo, uint256 amount) external {
-        accounts[accountNo].removeProfit(amount, protocol);
+    function updateProfit(uint256 accountNo, int256 amount) external {
+        accounts[accountNo].updateProfit(amount, protocol);
     }
 
     function swapTokenAmount(
