@@ -144,6 +144,7 @@ describe('Clearing House Library', () => {
       },
       liquidityFeePips: 500,
       protocolFeePips: 500,
+      slotsToInitialize: 100,
     });
 
     const eventFilter = rageTradeFactory.filters.PoolInitlized();
@@ -246,7 +247,7 @@ describe('Clearing House Library', () => {
     // constants = await VPoolFactory.constants();
     rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
-    rBase1 = await hre.ethers.getContractAt('IERC20', '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8');
+    rBase1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
     rBase1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
     clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
 
@@ -294,6 +295,7 @@ describe('Clearing House Library', () => {
   describe('#StealFunds', () => {
     it('Steal Funds', async () => {
       await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleForBase);
+      await stealFunds(rBase1.address, 6, user1.address, '1000000', whaleForBase);
       await stealFunds(REAL_BASE, 6, user2.address, 10 ** 6, whaleForBase);
       expect(await rBase.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
       expect(await rBase.balanceOf(user2.address)).to.eq(tokenAmount(10 ** 6, 6));
@@ -510,12 +512,7 @@ describe('Clearing House Library', () => {
         clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
-    it('Fail - Unsupported Token', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
-      await expect(
-        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
-      ).to.be.revertedWith('UnsupportedRToken("' + rBase1.address + '")');
-    });
+
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase.address);
       await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('100000', 6));
@@ -524,6 +521,25 @@ describe('Clearing House Library', () => {
       expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, rBase.address)).to.eq(
         tokenAmount('900000', 6),
       );
+    });
+
+    it('Pass - Withdrawal after removal of token support', async () => {
+      //Add rBase1 support
+      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase1.address, true);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
+
+      await rBase1.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
+      await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
+      expect(await rBase1.balanceOf(user1.address)).to.eq(0);
+      expect(await rBase1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+
+      //Remove rBase1 support
+      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase1.address, false);
+
+      await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
+
+      expect(await rBase1.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await rBase1.balanceOf(clearingHouseTest.address)).to.eq(0);
     });
   });
   describe('#InitLiquidity', async () => {

@@ -32,6 +32,7 @@ import {
   sqrtPriceX96ToTick,
 } from './utils/price-tick';
 import { amountsForLiquidity, maxLiquidityForAmounts } from './utils/liquidity';
+import { randomInt } from 'crypto';
 
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -1302,5 +1303,67 @@ describe('Account Library Test Realistic', () => {
       await checkLiquidityPositionNum(vTokenAddress, 0);
       // await checkAccountMarketValueAndRequiredMargin(false, tokenAmount(100000, 6));
     });
+  });
+
+  describe('#Trade- Multiple Liquidity Add & Remove', () => {
+    let tickLower: number;
+    let tickUpper: number;
+    let liquidity: BigNumber;
+    let netSumB: BigNumber;
+    before(async () => {
+      tickLower = await priceToTick(3500, vBase, vToken);
+      tickLower -= tickLower % 10;
+      tickUpper = await priceToTick(4500, vBase, vToken);
+      tickUpper -= tickUpper % 10;
+      netSumB = BigNumber.from(0);
+    });
+
+    beforeEach(async () => {
+      await changeVPoolPriceToNearestTick(4000);
+      await changeVPoolWrapperFakePrice(4000);
+      await test.addMargin(0, realBase.address, tokenAmount(100000, 6));
+    });
+
+    afterEach(async () => {
+      //Makes sumBInsideLast = 0
+      setWrapperValuesInside(0);
+      await liquidityChange(tickLower, tickUpper, 1, false, 0);
+
+      await test.cleanPositions(0);
+      await test.cleanDeposits(0);
+    });
+
+    for (let index = 0; index < 10; index++) {
+      let liqNum = randomInt(20) + 1;
+      let smallLiqAddNum = randomInt(50);
+      let smallLiqRemoveNum = randomInt(50);
+      it('Test #' + (index + 1) + ' (' + liqNum + ', ' + smallLiqAddNum + ', ' + smallLiqRemoveNum + ')', async () => {
+        liquidity = tokenAmount(1, 6);
+
+        for (let i = 0; i < liqNum; i++) {
+          await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+        }
+
+        for (let i = 0; i < smallLiqAddNum; i++) {
+          await liquidityChange(tickLower, tickUpper, 1, false, 0);
+        }
+
+        for (let i = 0; i < smallLiqRemoveNum; i++) {
+          await liquidityChange(tickLower, tickUpper, -1, false, 0);
+        }
+
+        for (let i = 0; i < liqNum - 1; i++) {
+          await liquidityChange(tickLower, tickUpper, -liquidity, false, 0);
+        }
+
+        await liquidityChange(tickLower, tickUpper, -liquidity + smallLiqRemoveNum - smallLiqAddNum, false, 0);
+
+        const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
+        const liquidityPosition = await test.getAccountLiquidityPositionDetails(0, vTokenAddress, 0);
+        expect(vTokenPosition.balance).eq(vTokenPosition.netTraderPosition);
+        expect(liquidityPosition.liquidity).eq(0);
+        expect(liquidityPosition.vTokenAmountIn).eq(0);
+      });
+    }
   });
 });

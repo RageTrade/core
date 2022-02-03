@@ -106,6 +106,7 @@ describe('VTokenPositionSet Library', () => {
       },
       liquidityFeePips: 500,
       protocolFeePips: 500,
+      slotsToInitialize: 100,
     });
 
     const eventFilter = rageTradeFactory.filters.PoolInitlized();
@@ -139,6 +140,7 @@ describe('VTokenPositionSet Library', () => {
       },
       liquidityFeePips: 500,
       protocolFeePips: 500,
+      slotsToInitialize: 100,
     });
 
     const eventFilter1 = rageTradeFactory.filters.PoolInitlized();

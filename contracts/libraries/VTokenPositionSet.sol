@@ -199,7 +199,7 @@ library VTokenPositionSet {
     /// @param vToken address of the token
     function deactivate(Set storage set, IVToken vToken) internal {
         uint32 truncated = vToken.truncate();
-        if (set.positions[truncated].balance != 0 && !set.positions[truncated].liquidityPositions.isEmpty()) {
+        if (set.positions[truncated].balance != 0 || !set.positions[truncated].liquidityPositions.isEmpty()) {
             revert DeactivationFailed(vToken);
         }
 
@@ -490,7 +490,7 @@ library VTokenPositionSet {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vToken, false, protocol);
 
         IClearingHouse.BalanceAdjustments memory balanceAdjustments;
-        int24 currentTick = vToken.getVirtualTwapTick(protocol);
+        int24 currentTick = vToken.getVirtualCurrentTick(protocol);
 
         vTokenPosition.liquidityPositions.removeLimitOrder(
             set.accountNo,

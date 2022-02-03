@@ -57,35 +57,35 @@ describe('Tick', () => {
     suchThatVTokenIsToken0: ethers.utils.hexZeroPad(BigNumber.from(1).toHexString(), 20),
     suchThatVTokenIsToken1: BigNumber.from(1).shl(160).sub(1).toHexString(),
   };
-  describe('#uniswapFeeGrowth', () => {
-    it('zero', async () => {
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(0);
-    });
+  // describe('#uniswapFeeGrowth', () => {
+  //   it('zero', async () => {
+  //     expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(0);
+  //   });
 
-    it('current price inside, global increase', async () => {
-      await vPool.setFeeGrowth(0, toQ128(10)); // increasing token1 global var
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(toQ128(10));
-    });
+  //   it('current price inside, global increase', async () => {
+  //     await vPool.setFeeGrowth(0, toQ128(10)); // increasing token1 global var
+  //     expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(toQ128(10));
+  //   });
 
-    it('current price outside, global increase', async () => {
-      await vPool.setFeeGrowth(0, toQ128(10)); // increasing token1 global var
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2)).to.eq(0);
-    });
+  //   it('current price outside, global increase', async () => {
+  //     await vPool.setFeeGrowth(0, toQ128(10)); // increasing token1 global var
+  //     expect(await test.getUniswapFeeGrowthInside(-1, 1, 2)).to.eq(0);
+  //   });
 
-    it('current price inside, global increase with ticks', async () => {
-      await vPool.setFeeGrowth(0, toQ128(30)); // increasing token1 global var
-      await vPoolMocksetTick(-1, { feeGrowthOutside1X128: toQ128(5) });
-      await vPoolMocksetTick(1, { feeGrowthOutside1X128: toQ128(10) });
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(toQ128(15));
-    });
+  //   it('current price inside, global increase with ticks', async () => {
+  //     await vPool.setFeeGrowth(0, toQ128(30)); // increasing token1 global var
+  //     await vPoolMocksetTick(-1, { feeGrowthOutside1X128: toQ128(5) });
+  //     await vPoolMocksetTick(1, { feeGrowthOutside1X128: toQ128(10) });
+  //     expect(await test.getUniswapFeeGrowthInside(-1, 1, 0)).to.eq(toQ128(15));
+  //   });
 
-    it('current price outside, global increase with ticks', async () => {
-      await vPool.setFeeGrowth(0, 30); // increasing token1 global var
-      await vPoolMocksetTick(-1, { feeGrowthOutside1X128: toQ128(5) });
-      await vPoolMocksetTick(1, { feeGrowthOutside1X128: toQ128(10) });
-      expect(await test.getUniswapFeeGrowthInside(-1, 1, 2)).to.eq(toQ128(5));
-    });
-  });
+  //   it('current price outside, global increase with ticks', async () => {
+  //     await vPool.setFeeGrowth(0, 30); // increasing token1 global var
+  //     await vPoolMocksetTick(-1, { feeGrowthOutside1X128: toQ128(5) });
+  //     await vPoolMocksetTick(1, { feeGrowthOutside1X128: toQ128(10) });
+  //     expect(await test.getUniswapFeeGrowthInside(-1, 1, 2)).to.eq(toQ128(5));
+  //   });
+  // });
 
   describe('#extendedFeeGrowth', () => {
     it('zero', async () => {

@@ -61,6 +61,14 @@ library VTokenLib {
         return protocol.pools[vToken].vPool.sqrtPriceCurrent();
     }
 
+    function getVirtualCurrentTick(IVToken vToken, Account.ProtocolInfo storage protocol)
+        internal
+        view
+        returns (int24 tick)
+    {
+        return protocol.pools[vToken].vPool.tickCurrent();
+    }
+
     function getVirtualTwapTick(IVToken vToken, Account.ProtocolInfo storage protocol)
         internal
         view

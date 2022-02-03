@@ -512,6 +512,7 @@ describe('Clearing House Scenario 6', () => {
       },
       liquidityFeePips: lpFee,
       protocolFeePips: protocolFee,
+      slotsToInitialize: 100,
     });
 
     const eventFilter = rageTradeFactory.filters.PoolInitlized();

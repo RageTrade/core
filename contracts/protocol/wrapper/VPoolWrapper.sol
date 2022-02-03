@@ -205,7 +205,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             // execute actual swap on uniswap
             (vTokenIn, vBaseIn) = vPool.swap(address(this), swapVTokenForVBase, amountSpecified, sqrtPriceLimitX96, '');
 
-            // TODO should this check be removed in production?
             // simulated swap should be identical to actual swap
             assert(vTokenIn_simulated == vTokenIn && vBaseIn_simulated == vBaseIn);
         }

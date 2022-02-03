@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { smock } from '@defi-wonderland/smock';
+import { FakeContract, smock } from '@defi-wonderland/smock';
 
 import {
   SqrtPriceMath,
@@ -19,10 +19,10 @@ import { priceToTick, tickToSqrtPriceX96 } from './utils/price-tick';
 
 describe('LiquidityPosition Library', () => {
   let test: LiquidityPositionTest;
-
+  let vPoolFake: FakeContract<UniswapV3Pool>;
   before(async () => {
     const vPoolAddress = ADDRESS_ZERO;
-    const vPoolFake = await smock.fake<UniswapV3Pool>(
+    vPoolFake = await smock.fake<UniswapV3Pool>(
       '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',
       {
         address: vPoolAddress,
@@ -254,6 +254,10 @@ describe('LiquidityPosition Library', () => {
           currentTick,
           vTokenAddress,
           roundUp: false,
+        });
+
+        vPoolFake.slot0.returns(() => {
+          return [sqrtPriceCurrent, currentTick, 0, 0, 0, 0, false];
         });
 
         await test.initialize(tickLower, tickUpper);

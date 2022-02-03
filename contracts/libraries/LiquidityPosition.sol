@@ -110,19 +110,19 @@ library LiquidityPosition {
         );
 
         uint160 sqrtPriceCurrent = wrapper.vPool().sqrtPriceCurrent();
+        int256 tokenAmountCurrent;
         {
-            (int256 tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent);
-
-            balanceAdjustments.traderPositionIncrease += tokenAmountCurrent - position.vTokenAmountIn;
+            (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
+            balanceAdjustments.traderPositionIncrease += (tokenAmountCurrent - position.vTokenAmountIn);
         }
 
         if (liquidity > 0) {
             position.liquidity += uint128(liquidity);
-            position.vTokenAmountIn = vTokenPrincipal;
         } else if (liquidity < 0) {
             position.liquidity -= uint128(liquidity * -1);
-            position.vTokenAmountIn = 0;
         }
+
+        position.vTokenAmountIn = tokenAmountCurrent + vTokenPrincipal;
     }
 
     function update(
@@ -198,18 +198,18 @@ library LiquidityPosition {
 
     function baseValue(
         Info storage position,
-        uint160 sqrtPriceCurrent,
+        uint160 valuationSqrtPriceX96,
         IVToken vToken,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(sqrtPriceCurrent, vToken.vPoolWrapper(protocol));
+        return position.baseValue(valuationSqrtPriceX96, vToken.vPoolWrapper(protocol));
     }
 
-    function tokenAmountsInRange(Info storage position, uint160 sqrtPriceCurrent)
-        internal
-        view
-        returns (int256 vTokenAmount, int256 vBaseAmount)
-    {
+    function tokenAmountsInRange(
+        Info storage position,
+        uint160 sqrtPriceCurrent,
+        bool roundUp
+    ) internal view returns (int256 vTokenAmount, int256 vBaseAmount) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -223,21 +223,24 @@ library LiquidityPosition {
         }
 
         vTokenAmount = SqrtPriceMath
-            .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, false)
+            .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, roundUp)
             .toInt256();
         vBaseAmount = SqrtPriceMath
-            .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, false)
+            .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, roundUp)
             .toInt256();
     }
 
     function baseValue(
         Info storage position,
-        uint160 sqrtPriceCurrent,
+        uint160 valuationSqrtPriceX96,
         IVPoolWrapper wrapper
     ) internal view returns (int256 baseValue_) {
         {
-            (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(sqrtPriceCurrent);
-            uint256 priceX128 = sqrtPriceCurrent.toPriceX128();
+            (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(
+                wrapper.vPool().sqrtPriceCurrent(),
+                false
+            );
+            uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
             baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees

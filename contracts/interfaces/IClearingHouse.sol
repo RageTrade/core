@@ -196,10 +196,6 @@ interface IClearingHouse is IGovernable {
 
     function registerPool(address full, RageTradePool calldata rageTradePool) external;
 
-    function isRealTokenAlreadyInitilized(address _realToken) external view returns (bool);
-
-    function initRealToken(address _realToken) external;
-
     function getTwapSqrtPricesForSetDuration(IVToken vToken)
         external
         view

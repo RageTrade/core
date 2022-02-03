@@ -63,11 +63,9 @@ library Account {
     }
 
     /// @notice parameters to be used for liquidation
-    /// @param fixFee specifies the fixFee to be given for successful liquidation
-    /// @param minRequiredMargin specifies the minimum required margin threshold
-    /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees
-    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position
-    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee
+    /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
+    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
+    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
     struct LiquidationParams {
         uint16 liquidationFeeFraction;
         uint16 tokenLiquidationPriceDeltaBps;
@@ -441,8 +439,8 @@ library Account {
     }
 
     /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
-    /// @param tokensToTrade account to liquidate
-    /// @param vToken map of vTokens allowed on the platform
+    /// @param tokensToTrade amount of tokens to trade for liquidation
+    /// @param vToken vToken being liquidated
     /// @param protocol set of all constants and token addresses
     function getLiquidationPriceX128AndFee(
         int256 tokensToTrade,
@@ -514,21 +512,19 @@ library Account {
             balanceAdjustments.vBaseIncrease
         );
 
-        balanceAdjustments = IClearingHouse.BalanceAdjustments({
+        liquidatorBalanceAdjustments = IClearingHouse.BalanceAdjustments({
             vBaseIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
             vTokenIncrease: -tokensToTrade,
             traderPositionIncrease: -tokensToTrade
         });
 
-        liquidatorAccount.tokenPositions.update(balanceAdjustments, vToken, protocol);
+        liquidatorAccount.tokenPositions.update(liquidatorBalanceAdjustments, vToken, protocol);
         emit Account.TokenPositionChange(
             liquidatorAccount.tokenPositions.accountNo,
             vToken,
-            balanceAdjustments.vTokenIncrease,
-            balanceAdjustments.vBaseIncrease
+            liquidatorBalanceAdjustments.vTokenIncrease,
+            liquidatorBalanceAdjustments.vBaseIncrease
         );
-
-        return balanceAdjustments;
     }
 
     /// @notice liquidates all range positions in case the account is under water

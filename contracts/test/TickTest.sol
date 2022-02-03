@@ -69,14 +69,6 @@ contract TickTest {
         );
     }
 
-    function getUniswapFeeGrowthInside(
-        int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent
-    ) public view returns (uint256 uniswapFeeGrowthInside) {
-        return vPool.getUniswapFeeGrowthInside(tickLower, tickUpper, tickCurrent);
-    }
-
     function getFeeGrowthInside(
         int24 tickLower,
         int24 tickUpper,

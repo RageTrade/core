@@ -73,31 +73,6 @@ library Tick {
         sumFeeInsideX128 = sumFeeGlobalX128 - sumFeeBelowX128 - sumFeeAboveX128;
     }
 
-    function getUniswapFeeGrowthInside(
-        IUniswapV3Pool vPool,
-        int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent
-    ) internal view returns (uint256 uniswapFeeGrowthInsideX128) {
-        uint256 uniswapFeeGrowthLowerX128;
-        uint256 uniswapFeeGrowthUpperX128;
-        {
-            (, , , uint256 fee1LowerX128, , , , ) = vPool.ticks(tickLower);
-            (, , , uint256 fee1UpperX128, , , , ) = vPool.ticks(tickUpper);
-            uniswapFeeGrowthLowerX128 = fee1LowerX128;
-            uniswapFeeGrowthUpperX128 = fee1UpperX128;
-        }
-
-        if (tickCurrent < tickLower) {
-            uniswapFeeGrowthInsideX128 = uniswapFeeGrowthLowerX128 - uniswapFeeGrowthUpperX128;
-        } else if (tickCurrent < tickUpper) {
-            uniswapFeeGrowthInsideX128 = vPool.feeGrowthGlobal1X128();
-            uniswapFeeGrowthInsideX128 -= (uniswapFeeGrowthLowerX128 + uniswapFeeGrowthUpperX128);
-        } else {
-            uniswapFeeGrowthInsideX128 = uniswapFeeGrowthUpperX128 - uniswapFeeGrowthLowerX128;
-        }
-    }
-
     function update(
         mapping(int24 => Tick.Info) storage self,
         int24 tick,
