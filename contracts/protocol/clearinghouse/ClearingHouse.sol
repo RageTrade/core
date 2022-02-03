@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
@@ -34,6 +35,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
     using VTokenLib for IVToken;
     using SignedMath for int256;
     using RTokenLib for RTokenLib.RToken;
+    using SafeCast for uint256;
 
     error Paused();
     error NotRageTradeFactory();
