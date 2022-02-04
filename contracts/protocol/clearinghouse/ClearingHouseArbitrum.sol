@@ -54,7 +54,6 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
             l1FeeInWei = Arbitrum.getCurrentTxL1GasFees();
         }
 
-        // TODO put a upper limit to tx.gasprice
         uint256 l2FeeInWei = l2GasUnits * tx.gasprice;
 
         uint256 ethPriceInUsdc = nativeOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();

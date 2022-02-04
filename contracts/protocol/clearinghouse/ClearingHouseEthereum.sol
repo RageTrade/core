@@ -26,7 +26,6 @@ contract ClearingHouseEthereum is ClearingHouse, TxGasPriceLimit {
             gasUnits += 21000 + Calldata.calculateCostUnits(msg.data);
         }
 
-        // TODO put a upper limit to tx.gasprice
         uint256 nativeAmount = tx.gasprice * gasUnits;
         uint256 nativePriceInRBase = nativeOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
         return nativeAmount.mulDiv(nativePriceInRBase, FixedPoint128.Q128);
