@@ -81,9 +81,6 @@ describe('VTokenPositionSet Library', () => {
       insuranceFundLogic.address,
       REAL_BASE,
       nativeOracle.address,
-      UNISWAP_V3_FACTORY_ADDRESS,
-      UNISWAP_V3_DEFAULT_FEE_TIER,
-      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());

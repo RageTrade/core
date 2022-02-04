@@ -203,9 +203,6 @@ describe('Clearing House Library', () => {
       insuranceFundLogic.address,
       rBase.address,
       nativeOracle.address,
-      UNISWAP_V3_FACTORY_ADDRESS,
-      UNISWAP_V3_DEFAULT_FEE_TIER,
-      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());

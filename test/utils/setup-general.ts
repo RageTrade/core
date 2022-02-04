@@ -53,9 +53,6 @@ export async function testSetup({
     insuranceFundLogic.address,
     realBase.address,
     nativeOracle.address,
-    UNISWAP_V3_FACTORY_ADDRESS,
-    UNISWAP_V3_DEFAULT_FEE_TIER,
-    UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
@@ -168,9 +165,6 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     insuranceFundLogic.address,
     realBase.address,
     nativeOracle.address,
-    UNISWAP_V3_FACTORY_ADDRESS,
-    UNISWAP_V3_DEFAULT_FEE_TIER,
-    UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();

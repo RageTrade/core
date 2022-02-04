@@ -21,10 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const rBase = await get('RBase');
   const nativeOracle = await get('NativeOracle');
 
-  const { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER, UNISWAP_V3_POOL_BYTE_CODE_HASH } = getNetworkInfo(
-    hre.network.config.chainId,
-  );
-
   const deployment = await deploy('RageTradeFactory', {
     from: deployer,
     log: true,
@@ -34,9 +30,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       insuranceFundLogic.address,
       rBase.address,
       nativeOracle.address,
-      UNISWAP_V3_FACTORY_ADDRESS,
-      UNISWAP_V3_DEFAULT_FEE_TIER,
-      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     ],
   });
 

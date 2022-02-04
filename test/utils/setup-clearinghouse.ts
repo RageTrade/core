@@ -109,9 +109,6 @@ export async function setupClearingHouse({
     insuranceFundLogic.address,
     rBase.address,
     nativeOracle.address,
-    UNISWAP_V3_FACTORY_ADDRESS,
-    UNISWAP_V3_DEFAULT_FEE_TIER,
-    UNISWAP_V3_POOL_BYTE_CODE_HASH,
   );
 
   // virtual base
