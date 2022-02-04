@@ -29,6 +29,8 @@ import { UniswapV3PoolHelper } from '../../libraries/UniswapV3PoolHelper.sol';
 
 import { Extsload } from '../../utils/Extsload.sol';
 
+import { UNISWAP_V3_DEFAULT_TICKSPACING } from '../../utils/constants.sol';
+
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback, Initializable, Extsload {
@@ -64,6 +66,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     error NotClearingHouse();
     error NotGovernance();
     error NotUniswapV3Pool();
+    error InvalidTicks(int24 tickLower, int24 tickUpper);
 
     modifier onlyClearingHouse() {
         if (msg.sender != address(clearingHouse)) {
@@ -83,6 +86,17 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         if (msg.sender != address(vPool)) {
             revert NotUniswapV3Pool();
         }
+        _;
+    }
+
+    modifier checkTicks(int24 tickLower, int24 tickUpper) {
+        if (
+            tickLower >= tickUpper ||
+            tickLower < TickMath.MIN_TICK ||
+            tickUpper > TickMath.MAX_TICK ||
+            tickLower % UNISWAP_V3_DEFAULT_TICKSPACING == 0 ||
+            tickUpper % UNISWAP_V3_DEFAULT_TICKSPACING == 0
+        ) revert InvalidTicks(tickLower, tickUpper);
         _;
     }
 
@@ -268,6 +282,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     )
         external
         onlyClearingHouse
+        checkTicks(tickLower, tickUpper)
         returns (
             int256 basePrincipal,
             int256 vTokenPrincipal,
@@ -351,6 +366,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     function getValuesInside(int24 tickLower, int24 tickUpper)
         public
         view
+        checkTicks(tickLower, tickUpper)
         returns (WrapperValuesInside memory wrapperValuesInside)
     {
         (, int24 currentTick, , , , , ) = vPool.slot0();
