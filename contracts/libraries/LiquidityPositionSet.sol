@@ -233,4 +233,25 @@ library LiquidityPositionSet {
             balanceAdjustments.traderPositionIncrease += balanceAdjustmentsCurrent.traderPositionIncrease;
         }
     }
+
+    function getView(Info storage set)
+        internal
+        view
+        returns (IClearingHouse.LiquidityPositionView[] memory liquidityPositions)
+    {
+        uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
+        liquidityPositions = new IClearingHouse.LiquidityPositionView[](numberOfTokenPositions);
+
+        for (uint256 i = 0; i < numberOfTokenPositions; i++) {
+            liquidityPositions[i].limitOrderType = set.positions[set.active[i]].limitOrderType;
+            liquidityPositions[i].tickLower = set.positions[set.active[i]].tickLower;
+            liquidityPositions[i].tickUpper = set.positions[set.active[i]].tickUpper;
+            liquidityPositions[i].liquidity = set.positions[set.active[i]].liquidity;
+            liquidityPositions[i].vTokenAmountIn = set.positions[set.active[i]].vTokenAmountIn;
+            liquidityPositions[i].sumALastX128 = set.positions[set.active[i]].sumALastX128;
+            liquidityPositions[i].sumBInsideLastX128 = set.positions[set.active[i]].sumBInsideLastX128;
+            liquidityPositions[i].sumFpInsideLastX128 = set.positions[set.active[i]].sumFpInsideLastX128;
+            liquidityPositions[i].sumFeeInsideLastX128 = set.positions[set.active[i]].sumFeeInsideLastX128;
+        }
+    }
 }

@@ -24,6 +24,7 @@ import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './utils/create-addresses';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
+import { impersonateAccount } from './utils/impersonate-account';
 
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
@@ -40,6 +41,7 @@ describe('VTokenPositionSet Library', () => {
   let clearingHouse: ClearingHouse;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
+  let chSigner: SignerWithAddress;
   before(async () => {
     await activateMainnetFork();
 
@@ -79,12 +81,10 @@ describe('VTokenPositionSet Library', () => {
       insuranceFundLogic.address,
       REAL_BASE,
       nativeOracle.address,
-      UNISWAP_V3_FACTORY_ADDRESS,
-      UNISWAP_V3_DEFAULT_FEE_TIER,
-      UNISWAP_V3_POOL_BYTE_CODE_HASH,
     );
 
     clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+    chSigner = await impersonateAccount(clearingHouse.address);
     vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
 
     const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
@@ -123,7 +123,7 @@ describe('VTokenPositionSet Library', () => {
         address: vPoolAddress,
       },
     );
-    await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
+    await VPoolWrapper.connect(chSigner).liquidityChange(-10, 10, 10000000000000);
 
     await rageTradeFactory.initializePool({
       deployVTokenParams: {
@@ -150,7 +150,7 @@ describe('VTokenPositionSet Library', () => {
     // console.log('VPoolFactoryAddress1', VPoolFactory.address);
     // console.log('Vwrapper1', events1[0].args[2]);
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events1[0].args[2]);
-    await VPoolWrapper.liquidityChange(-10, 10, 10000000000000);
+    await VPoolWrapper.connect(chSigner).liquidityChange(-10, 10, 10000000000000);
 
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
     VTokenPositionSet = await factory.deploy();

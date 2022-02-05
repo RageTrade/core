@@ -8,6 +8,7 @@ import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-etherscan';
+import '@tenderly/hardhat-tenderly';
 import { ethers } from 'ethers';
 
 config();
@@ -46,13 +47,19 @@ export default {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
-    arbitrum: {
+    arbmain: {
       url: `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
-    arbitrumRinkeby: {
+    arbtest: {
       url: `https://arb-rinkeby.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
+      chainId: 421611,
+    },
+    optest: {
+      url: `https://opt-kovan.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      accounts: [pk],
+      chainId: 69,
     },
   },
   solidity: {

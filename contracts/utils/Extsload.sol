@@ -14,13 +14,13 @@ abstract contract Extsload {
         assembly {
             let end := add(0x20, add(slots, mul(mload(slots), 0x20)))
             for {
-                let pointer := slots
+                let pointer := add(slots, 32)
             } lt(pointer, end) {
 
             } {
-                pointer := add(pointer, 0x20)
                 let value := sload(mload(pointer))
                 mstore(pointer, value)
+                pointer := add(pointer, 0x20)
             }
         }
 

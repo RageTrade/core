@@ -13,9 +13,6 @@ import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 import { IVToken } from './IVToken.sol';
 
-// TODO move these to interface
-import { Account } from '../libraries/Account.sol';
-
 interface IClearingHouse is IGovernable {
     struct RageTradePool {
         IUniswapV3Pool vPool;
@@ -67,6 +64,35 @@ interface IClearingHouse is IGovernable {
         int256 vBaseIncrease;
         int256 vTokenIncrease;
         int256 traderPositionIncrease;
+    }
+
+    struct DepositTokenView {
+        address rTokenAddress;
+        uint256 balance;
+    }
+
+    struct VTokenPositionView {
+        address vTokenAddress;
+        int256 balance; // vTokenLong - vTokenShort
+        int256 netTraderPosition;
+        int256 sumAX128Ckpt;
+        LiquidityPositionView[] liquidityPositions;
+    }
+
+    struct LiquidityPositionView {
+        LimitOrderType limitOrderType;
+        // the tick range of the position;
+        int24 tickLower;
+        int24 tickUpper;
+        // the liquidity of the position
+        uint128 liquidity;
+        int256 vTokenAmountIn;
+        // funding payment checkpoints
+        int256 sumALastX128;
+        int256 sumBInsideLastX128;
+        int256 sumFpInsideLastX128;
+        // fee growth inside
+        uint256 sumFeeInsideLastX128;
     }
 
     /// @notice error to denote invalid account access
@@ -163,19 +189,17 @@ interface IClearingHouse is IGovernable {
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
     /// @param tickLower liquidity change parameters
     /// @param tickUpper liquidity change parameters
-    // @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     function removeLimitOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper
-    ) external returns (uint256 keeperFee);
+    ) external;
 
     /// @notice keeper call for liquidation of range position
     /// @dev removes all the active range positions and gives liquidator a percent of notional amount closed + fixedFee
     /// @param accountNo account number
-    // @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
-    function liquidateLiquidityPositions(uint256 accountNo) external returns (int256 keeperFee);
+    function liquidateLiquidityPositions(uint256 accountNo) external;
 
     /// @notice keeper call for liquidation of token position
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
@@ -183,13 +207,53 @@ interface IClearingHouse is IGovernable {
     /// @param accountNo account number
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
-    // @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
+    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
+
+    /// @notice keeper call to remove a limit order
+    /// @dev checks the position of current price relative to limit order and checks limitOrderType
+    /// @param accountNo account number
+    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param tickLower liquidity change parameters
+    /// @param tickUpper liquidity change parameters
+    /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
+    /// @return keeperFee : amount of fees paid to caller
+    function removeLimitOrderWithGasClaim(
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 gasComputationUnitsClaim
+    ) external returns (uint256 keeperFee);
+
+    /// @notice keeper call for liquidation of range position
+    /// @dev removes all the active range positions and gives liquidator a percent of notional amount closed + fixedFee
+    /// @param accountNo account number
+    /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
+    /// @return keeperFee : amount of fees paid to caller
+    function liquidateLiquidityPositionsWithGasClaim(uint256 accountNo, uint256 gasComputationUnitsClaim)
+        external
+        returns (int256 keeperFee);
+
+    /// @notice keeper call for liquidation of token position
+    /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
+    /// @param liquidatorAccountNo liquidator account number
+    /// @param accountNo account number
+    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param liquidationBps fraction of the token position to be transferred in BPS
+    /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
+    /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
+    function liquidateTokenPositionWithGasClaim(
+        uint256 liquidatorAccountNo,
+        uint256 accountNo,
+        uint32 vTokenTruncatedAddress,
+        uint16 liquidationBps,
+        uint256 gasComputationUnitsClaim
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);

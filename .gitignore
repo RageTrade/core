@@ -11,3 +11,4 @@ coverage
 coverage.json
 deployments/localhost
 .env
+tenderly.yaml

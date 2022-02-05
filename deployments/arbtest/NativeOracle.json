@@ -1,0 +1,92 @@
+{
+  "address": "0x621355b750f6493AECDa69a4f0a0D29A79246c7e",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "getTwapSqrtPriceX96",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "sqrtPriceX96",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint160",
+          "name": "sqrtPriceX96",
+          "type": "uint160"
+        }
+      ],
+      "name": "setSqrtPrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x2889e49dd88b4e13d2c75b172a310444878d32f899b0dd68cb63b9ac2d45084d",
+  "receipt": {
+    "to": null,
+    "from": "0x4ec0dda0430A54b4796109913545F715B2d89F34",
+    "contractAddress": "0x621355b750f6493AECDa69a4f0a0D29A79246c7e",
+    "transactionIndex": 0,
+    "gasUsed": "966019",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x84713386f35a9494e3d20c88bf30e8c60651e01e98a591326ba8dc94c131f44b",
+    "transactionHash": "0x2889e49dd88b4e13d2c75b172a310444878d32f899b0dd68cb63b9ac2d45084d",
+    "logs": [],
+    "blockNumber": 8678655,
+    "cumulativeGasUsed": "55219",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "11fe70ca772ffd2defe9ec97f4437e59",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.10+commit.fc410830\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"name\":\"getTwapSqrtPriceX96\",\"outputs\":[{\"internalType\":\"uint160\",\"name\":\"sqrtPriceX96\",\"type\":\"uint160\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint160\",\"name\":\"sqrtPriceX96\",\"type\":\"uint160\"}],\"name\":\"setSqrtPrice\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/test/mocks/OracleMock.sol\":\"OracleMock\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IOracle.sol\":{\"content\":\"//SPDX-License-Identifier: UNLICENSED\\n\\npragma solidity ^0.8.9;\\n\\ninterface IOracle {\\n    // TODO change to X128 instead of X96\\n    function getTwapSqrtPriceX96(uint32 twapDuration) external view returns (uint160 sqrtPriceX96);\\n}\\n\",\"keccak256\":\"0x557aab09de88ac0d7036a2928b84fe8becb17d28851fe9f8e61616fc4f177b9e\",\"license\":\"UNLICENSED\"},\"contracts/test/mocks/OracleMock.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\n\\npragma solidity ^0.8.9;\\n\\nimport { IOracle } from '../../interfaces/IOracle.sol';\\n\\ncontract OracleMock is IOracle {\\n    uint160 _sqrtPriceX96;\\n\\n    constructor() {\\n        setSqrtPrice(1 << 96);\\n    }\\n\\n    function getTwapSqrtPriceX96(uint32) external view returns (uint160 sqrtPriceX96) {\\n        return _sqrtPriceX96;\\n    }\\n\\n    function setSqrtPrice(uint160 sqrtPriceX96) public {\\n        _sqrtPriceX96 = sqrtPriceX96;\\n    }\\n}\\n\",\"keccak256\":\"0x0b211ec918dd968300a4f72de2d078a9b09568314bf677fabec1c15be6b17b4a\",\"license\":\"UNLICENSED\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50600080546001600160a01b0319166c0100000000000000000000000017905560fc8061003e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c806372b6bb3814603757806382a2423e14606e575b600080fd5b60526042366004609d565b506000546001600160a01b031690565b6040516001600160a01b03909116815260200160405180910390f35b609b607936600460c8565b600080546001600160a01b0319166001600160a01b0392909216919091179055565b005b60006020828403121560ae57600080fd5b813563ffffffff8116811460c157600080fd5b9392505050565b60006020828403121560d957600080fd5b81356001600160a01b038116811460c157600080fdfea164736f6c634300080a000a",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060325760003560e01c806372b6bb3814603757806382a2423e14606e575b600080fd5b60526042366004609d565b506000546001600160a01b031690565b6040516001600160a01b03909116815260200160405180910390f35b609b607936600460c8565b600080546001600160a01b0319166001600160a01b0392909216919091179055565b005b60006020828403121560ae57600080fd5b813563ffffffff8116811460c157600080fd5b9392505050565b60006020828403121560d957600080fd5b81356001600160a01b038116811460c157600080fdfea164736f6c634300080a000a",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 25890,
+        "contract": "contracts/test/mocks/OracleMock.sol:OracleMock",
+        "label": "_sqrtPriceX96",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint160"
+      }
+    ],
+    "types": {
+      "t_uint160": {
+        "encoding": "inplace",
+        "label": "uint160",
+        "numberOfBytes": "20"
+      }
+    }
+  }
+}

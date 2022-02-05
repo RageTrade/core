@@ -251,13 +251,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper
-    ) external returns (uint256 keeperFee) {
-        return _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, 0);
+    ) external {
+        _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, 0);
     }
 
     /// @inheritdoc IClearingHouse
-    function liquidateLiquidityPositions(uint256 accountNo) external returns (int256 keeperFee) {
-        return _liquidateLiquidityPositions(accountNo, 0);
+    function liquidateLiquidityPositions(uint256 accountNo) external {
+        _liquidateLiquidityPositions(accountNo, 0);
     }
 
     /// @inheritdoc IClearingHouse

@@ -93,7 +93,7 @@ library Account {
     /// @notice denotes new account creation
     /// @param ownerAddress wallet address of account owner
     /// @param accountNo serial number of the account
-    event AccountCreated(address ownerAddress, uint256 accountNo);
+    event AccountCreated(address indexed ownerAddress, uint256 accountNo);
 
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
@@ -624,5 +624,20 @@ library Account {
         account.tokenPositions.removeLimitOrder(vToken, tickLower, tickUpper, protocol);
 
         account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
+    }
+
+    function getView(UserInfo storage account, Account.ProtocolInfo storage protocol)
+        external
+        view
+        returns (
+            address owner,
+            int256 vBaseBalance,
+            IClearingHouse.DepositTokenView[] memory tokenDeposits,
+            IClearingHouse.VTokenPositionView[] memory tokenPositions
+        )
+    {
+        owner = account.owner;
+        tokenDeposits = account.tokenDeposits.getView(protocol);
+        (vBaseBalance, tokenPositions) = account.tokenPositions.getView(protocol);
     }
 }

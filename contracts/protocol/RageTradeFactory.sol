@@ -20,6 +20,8 @@ import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
+import { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER } from '../utils/constants.sol';
+
 import { console } from 'hardhat/console.sol';
 
 contract RageTradeFactory is
@@ -31,10 +33,6 @@ contract RageTradeFactory is
     VTokenDeployer
 {
     using VTokenLib for IVToken;
-
-    address public immutable UNISWAP_V3_FACTORY_ADDRESS;
-    uint24 public immutable UNISWAP_V3_DEFAULT_FEE_TIER;
-    bytes32 public immutable UNISWAP_V3_POOL_BYTE_CODE_HASH;
 
     IVBase public immutable vBase;
     IClearingHouse public immutable clearingHouse;
@@ -49,17 +47,10 @@ contract RageTradeFactory is
         address _vPoolWrapperLogicAddress,
         address insuranceFundLogicAddress,
         IERC20Metadata rBase,
-        address nativeOracle,
-        address _UNISWAP_V3_FACTORY_ADDRESS,
-        uint24 _UNISWAP_V3_DEFAULT_FEE_TIER,
-        bytes32 _UNISWAP_V3_POOL_BYTE_CODE_HASH
+        address nativeOracle
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
         proxyAdmin = _deployProxyAdmin();
         proxyAdmin.transferOwnership(msg.sender);
-
-        UNISWAP_V3_FACTORY_ADDRESS = _UNISWAP_V3_FACTORY_ADDRESS;
-        UNISWAP_V3_DEFAULT_FEE_TIER = _UNISWAP_V3_DEFAULT_FEE_TIER;
-        UNISWAP_V3_POOL_BYTE_CODE_HASH = _UNISWAP_V3_POOL_BYTE_CODE_HASH;
 
         // deploys VBase contract at an address which has most significant nibble as "f"
         vBase = _deployVBase(rBase.decimals());

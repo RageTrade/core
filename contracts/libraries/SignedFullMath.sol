@@ -3,7 +3,11 @@ pragma solidity >=0.8.0;
 
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
+import { SignedMath } from './SignedMath.sol';
+
 library SignedFullMath {
+    using SignedMath for int256;
+
     function mulDiv(
         int256 a,
         uint256 b,
@@ -24,24 +28,11 @@ library SignedFullMath {
         uint256 _a;
         uint256 _b;
         uint256 _denominator;
-        if (a < 0) {
-            resultPositive = !resultPositive;
-            _a = uint256(-a);
-        } else {
-            _a = uint256(a);
-        }
-        if (b < 0) {
-            resultPositive = !resultPositive;
-            _b = uint256(-b);
-        } else {
-            _b = uint256(b);
-        }
-        if (denominator < 0) {
-            resultPositive = !resultPositive;
-            _denominator = uint256(-1 * denominator);
-        } else {
-            _denominator = uint256(denominator);
-        }
+
+        (_a, resultPositive) = a.extractSign(resultPositive);
+        (_b, resultPositive) = b.extractSign(resultPositive);
+        (_denominator, resultPositive) = denominator.extractSign(resultPositive);
+
         result = int256(FullMath.mulDiv(_a, _b, _denominator));
         if (!resultPositive) {
             result = -result;
@@ -56,7 +47,7 @@ library SignedFullMath {
         uint256 denominator
     ) internal pure returns (int256 result) {
         result = mulDiv(a, b, denominator);
-        if (result < 0) {
+        if (result < 0 && _hasRemainder(a.absUint(), b, denominator)) {
             result += -1;
         }
     }
@@ -69,8 +60,25 @@ library SignedFullMath {
         int256 denominator
     ) internal pure returns (int256 result) {
         result = mulDiv(a, b, denominator);
-        if (result < 0) {
+        if (result < 0 && _hasRemainder(a.absUint(), b.absUint(), denominator.absUint())) {
             result += -1;
         }
     }
+
+    function _hasRemainder(
+        uint256 a,
+        uint256 b,
+        uint256 denominator
+    ) private pure returns (bool hasRemainder) {
+        assembly {
+            let remainder := mulmod(a, b, denominator)
+            if gt(remainder, 0) {
+                hasRemainder := 1
+            }
+        }
+    }
+
+    // function xor(bool a, bool b) private pure returns (bool) {
+    //     return (a ? 1 : 0) ^ (b ? 1 : 0) > 0;
+    // }
 }
