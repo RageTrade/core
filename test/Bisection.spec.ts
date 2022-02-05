@@ -14,6 +14,6 @@ describe('Bisection', () => {
   });
 
   it('reverts when target is out of bounds', async () => {
-    await expect(test.findSolution(300, 101, 1000)).to.be.revertedWith('f');
+    await expect(test.findSolution(300, 101, 1000)).to.be.revertedWith('SolutionOutOfBounds(300, 101, 1000)');
   });
 });
