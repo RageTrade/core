@@ -298,6 +298,18 @@ library Account {
         return (accountMarketValue, totalRequiredMargin);
     }
 
+    /// @notice returns market value for the account positions based on current market conditions
+    /// @param account account to check
+    /// @param protocol set of all constants and token addresses
+    /// @return accountPositionProfits total market value of all the positions (token ) and deposits
+    function getAccountPositionProfits(UserInfo storage account, Account.ProtocolInfo storage protocol)
+        internal
+        view
+        returns (int256 accountPositionProfits)
+    {
+        accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+    }
+
     /// @notice returns market value for the account based on current market conditions
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
@@ -307,7 +319,7 @@ library Account {
         view
         returns (int256 accountMarketValue)
     {
-        accountMarketValue = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+        accountMarketValue = account.getAccountPositionProfits(protocol);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
         return (accountMarketValue);
     }
@@ -333,7 +345,7 @@ library Account {
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     function checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) internal view {
-        int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+        int256 totalPositionValue = account.getAccountPositionProfits(protocol);
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
