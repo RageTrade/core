@@ -18,8 +18,6 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
-import { IOracle } from '../../interfaces/IOracle.sol';
-
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
@@ -372,7 +370,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
-        require(keeperFee > 0, "negative keeper fee");
+        require(keeperFee > 0, 'negative keeper fee');
         protocol.rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
