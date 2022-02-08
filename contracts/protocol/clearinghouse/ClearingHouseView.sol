@@ -91,4 +91,8 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
             protocol
         );
     }
+
+    function getAccountNetProfit(uint256 accountNo) public view returns (int256 accountNetProfit) {
+        accountNetProfit = accounts[accountNo].getAccountPositionProfits(protocol);
+    }
 }

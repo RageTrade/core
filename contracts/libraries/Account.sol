@@ -110,7 +110,7 @@ library Account {
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account
     /// @param amount amount of profit withdrawn
-    event WithdrawProfit(uint256 accountNo, uint256 amount);
+    event UpdateProfit(uint256 accountNo, int256 amount);
 
     /// @notice denotes token position change
     /// @param accountNo serial number of the account
@@ -258,19 +258,21 @@ library Account {
         account.checkIfMarginAvailable(true, protocol);
     }
 
-    /// @notice removes 'amount' of profit generated in base token
+    /// @notice updates 'amount' of profit generated in base token
     /// @param account account to remove profit from
-    /// @param amount amount of profit(base token) to remove
+    /// @param amount amount of profit(base token) to add/remove
     /// @param protocol set of all constants and token addresses
-    function removeProfit(
+    function updateProfit(
         UserInfo storage account,
-        uint256 amount,
+        int256 amount,
         Account.ProtocolInfo storage protocol
     ) external {
-        account.updateBaseBalance(-int256(amount), protocol);
+        account.updateBaseBalance(amount, protocol);
 
-        account.checkIfProfitAvailable(protocol);
-        account.checkIfMarginAvailable(true, protocol);
+        if (amount < 0) {
+            account.checkIfProfitAvailable(protocol);
+            account.checkIfMarginAvailable(true, protocol);
+        }
     }
 
     /// @notice returns market value and required margin for the account based on current market conditions
@@ -296,6 +298,18 @@ library Account {
         return (accountMarketValue, totalRequiredMargin);
     }
 
+    /// @notice returns market value for the account positions based on current market conditions
+    /// @param account account to check
+    /// @param protocol set of all constants and token addresses
+    /// @return accountPositionProfits total market value of all the positions (token ) and deposits
+    function getAccountPositionProfits(UserInfo storage account, Account.ProtocolInfo storage protocol)
+        internal
+        view
+        returns (int256 accountPositionProfits)
+    {
+        accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+    }
+
     /// @notice returns market value for the account based on current market conditions
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
@@ -305,7 +319,7 @@ library Account {
         view
         returns (int256 accountMarketValue)
     {
-        accountMarketValue = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+        accountMarketValue = account.getAccountPositionProfits(protocol);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
         return (accountMarketValue);
     }
@@ -331,7 +345,7 @@ library Account {
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     function checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) internal view {
-        int256 totalPositionValue = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+        int256 totalPositionValue = account.getAccountPositionProfits(protocol);
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 

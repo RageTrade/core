@@ -12,6 +12,8 @@ import { IOracle } from './IOracle.sol';
 import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 import { IVToken } from './IVToken.sol';
+import { Account } from '../libraries/Account.sol';
+import { RTokenLib } from '../libraries/RTokenLib.sol';
 
 interface IClearingHouse is IGovernable {
     struct RageTradePool {
@@ -160,7 +162,7 @@ interface IClearingHouse is IGovernable {
     /// @notice withdraws 'amount' of base token from the profit made
     /// @param accountNo account number
     /// @param amount amount of token to withdraw
-    function removeProfit(uint256 accountNo, uint256 amount) external;
+    function updateProfit(uint256 accountNo, int256 amount) external;
 
     /// @notice swaps token associated with 'vTokenTruncatedAddress' by 'amount' (Long if amount>0 else Short)
     /// @param accountNo account number
@@ -264,4 +266,45 @@ interface IClearingHouse is IGovernable {
         external
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128);
+
+    /**
+        Account.ProtocolInfo VIEW
+     */
+    function protocolInfo()
+        external
+        view
+        returns (
+            IVBase vBase,
+            Account.LiquidationParams memory liquidationParams,
+            uint256 minRequiredMargin,
+            uint256 removeLimitOrderFee,
+            uint256 minimumOrderNotional
+        );
+
+    function pools(IVToken vToken) external view returns (RageTradePool memory);
+
+    function rTokens(uint32 rTokenId) external view returns (RTokenLib.RToken memory);
+
+    function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
+
+    /**
+        Account.UserInfo VIEW
+     */
+
+    function getAccountView(uint256 accountNo)
+        external
+        view
+        returns (
+            address owner,
+            int256 vBaseBalance,
+            DepositTokenView[] memory tokenDeposits,
+            VTokenPositionView[] memory tokenPositions
+        );
+
+    function getAccountMarketValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+        external
+        view
+        returns (int256 accountMarketValue, int256 requiredMargin);
+
+    function getAccountNetProfit(uint256 accountNo) external view returns (int256 accountNetProfit);
 }

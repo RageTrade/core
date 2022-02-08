@@ -187,14 +187,18 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
     }
 
     /// @inheritdoc IClearingHouse
-    function removeProfit(uint256 accountNo, uint256 amount) external notPaused {
+    function updateProfit(uint256 accountNo, int256 amount) external notPaused {
+        require(amount != 0, '!amount');
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
-        account.removeProfit(amount, protocol);
-        rBase.safeTransfer(msg.sender, amount);
-
-        emit Account.WithdrawProfit(accountNo, amount);
+        account.updateProfit(amount, protocol);
+        if (amount > 0) {
+            rBase.safeTransferFrom(msg.sender, address(this), uint256(amount));
+        } else {
+            rBase.safeTransfer(msg.sender, uint256(-amount));
+        }
+        emit Account.UpdateProfit(accountNo, amount);
     }
 
     /// @inheritdoc IClearingHouse
