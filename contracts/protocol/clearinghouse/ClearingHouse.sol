@@ -36,6 +36,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
     using SignedMath for int256;
     using RTokenLib for RTokenLib.RToken;
     using SafeCast for uint256;
+    using SafeCast for int256;
 
     error Paused();
     error NotRageTradeFactory();
@@ -371,6 +372,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
+        require(keeperFee > 0, "negative keeper fee");
         protocol.rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
