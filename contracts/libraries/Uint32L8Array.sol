@@ -20,6 +20,7 @@ library Uint32L8ArrayLib {
             }
             if (emptyIndex == 8 && array[i] == uint32(0)) {
                 emptyIndex = i;
+                break;
             }
         }
 
