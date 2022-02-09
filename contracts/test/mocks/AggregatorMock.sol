@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { IRealOracle } from '../../interfaces/IRealOracle.sol';
 import { AggregatorV3Interface } from '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
-
+import 'hardhat/console.sol';
 
 contract AggregatorMock is AggregatorV3Interface {
 
@@ -19,10 +19,26 @@ contract AggregatorMock is AggregatorV3Interface {
     string constant _desc = "Mock Aggregator";
     uint256 constant _cVersion = 1;
     uint8 constant _numDecimals = 8;
-    Round[6] history;
+    Round[] history;
 
-    function setHistory(Round[6] memory _history) external {
-        history = _history;
+    function setHistory(
+        uint80[] memory _roundId,
+        int256[] memory _answer,
+        uint256[] memory _startedAt,
+        uint256[] memory _updatedAt,
+        uint80[] memory _answeredInRound
+    ) external {
+        for(uint i=0; i<_roundId.length; i++) {
+            history.push(
+                Round({
+                    roundId: _roundId[i],
+                    answer: _answer[i],
+                    startedAt: _startedAt[i],
+                    updatedAt: _updatedAt[i],
+                    answeredInRound: _answeredInRound[i]
+                })
+            );
+        }
     }
 
     function decimals() external pure returns (uint8 numDecimals) {
@@ -68,7 +84,7 @@ contract AggregatorMock is AggregatorV3Interface {
       uint256 updatedAt,
       uint80 answeredInRound
     ) {
-        for (uint i = history.length; i >= 0; --i) {
+        for (uint i = history.length-1; i >= 0; --i) {
             if (history[i].roundId != 0) {
                 Round memory round = history[i];
                 return (
