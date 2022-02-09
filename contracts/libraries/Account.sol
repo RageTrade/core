@@ -62,6 +62,11 @@ library Account {
         uint256[100] _emptySlots;
     }
 
+    modifier onlyInternal() {
+        require(msg.sender == address(this), 'sender != address lib');
+        _;
+    }
+
     /// @notice parameters to be used for liquidation
     /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
     /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
@@ -210,6 +215,16 @@ library Account {
         int256 insuranceFundFee
     );
 
+    function aggregate(bytes[] memory calls) public returns (uint256 blockNumber, bytes[] memory returnData) {
+        blockNumber = block.number;
+        returnData = new bytes[](calls.length);
+        for(uint256 i = 0; i < calls.length; i++) {
+            (bool success, bytes memory ret) = address(this).call(calls[i]);
+            require(success);
+            returnData[i] = ret;
+        }
+    }
+
     /// @notice checks if 'account' is initialized
     /// @param account pointer to 'account' struct
     function isInitialized(UserInfo storage account) internal view returns (bool) {
@@ -237,7 +252,7 @@ library Account {
         UserInfo storage account,
         address realTokenAddress,
         uint256 amount
-    ) external {
+    ) public {
         // vBASE should be an immutable constant
         account.tokenDeposits.increaseBalance(realTokenAddress, amount);
     }
@@ -253,9 +268,18 @@ library Account {
         uint256 amount,
         Account.ProtocolInfo storage protocol
     ) external {
-        account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
+        _removeMargin(account, realTokenAddress, amount, protocol);
 
         account.checkIfMarginAvailable(true, protocol);
+    }
+
+    function _removeMargin(
+        UserInfo storage account,
+        address realTokenAddress,
+        uint256 amount,
+        Account.ProtocolInfo storage
+    ) public onlyInternal() {
+        account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
     }
 
     /// @notice updates 'amount' of profit generated in base token
@@ -267,12 +291,20 @@ library Account {
         int256 amount,
         Account.ProtocolInfo storage protocol
     ) external {
-        account.updateBaseBalance(amount, protocol);
+        _updateProfit(account, amount, protocol);
 
         if (amount < 0) {
             account.checkIfProfitAvailable(protocol);
             account.checkIfMarginAvailable(true, protocol);
         }
+    }
+
+    function _updateProfit(
+        UserInfo storage account,
+        int256 amount,
+        Account.ProtocolInfo storage protocol
+    ) public onlyInternal() {
+        account.updateBaseBalance(amount, protocol);
     }
 
     /// @notice returns market value and required margin for the account based on current market conditions
@@ -366,10 +398,19 @@ library Account {
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback and send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vToken, swapParams, protocol);
+        (vTokenAmountOut, vBaseAmountOut) = _swapToken(account, vToken, swapParams, protocol);
 
         // after all the stuff, account should be above water
         account.checkIfMarginAvailable(true, protocol);
+    }
+
+    function _swapToken(
+        UserInfo storage account,
+        IVToken vToken,
+        IClearingHouse.SwapParams memory swapParams,
+        Account.ProtocolInfo storage protocol
+    ) public onlyInternal() returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vToken, swapParams, protocol);
     }
 
     /// @notice changes range liquidity 'vToken' of market value equal to 'vTokenNotional'
@@ -387,14 +428,23 @@ library Account {
         Account.ProtocolInfo storage protocol
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // mint/burn tokens + fee + funding payment
+        (vTokenAmountOut, vBaseAmountOut) = _liquidityChange(account, vToken, liquidityChangeParams, protocol);
+
+        // after all the stuff, account should be above water
+        account.checkIfMarginAvailable(true, protocol);
+    }
+
+    function _liquidityChange(
+        UserInfo storage account,
+        IVToken vToken,
+        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
+        Account.ProtocolInfo storage protocol
+    ) public onlyInternal() returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
             vToken,
             liquidityChangeParams,
             protocol
         );
-
-        // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
@@ -429,7 +479,7 @@ library Account {
         UserInfo storage account,
         uint256 fixFee,
         Account.ProtocolInfo storage protocol
-    ) external returns (int256 keeperFee, int256 insuranceFundFee) {
+    ) public returns (int256 keeperFee, int256 insuranceFundFee) {
         // check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
@@ -553,7 +603,30 @@ library Account {
         uint256 fixFee,
         Account.ProtocolInfo storage protocol
     )
-        external
+        public
+        returns (int256 insuranceFundFee, IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments)
+    {
+        (insuranceFundFee, liquidatorBalanceAdjustments) = _liquidateTokenPosition(
+            account,
+            liquidatorAccount,
+            liquidationBps,
+            vToken,
+            fixFee,
+            protocol
+        );
+
+        liquidatorAccount.checkIfMarginAvailable(false, protocol);
+    }
+
+    function _liquidateTokenPosition(
+        UserInfo storage account,
+        UserInfo storage liquidatorAccount,
+        uint16 liquidationBps,
+        IVToken vToken,
+        uint256 fixFee,
+        Account.ProtocolInfo storage protocol
+    )
+        public onlyInternal()
         returns (int256 insuranceFundFee, IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments)
     {
         if (account.tokenPositions.getIsTokenRangeActive(vToken, protocol))
@@ -609,7 +682,6 @@ library Account {
             }
         }
 
-        liquidatorAccount.checkIfMarginAvailable(false, protocol);
         emit Account.LiquidateTokenPosition(
             account.tokenPositions.accountNo,
             liquidatorAccount.tokenPositions.accountNo,
@@ -634,7 +706,7 @@ library Account {
         int24 tickUpper,
         uint256 limitOrderFeeAndFixFee,
         Account.ProtocolInfo storage protocol
-    ) external {
+    ) public {
         account.tokenPositions.removeLimitOrder(vToken, tickLower, tickUpper, protocol);
 
         account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
