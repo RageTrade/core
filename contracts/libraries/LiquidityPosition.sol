@@ -150,16 +150,14 @@ library LiquidityPosition {
         position.sumFeeInsideLastX128 = wrapperValuesInside.sumFeeInsideX128;
     }
 
-    function netPosition(Info storage position, IVPoolWrapper wrapper) internal view returns (int256) {
-        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getValuesInside(
-            position.tickLower,
-            position.tickUpper
-        );
-        return position.netPosition(wrapperValuesInside.sumBInsideX128);
-    }
-
-    function netPosition(Info storage position, int256 sumBInsideX128) internal view returns (int256) {
-        return (sumBInsideX128 - position.sumBInsideLastX128).mulDiv(position.liquidity, FixedPoint128.Q128);
+    function netPosition(Info storage position, uint160 sqrtPriceCurrent)
+        internal
+        view
+        returns (int256 netTokenPosition)
+    {
+        int256 tokenAmountCurrent;
+        (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
+        netTokenPosition = (tokenAmountCurrent - position.vTokenAmountIn);
     }
 
     // use funding payment lib

@@ -38,8 +38,8 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
         lp.update(0, IVToken(address(0)), wrapperValuesInside, balanceAdjustments);
     }
 
-    function netPosition() public view returns (int256) {
-        return lp.netPosition(wrapper);
+    function netPosition(uint160 sqrtPriceCurrent) public view returns (int256) {
+        return lp.netPosition(sqrtPriceCurrent);
     }
 
     function liquidityChange(int128 liquidity) public {
