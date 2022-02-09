@@ -254,4 +254,12 @@ library LiquidityPositionSet {
             liquidityPositions[i].sumFeeInsideLastX128 = set.positions[set.active[i]].sumFeeInsideLastX128;
         }
     }
+
+    function getNetPosition(Info storage set, uint160 sqrtPriceCurrent) internal view returns (int256 netPosition) {
+        uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
+
+        for (uint256 i = 0; i < numberOfTokenPositions; i++) {
+            netPosition += set.positions[set.active[i]].netPosition(sqrtPriceCurrent);
+        }
+    }
 }

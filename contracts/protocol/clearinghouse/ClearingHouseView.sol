@@ -95,4 +95,13 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     function getAccountNetProfit(uint256 accountNo) public view returns (int256 accountNetProfit) {
         accountNetProfit = accounts[accountNo].getAccountPositionProfits(protocol);
     }
+
+    function getNetTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddess)
+        public
+        view
+        returns (int256 netPosition)
+    {
+        IVToken vToken = vTokens(vTokenTruncatedAddess);
+        return accounts[accountNo].getNetPosition(vToken, protocol);
+    }
 }

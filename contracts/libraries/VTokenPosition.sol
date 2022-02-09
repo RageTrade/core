@@ -14,6 +14,9 @@ import { FundingPayment } from './FundingPayment.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
+import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
@@ -21,6 +24,8 @@ library VTokenPosition {
     using FullMath for uint256;
     using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
+    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
 
     enum RISK_SIDE {
         LONG,
@@ -106,5 +111,15 @@ library VTokenPosition {
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
         return unrealizedFundingPayment(position, vToken.vPoolWrapper(protocol));
+    }
+
+    function getNetPosition(
+        Position storage position,
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
+    ) internal view returns (int256) {
+        return
+            position.netTraderPosition +
+            position.liquidityPositions.getNetPosition(vToken.vPool(protocol).sqrtPriceCurrent());
     }
 }

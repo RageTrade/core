@@ -568,4 +568,15 @@ library VTokenPositionSet {
             vTokenPositions[i].liquidityPositions = set.positions[set.active[i]].liquidityPositions.getView();
         }
     }
+
+    function getNetPosition(
+        Set storage set,
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
+    ) internal view returns (int256 netPosition) {
+        uint32 vTokenTruncatedAddress = vToken.truncate();
+        require(set.active.exists(vTokenTruncatedAddress), 'Token Inactive');
+        VTokenPosition.Position storage tokenPosition = set.positions[vTokenTruncatedAddress];
+        return tokenPosition.getNetPosition(vToken, protocol);
+    }
 }
