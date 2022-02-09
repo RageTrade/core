@@ -28,11 +28,6 @@ contract ChainlinkOracle {
         return aggregator.decimals();
     }
 
-    function getTwapSqrtPriceX96(uint32 interval) external view returns (uint160 sqrtPriceX96) {
-        uint256 price = getPrice(interval);
-        sqrtPriceX96 = price.mulDiv(FixedPoint96.Q96, 10**decimals()).toUint160(); // TODO more decimals?
-    }
-
     function getTwapPriceX128(uint32 interval) external view returns (uint256 priceX128) {
         priceX128 = getPrice(interval);
         priceX128 = priceX128.mulDiv(FixedPoint128.Q128, 10**decimals()); // TODO more decimals?

@@ -10,7 +10,7 @@ import { PriceMath } from './PriceMath.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { IOracle } from '../interfaces/IOracle.sol';
+import { IRealOracle } from '../interfaces/IRealOracle.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -46,12 +46,8 @@ library RTokenLib {
         return IERC20(token.tokenAddress);
     }
 
-    function oracle(RToken storage token) internal view returns (IOracle) {
-        return IOracle(token.oracleAddress);
-    }
-
-    function getRealTwapSqrtPriceX96(RToken storage token) internal view returns (uint160 sqrtPriceX96) {
-        return token.oracle().getTwapSqrtPriceX96(token.oracleTimeHorizon);
+    function oracle(RToken storage token) internal view returns (IRealOracle) {
+        return IRealOracle(token.oracleAddress);
     }
 
     function getRealTwapPriceX128(RToken storage token) internal view returns (uint256 priceX128) {
