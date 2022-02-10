@@ -107,17 +107,5 @@ describe('DepositTokenSet Library', () => {
       balance = await test.getBalance(rToken1.address);
       expect(balance).to.eq(100);
     });
-    it('Deposit Market Value (Price1)', async () => {
-      await rToken1Oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
-
-      const marketValue = await test.getAllDepositAccountMarketValue();
-      expect(marketValue).to.eq(40050);
-    });
-    it('Deposit Market Value (Price2)', async () => {
-      await rToken1Oracle.setSqrtPrice(BigNumber.from(10).mul(BigNumber.from(2).pow(96)));
-
-      const marketValue = await test.getAllDepositAccountMarketValue();
-      expect(marketValue).to.eq(10050);
-    });
   });
 });
