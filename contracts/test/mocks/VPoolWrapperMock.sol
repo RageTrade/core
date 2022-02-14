@@ -5,11 +5,15 @@ pragma solidity ^0.8.9;
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
+import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapperMock is IVPoolWrapper {
     mapping(int24 => mapping(int24 => IVPoolWrapper.WrapperValuesInside)) _getValuesInside;
+    uint24 public uniswapFeePips; // fee collected by Uniswap
+    uint24 public liquidityFeePips; // fee paid to liquidity providers, in 1e6
+    uint24 public protocolFeePips; // fee paid to DAO treasury
 
     struct LiquidityRate {
         uint256 vBasePerLiquidity;

@@ -81,6 +81,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         return accounts[accountNo].getView(protocol);
     }
 
+    // isInitialMargin true is initial margin, false is maintainance margin
     function getAccountMarketValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
         public
         view

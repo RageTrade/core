@@ -68,7 +68,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(swapDirection, amountSpecified, 0));
+      const [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(swapDirection, amountSpecified, 0);
 
       // when asked to charge 1 ETH, trader should be debited by that exactly and get whatever ETH
       expect(vTokenIn).to.eq(parseEther('1'));
@@ -137,7 +137,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0));
+      const [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
 
       // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
       expect(vBaseIn).to.eq(parseUsdc('2000'));
@@ -209,7 +209,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0));
+      const [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
 
       // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
       assert(vTokenIn.isNegative());
@@ -277,7 +277,7 @@ describe('VPoolWrapper.swap', () => {
     let vBaseIn: BigNumber;
 
     it('amountSpecified', async () => {
-      ({ vTokenIn, vBaseIn } = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0));
+      const [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
       assert(vBaseIn.isNegative());
       expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
     });

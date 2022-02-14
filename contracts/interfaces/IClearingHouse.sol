@@ -116,6 +116,14 @@ interface IClearingHouse is IGovernable {
         bytes data;
     }
 
+    struct SwapValues {
+        int256 amountSpecified;
+        int256 vTokenIn;
+        int256 vBaseIn;
+        uint256 liquidityFees;
+        uint256 protocolFees;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);

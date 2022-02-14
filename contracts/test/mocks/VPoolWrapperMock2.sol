@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { VPoolWrapper } from '../../protocol/wrapper/VPoolWrapper.sol';
+import { SwapMath } from '../../libraries/SwapMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -23,11 +24,11 @@ contract VPoolWrapperMock2 is VPoolWrapper {
         blockTimestamp += secs;
     }
 
-    function calculateFees(int256 amount, AmountTypeEnum amountTypeEnum)
+    function calculateFees(int256 amount, SwapMath.AmountTypeEnum amountTypeEnum)
         public
         view
         returns (uint256 liquidityFees, uint256 protocolFees)
     {
-        return _calculateFees(amount, amountTypeEnum);
+        return SwapMath.calculateFees(amount, amountTypeEnum, liquidityFeePips, protocolFeePips);
     }
 }

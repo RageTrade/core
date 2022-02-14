@@ -68,4 +68,10 @@ interface IVPoolWrapper {
     ) external returns (int256 vTokenAmount, int256 vBaseAmount);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
+
+    function uniswapFeePips() external view returns (uint24);
+
+    function liquidityFeePips() external view returns (uint24);
+
+    function protocolFeePips() external view returns (uint24);
 }
