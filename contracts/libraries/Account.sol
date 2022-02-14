@@ -101,25 +101,30 @@ library Account {
     /// @param accountNo serial number of the account
     /// @param rTokenAddress token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 accountNo, address rTokenAddress, uint256 amount);
+    event DepositMargin(uint256 indexed accountNo, address indexed rTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of margin
     /// @param accountNo serial number of the account
     /// @param rTokenAddress token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 accountNo, address rTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 indexed accountNo, address indexed rTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account
     /// @param amount amount of profit withdrawn
-    event UpdateProfit(uint256 accountNo, int256 amount);
+    event UpdateProfit(uint256 indexed accountNo, uint256 amount);
 
     /// @notice denotes token position change
     /// @param accountNo serial number of the account
     /// @param vToken address of token whose position was taken
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
-    event TokenPositionChange(uint256 accountNo, IVToken vToken, int256 tokenAmountOut, int256 baseAmountOut);
+    event TokenPositionChange(
+        uint256 indexed accountNo,
+        IVToken indexed vToken,
+        int256 tokenAmountOut,
+        int256 baseAmountOut
+    );
 
     /// @notice denotes token position change due to liquidity add/remove
     /// @param accountNo serial number of the account
@@ -128,8 +133,8 @@ library Account {
     /// @param tickUpper upper tick of the range updated
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     event LiquidityTokenPositionChange(
-        uint256 accountNo,
-        IVToken vToken,
+        uint256 indexed accountNo,
+        IVToken indexed vToken,
         int24 tickLower,
         int24 tickUpper,
         int256 tokenAmountOut
@@ -145,8 +150,8 @@ library Account {
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
     event LiquidityChange(
-        uint256 accountNo,
-        IVToken vToken,
+        uint256 indexed accountNo,
+        IVToken indexed vToken,
         int24 tickLower,
         int24 tickUpper,
         int128 liquidityDelta,
@@ -162,7 +167,13 @@ library Account {
     /// @param tickLower lower tick of the range for which funding was paid
     /// @param tickUpper upper tick of the range for which funding was paid
     /// @param amount amount of funding paid (negative) or received (positive)
-    event FundingPayment(uint256 accountNo, IVToken vToken, int24 tickLower, int24 tickUpper, int256 amount);
+    event FundingPayment(
+        uint256 indexed accountNo,
+        IVToken indexed vToken,
+        int24 tickLower,
+        int24 tickUpper,
+        int256 amount
+    );
 
     /// @notice denotes fee payment for a range / token position
     /// @dev for a token position tickLower = tickUpper = 0
@@ -171,12 +182,18 @@ library Account {
     /// @param tickLower lower tick of the range for which fee was paid
     /// @param tickUpper upper tick of the range for which fee was paid
     /// @param amount amount of fee paid (negative) or received (positive)
-    event LiquidityFee(uint256 accountNo, IVToken vToken, int24 tickLower, int24 tickUpper, int256 amount);
+    event LiquidityFee(
+        uint256 indexed accountNo,
+        IVToken indexed vToken,
+        int24 tickLower,
+        int24 tickUpper,
+        int256 amount
+    );
 
     /// @notice denotes protocol fee withdrawal from a pool wrapper
     /// @param wrapperAddress address of token for which fee was paid
     /// @param feeAmount amount of protocol fee which was withdrawn
-    event ProtocolFeeWithdrawm(address wrapperAddress, uint256 feeAmount);
+    event ProtocolFeeWithdrawm(address indexed wrapperAddress, uint256 feeAmount);
 
     /// @notice denotes range position liquidation event
     /// @dev all range positions are liquidated and the current tokens inside the range are added in as token positions to the account
@@ -186,8 +203,8 @@ library Account {
     /// @param keeperFee total liquidaiton fee paid to the keeper (positive only)
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enought to cover the fee)
     event LiquidateRanges(
-        uint256 accountNo,
-        address keeperAddress,
+        uint256 indexed accountNo,
+        address indexed keeperAddress,
         int256 liquidationFee,
         int256 keeperFee,
         int256 insuranceFundFee
@@ -203,9 +220,9 @@ library Account {
     /// @param liquidatorPriceX128 discounted price at which tokens were transferred to the liquidator account
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enough to cover the fee)
     event LiquidateTokenPosition(
-        uint256 accountNo,
-        uint256 liquidatorAccountNo,
-        IVToken vToken,
+        uint256 indexed accountNo,
+        uint256 indexed liquidatorAccountNo,
+        IVToken indexed vToken,
         uint16 liquidationBps,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
