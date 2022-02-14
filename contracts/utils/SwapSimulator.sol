@@ -27,30 +27,11 @@ contract SwapSimulator {
         int256 amount,
         uint160 sqrtPriceLimitX96,
         bool isNotional
-    ) external returns (IClearingHouse.SwapValues memory swapValues) {
-        // case isNotional true
-        // amountSpecified is positive
-        return
-            _simulateSwap(
-                clearingHouse,
-                vToken,
-                amount < 0,
-                isNotional ? amount : -amount,
-                sqrtPriceLimitX96,
-                _emptyFunction
-            );
-    }
-
-    function simulateSwapWithTickData(
-        IClearingHouse clearingHouse,
-        IVToken vToken,
-        int256 amount,
-        uint160 sqrtPriceLimitX96,
-        bool isNotional
     )
         external
         returns (
             IClearingHouse.SwapValues memory swapValues,
+            uint160 sqrtPriceX96End,
             SimulateSwap.SwapCache memory cache,
             SwapStep[] memory steps
         )
@@ -63,19 +44,22 @@ contract SwapSimulator {
             amount < 0,
             isNotional ? amount : -amount,
             sqrtPriceLimitX96,
-            _recordStep
+            _onSwapStep
         );
 
         cache = _cache;
         steps = _steps;
+        sqrtPriceX96End = _sqrtPriceX96End;
         delete _cache;
         delete _steps;
+        delete _sqrtPriceX96End;
     }
 
     SimulateSwap.SwapCache _cache;
     SwapStep[] _steps;
+    uint160 _sqrtPriceX96End;
 
-    function _recordStep(
+    function _onSwapStep(
         bool,
         SimulateSwap.SwapCache memory cache,
         SimulateSwap.SwapState memory state,
@@ -84,14 +68,8 @@ contract SwapSimulator {
         // for reading
         _cache = cache;
         _steps.push(SwapStep({ state: state, step: step }));
+        _sqrtPriceX96End = state.sqrtPriceX96;
     }
-
-    function _emptyFunction(
-        bool,
-        SimulateSwap.SwapCache memory,
-        SimulateSwap.SwapState memory,
-        SimulateSwap.StepComputations memory
-    ) internal {}
 
     function _simulateSwap(
         IClearingHouse clearingHouse,
