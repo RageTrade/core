@@ -112,7 +112,7 @@ library Account {
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account
     /// @param amount amount of profit withdrawn
-    event UpdateProfit(uint256 indexed accountNo, uint256 amount);
+    event UpdateProfit(uint256 indexed accountNo, int256 amount);
 
     /// @notice denotes token position change
     /// @param accountNo serial number of the account
