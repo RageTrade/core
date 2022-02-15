@@ -25,6 +25,7 @@ import {
   InsuranceFund,
   UniswapV3Pool,
   RageTradeFactory,
+  ChainlinkOracleMock,
 } from '../typechain-types';
 
 import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
@@ -83,7 +84,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
   let keeperAccountNo: BigNumberish;
 
   let rBase: IERC20;
-  let rBaseOracle: OracleMock;
+  let rBaseOracle: ChainlinkOracleMock;
   let rageTradeFactory: RageTradeFactory;
 
   let vTokenAddress: string;
@@ -765,7 +766,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     vBaseAddress = vBase.address;
 
     // await vBase.transferOwnership(VPoolFactory.address);
-    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    rBaseOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
     clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
 
     await deployWrappers(rageTradeFactory);

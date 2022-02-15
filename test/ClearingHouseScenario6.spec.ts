@@ -23,6 +23,7 @@ import {
   VToken,
   VBase,
   Account__factory,
+  ChainlinkOracleMock,
 } from '../typechain-types';
 
 import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
@@ -81,7 +82,7 @@ describe('Clearing House Scenario 6', () => {
   let user2AccountNo: BigNumberish;
 
   let rBase: IERC20;
-  let rBaseOracle: OracleMock;
+  let rBaseOracle: ChainlinkOracleMock;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -651,7 +652,7 @@ describe('Clearing House Scenario 6', () => {
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
-    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    rBaseOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
     clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
   });
 

@@ -10,6 +10,7 @@ import {
   OracleMock,
   RealTokenMock,
   ERC20,
+  ChainlinkOracleMock,
 } from '../typechain-types';
 
 import { utils } from 'ethers';
@@ -34,16 +35,12 @@ describe('DepositTokenSet Library', () => {
   let ownerAddress: string;
   let testContractAddress: string;
 
-  let oracle: OracleMock;
-  let oracle1: OracleMock;
-
-  let realToken: RealTokenMock;
-  let realToken1: RealTokenMock;
+  let rBase: FakeContract<ERC20>;
 
   let rToken: FakeContract<ERC20>;
-  let rTokenOracle: OracleMock;
+  let rTokenOracle: ChainlinkOracleMock;
   let rToken1: FakeContract<ERC20>;
-  let rToken1Oracle: OracleMock;
+  let rToken1Oracle: ChainlinkOracleMock;
   // let constants: ConstantsStruct;
 
   let signers: SignerWithAddress[];
@@ -51,20 +48,23 @@ describe('DepositTokenSet Library', () => {
   before(async () => {
     await activateMainnetFork();
 
+    rBase = await smock.fake<ERC20>('ERC20');
+    rBase.decimals.returns(6);
+
     rToken = await smock.fake<ERC20>('ERC20');
     rToken.decimals.returns(18);
 
-    rTokenOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    rTokenOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
 
     rToken1 = await smock.fake<ERC20>('ERC20');
     rToken1.decimals.returns(18);
 
-    rToken1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    rToken1Oracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
 
     signers = await hre.ethers.getSigners();
 
     const factory = await hre.ethers.getContractFactory('DepositTokenSetTest');
-    test = await factory.deploy();
+    test = await factory.deploy(rBase.address);
 
     signers = await hre.ethers.getSigners();
     const tester = signers[0];
@@ -108,13 +108,13 @@ describe('DepositTokenSet Library', () => {
       expect(balance).to.eq(100);
     });
     it('Deposit Market Value (Price1)', async () => {
-      await rToken1Oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
+      await rToken1Oracle.setPriceX128(BigNumber.from(400).mul(BigNumber.from(2).pow(128)));
 
       const marketValue = await test.getAllDepositAccountMarketValue();
       expect(marketValue).to.eq(40050);
     });
     it('Deposit Market Value (Price2)', async () => {
-      await rToken1Oracle.setSqrtPrice(BigNumber.from(10).mul(BigNumber.from(2).pow(96)));
+      await rToken1Oracle.setPriceX128(BigNumber.from(100).mul(BigNumber.from(2).pow(128)));
 
       const marketValue = await test.getAllDepositAccountMarketValue();
       expect(marketValue).to.eq(10050);

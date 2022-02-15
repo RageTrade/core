@@ -16,6 +16,8 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 contract AccountTest {
     using Account for Account.UserInfo;
     using VTokenPosition for VTokenPosition.Position;
@@ -37,12 +39,14 @@ contract AccountTest {
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
-        uint256 _fixFee
+        uint256 _fixFee,
+        address _rBase
     ) external {
         protocol.liquidationParams = _liquidationParams;
         protocol.minRequiredMargin = _minRequiredMargin;
         protocol.removeLimitOrderFee = _removeLimitOrderFee;
         protocol.minimumOrderNotional = _minimumOrderNotional;
+        protocol.rBase = IERC20(_rBase);
         fixFee = _fixFee;
     }
 

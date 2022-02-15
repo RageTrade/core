@@ -13,6 +13,8 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 contract DepositTokenSetTest is AccountProtocolInfoMock {
     using DepositTokenSet for DepositTokenSet.Info;
     using RTokenLib for RTokenLib.RToken;
@@ -23,8 +25,9 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
 
     VPoolWrapperMock public wrapper;
 
-    constructor() {
+    constructor(address _rBase) {
         wrapper = new VPoolWrapperMock();
+        protocol.rBase = IERC20(_rBase);
     }
 
     function initVToken(address vToken) external {

@@ -17,6 +17,7 @@ import {
   IERC20,
   ClearingHouseTest,
   IUniswapV3Pool,
+  ChainlinkOracleMock,
 } from '../typechain-types';
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
@@ -59,10 +60,10 @@ describe('Clearing House Library', () => {
   let user2AccountNo: BigNumberish;
 
   let rBase: IERC20;
-  let rBaseOracle: OracleMock;
+  let rBaseOracle: ChainlinkOracleMock;
 
   let rBase1: IERC20;
-  let rBase1Oracle: OracleMock;
+  let rBase1Oracle: ChainlinkOracleMock;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -242,10 +243,10 @@ describe('Clearing House Library', () => {
     // console.log(await vBase.decimals());
 
     // constants = await VPoolFactory.constants();
-    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    rBaseOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
 
     rBase1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
-    rBase1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    rBase1Oracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
     clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
 
     clearingHouseTest.addCollateralSupport(rBase1.address, rBase1Oracle.address, 300);
