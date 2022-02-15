@@ -104,24 +104,12 @@ contract SwapSimulator {
 
         {
             // simulate swap and update our tick states
-            (int256 vTokenIn_simulated, int256 vBaseIn_simulated) = pool.vPool.simulateSwap(
+            (swapValues.vTokenIn, swapValues.vBaseIn) = pool.vPool.simulateSwap(
                 swapVTokenForVBase,
                 amountSpecified,
                 sqrtPriceLimitX96,
                 onSwapStep
             );
-
-            // execute actual swap on uniswap
-            (swapValues.vTokenIn, swapValues.vBaseIn) = pool.vPool.swap(
-                address(this),
-                swapVTokenForVBase,
-                amountSpecified,
-                sqrtPriceLimitX96,
-                ''
-            );
-
-            // simulated swap should be identical to actual swap
-            assert(vTokenIn_simulated == swapValues.vTokenIn && vBaseIn_simulated == swapValues.vBaseIn);
         }
 
         SwapMath.afterSwap(exactIn, swapVTokenForVBase, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);
