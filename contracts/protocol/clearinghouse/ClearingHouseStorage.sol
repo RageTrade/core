@@ -2,7 +2,6 @@
 pragma solidity ^0.8.9;
 
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { IVToken } from '../../libraries/VTokenLib.sol';
@@ -29,7 +28,6 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     // TODO use openzeppelin pauser
     bool public paused;
 
-    IERC20 public rBase;
     address public rageTradeFactoryAddress;
     IInsuranceFund public insuranceFund;
 

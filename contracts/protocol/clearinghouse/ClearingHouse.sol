@@ -58,7 +58,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         IOracle _nativeOracle
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
-        rBase = _rBase;
+        protocol.rBase = _rBase;
         insuranceFund = _insuranceFund;
         nativeOracle = _nativeOracle;
 
@@ -131,7 +131,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
             emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
-        rBase.safeTransfer(teamMultisig(), totalProtocolFee);
+        protocol.rBase.safeTransfer(teamMultisig(), totalProtocolFee);
     }
 
     /**
@@ -194,9 +194,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
 
         account.updateProfit(amount, protocol);
         if (amount > 0) {
-            rBase.safeTransferFrom(msg.sender, address(this), uint256(amount));
+            protocol.rBase.safeTransferFrom(msg.sender, address(this), uint256(amount));
         } else {
-            rBase.safeTransfer(msg.sender, uint256(-amount));
+            protocol.rBase.safeTransfer(msg.sender, uint256(-amount));
         }
         emit Account.UpdateProfit(accountNo, amount);
     }
@@ -367,7 +367,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
-        rBase.safeTransfer(msg.sender, uint256(keeperFee));
+        protocol.rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
@@ -410,13 +410,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
 
         account.removeLimitOrder(vToken, tickLower, tickUpper, keeperFee, protocol);
 
-        rBase.safeTransfer(msg.sender, keeperFee);
+        protocol.rBase.safeTransfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function _transferInsuranceFundFee(int256 insuranceFundFee) internal {
         if (insuranceFundFee > 0) {
-            rBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
+            protocol.rBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
         } else {
             insuranceFund.claim(uint256(-insuranceFundFee));
         }
