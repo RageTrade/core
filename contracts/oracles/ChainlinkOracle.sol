@@ -18,7 +18,7 @@ contract ChainlinkOracle is IChainlinkOracle {
 
     AggregatorV3Interface public aggregator;
 
-    error NoHistory();
+    error NotEnoughHistory();
 
     constructor(address _aggregator) {
         require(_aggregator != address(0), 'invalid aggregator address');
@@ -97,7 +97,7 @@ contract ChainlinkOracle is IChainlinkOracle {
         (uint80 round, int256 latestPrice, , uint256 latestTS, ) = aggregator.latestRoundData();
         finalPrice = uint256(latestPrice);
 
-        if (round <= 0) revert NoHistory();
+        if (latestPrice < 0 && round <= 0) revert NotEnoughHistory();
 
         if (latestPrice < 0) {
             (round, finalPrice, latestTS) = _getRoundData(round - 1);
@@ -119,7 +119,7 @@ contract ChainlinkOracle is IChainlinkOracle {
             round = round - 1;
             (, latestPrice, , latestTS, ) = aggregator.getRoundData(round);
         }
-        if (round <= 0) revert NoHistory();
+        if (latestPrice < 0 && round <= 0) revert NotEnoughHistory();
         return (round, uint256(latestPrice), latestTS);
     }
 }
