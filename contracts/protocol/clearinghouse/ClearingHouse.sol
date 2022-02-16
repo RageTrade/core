@@ -17,6 +17,8 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
+import { IChainlinkOracle } from '../../interfaces/IChainlinkOracle.sol';
+
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
@@ -55,7 +57,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         IERC20 _rBase,
         IInsuranceFund _insuranceFund,
         IVBase _vBase,
-        IOracle _nativeOracle
+        IChainlinkOracle _nativeOracle
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
         protocol.rBase = _rBase;

@@ -9,6 +9,8 @@ import { IVToken } from '../../libraries/VTokenLib.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
 
+import { IChainlinkOracle } from '../../interfaces/IChainlinkOracle.sol';
+
 import { Governable } from '../../utils/Governable.sol';
 
 abstract contract ClearingHouseStorage is Initializable, Governable {
@@ -33,7 +35,7 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
 
     // Oracle for the chain's native currency in terms of rBase
     // Used to provide gas refund in rBase to the liquidators
-    IOracle public nativeOracle;
+    IChainlinkOracle public nativeOracle;
 
     // reserved for adding slots in future
     uint256[100] private _emptySlots2;

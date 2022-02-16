@@ -9,6 +9,9 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IGovernable } from './IGovernable.sol';
 import { IInsuranceFund } from './IInsuranceFund.sol';
 import { IOracle } from './IOracle.sol';
+
+import { IChainlinkOracle } from './IChainlinkOracle.sol';
+
 import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 import { IVToken } from './IVToken.sol';
@@ -128,7 +131,7 @@ interface IClearingHouse is IGovernable {
         IERC20 _rBase,
         IInsuranceFund _insuranceFund,
         IVBase _vBase,
-        IOracle _nativeOracle
+        IChainlinkOracle _nativeOracle
     ) external;
 
     /// @notice creates a new account and adds it to the accounts map
