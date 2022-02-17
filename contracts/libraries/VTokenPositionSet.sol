@@ -575,7 +575,7 @@ library VTokenPositionSet {
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256 netPosition) {
         uint32 vTokenTruncatedAddress = vToken.truncate();
-        require(set.active.exists(vTokenTruncatedAddress), 'Token Inactive');
+        if (!set.active.exists(vTokenTruncatedAddress)) return 0;
         VTokenPosition.Position storage tokenPosition = set.positions[vTokenTruncatedAddress];
         return tokenPosition.getNetPosition(vToken, protocol);
     }
