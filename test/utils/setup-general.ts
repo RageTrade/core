@@ -167,7 +167,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     nativeOracle.address,
   );
 
-  const oracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
+  const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
 
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());

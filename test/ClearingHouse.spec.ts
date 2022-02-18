@@ -17,7 +17,6 @@ import {
   IERC20,
   ClearingHouseTest,
   IUniswapV3Pool,
-  ChainlinkOracleMock,
 } from '../typechain-types';
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
@@ -60,10 +59,10 @@ describe('Clearing House Library', () => {
   let user2AccountNo: BigNumberish;
 
   let rBase: IERC20;
-  let rBaseOracle: ChainlinkOracleMock;
+  let rBaseOracle: OracleMock;
 
   let rBase1: IERC20;
-  let rBase1Oracle: ChainlinkOracleMock;
+  let rBase1Oracle: OracleMock;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -128,7 +127,7 @@ describe('Clearing House Library', () => {
 
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
-    await oracle.setSqrtPrice(initialPrice);
+    await oracle.setSqrtPriceX96(initialPrice);
 
     await rageTradeFactory.initializePool({
       deployVTokenParams: {
@@ -243,10 +242,10 @@ describe('Clearing House Library', () => {
     // console.log(await vBase.decimals());
 
     // constants = await VPoolFactory.constants();
-    rBaseOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
+    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     rBase1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
-    rBase1Oracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
+    rBase1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
     clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
 
     clearingHouseTest.addCollateralSupport(rBase1.address, rBase1Oracle.address, 300);
@@ -700,7 +699,7 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
     });
     it('Fail - Low Notional Value', async () => {
-      const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
+      const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0, 0, 0);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const amount = tokenAmount('1', 6).div(100).sub(1);
       const swapParams = {

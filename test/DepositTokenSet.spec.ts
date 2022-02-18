@@ -10,7 +10,6 @@ import {
   OracleMock,
   RealTokenMock,
   ERC20,
-  ChainlinkOracleMock,
 } from '../typechain-types';
 
 import { utils } from 'ethers';
@@ -38,9 +37,9 @@ describe('DepositTokenSet Library', () => {
   let rBase: FakeContract<ERC20>;
 
   let rToken: FakeContract<ERC20>;
-  let rTokenOracle: ChainlinkOracleMock;
+  let rTokenOracle: OracleMock;
   let rToken1: FakeContract<ERC20>;
-  let rToken1Oracle: ChainlinkOracleMock;
+  let rToken1Oracle: OracleMock;
   // let constants: ConstantsStruct;
 
   let signers: SignerWithAddress[];
@@ -54,12 +53,12 @@ describe('DepositTokenSet Library', () => {
     rToken = await smock.fake<ERC20>('ERC20');
     rToken.decimals.returns(18);
 
-    rTokenOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
+    rTokenOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     rToken1 = await smock.fake<ERC20>('ERC20');
     rToken1.decimals.returns(18);
 
-    rToken1Oracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
+    rToken1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     signers = await hre.ethers.getSigners();
 
@@ -87,7 +86,7 @@ describe('DepositTokenSet Library', () => {
       expect(balance).to.eq(50);
     });
     it('Deposit Market Value', async () => {
-      // await oracle.setSqrtPrice(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
+      // await oracle.setSqrtPriceX96(BigNumber.from(20).mul(BigNumber.from(2).pow(96)));
       const marketValue = await test.getAllDepositAccountMarketValue();
       expect(marketValue).to.eq(50);
     });

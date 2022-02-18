@@ -9,12 +9,14 @@ import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/F
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
-import { IChainlinkOracle } from '../interfaces/IChainlinkOracle.sol';
+import { IOracle } from '../interfaces/IOracle.sol';
+import { PriceMath } from '../libraries/PriceMath.sol';
 
-contract ChainlinkOracle is IChainlinkOracle {
+contract ChainlinkOracle is IOracle {
     using FullMath for uint256;
     using SafeCast for uint256;
     using Address for address;
+    using PriceMath for uint256;
 
     AggregatorV3Interface public aggregator;
 
@@ -29,12 +31,20 @@ contract ChainlinkOracle is IChainlinkOracle {
         uint32 twapDuration,
         uint8 tokenDecimals,
         uint8 baseDecimals
-    ) external view returns (uint256 priceX128) {
+    ) public view returns (uint256 priceX128) {
         priceX128 = getPrice(twapDuration);
         priceX128 = priceX128.mulDiv(
             FixedPoint128.Q128 * 10**(baseDecimals),
             10**(tokenDecimals + aggregator.decimals())
         );
+    }
+
+    function getTwapSqrtPriceX96(
+        uint32 twapDuration,
+        uint8 tokenDecimals,
+        uint8 baseDecimals
+    ) external view returns (uint160 sqrtPriceX96) {
+        return getTwapPriceX128(twapDuration, tokenDecimals, baseDecimals).toSqrtPriceX96();
     }
 
     function getPrice(uint256 twapDuration) internal view returns (uint256) {

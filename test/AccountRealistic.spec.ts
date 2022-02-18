@@ -12,7 +12,6 @@ import {
   RageTradeFactory,
   ClearingHouse,
   VToken,
-  ChainlinkOracleMock,
 } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
@@ -54,7 +53,7 @@ describe('Account Library Test Realistic', () => {
   let fixFee: BigNumberish;
 
   let oracle: OracleMock;
-  let rBaseOracle: ChainlinkOracleMock;
+  let rBaseOracle: OracleMock;
 
   let vTokenAddress: string;
   let oracle1: OracleMock;

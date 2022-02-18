@@ -185,7 +185,7 @@ export async function initializePool({
 
   // oracle
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-  await oracle.setSqrtPrice(await priceToSqrtPriceX96(rPriceInitial, vBaseDecimalsDefault, vTokenDecimals));
+  await oracle.setSqrtPriceX96(await priceToSqrtPriceX96(rPriceInitial, vBaseDecimalsDefault, vTokenDecimals));
 
   await rageTradeFactory.initializePool({
     deployVTokenParams: {

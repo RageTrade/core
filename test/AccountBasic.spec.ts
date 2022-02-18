@@ -20,7 +20,6 @@ import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { tokenAmount } from './utils/stealFunds';
-import { ChainlinkOracleMock } from '../typechain-types/ChainlinkOracleMock';
 
 describe('Account Library Test Basic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -35,7 +34,7 @@ describe('Account Library Test Basic', () => {
   let realBase: FakeContract<ERC20>;
   let vBase: VBase;
   let oracle: OracleMock;
-  let rBaseOracle: ChainlinkOracleMock;
+  let rBaseOracle: OracleMock;
 
   let vBaseAddress: string;
 

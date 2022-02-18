@@ -25,7 +25,6 @@ import {
   InsuranceFund,
   UniswapV3Pool,
   RageTradeFactory,
-  ChainlinkOracleMock,
 } from '../typechain-types';
 
 import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
@@ -85,7 +84,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
   let keeperAccountNo: BigNumberish;
 
   let rBase: IERC20;
-  let rBaseOracle: ChainlinkOracleMock;
+  let rBaseOracle: OracleMock;
 
   let vTokenAddress: string;
   let vToken1Address: string;
@@ -612,7 +611,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
 
-    await oracle.setSqrtPrice(initialPrice);
+    await oracle.setSqrtPriceX96(initialPrice);
 
     // await VPoolFactory.initializePool(
     //   {
@@ -770,7 +769,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     vBaseAddress = vBase.address;
 
     // await vBase.transferOwnership(VPoolFactory.address);
-    rBaseOracle = await (await hre.ethers.getContractFactory('ChainlinkOracleMock')).deploy();
+    rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
     clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
 
     await deployWrappers(rageTradeFactory);
@@ -940,7 +939,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await changeWrapperTimestampAndCheck(0);
       const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
     });
 
     it('Acct[0] Adds Liq to BTC Pool b/w ticks (60000 to 68000) @ tickCurrent = 64197', async () => {
@@ -981,7 +980,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp And Oracle Update - 100', async () => {
       await changeWrapperTimestampAndCheck(100);
       const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[0] Adds Liq to ETH Pool b/w ticks (-190000 to -196000) @ tickCurrent = -194365', async () => {
@@ -1022,7 +1021,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 600', async () => {
       await changeWrapperTimestampAndCheck(600);
       const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
     });
 
     it('Acct[1] Short BTC : Price Changes (StartTick = 64197, EndTick = 64000)', async () => {
@@ -1062,9 +1061,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 1000', async () => {
       await changeWrapperTimestampAndCheck(1000);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[1] Adds Liq to BTC Pool b/w ticks (63000 to 64400) @ tickCurrent = 64000', async () => {
@@ -1096,9 +1095,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 1500', async () => {
       await changeWrapperTimestampAndCheck(1500);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[1] Short ETH : Price Changes (StartTick = -194365, EndTick = -194430)', async () => {
@@ -1138,9 +1137,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 2000', async () => {
       await changeWrapperTimestampAndCheck(2000);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[1] Adds Liq to ETH Pool b/w ticks (-195660 to -193370) @ tickCurrent = -194430', async () => {
@@ -1181,9 +1180,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 2500', async () => {
       await changeWrapperTimestampAndCheck(2500);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[2] Long BTC : Price Changes (StartTick = 64000, EndTick = 64400)', async () => {
@@ -1228,9 +1227,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 2600', async () => {
       await changeWrapperTimestampAndCheck(2600);
       const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[2] Long ETH : Price Changes (StartTick = -194430, EndTick = -193370)', async () => {
@@ -1274,9 +1273,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 3000', async () => {
       await changeWrapperTimestampAndCheck(3000);
       const realSqrtPrice1 = await priceToSqrtPriceX96(62651.8307931874, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[2] Long BTC : Price Changes (StartTick = 64400, EndTick = 67000)', async () => {
@@ -1322,9 +1321,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 3500', async () => {
       await changeWrapperTimestampAndCheck(3500);
       const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[1] Underwater : Liquidate Ranges @ current tickBTC = 66000, current tickETH = -193370', async () => {
@@ -1374,9 +1373,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 4000', async () => {
       await changeWrapperTimestampAndCheck(4000);
       const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -193370', async () => {
@@ -1432,9 +1431,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Timestamp and Oracle Update - 4500', async () => {
       await changeWrapperTimestampAndCheck(4500);
       const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vBase, vToken1);
-      await oracle1.setSqrtPrice(realSqrtPrice1);
+      await oracle1.setSqrtPriceX96(realSqrtPrice1);
       const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
     it('Acct[1] Underwater : Liquidate BTC Token Positions @ current tickBTC = 67000', async () => {
