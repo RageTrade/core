@@ -21,13 +21,14 @@ import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
+import { Multicall } from '../../utils/Multicall.sol';
 import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
 
 import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedClaim {
+contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim {
     using SafeERC20 for IERC20;
     using Account for Account.UserInfo;
     using VTokenLib for IVToken;
