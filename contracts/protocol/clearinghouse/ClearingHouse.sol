@@ -143,7 +143,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
      */
 
     /// @inheritdoc IClearingHouse
-    function createAccount() external notPaused returns (uint256 newAccountId) {
+    function createAccount() public notPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
 
@@ -159,7 +159,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountNo,
         uint32 rTokenTruncatedAddress,
         uint256 amount
-    ) external notPaused {
+    ) public notPaused {
         Account.UserInfo storage account = accounts[accountNo];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
 
@@ -170,6 +170,15 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         account.addMargin(rToken.tokenAddress, amount);
 
         emit Account.DepositMargin(accountNo, rToken.tokenAddress, amount);
+    }
+
+    /// @inheritdoc IClearingHouse
+    function createAccountAndAddMargin(uint32 vTokenTruncatedAddress, uint256 amount)
+        external
+        returns (uint256 newAccountId)
+    {
+        newAccountId = createAccount();
+        addMargin(newAccountId, vTokenTruncatedAddress, amount);
     }
 
     /// @inheritdoc IClearingHouse

@@ -154,6 +154,14 @@ interface IClearingHouse is IGovernable {
         uint256 amount
     ) external;
 
+    /// @notice creates a new account and deposits 'amount' of token associated with 'vTokenTruncatedAddress'
+    /// @param vTokenTruncatedAddress truncated address of token to deposit
+    /// @param amount amount of token to deposit
+    /// @return newAccountId - serial number of the new account created
+    function createAccountAndAddMargin(uint32 vTokenTruncatedAddress, uint256 amount)
+        external
+        returns (uint256 newAccountId);
+
     /// @notice withdraws 'amount' of token associated with 'vTokenTruncatedAddress'
     /// @param accountNo account number
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
