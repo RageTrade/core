@@ -73,7 +73,9 @@ describe('Price Math', () => {
 
     it(`0(X128) reverts`, async () => {
       // all numbers 0_X96 to 4294967296_X96 square to 0_X128
-      expect(test.toSqrtPriceX96(0)).revertedWith('IllegalSqrtPrice(4294967296)');
+      await expect(test.toSqrtPriceX96(0)).revertedWith(
+        'SolutionOutOfBounds(0, 4295128739, 1461446703485210103287273052203988822378723970341)',
+      );
     });
 
     it('fuzz perfect square', async () => {
