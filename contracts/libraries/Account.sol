@@ -253,11 +253,12 @@ library Account {
         UserInfo storage account,
         address realTokenAddress,
         uint256 amount,
-        Account.ProtocolInfo storage protocol
+        Account.ProtocolInfo storage protocol,
+        bool checkMargin
     ) external {
         account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
 
-        account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice updates 'amount' of profit generated in base token
@@ -267,11 +268,13 @@ library Account {
     function updateProfit(
         UserInfo storage account,
         int256 amount,
-        Account.ProtocolInfo storage protocol
+        Account.ProtocolInfo storage protocol,
+        bool checkMargin
     ) external {
         account.updateBaseBalance(amount, protocol);
 
-        if (amount < 0) {
+        // TODO is not doing checkIfProfitAvailable in multicall safe?
+        if (checkMargin && amount < 0) {
             account.checkIfProfitAvailable(protocol);
             account.checkIfMarginAvailable(true, protocol);
         }
@@ -364,14 +367,15 @@ library Account {
         UserInfo storage account,
         IVToken vToken,
         IClearingHouse.SwapParams memory swapParams,
-        Account.ProtocolInfo storage protocol
+        Account.ProtocolInfo storage protocol,
+        bool checkMargin
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback and send to the pool
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vToken, swapParams, protocol);
 
         // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice changes range liquidity 'vToken' of market value equal to 'vTokenNotional'
@@ -386,7 +390,8 @@ library Account {
         UserInfo storage account,
         IVToken vToken,
         IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
-        Account.ProtocolInfo storage protocol
+        Account.ProtocolInfo storage protocol,
+        bool checkMargin
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // mint/burn tokens + fee + funding payment
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
@@ -396,7 +401,7 @@ library Account {
         );
 
         // after all the stuff, account should be above water
-        account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
@@ -553,7 +558,8 @@ library Account {
         uint16 liquidationBps,
         IVToken vToken,
         uint256 fixFee,
-        Account.ProtocolInfo storage protocol
+        Account.ProtocolInfo storage protocol,
+        bool checkMargin
     )
         external
         returns (int256 insuranceFundFee, IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments)
@@ -611,7 +617,8 @@ library Account {
             }
         }
 
-        liquidatorAccount.checkIfMarginAvailable(false, protocol);
+        if (checkMargin) liquidatorAccount.checkIfMarginAvailable(false, protocol);
+
         emit Account.LiquidateTokenPosition(
             account.tokenPositions.accountNo,
             liquidatorAccount.tokenPositions.accountNo,
