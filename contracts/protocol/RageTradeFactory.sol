@@ -24,6 +24,8 @@ import { Governable } from '../utils/Governable.sol';
 
 import { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER } from '../utils/constants.sol';
 
+import { PriceMath } from '../libraries/PriceMath.sol';
+
 import { console } from 'hardhat/console.sol';
 
 contract RageTradeFactory is
@@ -35,6 +37,7 @@ contract RageTradeFactory is
     VTokenDeployer
 {
     using VTokenLib for IVToken;
+    using PriceMath for uint256;
 
     IVBase public immutable vBase;
     IClearingHouse public immutable clearingHouse;
@@ -106,11 +109,15 @@ contract RageTradeFactory is
 
         // STEP 3: Initialize the price on the vPool
         vPool.initialize(
-            initializePoolParams.rageTradePoolInitialSettings.oracle.getTwapSqrtPriceX96(
-                initializePoolParams.rageTradePoolInitialSettings.twapDuration,
-                vToken.decimals(),
-                IERC20Metadata(address(vBase)).decimals()
-            )
+            initializePoolParams
+                .rageTradePoolInitialSettings
+                .oracle
+                .getTwapPriceX128(
+                    initializePoolParams.rageTradePoolInitialSettings.twapDuration,
+                    vToken.decimals(),
+                    IERC20Metadata(address(vBase)).decimals()
+                )
+                .toSqrtPriceX96()
         );
 
         vPool.increaseObservationCardinalityNext(initializePoolParams.slotsToInitialize);

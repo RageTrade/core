@@ -12,12 +12,4 @@ contract BaseOracle is IOracle {
     ) external pure returns (uint256 priceX128) {
         priceX128 = 1 << 128;
     }
-
-    function getTwapSqrtPriceX96(
-        uint32 twapDuration,
-        uint8 tokenDecimals,
-        uint8 baseDecimals
-    ) external view returns (uint160 sqrtPriceX96) {
-        sqrtPriceX96 = 1 << 96;
-    }
 }

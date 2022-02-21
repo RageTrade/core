@@ -39,14 +39,6 @@ contract ChainlinkOracle is IOracle {
         );
     }
 
-    function getTwapSqrtPriceX96(
-        uint32 twapDuration,
-        uint8 tokenDecimals,
-        uint8 baseDecimals
-    ) external view returns (uint160 sqrtPriceX96) {
-        return getTwapPriceX128(twapDuration, tokenDecimals, baseDecimals).toSqrtPriceX96();
-    }
-
     function getPrice(uint256 twapDuration) internal view returns (uint256) {
         (uint80 round, uint256 latestPrice, uint256 latestTS) = _getLatestRoundData();
         uint256 endTS = block.timestamp;

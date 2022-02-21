@@ -8,10 +8,4 @@ interface IOracle {
         uint8 tokenDecimals,
         uint8 baseDecimals
     ) external view returns (uint256 priceX128);
-
-    function getTwapSqrtPriceX96(
-        uint32 twapDuration,
-        uint8 tokenDecimals,
-        uint8 baseDecimals
-    ) external view returns (uint160 sqrtPriceX96);
 }
