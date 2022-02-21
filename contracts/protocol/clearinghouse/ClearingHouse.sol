@@ -349,6 +349,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
 
+        bool checkProfit = false;
+
         for (uint256 i = 0; i < operations.length; i++) {
             if (operations[i].operationType == IClearingHouse.MulticallOperationType.ADD_MARGIN) {
                 // ADD_MARGIN
@@ -362,6 +364,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
                 _updateProfit(accountNo, account, amount, false);
+                checkProfit = true;
             } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
                 (uint32 vTokenTruncatedAddress, IClearingHouse.SwapParams memory sp) = abi.decode(
@@ -399,7 +402,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
 
         // after all the operations are done, check the margin requirements
-        account.checkIfProfitAvailable(protocol); // TODO is this needed?
+        if (checkProfit) account.checkIfProfitAvailable(protocol); // TODO is this needed?
         account.checkIfMarginAvailable(true, protocol);
 
         return results;
