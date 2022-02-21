@@ -214,7 +214,7 @@ library Account {
 
     /// @notice checks if 'account' is initialized
     /// @param account pointer to 'account' struct
-    function isInitialized(UserInfo storage account) internal view returns (bool) {
+    function _isInitialized(UserInfo storage account) internal view returns (bool) {
         return account.owner != address(0);
     }
 
@@ -222,7 +222,7 @@ library Account {
     /// @param account pointer to 'account' struct
     /// @param amount amount of balance to update
     /// @param protocol platform constants
-    function updateBaseBalance(
+    function _updateBaseBalance(
         UserInfo storage account,
         int256 amount,
         Account.ProtocolInfo storage protocol
@@ -258,7 +258,7 @@ library Account {
     ) external {
         account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
 
-        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice updates 'amount' of profit generated in base token
@@ -271,12 +271,12 @@ library Account {
         Account.ProtocolInfo storage protocol,
         bool checkMargin
     ) external {
-        account.updateBaseBalance(amount, protocol);
+        account._updateBaseBalance(amount, protocol);
 
         // TODO is not doing checkIfProfitAvailable in multicall safe?
         if (checkMargin && amount < 0) {
-            account.checkIfProfitAvailable(protocol);
-            account.checkIfMarginAvailable(true, protocol);
+            account._checkIfProfitAvailable(protocol);
+            account._checkIfMarginAvailable(true, protocol);
         }
     }
 
@@ -291,8 +291,16 @@ library Account {
         UserInfo storage account,
         bool isInitialMargin,
         Account.ProtocolInfo storage protocol
+    ) external view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
+        return account._getAccountValueAndRequiredMargin(isInitialMargin, protocol);
+    }
+
+    function _getAccountValueAndRequiredMargin(
+        UserInfo storage account,
+        bool isInitialMargin,
+        Account.ProtocolInfo storage protocol
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
-        accountMarketValue = account.getAccountValue(protocol);
+        accountMarketValue = account._getAccountValue(protocol);
 
         totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, protocol.vTokens, protocol);
         if (!account.tokenPositions.isEmpty()) {
@@ -308,6 +316,14 @@ library Account {
     /// @param protocol set of all constants and token addresses
     /// @return accountPositionProfits total market value of all the positions (token ) and deposits
     function getAccountPositionProfits(UserInfo storage account, Account.ProtocolInfo storage protocol)
+        external
+        view
+        returns (int256 accountPositionProfits)
+    {
+        return account._getAccountPositionProfits(protocol);
+    }
+
+    function _getAccountPositionProfits(UserInfo storage account, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (int256 accountPositionProfits)
@@ -319,12 +335,12 @@ library Account {
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
-    function getAccountValue(UserInfo storage account, Account.ProtocolInfo storage protocol)
+    function _getAccountValue(UserInfo storage account, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (int256 accountMarketValue)
     {
-        accountMarketValue = account.getAccountPositionProfits(protocol);
+        accountMarketValue = account._getAccountPositionProfits(protocol);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
         return (accountMarketValue);
     }
@@ -337,8 +353,21 @@ library Account {
         UserInfo storage account,
         bool isInitialMargin,
         Account.ProtocolInfo storage protocol
+    ) external view {
+        (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
+            isInitialMargin,
+            protocol
+        );
+        if (accountMarketValue < totalRequiredMargin)
+            revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
+    }
+
+    function _checkIfMarginAvailable(
+        UserInfo storage account,
+        bool isInitialMargin,
+        Account.ProtocolInfo storage protocol
     ) internal view {
-        (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
+        (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
             isInitialMargin,
             protocol
         );
@@ -349,8 +378,12 @@ library Account {
     /// @notice checks if profit is available to withdraw base token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
-    function checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) internal view {
-        int256 totalPositionValue = account.getAccountPositionProfits(protocol);
+    function checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) external view {
+        _checkIfProfitAvailable(account, protocol);
+    }
+
+    function _checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) internal view {
+        int256 totalPositionValue = account._getAccountPositionProfits(protocol);
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
@@ -375,13 +408,13 @@ library Account {
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vToken, swapParams, protocol);
 
         // after all the stuff, account should be above water
-        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice changes range liquidity 'vToken' of market value equal to 'vTokenNotional'
     /// @notice if 'liquidityDelta'>0 then liquidity is added and if 'liquidityChange'<0 then liquidity is removed
     /// @notice the liquidity change is reverted if the sqrt price at the time of execution is beyond 'slippageToleranceBps' of 'sqrtPriceCurrent' supplied
-    /// @notice whenever liquidity change is done the internal token position is taken out. If 'closeTokenPosition' is true this is swapped out else it is added to the current token position
+    /// @notice whenever liquidity change is done the external token position is taken out. If 'closeTokenPosition' is true this is swapped out else it is added to the current token position
     /// @param account account to change liquidity
     /// @param vToken address of token to swap
     /// @param liquidityChangeParams parameters including lower tick, upper tick, liquidity delta, sqrtPriceCurrent, slippageToleranceBps, closeTokenPosition, limit order type
@@ -401,7 +434,7 @@ library Account {
         );
 
         // after all the stuff, account should be above water
-        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
 
     /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
@@ -412,7 +445,7 @@ library Account {
     /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
     /// @return keeperFee map of vTokens allowed on the platform
     /// @return insuranceFundFee poolwrapper for token
-    function computeLiquidationFees(
+    function _computeLiquidationFees(
         int256 accountMarketValue,
         int256 liquidationFee,
         uint256 fixFee,
@@ -442,28 +475,28 @@ library Account {
         int256 totalRequiredMargin;
         int256 notionalAmountClosed;
 
-        (accountMarketValue, totalRequiredMargin) = account.getAccountValueAndRequiredMargin(false, protocol);
+        (accountMarketValue, totalRequiredMargin) = account._getAccountValueAndRequiredMargin(false, protocol);
         if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
 
         int256 liquidationFee = notionalAmountClosed.mulDiv(protocol.liquidationParams.liquidationFeeFraction, 1e5);
-        (keeperFee, insuranceFundFee) = computeLiquidationFees(
+        (keeperFee, insuranceFundFee) = _computeLiquidationFees(
             accountMarketValue,
             liquidationFee,
             fixFee,
             protocol.liquidationParams
         );
 
-        account.updateBaseBalance(-(keeperFee + insuranceFundFee), protocol);
+        account._updateBaseBalance(-(keeperFee + insuranceFundFee), protocol);
     }
 
     /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
     /// @param tokensToTrade amount of tokens to trade for liquidation
     /// @param vToken vToken being liquidated
     /// @param protocol set of all constants and token addresses
-    function getLiquidationPriceX128AndFee(
+    function _getLiquidationPriceX128AndFee(
         int256 tokensToTrade,
         IVToken vToken,
         Account.ProtocolInfo storage protocol
@@ -507,7 +540,7 @@ library Account {
     /// @param liquidatorPriceX128 discounted price at which tokens should be given to liquidator
     /// @param fixFee is the fee to be given to liquidator to compensate for gas price
     /// @param protocol platform constants
-    function updateLiquidationAccounts(
+    function _updateLiquidationAccounts(
         UserInfo storage account,
         UserInfo storage liquidatorAccount,
         IVToken vToken,
@@ -568,7 +601,7 @@ library Account {
             revert InvalidLiquidationActiveRangePresent(vToken);
 
         {
-            (int256 accountMarketValue, int256 totalRequiredMargin) = account.getAccountValueAndRequiredMargin(
+            (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
                 false,
                 protocol
             );
@@ -591,13 +624,13 @@ library Account {
         uint256 liquidationPriceX128;
         uint256 liquidatorPriceX128;
         {
-            (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = getLiquidationPriceX128AndFee(
+            (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = _getLiquidationPriceX128AndFee(
                 tokensToTrade,
                 vToken,
                 protocol
             );
 
-            liquidatorBalanceAdjustments = updateLiquidationAccounts(
+            liquidatorBalanceAdjustments = _updateLiquidationAccounts(
                 account,
                 liquidatorAccount,
                 vToken,
@@ -609,15 +642,15 @@ library Account {
             );
         }
         {
-            int256 accountMarketValueFinal = account.getAccountValue(protocol);
+            int256 accountMarketValueFinal = account._getAccountValue(protocol);
 
             if (accountMarketValueFinal < 0) {
                 insuranceFundFee = accountMarketValueFinal;
-                account.updateBaseBalance(-accountMarketValueFinal, protocol);
+                account._updateBaseBalance(-accountMarketValueFinal, protocol);
             }
         }
 
-        if (checkMargin) liquidatorAccount.checkIfMarginAvailable(false, protocol);
+        if (checkMargin) liquidatorAccount._checkIfMarginAvailable(false, protocol);
 
         emit Account.LiquidateTokenPosition(
             account.tokenPositions.accountNo,
@@ -646,7 +679,7 @@ library Account {
     ) external {
         account.tokenPositions.removeLimitOrder(vToken, tickLower, tickUpper, protocol);
 
-        account.updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
+        account._updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
     }
 
     function getView(UserInfo storage account, Account.ProtocolInfo storage protocol)

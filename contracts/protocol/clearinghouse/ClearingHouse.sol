@@ -337,6 +337,10 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         return _liquidateTokenPosition(liquidatorAccountNo, accountNo, vTokenTruncatedAddress, liquidationBps, 0);
     }
 
+    /**
+        MULTICALL
+     */
+
     function multicallWithSingleMarginCheck(uint256 accountNo, IClearingHouse.MulticallOperation[] calldata operations)
         external
         returns (bytes[] memory results)

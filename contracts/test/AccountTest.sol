@@ -195,7 +195,7 @@ contract AccountTest {
             int256 insuranceFundFee
         )
     {
-        return Account.getLiquidationPriceX128AndFee(tokensToTrade, IVToken(vToken), protocol);
+        return Account._getLiquidationPriceX128AndFee(tokensToTrade, IVToken(vToken), protocol);
     }
 
     function liquidateTokenPosition(
