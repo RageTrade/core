@@ -24,7 +24,7 @@ import {
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { FakeContract, smock } from '@defi-wonderland/smock';
 
-describe('DepositTokenSet Library', () => {
+describe('CTokenDepositSet Library', () => {
   let test: DepositTokenSetTest;
 
   let vTokenAddress: string;

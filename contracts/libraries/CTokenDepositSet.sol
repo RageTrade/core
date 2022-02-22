@@ -14,7 +14,7 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 import { console } from 'hardhat/console.sol';
 
-library DepositTokenSet {
+library CTokenDepositSet {
     using CTokenLib for CTokenLib.CToken;
     using CTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];

@@ -6,7 +6,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
-import { DepositTokenSet } from './DepositTokenSet.sol';
+import { CTokenDepositSet } from './CTokenDepositSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
@@ -25,7 +25,7 @@ import { console } from 'hardhat/console.sol';
 
 library Account {
     using Account for Account.UserInfo;
-    using DepositTokenSet for DepositTokenSet.Info;
+    using CTokenDepositSet for CTokenDepositSet.Info;
     using FullMath for uint256;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using SafeCast for uint256;
@@ -42,7 +42,7 @@ library Account {
     struct UserInfo {
         address owner;
         VTokenPositionSet.Set tokenPositions;
-        DepositTokenSet.Info tokenDeposits;
+        CTokenDepositSet.Info tokenDeposits;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
