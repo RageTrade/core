@@ -12,13 +12,16 @@ import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
+import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
+import { PriceMath } from './PriceMath.sol';
 import { console } from 'hardhat/console.sol';
 
 library VTokenLib {
     using VTokenLib for IVToken;
     using FullMath for uint256;
     using PriceMath for uint160;
+    using PriceMath for uint256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
     function eq(IVToken a, IVToken b) internal pure returns (bool) {
@@ -31,6 +34,10 @@ library VTokenLib {
 
     function truncate(IVToken vToken) internal pure returns (uint32) {
         return uint32(uint160(address(vToken)));
+    }
+
+    function decimals(IVToken vToken) internal view returns (uint8) {
+        return IERC20Metadata(address(vToken)).decimals();
     }
 
     function iface(IVToken vToken) internal pure returns (IVToken) {
@@ -98,7 +105,7 @@ library VTokenLib {
         view
         returns (uint160 sqrtPriceX96)
     {
-        return protocol.pools[vToken].settings.oracle.getTwapSqrtPriceX96(protocol.pools[vToken].settings.twapDuration);
+        sqrtPriceX96 = vToken.getRealTwapPriceX128(protocol).toSqrtPriceX96();
     }
 
     function getRealTwapPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
@@ -106,7 +113,9 @@ library VTokenLib {
         view
         returns (uint256 priceX128)
     {
-        return vToken.getRealTwapSqrtPriceX96(protocol).toPriceX128();
+        priceX128 = protocol.pools[vToken].settings.oracle.getTwapPriceX128(
+            protocol.pools[vToken].settings.twapDuration
+        );
     }
 
     function getMarginRatio(

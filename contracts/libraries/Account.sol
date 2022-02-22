@@ -19,6 +19,7 @@ import { VTokenPositionSet } from './VTokenPositionSet.sol';
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -53,6 +54,7 @@ library Account {
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;
+        IERC20 rBase;
         // accounting settings
         LiquidationParams liquidationParams;
         uint256 minRequiredMargin;

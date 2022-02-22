@@ -11,6 +11,7 @@ import { PriceMath } from '../../libraries/PriceMath.sol';
 import { TxGasPriceLimit } from '../../utils/TxGasPriceLimit.sol';
 
 import { ClearingHouse } from './ClearingHouse.sol';
+import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 /// @notice ClearingHouse with gas fee refunds for liquidations on Ethereum L1 like chains
 contract ClearingHouseEthereum is ClearingHouse, TxGasPriceLimit {
@@ -27,7 +28,7 @@ contract ClearingHouseEthereum is ClearingHouse, TxGasPriceLimit {
         }
 
         uint256 nativeAmount = tx.gasprice * gasUnits;
-        uint256 nativePriceInRBase = nativeOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
+        uint256 nativePriceInRBase = nativeOracle.getTwapPriceX128(5 minutes);
         return nativeAmount.mulDiv(nativePriceInRBase, FixedPoint128.Q128);
     }
 }

@@ -493,7 +493,7 @@ describe('Clearing House Scenario 1', () => {
 
     const oracleFactory = await hre.ethers.getContractFactory('OracleMock');
     const oracle = await oracleFactory.deploy();
-    await await oracle.setSqrtPrice(initialPrice);
+    await await oracle.setSqrtPriceX96(initialPrice);
 
     await rageTradeFactory.initializePool({
       deployVTokenParams: {
@@ -743,7 +743,7 @@ describe('Clearing House Scenario 1', () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await vPoolWrapper.setBlockTimestamp(0);
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
     });
     it('Acct[0] Initial Collateral Deposit = 100K USDC', async () => {
@@ -791,7 +791,7 @@ describe('Clearing House Scenario 1', () => {
       const timestampIncrease = 600;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
@@ -843,7 +843,7 @@ describe('Clearing House Scenario 1', () => {
       const timestampIncrease = 1200;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
@@ -911,7 +911,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
-      await await oracle.setSqrtPrice(realSqrtPrice);
+      await await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -975,7 +975,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1040,7 +1040,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1104,7 +1104,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1169,7 +1169,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2161.41574705594, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1233,7 +1233,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2141.33749022076, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1298,7 +1298,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1361,7 +1361,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2001.24061387234, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1412,7 +1412,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(2001.24061387234, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1465,7 +1465,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(1991.25998215442, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1512,7 +1512,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(1942.0979282388, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 
@@ -1559,7 +1559,7 @@ describe('Clearing House Scenario 1', () => {
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
       const realSqrtPrice = await priceToSqrtPriceX96(1915.09933823398, vBase, vToken);
-      await oracle.setSqrtPrice(realSqrtPrice);
+      await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
 

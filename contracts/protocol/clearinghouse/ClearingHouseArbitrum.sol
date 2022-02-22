@@ -15,6 +15,7 @@ import { PriceMath } from '../../libraries/PriceMath.sol';
 import { TxGasPriceLimit } from '../../utils/TxGasPriceLimit.sol';
 
 import { ClearingHouse } from './ClearingHouse.sol';
+import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
     using FullMath for uint256;
@@ -56,7 +57,7 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
 
         uint256 l2FeeInWei = l2GasUnits * tx.gasprice;
 
-        uint256 ethPriceInUsdc = nativeOracle.getTwapSqrtPriceX96(5 minutes).toPriceX128();
+        uint256 ethPriceInUsdc = nativeOracle.getTwapPriceX128(5 minutes);
         return (l1FeeInWei + l2FeeInWei).mulDiv(ethPriceInUsdc, FixedPoint128.Q128);
     }
 }

@@ -15,12 +15,16 @@ import { VBaseDeployer, IVBase } from './tokens/VBaseDeployer.sol';
 import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
 import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
 
+import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+
 import { IOracle } from '../interfaces/IOracle.sol';
 import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
 import { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER } from '../utils/constants.sol';
+
+import { PriceMath } from '../libraries/PriceMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -33,6 +37,7 @@ contract RageTradeFactory is
     VTokenDeployer
 {
     using VTokenLib for IVToken;
+    using PriceMath for uint256;
 
     IVBase public immutable vBase;
     IClearingHouse public immutable clearingHouse;
@@ -104,9 +109,11 @@ contract RageTradeFactory is
 
         // STEP 3: Initialize the price on the vPool
         vPool.initialize(
-            initializePoolParams.rageTradePoolInitialSettings.oracle.getTwapSqrtPriceX96(
-                initializePoolParams.rageTradePoolInitialSettings.twapDuration
-            )
+            initializePoolParams
+                .rageTradePoolInitialSettings
+                .oracle
+                .getTwapPriceX128(initializePoolParams.rageTradePoolInitialSettings.twapDuration)
+                .toSqrtPriceX96()
         );
 
         vPool.increaseObservationCardinalityNext(initializePoolParams.slotsToInitialize);
