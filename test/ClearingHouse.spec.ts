@@ -354,7 +354,9 @@ describe('Clearing House Library', () => {
       );
     });
     it('Add Token Deposit Support - Uninitialized Collateral', async () => {
-      await expect(clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith("Invalid Address");
+      await expect(clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
+        'Invalid Address',
+      );
     });
     it('Add Base Deposit Support  - Pass', async () => {
       await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);

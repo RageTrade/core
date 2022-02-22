@@ -112,7 +112,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function updateSupportedVTokens(IVToken vToken, bool status) external onlyGovernanceOrTeamMultisig {
         assert(!vToken.eq(address(0)));
         IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
-        require(settings.initialMarginRatio != 0,"Invalid Address");
+        require(settings.initialMarginRatio != 0, 'Invalid Address');
         settings.supported = status;
         emit NewVTokenSupported(add);
     }
@@ -121,7 +121,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         assert(tokenAddress != address(0));
         uint32 truncatedAddress = uint32(uint160(tokenAddress));
         CTokenLib.CToken storage rToken = protocol.rTokens[truncatedAddress];
-        require(rToken.tokenAddress == tokenAddress,"Invalid Address");
+        require(rToken.tokenAddress == tokenAddress, 'Invalid Address');
         rToken.supported = status;
         emit NewCollateralSupported(add);
     }
