@@ -29,6 +29,7 @@ library RTokenLib {
         address tokenAddress;
         address oracleAddress;
         uint32 oracleTimeHorizon;
+        bool supported;
     }
 
     function eq(RToken storage a, RToken storage b) internal view returns (bool) {

@@ -121,7 +121,7 @@ contract AccountTest {
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration, true);
         protocol.rTokens[truncate(token.tokenAddress)] = token;
     }
 

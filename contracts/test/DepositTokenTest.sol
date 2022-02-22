@@ -39,7 +39,7 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration, true);
         protocol.rTokens[token.tokenAddress.truncate()] = token;
     }
 

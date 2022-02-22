@@ -175,7 +175,7 @@ library VTokenPositionSet {
             IVToken vToken = vTokens[set.active[i]];
             (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, vToken, protocol);
 
-            if (vToken.getWhitelisted(protocol)) {
+            if (vToken.getIsCrossMargined(protocol)) {
                 longSideRiskTotal += longSideRisk;
                 shortSideRiskTotal += shortSideRisk;
             } else {

@@ -130,7 +130,7 @@ library VTokenLib {
         }
     }
 
-    function getWhitelisted(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (bool) {
-        return protocol.pools[vToken].settings.whitelisted;
+    function getIsCrossMargined(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (bool) {
+        return protocol.pools[vToken].settings.isCrossMargined;
     }
 }

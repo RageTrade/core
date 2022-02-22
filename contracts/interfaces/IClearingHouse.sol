@@ -29,7 +29,8 @@ interface IClearingHouse is IGovernable {
         uint16 initialMarginRatio;
         uint16 maintainanceMarginRatio;
         uint32 twapDuration;
-        bool whitelisted;
+        bool supported;
+        bool isCrossMargined;
         IOracle oracle;
     }
 

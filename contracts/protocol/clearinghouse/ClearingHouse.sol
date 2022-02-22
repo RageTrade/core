@@ -92,18 +92,37 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         address oracleAddress,
         uint32 twapDuration
     ) external onlyGovernanceOrTeamMultisig {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
+        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration, false);
         protocol.rTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 
-    // TODO: move to rage trade pool settings
-    function updateSupportedVTokens(IVToken add, bool status) external onlyGovernanceOrTeamMultisig {
-        supportedVTokens[add] = status;
+    function supportedVTokens(IVToken vToken) external view returns (bool) {
+        IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
+        return settings.supported;
+
+    }
+
+    function supportedDeposits(address tokenAddress) external view returns (bool) {
+        uint32 truncatedAddress = uint32(uint160(tokenAddress));
+        RTokenLib.RToken storage rToken = protocol.rTokens[truncatedAddress];
+        return rToken.supported;
+
+    }
+
+    function updateSupportedVTokens(IVToken vToken, bool status) external onlyGovernanceOrTeamMultisig {
+        assert(!vToken.eq(address(0)));
+        IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
+        require(settings.initialMarginRatio != 0,"Invalid Address");
+        settings.supported = status;
         emit NewVTokenSupported(add);
     }
 
-    function updateSupportedDeposits(address add, bool status) external onlyGovernanceOrTeamMultisig {
-        supportedDeposits[add] = status;
+    function updateSupportedDeposits(address tokenAddress, bool status) external onlyGovernanceOrTeamMultisig {
+        assert(tokenAddress != address(0));
+        uint32 truncatedAddress = uint32(uint160(tokenAddress));
+        RTokenLib.RToken storage rToken = protocol.rTokens[truncatedAddress];
+        require(rToken.tokenAddress == tokenAddress,"Invalid Address");
+        rToken.supported = status;
         emit NewCollateralSupported(add);
     }
 
@@ -500,13 +519,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     {
         rToken = protocol.rTokens[rTokenTruncatedAddress];
         if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);
-        if (checkSupported && !supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
+        if (checkSupported && !rToken.supported) revert UnsupportedRToken(rToken.tokenAddress);
     }
 
     function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
         vToken = protocol.vTokens[vTokenTruncatedAddress];
         if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
-        if (!supportedVTokens[vToken]) revert UnsupportedVToken(vToken);
+        if (!protocol.pools[vToken].settings.supported) revert UnsupportedVToken(vToken);
     }
 
     function _liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
