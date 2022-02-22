@@ -370,7 +370,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
-        require(keeperFee > 0, 'negative keeper fee');
+        if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
         protocol.rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 

@@ -126,6 +126,8 @@ interface IClearingHouse is IGovernable {
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
 
+    error KeeperFeeNotPositive(int256 keeperFee);
+
     function __ClearingHouse_init(
         address _rageTradeFactoryAddress,
         IERC20 _rBase,
