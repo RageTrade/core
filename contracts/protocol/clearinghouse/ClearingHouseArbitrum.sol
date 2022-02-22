@@ -57,11 +57,7 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
 
         uint256 l2FeeInWei = l2GasUnits * tx.gasprice;
 
-        uint256 ethPriceInUsdc = nativeOracle.getTwapPriceX128(
-            5 minutes,
-            18,
-            IERC20Metadata(address(protocol.rBase)).decimals()
-        );
+        uint256 ethPriceInUsdc = nativeOracle.getTwapPriceX128(5 minutes);
         return (l1FeeInWei + l2FeeInWei).mulDiv(ethPriceInUsdc, FixedPoint128.Q128);
     }
 }

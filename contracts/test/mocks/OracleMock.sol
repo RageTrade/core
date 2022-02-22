@@ -16,19 +16,11 @@ contract OracleMock is IOracle {
         setPriceX128(1 << 128);
     }
 
-    function getTwapPriceX128(
-        uint32,
-        uint8,
-        uint8
-    ) external view returns (uint256) {
+    function getTwapPriceX128(uint32) external view returns (uint256) {
         return priceX128;
     }
 
-    function getTwapSqrtPriceX96(
-        uint32,
-        uint8,
-        uint8
-    ) external view returns (uint160 sqrtPriceX96) {
+    function getTwapSqrtPriceX96(uint32) external view returns (uint160 sqrtPriceX96) {
         sqrtPriceX96 = priceX128.toSqrtPriceX96();
     }
 

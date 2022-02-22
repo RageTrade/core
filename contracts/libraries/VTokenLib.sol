@@ -114,9 +114,7 @@ library VTokenLib {
         returns (uint256 priceX128)
     {
         priceX128 = protocol.pools[vToken].settings.oracle.getTwapPriceX128(
-            protocol.pools[vToken].settings.twapDuration,
-            vToken.decimals(),
-            IERC20Metadata(address(protocol.rBase)).decimals()
+            protocol.pools[vToken].settings.twapDuration
         );
     }
 

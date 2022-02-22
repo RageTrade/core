@@ -22,7 +22,7 @@ describe('ChainlinkPriceFeed Spec', () => {
     aggregator = await smock.fake('MockAggregatorV3');
     aggregator.decimals.returns(8);
 
-    chainlinkOracle = await (await ethers.getContractFactory('ChainlinkOracle')).deploy(aggregator.address);
+    chainlinkOracle = await (await ethers.getContractFactory('ChainlinkOracle')).deploy(aggregator.address, 18, 6);
   });
 
   describe('Error Handling', () => {
@@ -47,7 +47,7 @@ describe('ChainlinkPriceFeed Spec', () => {
     });
 
     it('Not Enough History', async () => {
-      expect(chainlinkOracle.getTwapPriceX128(45, 18, 6)).to.be.revertedWith('NotEnoughHistory()');
+      expect(chainlinkOracle.getTwapPriceX128(45)).to.be.revertedWith('NotEnoughHistory()');
     });
   });
 
@@ -79,17 +79,17 @@ describe('ChainlinkPriceFeed Spec', () => {
     });
 
     it('Twap Duration = History', async () => {
-      const price = await chainlinkOracle.getTwapPriceX128(180, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(180);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3050', 6).sub(1));
     });
 
     it('Twap Duration > History', async () => {
-      const price = await chainlinkOracle.getTwapPriceX128(200, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(200);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3050', 6).sub(1));
     });
 
     it('Twap Duration < History', async () => {
-      const price = await chainlinkOracle.getTwapPriceX128(150, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(150);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3060', 6).sub(1));
     });
 
@@ -102,7 +102,7 @@ describe('ChainlinkPriceFeed Spec', () => {
       aggregator.latestRoundData.returns(roundData[roundData.length - 1]);
       await ethers.provider.send('evm_setNextBlockTimestamp', [currentTime + 100]);
       await ethers.provider.send('evm_mine', []);
-      const price = await chainlinkOracle.getTwapPriceX128(200, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(200);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3110', 6).sub(1));
     });
 
@@ -110,7 +110,7 @@ describe('ChainlinkPriceFeed Spec', () => {
       await ethers.provider.send('evm_setNextBlockTimestamp', [currentTime + 100]);
       await ethers.provider.send('evm_mine', []);
 
-      const price = await chainlinkOracle.getTwapPriceX128(60, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(60);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3100', 6).sub(1));
     });
 
@@ -121,7 +121,7 @@ describe('ChainlinkPriceFeed Spec', () => {
       });
 
       aggregator.latestRoundData.returns(roundData[roundData.length - 1]);
-      const price = await chainlinkOracle.getTwapPriceX128(180, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(180);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3050', 6).sub(1));
     });
 
@@ -136,12 +136,12 @@ describe('ChainlinkPriceFeed Spec', () => {
       await ethers.provider.send('evm_setNextBlockTimestamp', [currentTime + 180]);
       await ethers.provider.send('evm_mine', []);
 
-      const price = await chainlinkOracle.getTwapPriceX128(180, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(180);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq('3133333333');
     });
 
     it('Twap Duration = 0', async () => {
-      const price = await chainlinkOracle.getTwapPriceX128(0, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(0);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3100', 6).sub(1));
     });
   });
@@ -169,12 +169,12 @@ describe('ChainlinkPriceFeed Spec', () => {
     });
 
     it('Twap Duration = History', async () => {
-      const price = await chainlinkOracle.getTwapPriceX128(180, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(180);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3100', 6).sub(1));
     });
 
     it('Twap Duration > History', async () => {
-      const price = await chainlinkOracle.getTwapPriceX128(200, 18, 6);
+      const price = await chainlinkOracle.getTwapPriceX128(200);
       expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(tokenAmount('3100', 6).sub(1));
     });
   });

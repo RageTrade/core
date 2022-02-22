@@ -699,7 +699,7 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
     });
     it('Fail - Low Notional Value', async () => {
-      const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0, 0, 0);
+      const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const amount = tokenAmount('1', 6).div(100).sub(1);
       const swapParams = {

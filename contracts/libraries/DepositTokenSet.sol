@@ -70,7 +70,7 @@ library DepositTokenSet {
             RTokenLib.RToken storage token = protocol.rTokens[truncated];
 
             accountMarketValue += int256(set.deposits[truncated]).mulDiv(
-                token.getRealTwapPriceX128(protocol),
+                token.getRealTwapPriceX128(),
                 FixedPoint128.Q128
             );
         }

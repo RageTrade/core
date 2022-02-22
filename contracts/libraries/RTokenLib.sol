@@ -59,16 +59,7 @@ library RTokenLib {
         return IOracle(token.oracleAddress);
     }
 
-    function getRealTwapPriceX128(RToken storage token, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint256 priceX128)
-    {
-        return
-            token.oracle().getTwapPriceX128(
-                token.oracleTimeHorizon,
-                token.decimals(),
-                IERC20Metadata(address(protocol.rBase)).decimals()
-            );
+    function getRealTwapPriceX128(RToken storage token) internal view returns (uint256 priceX128) {
+        return token.oracle().getTwapPriceX128(token.oracleTimeHorizon);
     }
 }

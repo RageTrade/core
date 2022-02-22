@@ -28,11 +28,7 @@ contract ClearingHouseEthereum is ClearingHouse, TxGasPriceLimit {
         }
 
         uint256 nativeAmount = tx.gasprice * gasUnits;
-        uint256 nativePriceInRBase = nativeOracle.getTwapPriceX128(
-            5 minutes,
-            18,
-            IERC20Metadata(address(protocol.rBase)).decimals()
-        );
+        uint256 nativePriceInRBase = nativeOracle.getTwapPriceX128(5 minutes);
         return nativeAmount.mulDiv(nativePriceInRBase, FixedPoint128.Q128);
     }
 }

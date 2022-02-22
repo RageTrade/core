@@ -112,11 +112,7 @@ contract RageTradeFactory is
             initializePoolParams
                 .rageTradePoolInitialSettings
                 .oracle
-                .getTwapPriceX128(
-                    initializePoolParams.rageTradePoolInitialSettings.twapDuration,
-                    vToken.decimals(),
-                    IERC20Metadata(address(vBase)).decimals()
-                )
+                .getTwapPriceX128(initializePoolParams.rageTradePoolInitialSettings.twapDuration)
                 .toSqrtPriceX96()
         );
 
