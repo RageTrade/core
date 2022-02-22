@@ -396,6 +396,20 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                 (uint32 vTokenTruncatedAddress, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi
                     .decode(operations[i].data, (uint32, int24, int24, uint256));
                 _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, limitOrderFeeAndFixFee);
+            } else if (
+                operations[i].operationType == IClearingHouse.MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS
+            ) {
+                // LIQUIDATE_LIQUIDITY_POSITIONS
+                _liquidateLiquidityPositions(accountNo, 0);
+            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
+                // LIQUIDATE_TOKEN_POSITION
+                (uint256 targetAccountNo, uint32 vTokenTruncatedAddress, uint16 liquidationBps) = abi.decode(
+                    operations[i].data,
+                    (uint256, uint32, uint16)
+                );
+                results[i] = abi.encode(
+                    _liquidateTokenPosition(accountNo, targetAccountNo, vTokenTruncatedAddress, liquidationBps, 0)
+                );
             } else {
                 revert InvalidMulticallOperationType(operations[i].operationType);
             }
