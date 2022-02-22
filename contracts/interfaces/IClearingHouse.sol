@@ -39,6 +39,17 @@ interface IClearingHouse is IGovernable {
         UPPER_LIMIT
     }
 
+    enum MulticallOperationType {
+        ADD_MARGIN,
+        REMOVE_MARGIN,
+        UPDATE_PROFIT,
+        SWAP_TOKEN,
+        UPDATE_RANGE_ORDER,
+        REMOVE_LIMIT_ORDER,
+        LIQUIDATE_LIQUIDITY_POSITIONS,
+        LIQUIDATE_TOKEN_POSITION
+    }
+
     struct LiquidityChangeParams {
         int24 tickLower;
         int24 tickUpper;
@@ -100,6 +111,11 @@ interface IClearingHouse is IGovernable {
         uint256 sumFeeInsideLastX128;
     }
 
+    struct MulticallOperation {
+        MulticallOperationType operationType;
+        bytes data;
+    }
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);
@@ -118,6 +134,10 @@ interface IClearingHouse is IGovernable {
 
     /// @notice error to denote invalid token liquidation (fraction to liquidate> 1)
     error InvalidTokenLiquidationParameters();
+
+    /// @notice this is errored when the enum (uint8) value is out of bounds
+    /// @param multicallOperationType is the value that is out of bounds
+    error InvalidMulticallOperationType(IClearingHouse.MulticallOperationType multicallOperationType);
 
     /// @notice error to denote usage of unitialized token
     /// @param vTokenTruncatedAddress unitialized truncated address supplied
@@ -153,6 +173,14 @@ interface IClearingHouse is IGovernable {
         uint32 vTokenTruncatedAddress,
         uint256 amount
     ) external;
+
+    /// @notice creates a new account and deposits 'amount' of token associated with 'vTokenTruncatedAddress'
+    /// @param vTokenTruncatedAddress truncated address of token to deposit
+    /// @param amount amount of token to deposit
+    /// @return newAccountId - serial number of the new account created
+    function createAccountAndAddMargin(uint32 vTokenTruncatedAddress, uint256 amount)
+        external
+        returns (uint256 newAccountId);
 
     /// @notice withdraws 'amount' of token associated with 'vTokenTruncatedAddress'
     /// @param accountNo account number

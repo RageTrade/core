@@ -35,6 +35,9 @@ import { priceToSqrtPriceX96, sqrtPriceX96ToTick } from './utils/price-tick';
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 import { randomAddress } from './utils/random';
+import { MulticallOperationStruct } from '../typechain-types/ClearingHouse';
+import { truncate } from './utils/vToken';
+import { parseUnits } from '@ethersproject/units';
 const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();
@@ -822,6 +825,75 @@ describe('Clearing House Library', () => {
         liquidityChangeParams.limitOrderType,
         liquidityChangeParams.liquidityDelta,
       );
+    });
+  });
+
+  describe('Multicall', () => {
+    it('multicallWithSingleMarginCheck', async () => {
+      await rBase.connect(user1).approve(clearingHouseTest.address, parseUnits('1000', 6));
+
+      const operations: Array<MulticallOperationStruct> = [
+        {
+          operationType: 0,
+          data: ethers.utils.defaultAbiCoder.encode(
+            ['uint32', 'uint256'],
+            [truncate(rBase.address), parseUnits('100', 6)],
+          ),
+        },
+        {
+          operationType: 1,
+          data: ethers.utils.defaultAbiCoder.encode(
+            ['uint32', 'uint256'],
+            [truncate(rBase.address), parseUnits('10', 6)],
+          ),
+        },
+        // {
+        //   operationType: 2,
+        //   data: ethers.utils.defaultAbiCoder.encode(
+        //     ['uint256'],
+        //     [parseUnits('10', 6)],
+        //   ),
+        // },
+        {
+          operationType: 3,
+          data: ethers.utils.defaultAbiCoder.encode(
+            [
+              'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed) swapParams)',
+            ],
+            [
+              {
+                vTokenTruncatedAddress: truncate(vTokenAddress),
+                swapParams: {
+                  amount: parseUnits('1', 6),
+                  sqrtPriceLimit: 0,
+                  isNotional: true,
+                  isPartialAllowed: false,
+                },
+              },
+            ],
+          ),
+        },
+        {
+          operationType: 3,
+          data: ethers.utils.defaultAbiCoder.encode(
+            [
+              'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed) swapParams)',
+            ],
+            [
+              {
+                vTokenTruncatedAddress: truncate(vTokenAddress),
+                swapParams: {
+                  amount: parseUnits('-2', 6),
+                  sqrtPriceLimit: 0,
+                  isNotional: true,
+                  isPartialAllowed: false,
+                },
+              },
+            ],
+          ),
+        },
+      ];
+      await clearingHouseTest.connect(user1).multicallWithSingleMarginCheck(user1AccountNo, operations);
     });
   });
 });

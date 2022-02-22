@@ -138,11 +138,11 @@ contract AccountTest {
         address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountNo].removeMargin(realTokenAddress, amount, protocol);
+        accounts[accountNo].removeMargin(realTokenAddress, amount, protocol, true);
     }
 
     function updateProfit(uint256 accountNo, int256 amount) external {
-        accounts[accountNo].updateProfit(amount, protocol);
+        accounts[accountNo].updateProfit(amount, protocol, true);
     }
 
     function swapTokenAmount(
@@ -150,7 +150,12 @@ contract AccountTest {
         address vToken,
         int256 amount
     ) external {
-        accounts[accountNo].swapToken(IVToken(vToken), IClearingHouse.SwapParams(amount, 0, false, false), protocol);
+        accounts[accountNo].swapToken(
+            IVToken(vToken),
+            IClearingHouse.SwapParams(amount, 0, false, false),
+            protocol,
+            true
+        );
     }
 
     function swapTokenNotional(
@@ -158,7 +163,12 @@ contract AccountTest {
         address vToken,
         int256 amount
     ) external {
-        accounts[accountNo].swapToken(IVToken(vToken), IClearingHouse.SwapParams(amount, 0, true, false), protocol);
+        accounts[accountNo].swapToken(
+            IVToken(vToken),
+            IClearingHouse.SwapParams(amount, 0, true, false),
+            protocol,
+            true
+        );
     }
 
     function liquidityChange(
@@ -166,7 +176,7 @@ contract AccountTest {
         address vToken,
         IClearingHouse.LiquidityChangeParams memory liquidityChangeParams
     ) external {
-        accounts[accountNo].liquidityChange(IVToken(vToken), liquidityChangeParams, protocol);
+        accounts[accountNo].liquidityChange(IVToken(vToken), liquidityChangeParams, protocol, true);
     }
 
     function liquidateLiquidityPositions(uint256 accountNo)
@@ -185,7 +195,7 @@ contract AccountTest {
             int256 insuranceFundFee
         )
     {
-        return Account.getLiquidationPriceX128AndFee(tokensToTrade, IVToken(vToken), protocol);
+        return Account._getLiquidationPriceX128AndFee(tokensToTrade, IVToken(vToken), protocol);
     }
 
     function liquidateTokenPosition(
@@ -198,7 +208,8 @@ contract AccountTest {
             10000,
             IVToken(vToken),
             fixFee,
-            protocol
+            protocol,
+            true
         );
     }
 
