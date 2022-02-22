@@ -148,8 +148,6 @@ interface IClearingHouse is IGovernable {
 
     error KeeperFeeNotPositive(int256 keeperFee);
 
-
-
     function __ClearingHouse_init(
         address _rageTradeFactoryAddress,
         IERC20 _rBase,
