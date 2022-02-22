@@ -11,7 +11,7 @@ import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
-import { RTokenLib } from '../../libraries/RTokenLib.sol';
+import { CTokenLib } from '../../libraries/CTokenLib.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
@@ -33,7 +33,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     using Account for Account.UserInfo;
     using VTokenLib for IVToken;
     using SignedMath for int256;
-    using RTokenLib for RTokenLib.RToken;
+    using CTokenLib for CTokenLib.CToken;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -92,7 +92,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         address oracleAddress,
         uint32 twapDuration
     ) external onlyGovernanceOrTeamMultisig {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration, false);
+        CTokenLib.CToken memory token = CTokenLib.CToken(rTokenAddress, oracleAddress, twapDuration, false);
         protocol.rTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 
@@ -104,7 +104,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function supportedDeposits(address tokenAddress) external view returns (bool) {
         uint32 truncatedAddress = uint32(uint160(tokenAddress));
-        RTokenLib.RToken storage rToken = protocol.rTokens[truncatedAddress];
+        CTokenLib.CToken storage rToken = protocol.rTokens[truncatedAddress];
         return rToken.supported;
 
     }
@@ -120,7 +120,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function updateSupportedDeposits(address tokenAddress, bool status) external onlyGovernanceOrTeamMultisig {
         assert(tokenAddress != address(0));
         uint32 truncatedAddress = uint32(uint160(tokenAddress));
-        RTokenLib.RToken storage rToken = protocol.rTokens[truncatedAddress];
+        CTokenLib.CToken storage rToken = protocol.rTokens[truncatedAddress];
         require(rToken.tokenAddress == tokenAddress,"Invalid Address");
         rToken.supported = status;
         emit NewCollateralSupported(add);
@@ -202,7 +202,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 rTokenTruncatedAddress,
         uint256 amount
     ) internal notPaused {
-        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, true);
+        CTokenLib.CToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, true);
 
         IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -237,7 +237,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 amount,
         bool checkMargin
     ) internal notPaused {
-        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, false);
+        CTokenLib.CToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, true);
 
         account.removeMargin(rToken.tokenAddress, amount, protocol, checkMargin);
 
@@ -515,7 +515,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function _getRTokenWithChecks(uint32 rTokenTruncatedAddress, bool checkSupported)
         internal
         view
-        returns (RTokenLib.RToken storage rToken)
+        returns (CTokenLib.CToken storage rToken)
     {
         rToken = protocol.rTokens[rTokenTruncatedAddress];
         if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);

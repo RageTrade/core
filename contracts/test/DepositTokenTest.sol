@@ -6,7 +6,7 @@ import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenLib } from '../libraries/VTokenLib.sol';
-import { RTokenLib } from '../libraries/RTokenLib.sol';
+import { CTokenLib } from '../libraries/CTokenLib.sol';
 import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
@@ -17,8 +17,8 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract DepositTokenSetTest is AccountProtocolInfoMock {
     using DepositTokenSet for DepositTokenSet.Info;
-    using RTokenLib for RTokenLib.RToken;
-    using RTokenLib for address;
+    using CTokenLib for CTokenLib.CToken;
+    using CTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
 
     DepositTokenSet.Info depositTokenSet;
@@ -39,7 +39,7 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration, true);
+        CTokenLib.CToken memory token = CTokenLib.CToken(rTokenAddress, oracleAddress, twapDuration, true);
         protocol.rTokens[token.tokenAddress.truncate()] = token;
     }
 

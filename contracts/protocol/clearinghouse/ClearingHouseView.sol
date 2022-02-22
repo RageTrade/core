@@ -8,7 +8,7 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
-import { RTokenLib } from '../../libraries/RTokenLib.sol';
+import { CTokenLib } from '../../libraries/CTokenLib.sol';
 
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 
@@ -56,7 +56,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         return protocol.pools[vToken];
     }
 
-    function rTokens(uint32 rTokenId) public view returns (RTokenLib.RToken memory) {
+    function rTokens(uint32 rTokenId) public view returns (CTokenLib.CToken memory) {
         return protocol.rTokens[rTokenId];
     }
 

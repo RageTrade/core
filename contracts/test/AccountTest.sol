@@ -10,7 +10,7 @@ import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
-import { RTokenLib } from '../libraries/RTokenLib.sol';
+import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
@@ -121,7 +121,7 @@ contract AccountTest {
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration, true);
+        CTokenLib.CToken memory token = CTokenLib.CToken(rTokenAddress, oracleAddress, twapDuration, true);
         protocol.rTokens[truncate(token.tokenAddress)] = token;
     }
 

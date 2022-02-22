@@ -16,7 +16,7 @@ import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 import { IVToken } from './IVToken.sol';
 import { Account } from '../libraries/Account.sol';
-import { RTokenLib } from '../libraries/RTokenLib.sol';
+import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 interface IClearingHouse is IGovernable {
     struct RageTradePool {
@@ -338,7 +338,7 @@ interface IClearingHouse is IGovernable {
 
     function pools(IVToken vToken) external view returns (RageTradePool memory);
 
-    function rTokens(uint32 rTokenId) external view returns (RTokenLib.RToken memory);
+    function rTokens(uint32 rTokenId) external view returns (CTokenLib.CToken memory);
 
     function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
 

@@ -12,7 +12,7 @@ import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenLib } from './VTokenLib.sol';
-import { RTokenLib } from './RTokenLib.sol';
+import { CTokenLib } from './CTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
@@ -50,7 +50,7 @@ library Account {
         // rage trade pools
         mapping(IVToken => IClearingHouse.RageTradePool) pools;
         // conversion from compressed addressed to full address
-        mapping(uint32 => RTokenLib.RToken) rTokens;
+        mapping(uint32 => CTokenLib.CToken) rTokens;
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;
