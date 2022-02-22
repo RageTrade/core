@@ -417,7 +417,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             : (step.amountOut, step.amountIn);
 
         // here, vBaseAmount == swap amount
-        (uint256 liquidityFees, ) = _calculateFees(int256(vBaseAmount), AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT);
+        (uint256 liquidityFees, ) = _calculateFees(vBaseAmount.toInt256(), AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT);
 
         // base amount with fees
         // vBaseAmount = _includeFees(
@@ -431,7 +431,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 IVToken(address(vToken)) // TODO use IVToken as custom type
             );
             fpGlobal.update(
-                swapVTokenForVBase ? int256(vTokenAmount) : -int256(vTokenAmount), // when trader goes long, LP goes short
+                swapVTokenForVBase ? vTokenAmount.toInt256() : -vTokenAmount.toInt256(), // when trader goes long, LP goes short
                 state.liquidity,
                 _blockTimestamp(),
                 realPriceX128,

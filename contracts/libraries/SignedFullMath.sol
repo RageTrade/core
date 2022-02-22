@@ -2,10 +2,12 @@
 pragma solidity >=0.8.0;
 
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { SignedMath } from './SignedMath.sol';
 
 library SignedFullMath {
+    using SafeCast for uint256;
     using SignedMath for int256;
 
     function mulDiv(
@@ -33,7 +35,7 @@ library SignedFullMath {
         (_b, resultPositive) = b.extractSign(resultPositive);
         (_denominator, resultPositive) = denominator.extractSign(resultPositive);
 
-        result = int256(FullMath.mulDiv(_a, _b, _denominator));
+        result = FullMath.mulDiv(_a, _b, _denominator).toInt256();
         if (!resultPositive) {
             result = -result;
         }

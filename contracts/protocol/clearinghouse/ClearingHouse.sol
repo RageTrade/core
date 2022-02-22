@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
@@ -17,8 +18,6 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
-import { IOracle } from '../../interfaces/IOracle.sol';
-
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
@@ -34,6 +33,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
     using VTokenLib for IVToken;
     using SignedMath for int256;
     using RTokenLib for RTokenLib.RToken;
+    using SafeCast for uint256;
+    using SafeCast for int256;
 
     error Paused();
     error NotRageTradeFactory();
@@ -369,6 +370,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, OptimisticGasUsedCl
         );
         int256 accountFee = keeperFee + insuranceFundFee;
 
+        if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
         protocol.rBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 

@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from './Account.sol';
 import { RTokenLib } from './RTokenLib.sol';
@@ -18,6 +19,7 @@ library DepositTokenSet {
     using RTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
+    using SafeCast for uint256;
 
     struct Info {
         // fixed length array of truncate(tokenAddress)
@@ -69,7 +71,7 @@ library DepositTokenSet {
             if (truncated == 0) break;
             RTokenLib.RToken storage token = protocol.rTokens[truncated];
 
-            accountMarketValue += int256(set.deposits[truncated]).mulDiv(
+            accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
                 token.getRealTwapPriceX128(),
                 FixedPoint128.Q128
             );

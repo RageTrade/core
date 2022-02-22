@@ -91,7 +91,7 @@ library VTokenPositionSet {
 
             uint160 sqrtPriceX96 = vToken.getVirtualTwapSqrtPriceX96(protocol);
             //Value of all active range position for the current vToken
-            accountMarketValue += int256(position.liquidityPositions.baseValue(sqrtPriceX96, vToken, protocol));
+            accountMarketValue += position.liquidityPositions.baseValue(sqrtPriceX96, vToken, protocol);
         }
 
         //Value of the base token balance
@@ -143,7 +143,7 @@ library VTokenPositionSet {
         uint16 marginRatio = vToken.getMarginRatio(isInitialMargin, protocol);
 
         int256 tokenPosition = position.balance;
-        int256 liquidityMaxTokenPosition = int256(position.liquidityPositions.maxNetPosition());
+        int256 liquidityMaxTokenPosition = position.liquidityPositions.maxNetPosition().toInt256();
 
         longSideRisk = max(tokenPosition + liquidityMaxTokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(
             marginRatio,
