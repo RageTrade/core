@@ -21,6 +21,10 @@ library PriceMath {
             revert IllegalSqrtPrice(sqrtPriceX96);
         }
 
+        priceX128 = _toPriceX128(sqrtPriceX96);
+    }
+
+    function _toPriceX128(uint160 sqrtPriceX96) private pure returns (uint256 priceX128) {
         priceX128 = uint256(sqrtPriceX96).mulDiv(sqrtPriceX96, 1 << 64);
     }
 
@@ -30,7 +34,7 @@ library PriceMath {
     function toSqrtPriceX96(uint256 priceX128) internal pure returns (uint160 sqrtPriceX96) {
         // Uses bisection method to find solution to the equation toPriceX128(x) = priceX128
         sqrtPriceX96 = Bisection.findSolution(
-            toPriceX128,
+            _toPriceX128,
             priceX128,
             TickMath.MIN_SQRT_RATIO,
             TickMath.MAX_SQRT_RATIO - 1

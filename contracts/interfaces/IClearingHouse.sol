@@ -116,6 +116,27 @@ interface IClearingHouse is IGovernable {
         bytes data;
     }
 
+    struct SwapValues {
+        int256 amountSpecified;
+        int256 vTokenIn;
+        int256 vBaseIn;
+        uint256 liquidityFees;
+        uint256 protocolFees;
+    }
+
+    /// @notice new rage trade pool supported
+    /// @param vToken address of vToken
+    event NewVTokenSupported(IVToken vToken);
+
+    /// @notice new collateral supported as margin
+    /// @param rTokenAddress address of collateral token
+    event NewCollateralSupported(address rTokenAddress);
+
+    /// @notice maintainance margin ratio of a pool changed
+    /// @param vToken address of vToken
+    /// @param settings new settings
+    event RageTradePoolSettingsUpdated(IVToken vToken, RageTradePoolSettings settings);
+
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);

@@ -86,6 +86,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         ADMIN FUNCTIONS
      */
 
+    // TODO: change this method to updateCollateralSupport and remove updateSupportedDeposits
     function addCollateralSupport(
         address rTokenAddress,
         address oracleAddress,
@@ -95,12 +96,15 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         protocol.rTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 
+    // TODO: move to rage trade pool settings
     function updateSupportedVTokens(IVToken add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedVTokens[add] = status;
+        emit NewVTokenSupported(add);
     }
 
     function updateSupportedDeposits(address add, bool status) external onlyGovernanceOrTeamMultisig {
         supportedDeposits[add] = status;
+        emit NewCollateralSupported(add);
     }
 
     function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
@@ -108,6 +112,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     // TODO: rename to setGlobalSettings
+    // TODO add event for global settings, move LiquidationParams to IClearingHouse
     function setPlatformParameters(
         Account.LiquidationParams calldata _liquidationParams,
         uint256 _removeLimitOrderFee,
@@ -125,6 +130,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         onlyGovernanceOrTeamMultisig
     {
         protocol.pools[vToken].settings = newSettings;
+
+        emit RageTradePoolSettingsUpdated(vToken, newSettings);
     }
 
     /// @inheritdoc IClearingHouse
