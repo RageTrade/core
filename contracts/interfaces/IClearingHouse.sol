@@ -84,7 +84,7 @@ interface IClearingHouse is IGovernable {
     }
 
     struct DepositTokenView {
-        address rTokenAddress;
+        address cTokenAddress;
         uint256 balance;
     }
 
@@ -147,8 +147,8 @@ interface IClearingHouse is IGovernable {
     error UnsupportedVToken(IVToken vToken);
 
     /// @notice error to denote usage of unsupported token
-    /// @param rTokenAddress address of token
-    error UnsupportedRToken(address rTokenAddress);
+    /// @param cTokenAddress address of token
+    error UnsupportedCToken(address cTokenAddress);
 
     /// @notice error to denote low notional value of txn
     /// @param notionalValue notional value of txn
@@ -338,7 +338,7 @@ interface IClearingHouse is IGovernable {
 
     function pools(IVToken vToken) external view returns (RageTradePool memory);
 
-    function rTokens(uint32 rTokenId) external view returns (CTokenLib.CToken memory);
+    function cTokens(uint32 cTokenId) external view returns (CTokenLib.CToken memory);
 
     function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
 

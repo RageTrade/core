@@ -50,7 +50,7 @@ describe('RageTradeFactory', () => {
     it('deploys vToken at good address', async () => {
       let { rageTradeFactory, vBase } = await setupClearingHouse({});
 
-      // todo change rTokenAddress requirement to rTokenDecimals
+      // todo change cTokenAddress requirement to cTokenDecimals
       const realToken = await smock.fake<ERC20>('ERC20');
       realToken.decimals.returns(18);
 
@@ -59,7 +59,7 @@ describe('RageTradeFactory', () => {
         deployVTokenParams: {
           vTokenName: 'vTest',
           vTokenSymbol: 'vTest',
-          rTokenDecimals: 18,
+          cTokenDecimals: 18,
         },
         rageTradePoolInitialSettings: {
           initialMarginRatio: 1,

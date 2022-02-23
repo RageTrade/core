@@ -136,7 +136,7 @@ describe('Clearing House Library', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenDecimals: 18,
+        cTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,
@@ -482,7 +482,7 @@ describe('Clearing House Library', () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
       await expect(
         clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
-      ).to.be.revertedWith('UnsupportedRToken("' + rBase1.address + '")');
+      ).to.be.revertedWith('UnsupportedCToken("' + rBase1.address + '")');
     });
     it('Pass', async () => {
       await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));

@@ -35,12 +35,12 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
     }
 
     function init(
-        address rTokenAddress,
+        address cTokenAddress,
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        CTokenLib.CToken memory token = CTokenLib.CToken(rTokenAddress, oracleAddress, twapDuration, true);
-        protocol.rTokens[token.tokenAddress.truncate()] = token;
+        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, true);
+        protocol.cTokens[token.tokenAddress.truncate()] = token;
     }
 
     function cleanDeposits() external {
@@ -49,7 +49,7 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
             if (truncatedAddress == 0) break;
 
             depositTokenSet.decreaseBalance(
-                protocol.rTokens[truncatedAddress].tokenAddress,
+                protocol.cTokens[truncatedAddress].tokenAddress,
                 depositTokenSet.deposits[truncatedAddress]
             );
         }

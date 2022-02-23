@@ -50,7 +50,7 @@ library Account {
         // rage trade pools
         mapping(IVToken => IClearingHouse.RageTradePool) pools;
         // conversion from compressed addressed to full address
-        mapping(uint32 => CTokenLib.CToken) rTokens;
+        mapping(uint32 => CTokenLib.CToken) cTokens;
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;
@@ -99,15 +99,15 @@ library Account {
 
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
-    /// @param rTokenAddress token in which margin is deposited
+    /// @param cTokenAddress token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 indexed accountNo, address indexed rTokenAddress, uint256 amount);
+    event DepositMargin(uint256 indexed accountNo, address indexed cTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of margin
     /// @param accountNo serial number of the account
-    /// @param rTokenAddress token in which margin is withdrawn
+    /// @param cTokenAddress token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 indexed accountNo, address indexed rTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 indexed accountNo, address indexed cTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account

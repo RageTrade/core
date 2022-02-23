@@ -75,7 +75,7 @@ contract ClearingHouseTest is ClearingHouse {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(protocol.rTokens[truncatedAddress].tokenAddress, deposit);
+            set.decreaseBalance(protocol.cTokens[truncatedAddress].tokenAddress, deposit);
         }
     }
 

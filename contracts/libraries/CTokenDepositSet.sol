@@ -69,7 +69,7 @@ library CTokenDepositSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            CTokenLib.CToken storage token = protocol.rTokens[truncated];
+            CTokenLib.CToken storage token = protocol.cTokens[truncated];
 
             accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
                 token.getRealTwapPriceX128(),
@@ -88,7 +88,7 @@ library CTokenDepositSet {
         depositTokens = new IClearingHouse.DepositTokenView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            depositTokens[i].rTokenAddress = address(protocol.rTokens[set.active[i]].tokenAddress);
+            depositTokens[i].cTokenAddress = address(protocol.cTokens[set.active[i]].tokenAddress);
             depositTokens[i].balance = set.deposits[set.active[i]];
         }
     }

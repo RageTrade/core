@@ -95,7 +95,7 @@ describe('VTokenPositionSet Library', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenDecimals: 18,
+        cTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio: 2,
@@ -130,7 +130,7 @@ describe('VTokenPositionSet Library', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenDecimals: 18,
+        cTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio: 2,

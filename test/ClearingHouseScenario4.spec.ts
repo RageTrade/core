@@ -631,7 +631,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       deployVTokenParams: {
         vTokenName: tokenName,
         vTokenSymbol: tokenSymbol,
-        rTokenDecimals: decimals,
+        cTokenDecimals: decimals,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,

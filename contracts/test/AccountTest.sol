@@ -104,7 +104,7 @@ contract AccountTest {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(protocol.rTokens[truncatedAddress].tokenAddress, deposit);
+            set.decreaseBalance(protocol.cTokens[truncatedAddress].tokenAddress, deposit);
         }
     }
 
@@ -117,12 +117,12 @@ contract AccountTest {
     }
 
     function initCollateral(
-        address rTokenAddress,
+        address cTokenAddress,
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        CTokenLib.CToken memory token = CTokenLib.CToken(rTokenAddress, oracleAddress, twapDuration, true);
-        protocol.rTokens[truncate(token.tokenAddress)] = token;
+        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, true);
+        protocol.cTokens[truncate(token.tokenAddress)] = token;
     }
 
     function addMargin(

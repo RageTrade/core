@@ -88,7 +88,7 @@ export async function testSetup({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenDecimals: 18,
+      cTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
@@ -216,7 +216,7 @@ export async function testSetupToken({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenDecimals: 18,
+      cTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
