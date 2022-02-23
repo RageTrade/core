@@ -60,7 +60,7 @@ library CTokenLib {
         return IOracle(token.oracleAddress);
     }
 
-    function getRealTwapPriceX128(RToken storage token) internal view returns (uint256 priceX128) {
+    function getRealTwapPriceX128(CToken storage token) internal view returns (uint256 priceX128) {
         return token.oracle().getTwapPriceX128(token.oracleTimeHorizon);
     }
 }
