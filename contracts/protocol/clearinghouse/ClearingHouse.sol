@@ -11,7 +11,7 @@ import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
-import { RTokenLib } from '../../libraries/RTokenLib.sol';
+import { CTokenLib } from '../../libraries/CTokenLib.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
@@ -33,7 +33,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     using Account for Account.UserInfo;
     using VTokenLib for IVToken;
     using SignedMath for int256;
-    using RTokenLib for RTokenLib.RToken;
+    using CTokenLib for CTokenLib.CToken;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -88,23 +88,40 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     // TODO: change this method to updateCollateralSupport and remove updateSupportedDeposits
     function addCollateralSupport(
-        address rTokenAddress,
+        address cTokenAddress,
         address oracleAddress,
         uint32 twapDuration
     ) external onlyGovernanceOrTeamMultisig {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
-        protocol.rTokens[uint32(uint160(token.tokenAddress))] = token;
+        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, false);
+        protocol.cTokens[uint32(uint160(token.tokenAddress))] = token;
     }
 
-    // TODO: move to rage trade pool settings
-    function updateSupportedVTokens(IVToken add, bool status) external onlyGovernanceOrTeamMultisig {
-        supportedVTokens[add] = status;
-        emit NewVTokenSupported(add);
+    function supportedVTokens(IVToken vToken) external view returns (bool) {
+        IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
+        return settings.supported;
     }
 
-    function updateSupportedDeposits(address add, bool status) external onlyGovernanceOrTeamMultisig {
-        supportedDeposits[add] = status;
-        emit NewCollateralSupported(add);
+    function supportedDeposits(address tokenAddress) external view returns (bool) {
+        uint32 truncatedAddress = uint32(uint160(tokenAddress));
+        CTokenLib.CToken storage cToken = protocol.cTokens[truncatedAddress];
+        return cToken.supported;
+    }
+
+    function updateSupportedVTokens(IVToken vToken, bool status) external onlyGovernanceOrTeamMultisig {
+        assert(!vToken.eq(address(0)));
+        IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
+        require(settings.initialMarginRatio != 0, 'Invalid Address');
+        settings.supported = status;
+        emit NewVTokenSupported(vToken);
+    }
+
+    function updateSupportedDeposits(address tokenAddress, bool status) external onlyGovernanceOrTeamMultisig {
+        assert(tokenAddress != address(0));
+        uint32 truncatedAddress = uint32(uint160(tokenAddress));
+        CTokenLib.CToken storage cToken = protocol.cTokens[truncatedAddress];
+        require(cToken.tokenAddress == tokenAddress, 'Invalid Address');
+        cToken.supported = status;
+        emit NewCollateralSupported(tokenAddress);
     }
 
     function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
@@ -164,11 +181,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouse
     function addMargin(
         uint256 accountNo,
-        uint32 rTokenTruncatedAddress,
+        uint32 cTokenTruncatedAddress,
         uint256 amount
     ) public notPaused {
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
-        _addMargin(accountNo, account, rTokenTruncatedAddress, amount);
+        _addMargin(accountNo, account, cTokenTruncatedAddress, amount);
     }
 
     function _getAccountAndCheckOwner(uint256 accountNo) internal view returns (Account.UserInfo storage account) {
@@ -180,16 +197,16 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function _addMargin(
         uint256 accountNo,
         Account.UserInfo storage account,
-        uint32 rTokenTruncatedAddress,
+        uint32 cTokenTruncatedAddress,
         uint256 amount
     ) internal notPaused {
-        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, true);
+        CTokenLib.CToken storage cToken = _getCTokenWithChecks(cTokenTruncatedAddress, true);
 
-        IERC20(rToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(cToken.realToken()).safeTransferFrom(msg.sender, address(this), amount);
 
-        account.addMargin(rToken.tokenAddress, amount);
+        account.addMargin(cToken.tokenAddress, amount);
 
-        emit Account.DepositMargin(accountNo, rToken.tokenAddress, amount);
+        emit Account.DepositMargin(accountNo, cToken.tokenAddress, amount);
     }
 
     /// @inheritdoc IClearingHouse
@@ -204,27 +221,27 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouse
     function removeMargin(
         uint256 accountNo,
-        uint32 rTokenTruncatedAddress,
+        uint32 cTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
-        _removeMargin(accountNo, account, rTokenTruncatedAddress, amount, true);
+        _removeMargin(accountNo, account, cTokenTruncatedAddress, amount, true);
     }
 
     function _removeMargin(
         uint256 accountNo,
         Account.UserInfo storage account,
-        uint32 rTokenTruncatedAddress,
+        uint32 cTokenTruncatedAddress,
         uint256 amount,
         bool checkMargin
     ) internal notPaused {
-        RTokenLib.RToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, false);
+        CTokenLib.CToken storage cToken = _getCTokenWithChecks(cTokenTruncatedAddress, false);
 
-        account.removeMargin(rToken.tokenAddress, amount, protocol, checkMargin);
+        account.removeMargin(cToken.tokenAddress, amount, protocol, checkMargin);
 
-        IERC20(rToken.realToken()).safeTransfer(msg.sender, amount);
+        IERC20(cToken.realToken()).safeTransfer(msg.sender, amount);
 
-        emit Account.WithdrawMargin(accountNo, rToken.tokenAddress, amount);
+        emit Account.WithdrawMargin(accountNo, cToken.tokenAddress, amount);
     }
 
     /// @inheritdoc IClearingHouse
@@ -361,12 +378,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         for (uint256 i = 0; i < operations.length; i++) {
             if (operations[i].operationType == IClearingHouse.MulticallOperationType.ADD_MARGIN) {
                 // ADD_MARGIN
-                (uint32 rTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _addMargin(accountNo, account, rTokenTruncatedAddress, amount);
+                (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
+                _addMargin(accountNo, account, cTokenTruncatedAddress, amount);
             } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.REMOVE_MARGIN) {
                 // REMOVE_MARGIN
-                (uint32 rTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _removeMargin(accountNo, account, rTokenTruncatedAddress, amount, false);
+                (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
+                _removeMargin(accountNo, account, cTokenTruncatedAddress, amount, false);
             } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
@@ -493,20 +510,20 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
     }
 
-    function _getRTokenWithChecks(uint32 rTokenTruncatedAddress, bool checkSupported)
+    function _getCTokenWithChecks(uint32 cTokenTruncatedAddress, bool checkSupported)
         internal
         view
-        returns (RTokenLib.RToken storage rToken)
+        returns (CTokenLib.CToken storage cToken)
     {
-        rToken = protocol.rTokens[rTokenTruncatedAddress];
-        if (rToken.eq(address(0))) revert UninitializedToken(rTokenTruncatedAddress);
-        if (checkSupported && !supportedDeposits[rToken.tokenAddress]) revert UnsupportedRToken(rToken.tokenAddress);
+        cToken = protocol.cTokens[cTokenTruncatedAddress];
+        if (cToken.eq(address(0))) revert UninitializedToken(cTokenTruncatedAddress);
+        if (checkSupported && !cToken.supported) revert UnsupportedCToken(cToken.tokenAddress);
     }
 
     function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
         vToken = protocol.vTokens[vTokenTruncatedAddress];
         if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
-        if (!supportedVTokens[vToken]) revert UnsupportedVToken(vToken);
+        if (!protocol.pools[vToken].settings.supported) revert UnsupportedVToken(vToken);
     }
 
     function _liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)

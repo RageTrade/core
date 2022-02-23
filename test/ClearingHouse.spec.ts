@@ -136,13 +136,14 @@ describe('Clearing House Library', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenDecimals: 18,
+        cTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
-        whitelisted: false,
+        supported: false,
+        isCrossMargined: false,
         oracle: oracle.address,
       },
       liquidityFeePips: 500,
@@ -334,9 +335,9 @@ describe('Clearing House Library', () => {
   describe('#TokenSupport', () => {
     before(async () => {
       expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.false;
-      expect(await clearingHouseTest.supportedDeposits(vTokenAddress)).to.be.false;
+      expect(await clearingHouseTest.supportedDeposits(realToken.address)).to.be.false;
       expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
-      expect(await clearingHouseTest.supportedDeposits(vBaseAddress)).to.be.false;
+      expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
       await expect(clearingHouseTest.connect(user1).updateSupportedVTokens(vTokenAddress, true)).to.be.revertedWith(
@@ -352,13 +353,10 @@ describe('Clearing House Library', () => {
         'Unauthorised()',
       );
     });
-    it('Add Token Deposit Support  - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true);
-      expect(await clearingHouseTest.supportedDeposits(vTokenAddress)).to.be.true;
-    });
-    it('Remove Token Deposit Support  - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, false);
-      expect(await clearingHouseTest.supportedDeposits(vTokenAddress)).to.be.false;
+    it('Add Token Deposit Support - Uninitialized Collateral', async () => {
+      await expect(clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
+        'Invalid Address',
+      );
     });
     it('Add Base Deposit Support  - Pass', async () => {
       await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
@@ -484,7 +482,7 @@ describe('Clearing House Library', () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
       await expect(
         clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
-      ).to.be.revertedWith('UnsupportedRToken("' + rBase1.address + '")');
+      ).to.be.revertedWith('UnsupportedCToken("' + rBase1.address + '")');
     });
     it('Pass', async () => {
       await rBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));

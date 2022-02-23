@@ -82,7 +82,7 @@ contract RageTradeFactory is
             IClearingHouse.RageTradePool(
                 IUniswapV3Pool(address(0)),
                 IVPoolWrapper(address(0)),
-                IClearingHouse.RageTradePoolSettings(0, 0, 60, false, new BaseOracle())
+                IClearingHouse.RageTradePoolSettings(0, 0, 60, false, false, new BaseOracle())
             )
         );
 

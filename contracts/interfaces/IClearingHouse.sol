@@ -16,7 +16,7 @@ import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 import { IVToken } from './IVToken.sol';
 import { Account } from '../libraries/Account.sol';
-import { RTokenLib } from '../libraries/RTokenLib.sol';
+import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 interface IClearingHouse is IGovernable {
     struct RageTradePool {
@@ -29,7 +29,8 @@ interface IClearingHouse is IGovernable {
         uint16 initialMarginRatio;
         uint16 maintainanceMarginRatio;
         uint32 twapDuration;
-        bool whitelisted;
+        bool supported;
+        bool isCrossMargined;
         IOracle oracle;
     }
 
@@ -83,7 +84,7 @@ interface IClearingHouse is IGovernable {
     }
 
     struct DepositTokenView {
-        address rTokenAddress;
+        address cTokenAddress;
         uint256 balance;
     }
 
@@ -146,8 +147,8 @@ interface IClearingHouse is IGovernable {
     error UnsupportedVToken(IVToken vToken);
 
     /// @notice error to denote usage of unsupported token
-    /// @param rTokenAddress address of token
-    error UnsupportedRToken(address rTokenAddress);
+    /// @param cTokenAddress address of token
+    error UnsupportedCToken(address cTokenAddress);
 
     /// @notice error to denote low notional value of txn
     /// @param notionalValue notional value of txn
@@ -337,7 +338,7 @@ interface IClearingHouse is IGovernable {
 
     function pools(IVToken vToken) external view returns (RageTradePool memory);
 
-    function rTokens(uint32 rTokenId) external view returns (RTokenLib.RToken memory);
+    function cTokens(uint32 cTokenId) external view returns (CTokenLib.CToken memory);
 
     function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
 

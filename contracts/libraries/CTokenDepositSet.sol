@@ -6,7 +6,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from './Account.sol';
-import { RTokenLib } from './RTokenLib.sol';
+import { CTokenLib } from './CTokenLib.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
@@ -14,9 +14,9 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 import { console } from 'hardhat/console.sol';
 
-library DepositTokenSet {
-    using RTokenLib for RTokenLib.RToken;
-    using RTokenLib for address;
+library CTokenDepositSet {
+    using CTokenLib for CTokenLib.CToken;
+    using CTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
     using SafeCast for uint256;
@@ -69,7 +69,7 @@ library DepositTokenSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            RTokenLib.RToken storage token = protocol.rTokens[truncated];
+            CTokenLib.CToken storage token = protocol.cTokens[truncated];
 
             accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
                 token.getRealTwapPriceX128(),
@@ -88,7 +88,7 @@ library DepositTokenSet {
         depositTokens = new IClearingHouse.DepositTokenView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            depositTokens[i].rTokenAddress = address(protocol.rTokens[set.active[i]].tokenAddress);
+            depositTokens[i].cTokenAddress = address(protocol.cTokens[set.active[i]].tokenAddress);
             depositTokens[i].balance = set.deposits[set.active[i]];
         }
     }

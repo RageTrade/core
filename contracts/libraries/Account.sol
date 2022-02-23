@@ -6,13 +6,13 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
-import { DepositTokenSet } from './DepositTokenSet.sol';
+import { CTokenDepositSet } from './CTokenDepositSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenLib } from './VTokenLib.sol';
-import { RTokenLib } from './RTokenLib.sol';
+import { CTokenLib } from './CTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
@@ -25,7 +25,7 @@ import { console } from 'hardhat/console.sol';
 
 library Account {
     using Account for Account.UserInfo;
-    using DepositTokenSet for DepositTokenSet.Info;
+    using CTokenDepositSet for CTokenDepositSet.Info;
     using FullMath for uint256;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using SafeCast for uint256;
@@ -42,7 +42,7 @@ library Account {
     struct UserInfo {
         address owner;
         VTokenPositionSet.Set tokenPositions;
-        DepositTokenSet.Info tokenDeposits;
+        CTokenDepositSet.Info tokenDeposits;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
@@ -50,7 +50,7 @@ library Account {
         // rage trade pools
         mapping(IVToken => IClearingHouse.RageTradePool) pools;
         // conversion from compressed addressed to full address
-        mapping(uint32 => RTokenLib.RToken) rTokens;
+        mapping(uint32 => CTokenLib.CToken) cTokens;
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;
@@ -99,15 +99,15 @@ library Account {
 
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
-    /// @param rTokenAddress token in which margin is deposited
+    /// @param cTokenAddress token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 indexed accountNo, address indexed rTokenAddress, uint256 amount);
+    event DepositMargin(uint256 indexed accountNo, address indexed cTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of margin
     /// @param accountNo serial number of the account
-    /// @param rTokenAddress token in which margin is withdrawn
+    /// @param cTokenAddress token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 indexed accountNo, address indexed rTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 indexed accountNo, address indexed cTokenAddress, uint256 amount);
 
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account

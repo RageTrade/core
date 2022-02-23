@@ -19,9 +19,9 @@ contract VToken is ERC20, IVToken {
     constructor(
         string memory vTokenName,
         string memory vTokenSymbol,
-        uint8 rTokenDecimals
+        uint8 cTokenDecimals
     ) ERC20(vTokenName, vTokenSymbol) {
-        _decimals = rTokenDecimals;
+        _decimals = cTokenDecimals;
     }
 
     error Unauthorised();

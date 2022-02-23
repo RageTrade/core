@@ -95,13 +95,14 @@ describe('VTokenPositionSet Library', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenDecimals: 18,
+        cTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio: 2,
         maintainanceMarginRatio: 3,
         twapDuration: 2,
-        whitelisted: false,
+        supported: false,
+        isCrossMargined: false,
         oracle: oracleAddress,
       },
       liquidityFeePips: 500,
@@ -129,13 +130,14 @@ describe('VTokenPositionSet Library', () => {
       deployVTokenParams: {
         vTokenName: 'vWETH',
         vTokenSymbol: 'vWETH',
-        rTokenDecimals: 18,
+        cTokenDecimals: 18,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio: 2,
         maintainanceMarginRatio: 3,
         twapDuration: 2,
-        whitelisted: false,
+        supported: true,
+        isCrossMargined: false,
         oracle: oracleAddress,
       },
       liquidityFeePips: 500,

@@ -19,27 +19,28 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { Account } from './Account.sol';
 
-library RTokenLib {
-    using RTokenLib for RToken;
+library CTokenLib {
+    using CTokenLib for CToken;
     using FullMath for uint256;
     using PriceMath for uint160;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    struct RToken {
+    struct CToken {
         address tokenAddress;
         address oracleAddress;
         uint32 oracleTimeHorizon;
+        bool supported;
     }
 
-    function eq(RToken storage a, RToken storage b) internal view returns (bool) {
+    function eq(CToken storage a, CToken storage b) internal view returns (bool) {
         return a.tokenAddress == b.tokenAddress;
     }
 
-    function eq(RToken storage a, address b) internal view returns (bool) {
+    function eq(CToken storage a, address b) internal view returns (bool) {
         return a.tokenAddress == b;
     }
 
-    function decimals(RToken storage token) internal view returns (uint8) {
+    function decimals(CToken storage token) internal view returns (uint8) {
         return IERC20Metadata(token.tokenAddress).decimals();
     }
 
@@ -47,19 +48,19 @@ library RTokenLib {
         return uint32(uint160(realTokenAddress));
     }
 
-    function truncate(RToken storage token) internal view returns (uint32) {
+    function truncate(CToken storage token) internal view returns (uint32) {
         return uint32(uint160(token.tokenAddress));
     }
 
-    function realToken(RToken storage token) internal view returns (IERC20) {
+    function realToken(CToken storage token) internal view returns (IERC20) {
         return IERC20(token.tokenAddress);
     }
 
-    function oracle(RToken storage token) internal view returns (IOracle) {
+    function oracle(CToken storage token) internal view returns (IOracle) {
         return IOracle(token.oracleAddress);
     }
 
-    function getRealTwapPriceX128(RToken storage token) internal view returns (uint256 priceX128) {
+    function getRealTwapPriceX128(CToken storage token) internal view returns (uint256 priceX128) {
         return token.oracle().getTwapPriceX128(token.oracleTimeHorizon);
     }
 }

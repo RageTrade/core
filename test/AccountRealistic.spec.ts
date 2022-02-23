@@ -558,7 +558,7 @@ describe('Account Library Test Realistic', () => {
         await test.liquidateTokenPosition(0, 1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatorTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
@@ -567,7 +567,7 @@ describe('Account Library Test Realistic', () => {
         const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
 
         expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatorTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
         expect(endLiquidatedBaseDetails.balance).to.eq(
           startLiquidatedBaseDetails.balance
             .add(startLiquidatedTokenDetails.balance.mul(liquidationPriceX128).div(1n << 128n))
@@ -593,7 +593,7 @@ describe('Account Library Test Realistic', () => {
         await test.liquidateTokenPosition(0, 1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatorTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
@@ -602,7 +602,7 @@ describe('Account Library Test Realistic', () => {
         const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
 
         expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatorTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
         expect(endLiquidatedBaseDetails.balance).to.eq(startLiquidatedBaseDeposits.mul(-1));
         expect(liquidatorBaseDetails.balance).to.eq(
           startLiquidatedTokenDetails.balance
@@ -675,7 +675,7 @@ describe('Account Library Test Realistic', () => {
         await test.liquidateTokenPosition(0, 1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatorTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
@@ -684,7 +684,7 @@ describe('Account Library Test Realistic', () => {
         const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
 
         expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatorTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
         expect(endLiquidatedBaseDetails.balance).to.eq(
           startLiquidatedBaseDetails.balance
             .add(startLiquidatedTokenDetails.balance.mul(liquidationPriceX128).div(1n << 128n))
@@ -710,7 +710,7 @@ describe('Account Library Test Realistic', () => {
         await test.liquidateTokenPosition(0, 1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatorTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
         const endLiquidatedBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
         const liquidatorBaseDetails = await test.getAccountTokenDetails(1, vBaseAddress);
 
@@ -719,7 +719,7 @@ describe('Account Library Test Realistic', () => {
         const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
 
         expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatorTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
         expect(endLiquidatedBaseDetails.balance).to.eq(startLiquidatedBaseDeposits.mul(-1));
         expect(liquidatorBaseDetails.balance).to.eq(
           startLiquidatedTokenDetails.balance

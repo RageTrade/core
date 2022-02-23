@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { Account } from '../libraries/Account.sol';
-import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
+import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
@@ -27,7 +27,7 @@ contract ClearingHouseTest is ClearingHouse {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
     using SignedFullMath for int256;
-    using DepositTokenSet for DepositTokenSet.Info;
+    using CTokenDepositSet for CTokenDepositSet.Info;
 
     uint256 public fixFee;
 
@@ -68,14 +68,14 @@ contract ClearingHouseTest is ClearingHouse {
 
     function cleanDeposits(uint256 accountNo) external {
         accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
-        DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
+        CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(protocol.rTokens[truncatedAddress].tokenAddress, deposit);
+            set.decreaseBalance(protocol.cTokens[truncatedAddress].tokenAddress, deposit);
         }
     }
 

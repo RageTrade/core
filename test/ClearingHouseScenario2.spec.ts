@@ -647,13 +647,14 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       deployVTokenParams: {
         vTokenName: tokenName,
         vTokenSymbol: tokenSymbol,
-        rTokenDecimals: decimals,
+        cTokenDecimals: decimals,
       },
       rageTradePoolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
-        whitelisted: false,
+        supported: false,
+        isCrossMargined: false,
         oracle: oracle.address,
       },
       liquidityFeePips: lpFee,
@@ -1426,7 +1427,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const expectedInsuranceFundFee = 1534985416n;
 
       const liquidatorBaseBalance = 103877346504n;
-      const liquidatorTokenPosition = -25559097903887700000n;
+      const liquidatocTokenPosition = -25559097903887700000n;
       const liquidatorNetTradePosition = -25559097903887700000n;
 
       const LiquidationAccountBaseBalancePositLiquidation = 0n;
@@ -1438,7 +1439,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await checkTokenBalance(user1AccountNo, vTokenAddress, expectedTokenBalance);
       await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
 
-      await checkTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatorTokenPosition, 8);
+      await checkTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatocTokenPosition, 8);
       await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
 
       await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
@@ -1485,7 +1486,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const expectedInsuranceFundFee = 5527866666n;
 
       const liquidatorBaseBalance = 477939657577n;
-      const liquidatorToken1Position = -501494329n - 1n;
+      const liquidatocToken1Position = -501494329n - 1n;
       const liquidatorNetTrade1Position = -501494329n - 1n;
 
       const LiquidationAccountBaseBalancePositLiquidation = 0n;
@@ -1495,7 +1496,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
 
-      await checkTokenBalance(keeperAccountNo, vToken1Address, liquidatorToken1Position);
+      await checkTokenBalance(keeperAccountNo, vToken1Address, liquidatocToken1Position);
       await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
 
       await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);

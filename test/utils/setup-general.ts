@@ -88,13 +88,14 @@ export async function testSetup({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenDecimals: 18,
+      cTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,
-      whitelisted: false,
+      supported: false,
+      isCrossMargined: false,
       oracle: oracle.address,
     },
     liquidityFeePips: 500,
@@ -215,13 +216,14 @@ export async function testSetupToken({
     deployVTokenParams: {
       vTokenName: 'vTest',
       vTokenSymbol: 'vTest',
-      rTokenDecimals: 18,
+      cTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,
-      whitelisted: false,
+      supported: true,
+      isCrossMargined: false,
       oracle: oracle.address,
     },
     liquidityFeePips: 500,

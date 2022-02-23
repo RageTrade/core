@@ -31,7 +31,7 @@ interface InitializePoolArgs {
   // DeployVTokenParamsStructOutput
   vTokenName?: string;
   vTokenSymbol?: string;
-  // rTokenAddress?: string;
+  // cTokenAddress?: string;
   // oracleAddress?: string;
   vTokenDecimals?: number;
 
@@ -191,13 +191,14 @@ export async function initializePool({
     deployVTokenParams: {
       vTokenName: 'vWETH',
       vTokenSymbol: 'vWETH',
-      rTokenDecimals: 18,
+      cTokenDecimals: 18,
     },
     rageTradePoolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,
-      whitelisted: false,
+      supported: false,
+      isCrossMargined: false,
       oracle: oracle.address,
     },
     liquidityFeePips: 500,

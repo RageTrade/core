@@ -3,14 +3,14 @@
 pragma solidity ^0.8.9;
 
 import { Account } from '../libraries/Account.sol';
-import { DepositTokenSet } from '../libraries/DepositTokenSet.sol';
+import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
-import { RTokenLib } from '../libraries/RTokenLib.sol';
+import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
@@ -23,7 +23,7 @@ contract AccountTest {
     using VTokenPosition for VTokenPosition.Position;
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
-    using DepositTokenSet for DepositTokenSet.Info;
+    using CTokenDepositSet for CTokenDepositSet.Info;
     using VTokenLib for IVToken;
 
     mapping(uint256 => Account.UserInfo) accounts;
@@ -97,14 +97,14 @@ contract AccountTest {
 
     function cleanDeposits(uint256 accountNo) external {
         accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
-        DepositTokenSet.Info storage set = accounts[accountNo].tokenDeposits;
+        CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(protocol.rTokens[truncatedAddress].tokenAddress, deposit);
+            set.decreaseBalance(protocol.cTokens[truncatedAddress].tokenAddress, deposit);
         }
     }
 
@@ -117,12 +117,12 @@ contract AccountTest {
     }
 
     function initCollateral(
-        address rTokenAddress,
+        address cTokenAddress,
         address oracleAddress,
         uint32 twapDuration
     ) external {
-        RTokenLib.RToken memory token = RTokenLib.RToken(rTokenAddress, oracleAddress, twapDuration);
-        protocol.rTokens[truncate(token.tokenAddress)] = token;
+        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, true);
+        protocol.cTokens[truncate(token.tokenAddress)] = token;
     }
 
     function addMargin(
