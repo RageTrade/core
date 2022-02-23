@@ -99,14 +99,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function supportedVTokens(IVToken vToken) external view returns (bool) {
         IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
         return settings.supported;
-
     }
 
     function supportedDeposits(address tokenAddress) external view returns (bool) {
         uint32 truncatedAddress = uint32(uint160(tokenAddress));
         CTokenLib.CToken storage cToken = protocol.cTokens[truncatedAddress];
         return cToken.supported;
-
     }
 
     function updateSupportedVTokens(IVToken vToken, bool status) external onlyGovernanceOrTeamMultisig {
@@ -114,7 +112,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         IClearingHouse.RageTradePoolSettings storage settings = protocol.pools[vToken].settings;
         require(settings.initialMarginRatio != 0, 'Invalid Address');
         settings.supported = status;
-        emit NewVTokenSupported(add);
+        emit NewVTokenSupported(vToken);
     }
 
     function updateSupportedDeposits(address tokenAddress, bool status) external onlyGovernanceOrTeamMultisig {
@@ -123,7 +121,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         CTokenLib.CToken storage cToken = protocol.cTokens[truncatedAddress];
         require(cToken.tokenAddress == tokenAddress, 'Invalid Address');
         cToken.supported = status;
-        emit NewCollateralSupported(add);
+        emit NewCollateralSupported(tokenAddress);
     }
 
     function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
