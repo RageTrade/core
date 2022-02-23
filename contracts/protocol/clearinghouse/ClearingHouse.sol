@@ -237,7 +237,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 amount,
         bool checkMargin
     ) internal notPaused {
-        CTokenLib.CToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, true);
+        CTokenLib.CToken storage rToken = _getRTokenWithChecks(rTokenTruncatedAddress, false);
 
         account.removeMargin(rToken.tokenAddress, amount, protocol, checkMargin);
 
