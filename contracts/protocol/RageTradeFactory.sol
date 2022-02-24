@@ -79,16 +79,6 @@ contract RageTradeFactory is
         clearingHouse.transferGovernance(msg.sender);
         clearingHouse.transferTeamMultisig(msg.sender);
 
-        // TODO refactor the code such that registering vBase as a pool is not needed
-        clearingHouse.registerPool(
-            address(vBase),
-            IClearingHouse.RageTradePool(
-                IUniswapV3Pool(address(0)),
-                IVPoolWrapper(address(0)),
-                IClearingHouse.RageTradePoolSettings(0, 0, 60, false, false, cBaseOracle)
-            )
-        );
-
         _initializeInsuranceFund(insuranceFund, cBase, clearingHouse);
     }
 

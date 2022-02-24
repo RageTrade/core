@@ -238,6 +238,16 @@ describe('Clearing House Library', () => {
       out.vPool,
     )) as IUniswapV3Pool;
 
+    let out1 = await initializePool(
+      rageTradeFactory,
+      20_000,
+      10_000,
+      1,
+      await priceToSqrtPriceX96(4000, 6, 18),
+      // .div(60 * 10 ** 6),
+    );
+    vTokenAddress1 = out1.vTokenAddress;
+
     // console.log('### Is VToken 0 ? ###');
     // console.log(BigNumber.from(vTokenAddress).lt(vBaseAddress));
     // console.log(vTokenAddress);
@@ -332,9 +342,9 @@ describe('Clearing House Library', () => {
     it('vToken Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
     });
-    it('vBase Intialized', async () => {
-      expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
-    });
+    // it('vBase Intialized', async () => {
+    //   expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
+    // });
     it('Other Address Not Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(dummyTokenAddress)).to.eq(ADDRESS_ZERO);
     });
@@ -642,7 +652,7 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress1);
       const swapParams = {
         amount: tokenAmount('10000', 18),
         sqrtPriceLimit: 0,
@@ -651,7 +661,7 @@ describe('Clearing House Library', () => {
       };
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
-      ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
+      ).to.be.revertedWith('UnsupportedVToken("' + vTokenAddress1 + '")');
     });
     it('Fail - Low Notional Value', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
@@ -709,7 +719,7 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress1);
       const swapParams = {
         amount: tokenAmount('10000', 6),
         sqrtPriceLimit: 0,
@@ -718,7 +728,7 @@ describe('Clearing House Library', () => {
       };
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
-      ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
+      ).to.be.revertedWith('UnsupportedVToken("' + vTokenAddress1 + '")');
     });
     it('Fail - Low Notional Value', async () => {
       const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
@@ -792,7 +802,7 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress1);
       const liquidityChangeParams = {
         tickLower: tickLower,
         tickUpper: tickUpper,
@@ -804,7 +814,7 @@ describe('Clearing House Library', () => {
       };
       await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
-      ).to.be.revertedWith('UnsupportedVToken("' + vBaseAddress + '")');
+      ).to.be.revertedWith('UnsupportedVToken("' + vTokenAddress1 + '")');
     });
 
     it('Fail - Low Notional Value', async () => {

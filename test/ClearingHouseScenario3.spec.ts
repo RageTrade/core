@@ -901,7 +901,6 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Tokens Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
-      expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
     });
 
     it('Add Token 1 Position Support - Pass', async () => {

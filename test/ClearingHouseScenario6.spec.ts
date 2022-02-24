@@ -741,7 +741,6 @@ describe('Clearing House Scenario 6', () => {
     });
     it('Tokens Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
-      expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
     });
 
     it('Add Token Position Support - Pass', async () => {
