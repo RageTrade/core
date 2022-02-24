@@ -662,7 +662,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       slotsToInitialize: 100,
     });
 
-    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const eventFilter = rageTradeFactory.filters.PoolInitialized();
     const events = await rageTradeFactory.queryFilter(eventFilter);
     const eventNum = events.length - 1;
     const vPool = events[eventNum].args[0];

@@ -206,7 +206,7 @@ export async function initializePool({
     slotsToInitialize: 100,
   });
 
-  const eventFilter = rageTradeFactory.filters.PoolInitlized();
+  const eventFilter = rageTradeFactory.filters.PoolInitialized();
   const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
   const vPool = await hre.ethers.getContractAt(
     '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool',

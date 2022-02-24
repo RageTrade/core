@@ -151,7 +151,7 @@ describe('Clearing House Library', () => {
       slotsToInitialize: 100,
     });
 
-    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const eventFilter = rageTradeFactory.filters.PoolInitialized();
     const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];

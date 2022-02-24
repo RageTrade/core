@@ -43,7 +43,7 @@ contract RageTradeFactory is
     IClearingHouse public immutable clearingHouse;
     // IInsuranceFund public insuranceFund; // stored in ClearingHouse, replacable from there
 
-    event PoolInitlized(IUniswapV3Pool vPool, IVToken vToken, IVPoolWrapper vPoolWrapper);
+    event PoolInitialized(IUniswapV3Pool vPool, IVToken vToken, IVPoolWrapper vPoolWrapper);
 
     /// @notice Sets up the protocol by deploying necessary core contracts
     /// @dev Need to deploy logic contracts for ClearingHouse, VPoolWrapper, InsuranceFund prior to this
@@ -142,7 +142,7 @@ contract RageTradeFactory is
             IClearingHouse.RageTradePool(vPool, vPoolWrapper, initializePoolParams.rageTradePoolInitialSettings)
         );
 
-        emit PoolInitlized(vPool, vToken, vPoolWrapper);
+        emit PoolInitialized(vPool, vToken, vPoolWrapper);
     }
 
     function _createUniswapV3Pool(IVToken vToken) internal returns (IUniswapV3Pool) {

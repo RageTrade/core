@@ -74,7 +74,7 @@ describe('RageTradeFactory', () => {
         slotsToInitialize: 100,
       });
 
-      const eventFilter = rageTradeFactory.filters.PoolInitlized();
+      const eventFilter = rageTradeFactory.filters.PoolInitialized();
       const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
 
       // vTokenAddress should be such that in UniswapV3Pool it becomes token0 always
