@@ -172,10 +172,17 @@ interface IClearingHouse is IGovernable {
 
     function __ClearingHouse_init(
         address _rageTradeFactoryAddress,
-        IERC20 _rBase,
+        IERC20 _defaultCollateralToken,
+        IOracle _defaultCollateralTokenOracle,
         IInsuranceFund _insuranceFund,
         IVBase _vBase,
         IOracle _nativeOracle
+    ) external;
+
+    function addCollateralSupport(
+        IERC20 cToken,
+        IOracle oracle,
+        uint32 twapDuration
     ) external;
 
     /// @notice creates a new account and adds it to the accounts map

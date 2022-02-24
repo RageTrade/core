@@ -56,17 +56,20 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function __ClearingHouse_init(
         address _rageTradeFactoryAddress,
-        IERC20 _rBase,
+        IERC20 _defaultCollateralToken,
+        IOracle _defaultCollateralTokenOracle,
         IInsuranceFund _insuranceFund,
         IVBase _vBase,
         IOracle _nativeOracle
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
-        protocol.rBase = _rBase;
+        protocol.rBase = _defaultCollateralToken;
         insuranceFund = _insuranceFund;
         nativeOracle = _nativeOracle;
 
         protocol.vBase = _vBase;
+
+        _addCollateralSupport(_defaultCollateralToken, _defaultCollateralTokenOracle, 60);
 
         __Governable_init();
     }
@@ -88,12 +91,21 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     // TODO: change this method to updateCollateralSupport and remove updateSupportedDeposits
     function addCollateralSupport(
-        address cTokenAddress,
-        address oracleAddress,
+        IERC20 cToken,
+        IOracle oracle,
         uint32 twapDuration
     ) external onlyGovernanceOrTeamMultisig {
-        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, false);
-        protocol.cTokens[uint32(uint160(token.tokenAddress))] = token;
+        _addCollateralSupport(cToken, oracle, twapDuration);
+    }
+
+    function _addCollateralSupport(
+        IERC20 cToken,
+        IOracle oracle,
+        uint32 twapDuration
+    ) internal {
+        // TODO change to CTokenLib.CTokenInfo and use strict types instead of address
+        CTokenLib.CToken memory cTokenInfo = CTokenLib.CToken(address(cToken), address(oracle), twapDuration, false);
+        protocol.cTokens[CTokenLib.truncate(address(cToken))] = cTokenInfo;
     }
 
     function supportedVTokens(IVToken vToken) external view returns (bool) {
@@ -118,9 +130,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function updateSupportedDeposits(address tokenAddress, bool status) external onlyGovernanceOrTeamMultisig {
         assert(tokenAddress != address(0));
         uint32 truncatedAddress = uint32(uint160(tokenAddress));
-        CTokenLib.CToken storage cToken = protocol.cTokens[truncatedAddress];
-        require(cToken.tokenAddress == tokenAddress, 'Invalid Address');
-        cToken.supported = status;
+        CTokenLib.CToken storage cTokenInfo = protocol.cTokens[truncatedAddress];
+        require(cTokenInfo.eq(tokenAddress), 'Invalid Address');
+        cTokenInfo.supported = status;
         emit NewCollateralSupported(tokenAddress);
     }
 

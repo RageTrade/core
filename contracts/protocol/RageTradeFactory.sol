@@ -51,25 +51,28 @@ contract RageTradeFactory is
         address clearingHouseLogicAddress,
         address _vPoolWrapperLogicAddress,
         address insuranceFundLogicAddress,
-        IERC20Metadata rBase,
-        address nativeOracle
+        IERC20Metadata cBase,
+        IOracle nativeOracle
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
         proxyAdmin = _deployProxyAdmin();
         proxyAdmin.transferOwnership(msg.sender);
 
         // deploys VBase contract at an address which has most significant nibble as "f"
-        vBase = _deployVBase(rBase.decimals());
+        vBase = _deployVBase(cBase.decimals());
 
         // deploys InsuranceFund proxy
         IInsuranceFund insuranceFund = _deployProxyForInsuranceFund(insuranceFundLogicAddress);
+
+        BaseOracle cBaseOracle = new BaseOracle();
 
         // deploys a proxy for ClearingHouse, and initialize it as well
         clearingHouse = _deployProxyForClearingHouseAndInitialize(
             ClearingHouseDeployer.DeployClearingHouseParams(
                 clearingHouseLogicAddress,
-                address(rBase),
-                address(insuranceFund),
-                address(vBase),
+                cBase,
+                cBaseOracle,
+                insuranceFund,
+                vBase,
                 nativeOracle
             )
         );
@@ -82,11 +85,11 @@ contract RageTradeFactory is
             IClearingHouse.RageTradePool(
                 IUniswapV3Pool(address(0)),
                 IVPoolWrapper(address(0)),
-                IClearingHouse.RageTradePoolSettings(0, 0, 60, false, false, new BaseOracle())
+                IClearingHouse.RageTradePoolSettings(0, 0, 60, false, false, cBaseOracle)
             )
         );
 
-        _initializeInsuranceFund(insuranceFund, rBase, clearingHouse);
+        _initializeInsuranceFund(insuranceFund, cBase, clearingHouse);
     }
 
     struct InitializePoolParams {
