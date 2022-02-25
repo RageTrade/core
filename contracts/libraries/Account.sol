@@ -50,7 +50,7 @@ library Account {
         // rage trade pools
         mapping(IVToken => IClearingHouse.RageTradePool) pools;
         // conversion from compressed addressed to full address
-        mapping(uint32 => IClearingHouse.CollateralInfo) cTokens;
+        mapping(uint32 => IClearingHouse.Collateral) cTokens;
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;

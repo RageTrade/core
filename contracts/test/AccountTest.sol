@@ -122,8 +122,11 @@ contract AccountTest {
         IOracle oracle,
         uint32 twapDuration
     ) external {
-        IClearingHouse.CollateralInfo memory token = IClearingHouse.CollateralInfo(cToken, oracle, twapDuration, true);
-        protocol.cTokens[truncate(address(token.token))] = token;
+        IClearingHouse.Collateral memory collateral = IClearingHouse.Collateral(
+            cToken,
+            IClearingHouse.CollateralSettings(oracle, twapDuration, true)
+        );
+        protocol.cTokens[truncate(address(collateral.token))] = collateral;
     }
 
     function addMargin(

@@ -33,7 +33,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     using Account for Account.UserInfo;
     using VTokenLib for IVToken;
     using SignedMath for int256;
-    using CTokenLib for CollateralInfo;
+    using CTokenLib for Collateral;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -70,8 +70,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         protocol.vBase = _vBase;
 
         _updateCollateralSettings(
-            IClearingHouse.CollateralInfo({
-                token: _defaultCollateralToken,
+            _defaultCollateralToken,
+            IClearingHouse.CollateralSettings({
                 oracle: _defaultCollateralTokenOracle,
                 twapDuration: 60,
                 supported: true
@@ -96,8 +96,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         ADMIN FUNCTIONS
      */
 
-    function updateCollateralSettings(CollateralInfo memory cTokenInfo) external onlyGovernanceOrTeamMultisig {
-        _updateCollateralSettings(cTokenInfo);
+    function updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings)
+        external
+        onlyGovernanceOrTeamMultisig
+    {
+        _updateCollateralSettings(cToken, collateralSettings);
     }
 
     function updatePoolSettings(IVToken vToken, RageTradePoolSettings calldata newSettings)
@@ -108,13 +111,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         emit RageTradePoolSettingsUpdated(vToken, newSettings);
     }
 
-    function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
-        paused = _pause;
-    }
-
-    // TODO: rename to setGlobalSettings
-    // TODO add event for global settings, move LiquidationParams to IClearingHouse
-    function setPlatformParameters(
+    function updateProtocolSettings(
         LiquidationParams calldata _liquidationParams,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
@@ -124,6 +121,10 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         protocol.removeLimitOrderFee = _removeLimitOrderFee;
         protocol.minimumOrderNotional = _minimumOrderNotional;
         protocol.minRequiredMargin = _minRequiredMargin;
+    }
+
+    function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
+        paused = _pause;
     }
 
     /// @inheritdoc IClearingHouse
@@ -175,13 +176,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 cTokenTruncatedAddress,
         uint256 amount
     ) internal notPaused {
-        CollateralInfo storage cTokenInfo = _getCTokenWithChecks(cTokenTruncatedAddress, true);
+        Collateral storage collateral = _getCTokenWithChecks(cTokenTruncatedAddress, true);
 
-        cTokenInfo.token.safeTransferFrom(msg.sender, address(this), amount);
+        collateral.token.safeTransferFrom(msg.sender, address(this), amount);
 
-        account.addMargin(address(cTokenInfo.token), amount);
+        account.addMargin(address(collateral.token), amount);
 
-        emit Account.DepositMargin(accountNo, address(cTokenInfo.token), amount);
+        emit Account.DepositMargin(accountNo, address(collateral.token), amount);
     }
 
     /// @inheritdoc IClearingHouse
@@ -210,13 +211,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 amount,
         bool checkMargin
     ) internal notPaused {
-        CollateralInfo storage cToken = _getCTokenWithChecks(cTokenTruncatedAddress, false);
+        Collateral storage collateral = _getCTokenWithChecks(cTokenTruncatedAddress, false);
 
-        account.removeMargin(address(cToken.token), amount, protocol, checkMargin);
+        account.removeMargin(address(collateral.token), amount, protocol, checkMargin);
 
-        cToken.token.safeTransfer(msg.sender, amount);
+        collateral.token.safeTransfer(msg.sender, amount);
 
-        emit Account.WithdrawMargin(accountNo, address(cToken.token), amount);
+        emit Account.WithdrawMargin(accountNo, address(collateral.token), amount);
     }
 
     /// @inheritdoc IClearingHouse
@@ -488,16 +489,16 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function _getCTokenWithChecks(uint32 cTokenTruncatedAddress, bool checkSupported)
         internal
         view
-        returns (CollateralInfo storage cToken)
+        returns (Collateral storage collateral)
     {
-        cToken = protocol.cTokens[cTokenTruncatedAddress];
-        if (cToken.eq(address(0))) revert UninitializedToken(cTokenTruncatedAddress);
-        if (checkSupported && !cToken.supported) revert UnsupportedCToken(address(cToken.token));
+        collateral = protocol.cTokens[cTokenTruncatedAddress];
+        if (collateral.eq(address(0))) revert UninitializedToken(cTokenTruncatedAddress); // TODO change to UninitializedCollateral
+        if (checkSupported && !collateral.settings.supported) revert UnsupportedCToken(address(collateral.token));
     }
 
     function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
         vToken = protocol.vTokens[vTokenTruncatedAddress];
-        if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress);
+        if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress); // TODO change to UninitializedVToken
         if (!protocol.pools[vToken].settings.supported) revert UnsupportedVToken(vToken);
     }
 
@@ -571,24 +572,24 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
     }
 
-    function _updateCollateralSettings(CollateralInfo memory cTokenInfo) internal {
-        uint32 truncated = CTokenLib.truncate(address(cTokenInfo.token));
+    function _updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings) internal {
+        uint32 truncated = CTokenLib.truncate(address(cToken)); // TODO refactor, add address lib
 
         // doesn't allow zero address as a collateral token
-        if (address(cTokenInfo.token) == address(0)) revert InvalidCollateralAddress(address(0));
+        if (address(cToken) == address(0)) revert InvalidCollateralAddress(address(0));
 
         // doesn't allow owner to change the cToken address when updating settings, once it's truncated previously
         // TODO remove so many address() castings
         if (
             address(protocol.cTokens[truncated].token) != address(0) &&
-            address(protocol.cTokens[truncated].token) != address(cTokenInfo.token)
+            address(protocol.cTokens[truncated].token) != address(cToken)
         ) {
-            revert IncorrectCollateralAddress(address(cTokenInfo.token), address(protocol.cTokens[truncated].token));
+            revert IncorrectCollateralAddress(address(cToken), address(protocol.cTokens[truncated].token));
         }
 
-        protocol.cTokens[truncated] = cTokenInfo;
+        protocol.cTokens[truncated] = Collateral(cToken, collateralSettings);
 
-        emit CollateralUpdated(cTokenInfo);
+        emit CollateralSettingsUpdated(cToken, collateralSettings);
     }
 
     /// @notice Gets fix fee

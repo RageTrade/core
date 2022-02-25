@@ -250,15 +250,13 @@ describe('Clearing House Library', () => {
 
     rBase1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
     rBase1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    await clearingHouseTest.updateCollateralSettings({
-      token: rBase.address,
+    await clearingHouseTest.updateCollateralSettings(rBase.address, {
       oracle: rBaseOracle.address,
       twapDuration: 300,
       supported: false,
     });
 
-    await clearingHouseTest.updateCollateralSettings({
-      token: rBase1.address,
+    await clearingHouseTest.updateCollateralSettings(rBase1.address, {
       oracle: rBase1Oracle.address,
       twapDuration: 300,
       supported: false,
@@ -279,7 +277,7 @@ describe('Clearing House Library', () => {
       const minimumOrderNotional = tokenAmount(1, 6).div(100);
       const minRequiredMargin = tokenAmount(20, 6);
 
-      await clearingHouseTest.setPlatformParameters(
+      await clearingHouseTest.updateProtocolSettings(
         liquidationParams,
         removeLimitOrderFee,
         minimumOrderNotional,
@@ -345,9 +343,9 @@ describe('Clearing House Library', () => {
   describe('#TokenSupport', () => {
     before(async () => {
       expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.false;
-      expect((await clearingHouseTest.cTokens(truncate(realToken.address))).supported).to.be.false;
+      expect((await clearingHouseTest.cTokens(truncate(realToken.address))).settings.supported).to.be.false;
       expect((await clearingHouseTest.pools(vBaseAddress)).settings.supported).to.be.false;
-      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).supported).to.be.false;
+      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).settings.supported).to.be.false;
       // expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
       // expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.false;
     });
@@ -365,11 +363,11 @@ describe('Clearing House Library', () => {
       expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.true;
     });
     it('Add Token Deposit Support - Fail - Unauthorized', async () => {
-      const cTokenInfo = await getCollateralSettings(realToken.address);
-      cTokenInfo.supported = true;
-      await expect(clearingHouseTest.connect(user1).updateCollateralSettings(cTokenInfo)).to.be.revertedWith(
-        'Unauthorised()',
-      );
+      const { settings } = await getCollateralSettings(realToken.address);
+      settings.supported = true;
+      await expect(
+        clearingHouseTest.connect(user1).updateCollateralSettings(realToken.address, settings),
+      ).to.be.revertedWith('Unauthorised()');
     });
     // it('Add Token Deposit Support - Uninitialized Collateral', async () => {
     //   await expect(clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
@@ -377,10 +375,10 @@ describe('Clearing House Library', () => {
     //   );
     // });
     it('Add Base Deposit Support  - Pass', async () => {
-      const cTokenInfo = await getCollateralSettings(rBase.address);
-      cTokenInfo.supported = true;
-      await clearingHouseTest.connect(admin).updateCollateralSettings(cTokenInfo);
-      expect((await getCollateralSettings(rBase.address)).supported).to.be.true;
+      const { settings } = await getCollateralSettings(rBase.address);
+      settings.supported = true;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(rBase.address, settings);
+      expect((await getCollateralSettings(rBase.address)).settings.supported).to.be.true;
     });
   });
 
@@ -543,9 +541,9 @@ describe('Clearing House Library', () => {
 
     it('Pass - Withdrawal after removal of token support', async () => {
       //Add rBase1 support
-      const cTokenInfo = await getCollateralSettings(rBase1.address);
-      cTokenInfo.supported = true;
-      await clearingHouseTest.connect(admin).updateCollateralSettings(cTokenInfo);
+      const { settings } = await getCollateralSettings(rBase1.address);
+      settings.supported = true;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(rBase1.address, settings);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
 
       await rBase1.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
@@ -554,8 +552,8 @@ describe('Clearing House Library', () => {
       expect(await rBase1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
 
       //Remove rBase1 support
-      cTokenInfo.supported = false;
-      await clearingHouseTest.connect(admin).updateCollateralSettings(cTokenInfo);
+      settings.supported = false;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(rBase1.address, settings);
 
       await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
 
@@ -926,7 +924,10 @@ describe('Clearing House Library', () => {
   }
 
   async function getCollateralSettings(vTokenAddress: string) {
-    let { token, oracle, twapDuration, supported } = await clearingHouseTest.cTokens(truncate(vTokenAddress));
-    return { token, oracle, twapDuration, supported };
+    let {
+      token,
+      settings: { oracle, twapDuration, supported },
+    } = await clearingHouseTest.cTokens(truncate(vTokenAddress));
+    return { token, settings: { oracle, twapDuration, supported } };
   }
 });

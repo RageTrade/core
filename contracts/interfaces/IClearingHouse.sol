@@ -19,8 +19,12 @@ import { Account } from '../libraries/Account.sol';
 import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 interface IClearingHouse is IGovernable {
-    struct CollateralInfo {
+    struct Collateral {
         IERC20 token;
+        CollateralSettings settings;
+    }
+
+    struct CollateralSettings {
         IOracle oracle;
         uint32 twapDuration;
         bool supported;
@@ -148,12 +152,24 @@ interface IClearingHouse is IGovernable {
 
     /// @notice new collateral supported as margin
     /// @param cTokenInfo collateral token info
-    event CollateralUpdated(CollateralInfo cTokenInfo);
+    event CollateralSettingsUpdated(IERC20 cToken, CollateralSettings cTokenInfo);
 
     /// @notice maintainance margin ratio of a pool changed
     /// @param vToken address of vToken
     /// @param settings new settings
     event RageTradePoolSettingsUpdated(IVToken vToken, RageTradePoolSettings settings);
+
+    /// @notice protocol settings changed
+    /// @param liquidationParams liquidation params
+    /// @param removeLimitOrderFee fee for remove limit order
+    /// @param minimumOrderNotional minimum order notional
+    /// @param minRequiredMargin minimum required margin
+    event ProtocolSettingsUpdated(
+        LiquidationParams liquidationParams,
+        uint256 removeLimitOrderFee,
+        uint256 minimumOrderNotional,
+        uint256 minRequiredMargin
+    );
 
     /// @notice error to denote invalid account access
     /// @param senderAddress address of msg sender
@@ -194,20 +210,46 @@ interface IClearingHouse is IGovernable {
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
 
+    /// @notice error to denote that keeper fee is negative or zero
     error KeeperFeeNotPositive(int256 keeperFee);
 
+    /// @notice initializes clearing house contract
+    /// @param rageTradeFactoryAddress rage trade factory address
+    /// @param defaultCollateralToken address of default collateral token
+    /// @param defaultCollateralTokenOracle address of default collateral token oracle
+    /// @param insuranceFund address of insurance fund
+    /// @param vBase address of vBase
+    /// @param nativeOracle address of native oracle
     function __ClearingHouse_init(
-        address _rageTradeFactoryAddress,
-        IERC20 _defaultCollateralToken,
-        IOracle _defaultCollateralTokenOracle,
-        IInsuranceFund _insuranceFund,
-        IVBase _vBase,
-        IOracle _nativeOracle
+        address rageTradeFactoryAddress,
+        IERC20 defaultCollateralToken,
+        IOracle defaultCollateralTokenOracle,
+        IInsuranceFund insuranceFund,
+        IVBase vBase,
+        IOracle nativeOracle
     ) external;
 
-    function updateCollateralSettings(CollateralInfo memory cTokenInfo) external;
+    /// @notice updates the collataral settings
+    /// @param cToken collateral token
+    /// @param collateralSettings settings
+    function updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings) external;
 
+    /// @notice updates the rage trade pool settings
+    /// @param vToken address of vToken
+    /// @param newSettings updated rage trade pool settings
     function updatePoolSettings(IVToken vToken, RageTradePoolSettings calldata newSettings) external;
+
+    /// @notice updates the protocol settings
+    /// @param liquidationParams liquidation params
+    /// @param removeLimitOrderFee fee for remove limit order
+    /// @param minimumOrderNotional minimum order notional
+    /// @param minRequiredMargin minimum required margin
+    function updateProtocolSettings(
+        LiquidationParams calldata liquidationParams,
+        uint256 removeLimitOrderFee,
+        uint256 minimumOrderNotional,
+        uint256 minRequiredMargin
+    ) external;
 
     /// @notice creates a new account and adds it to the accounts map
     /// @return newAccountId - serial number of the new account created
@@ -369,7 +411,7 @@ interface IClearingHouse is IGovernable {
 
     function pools(IVToken vToken) external view returns (RageTradePool memory);
 
-    function cTokens(uint32 cTokenId) external view returns (CollateralInfo memory);
+    function cTokens(uint32 cTokenId) external view returns (Collateral memory);
 
     function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
 

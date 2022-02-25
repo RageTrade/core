@@ -56,7 +56,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         return protocol.pools[vToken];
     }
 
-    function cTokens(uint32 cTokenId) public view returns (CollateralInfo memory) {
+    function cTokens(uint32 cTokenId) public view returns (Collateral memory) {
         return protocol.cTokens[cTokenId];
     }
 

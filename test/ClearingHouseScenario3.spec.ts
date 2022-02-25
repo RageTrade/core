@@ -772,8 +772,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     // await vBase.transferOwnership(VPoolFactory.address);
     rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    await clearingHouseTest.updateCollateralSettings({
-      token: rBase.address,
+    await clearingHouseTest.updateCollateralSettings(rBase.address, {
       oracle: rBaseOracle.address,
       twapDuration: 300,
       supported: true,
@@ -828,7 +827,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       const minimumOrderNotional = tokenAmount(1, 6).div(100);
       const minRequiredMargin = tokenAmount(20, 6);
 
-      await clearingHouseTest.setPlatformParameters(
+      await clearingHouseTest.updateProtocolSettings(
         liquidationParams,
         removeLimitOrderFee,
         minimumOrderNotional,
@@ -921,7 +920,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Add Base Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
-      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).supported).to.be.true;
+      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).settings.supported).to.be.true;
     });
   });
 

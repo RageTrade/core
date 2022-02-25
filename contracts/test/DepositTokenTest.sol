@@ -19,7 +19,7 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract DepositTokenSetTest is AccountProtocolInfoMock {
     using CTokenDepositSet for CTokenDepositSet.Info;
-    using CTokenLib for IClearingHouse.CollateralInfo;
+    using CTokenLib for IClearingHouse.CollateralSettings;
     using CTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
 
@@ -41,13 +41,11 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
         IOracle oracle,
         uint32 twapDuration
     ) external {
-        IClearingHouse.CollateralInfo memory cTokenInfo = IClearingHouse.CollateralInfo(
+        IClearingHouse.Collateral memory collateral = IClearingHouse.Collateral(
             cToken,
-            oracle,
-            twapDuration,
-            true
+            IClearingHouse.CollateralSettings(oracle, twapDuration, true)
         );
-        protocol.cTokens[CTokenLib.truncate(address(cTokenInfo.token))] = cTokenInfo;
+        protocol.cTokens[CTokenLib.truncate(address(collateral.token))] = collateral;
     }
 
     function cleanDeposits() external {

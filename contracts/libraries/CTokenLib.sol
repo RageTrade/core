@@ -22,42 +22,38 @@ import { Account } from './Account.sol';
 
 // TODO this lib seems point less. Is it needed?
 library CTokenLib {
-    using CTokenLib for IClearingHouse.CollateralInfo;
+    using CTokenLib for IClearingHouse.CollateralSettings;
     using FullMath for uint256;
     using PriceMath for uint160;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    function eq(IClearingHouse.CollateralInfo storage a, IClearingHouse.CollateralInfo storage b)
-        internal
-        view
-        returns (bool)
-    {
+    function eq(IClearingHouse.Collateral storage a, IClearingHouse.Collateral storage b) internal view returns (bool) {
         return address(a.token) == address(b.token);
     }
 
-    function eq(IClearingHouse.CollateralInfo storage a, address b) internal view returns (bool) {
+    function eq(IClearingHouse.Collateral storage a, address b) internal view returns (bool) {
         return address(a.token) == b;
     }
 
     // TODO is this used anywhere?
-    function decimals(IClearingHouse.CollateralInfo storage token) internal view returns (uint8) {
-        return IERC20Metadata(address(token.token)).decimals();
+    function decimals(IClearingHouse.Collateral storage collateral) internal view returns (uint8) {
+        return IERC20Metadata(address(collateral.token)).decimals();
     }
 
     function truncate(address realTokenAddress) internal pure returns (uint32) {
         return uint32(uint160(realTokenAddress));
     }
 
-    function truncate(IClearingHouse.CollateralInfo storage token) internal view returns (uint32) {
+    function truncate(IClearingHouse.Collateral storage collateral) internal view returns (uint32) {
         // TODO truncate method is common in both CTokenLib and VTokenLib
-        return uint32(uint160(address(token.token)));
+        return uint32(uint160(address(collateral.token)));
     }
 
-    function getRealTwapPriceX128(IClearingHouse.CollateralInfo storage token)
+    function getRealTwapPriceX128(IClearingHouse.Collateral storage collateral)
         internal
         view
         returns (uint256 priceX128)
     {
-        return token.oracle.getTwapPriceX128(token.twapDuration);
+        return collateral.settings.oracle.getTwapPriceX128(collateral.settings.twapDuration);
     }
 }
