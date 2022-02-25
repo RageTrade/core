@@ -10,6 +10,8 @@ import { CTokenLib } from '../libraries/CTokenLib.sol';
 import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
+import { IOracle } from '../interfaces/IOracle.sol';
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
@@ -17,7 +19,7 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract DepositTokenSetTest is AccountProtocolInfoMock {
     using CTokenDepositSet for CTokenDepositSet.Info;
-    using CTokenLib for CTokenLib.CToken;
+    using CTokenLib for IClearingHouse.CollateralInfo;
     using CTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
 
@@ -35,12 +37,17 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
     }
 
     function init(
-        address cTokenAddress,
-        address oracleAddress,
+        IERC20 cToken,
+        IOracle oracle,
         uint32 twapDuration
     ) external {
-        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, true);
-        protocol.cTokens[token.tokenAddress.truncate()] = token;
+        IClearingHouse.CollateralInfo memory cTokenInfo = IClearingHouse.CollateralInfo(
+            cToken,
+            oracle,
+            twapDuration,
+            true
+        );
+        protocol.cTokens[CTokenLib.truncate(address(cTokenInfo.token))] = cTokenInfo;
     }
 
     function cleanDeposits() external {
@@ -49,7 +56,7 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
             if (truncatedAddress == 0) break;
 
             depositTokenSet.decreaseBalance(
-                protocol.cTokens[truncatedAddress].tokenAddress,
+                address(protocol.cTokens[truncatedAddress].token),
                 depositTokenSet.deposits[truncatedAddress]
             );
         }

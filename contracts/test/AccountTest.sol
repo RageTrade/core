@@ -14,6 +14,7 @@ import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
+import { IOracle } from '../interfaces/IOracle.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -35,7 +36,7 @@ contract AccountTest {
     constructor() {}
 
     function setAccountStorage(
-        Account.LiquidationParams calldata _liquidationParams,
+        IClearingHouse.LiquidationParams calldata _liquidationParams,
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
@@ -104,7 +105,7 @@ contract AccountTest {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(protocol.cTokens[truncatedAddress].tokenAddress, deposit);
+            set.decreaseBalance(address(protocol.cTokens[truncatedAddress].token), deposit);
         }
     }
 
@@ -117,12 +118,12 @@ contract AccountTest {
     }
 
     function initCollateral(
-        address cTokenAddress,
-        address oracleAddress,
+        IERC20 cToken,
+        IOracle oracle,
         uint32 twapDuration
     ) external {
-        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, true);
-        protocol.cTokens[truncate(token.tokenAddress)] = token;
+        IClearingHouse.CollateralInfo memory token = IClearingHouse.CollateralInfo(cToken, oracle, twapDuration, true);
+        protocol.cTokens[truncate(address(token.token))] = token;
     }
 
     function addMargin(

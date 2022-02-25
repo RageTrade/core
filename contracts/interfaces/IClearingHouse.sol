@@ -19,6 +19,13 @@ import { Account } from '../libraries/Account.sol';
 import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 interface IClearingHouse is IGovernable {
+    struct CollateralInfo {
+        IERC20 token;
+        IOracle oracle;
+        uint32 twapDuration;
+        bool supported;
+    }
+
     struct RageTradePool {
         IUniswapV3Pool vPool;
         IVPoolWrapper vPoolWrapper;
@@ -83,6 +90,16 @@ interface IClearingHouse is IGovernable {
         int256 traderPositionIncrease;
     }
 
+    /// @notice parameters to be used for liquidation
+    /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
+    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
+    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
+    struct LiquidationParams {
+        uint16 liquidationFeeFraction;
+        uint16 tokenLiquidationPriceDeltaBps;
+        uint16 insuranceFundFeeShareBps;
+    }
+
     struct DepositTokenView {
         address cTokenAddress;
         uint256 balance;
@@ -130,8 +147,8 @@ interface IClearingHouse is IGovernable {
     event NewVTokenSupported(IVToken vToken);
 
     /// @notice new collateral supported as margin
-    /// @param rTokenAddress address of collateral token
-    event NewCollateralSupported(address rTokenAddress);
+    /// @param cTokenInfo collateral token info
+    event CollateralUpdated(CollateralInfo cTokenInfo);
 
     /// @notice maintainance margin ratio of a pool changed
     /// @param vToken address of vToken
@@ -153,6 +170,15 @@ interface IClearingHouse is IGovernable {
     /// @notice error to denote low notional value of txn
     /// @param notionalValue notional value of txn
     error LowNotionalValue(uint256 notionalValue);
+
+    /// @notice error to denote incorrect address is supplied while updating collateral settings
+    /// @param incorrectAddress incorrect address of collateral token
+    /// @param correctAddress correct address of collateral token
+    error IncorrectCollateralAddress(address incorrectAddress, address correctAddress);
+
+    /// @notice error to denote invalid address supplied as a collateral token
+    /// @param invalidAddress invalid address of collateral token
+    error InvalidCollateralAddress(address invalidAddress);
 
     /// @notice error to denote invalid token liquidation (fraction to liquidate> 1)
     error InvalidTokenLiquidationParameters();
@@ -179,11 +205,9 @@ interface IClearingHouse is IGovernable {
         IOracle _nativeOracle
     ) external;
 
-    function addCollateralSupport(
-        IERC20 cToken,
-        IOracle oracle,
-        uint32 twapDuration
-    ) external;
+    function updateCollateralSettings(CollateralInfo memory cTokenInfo) external;
+
+    function updatePoolSettings(IVToken vToken, RageTradePoolSettings calldata newSettings) external;
 
     /// @notice creates a new account and adds it to the accounts map
     /// @return newAccountId - serial number of the new account created
@@ -337,7 +361,7 @@ interface IClearingHouse is IGovernable {
         view
         returns (
             IVBase vBase,
-            Account.LiquidationParams memory liquidationParams,
+            LiquidationParams memory liquidationParams,
             uint256 minRequiredMargin,
             uint256 removeLimitOrderFee,
             uint256 minimumOrderNotional
@@ -345,7 +369,7 @@ interface IClearingHouse is IGovernable {
 
     function pools(IVToken vToken) external view returns (RageTradePool memory);
 
-    function cTokens(uint32 cTokenId) external view returns (CTokenLib.CToken memory);
+    function cTokens(uint32 cTokenId) external view returns (CollateralInfo memory);
 
     function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
 

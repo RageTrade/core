@@ -17,7 +17,7 @@ abstract contract AccountProtocolInfoMock {
     uint256 public fixFee;
 
     function setAccountStorage(
-        Account.LiquidationParams calldata _liquidationParams,
+        IClearingHouse.LiquidationParams calldata _liquidationParams,
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,

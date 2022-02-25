@@ -15,7 +15,7 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { console } from 'hardhat/console.sol';
 
 library CTokenDepositSet {
-    using CTokenLib for CTokenLib.CToken;
+    using CTokenLib for IClearingHouse.CollateralInfo;
     using CTokenLib for address;
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
@@ -69,7 +69,7 @@ library CTokenDepositSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            CTokenLib.CToken storage token = protocol.cTokens[truncated];
+            IClearingHouse.CollateralInfo storage token = protocol.cTokens[truncated];
 
             accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
                 token.getRealTwapPriceX128(),
@@ -88,7 +88,7 @@ library CTokenDepositSet {
         depositTokens = new IClearingHouse.DepositTokenView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            depositTokens[i].cTokenAddress = address(protocol.cTokens[set.active[i]].tokenAddress);
+            depositTokens[i].cTokenAddress = address(protocol.cTokens[set.active[i]].token);
             depositTokens[i].balance = set.deposits[set.active[i]];
         }
     }

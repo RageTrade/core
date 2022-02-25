@@ -250,9 +250,19 @@ describe('Clearing House Library', () => {
 
     rBase1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
     rBase1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
+    await clearingHouseTest.updateCollateralSettings({
+      token: rBase.address,
+      oracle: rBaseOracle.address,
+      twapDuration: 300,
+      supported: false,
+    });
 
-    clearingHouseTest.addCollateralSupport(rBase1.address, rBase1Oracle.address, 300);
+    await clearingHouseTest.updateCollateralSettings({
+      token: rBase1.address,
+      oracle: rBase1Oracle.address,
+      twapDuration: 300,
+      supported: false,
+    });
   });
 
   after(deactivateMainnetFork);
@@ -334,33 +344,43 @@ describe('Clearing House Library', () => {
 
   describe('#TokenSupport', () => {
     before(async () => {
-      expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.false;
-      expect(await clearingHouseTest.supportedDeposits(realToken.address)).to.be.false;
-      expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
-      expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.false;
+      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.false;
+      expect((await clearingHouseTest.cTokens(truncate(realToken.address))).supported).to.be.false;
+      expect((await clearingHouseTest.pools(vBaseAddress)).settings.supported).to.be.false;
+      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).supported).to.be.false;
+      // expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
+      // expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
-      await expect(clearingHouseTest.connect(user1).updateSupportedVTokens(vTokenAddress, true)).to.be.revertedWith(
+      const settings = await getPoolSettings(vTokenAddress);
+      settings.supported = true;
+      await expect(clearingHouseTest.connect(user1).updatePoolSettings(vTokenAddress, settings)).to.be.revertedWith(
         'Unauthorised()',
       );
     });
     it('Add Token Position Support - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedVTokens(vTokenAddress, true);
-      expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.true;
+      const settings = await getPoolSettings(vTokenAddress);
+      settings.supported = true;
+      await clearingHouseTest.connect(admin).updatePoolSettings(vTokenAddress, settings);
+      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.true;
     });
     it('Add Token Deposit Support - Fail - Unauthorized', async () => {
-      await expect(clearingHouseTest.connect(user1).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
+      const cTokenInfo = await getCollateralSettings(realToken.address);
+      cTokenInfo.supported = true;
+      await expect(clearingHouseTest.connect(user1).updateCollateralSettings(cTokenInfo)).to.be.revertedWith(
         'Unauthorised()',
       );
     });
-    it('Add Token Deposit Support - Uninitialized Collateral', async () => {
-      await expect(clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
-        'Invalid Address',
-      );
-    });
+    // it('Add Token Deposit Support - Uninitialized Collateral', async () => {
+    //   await expect(clearingHouseTest.connect(admin).updateSupportedDeposits(vTokenAddress, true)).to.be.revertedWith(
+    //     'Invalid Address',
+    //   );
+    // });
     it('Add Base Deposit Support  - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
-      expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.true;
+      const cTokenInfo = await getCollateralSettings(rBase.address);
+      cTokenInfo.supported = true;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(cTokenInfo);
+      expect((await getCollateralSettings(rBase.address)).supported).to.be.true;
     });
   });
 
@@ -523,7 +543,9 @@ describe('Clearing House Library', () => {
 
     it('Pass - Withdrawal after removal of token support', async () => {
       //Add rBase1 support
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase1.address, true);
+      const cTokenInfo = await getCollateralSettings(rBase1.address);
+      cTokenInfo.supported = true;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(cTokenInfo);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(rBase1.address);
 
       await rBase1.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
@@ -532,7 +554,8 @@ describe('Clearing House Library', () => {
       expect(await rBase1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
 
       //Remove rBase1 support
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase1.address, false);
+      cTokenInfo.supported = false;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(cTokenInfo);
 
       await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
 
@@ -894,4 +917,16 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(user1).multicallWithSingleMarginCheck(user1AccountNo, operations);
     });
   });
+
+  async function getPoolSettings(vTokenAddress: string) {
+    let {
+      settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
+    } = await clearingHouseTest.pools(vTokenAddress);
+    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
+  }
+
+  async function getCollateralSettings(vTokenAddress: string) {
+    let { token, oracle, twapDuration, supported } = await clearingHouseTest.cTokens(truncate(vTokenAddress));
+    return { token, oracle, twapDuration, supported };
+  }
 });

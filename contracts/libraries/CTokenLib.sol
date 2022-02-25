@@ -14,53 +14,50 @@ import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/I
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { Account } from './Account.sol';
 
+// TODO this lib seems point less. Is it needed?
 library CTokenLib {
-    using CTokenLib for CToken;
+    using CTokenLib for IClearingHouse.CollateralInfo;
     using FullMath for uint256;
     using PriceMath for uint160;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    struct CToken {
-        address tokenAddress;
-        address oracleAddress;
-        uint32 oracleTimeHorizon;
-        bool supported;
+    function eq(IClearingHouse.CollateralInfo storage a, IClearingHouse.CollateralInfo storage b)
+        internal
+        view
+        returns (bool)
+    {
+        return address(a.token) == address(b.token);
     }
 
-    function eq(CToken storage a, CToken storage b) internal view returns (bool) {
-        return a.tokenAddress == b.tokenAddress;
+    function eq(IClearingHouse.CollateralInfo storage a, address b) internal view returns (bool) {
+        return address(a.token) == b;
     }
 
-    function eq(CToken storage a, address b) internal view returns (bool) {
-        return a.tokenAddress == b;
-    }
-
-    function decimals(CToken storage token) internal view returns (uint8) {
-        return IERC20Metadata(token.tokenAddress).decimals();
+    // TODO is this used anywhere?
+    function decimals(IClearingHouse.CollateralInfo storage token) internal view returns (uint8) {
+        return IERC20Metadata(address(token.token)).decimals();
     }
 
     function truncate(address realTokenAddress) internal pure returns (uint32) {
         return uint32(uint160(realTokenAddress));
     }
 
-    function truncate(CToken storage token) internal view returns (uint32) {
-        return uint32(uint160(token.tokenAddress));
+    function truncate(IClearingHouse.CollateralInfo storage token) internal view returns (uint32) {
+        // TODO truncate method is common in both CTokenLib and VTokenLib
+        return uint32(uint160(address(token.token)));
     }
 
-    function realToken(CToken storage token) internal view returns (IERC20) {
-        return IERC20(token.tokenAddress);
-    }
-
-    function oracle(CToken storage token) internal view returns (IOracle) {
-        return IOracle(token.oracleAddress);
-    }
-
-    function getRealTwapPriceX128(CToken storage token) internal view returns (uint256 priceX128) {
-        return token.oracle().getTwapPriceX128(token.oracleTimeHorizon);
+    function getRealTwapPriceX128(IClearingHouse.CollateralInfo storage token)
+        internal
+        view
+        returns (uint256 priceX128)
+    {
+        return token.oracle.getTwapPriceX128(token.twapDuration);
     }
 }

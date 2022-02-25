@@ -52,6 +52,7 @@ import {
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
 import { FundingPaymentEvent } from '../typechain-types/Account';
+import { truncate } from './utils/vToken';
 const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();
@@ -523,6 +524,13 @@ describe('Clearing House Scenario 1', () => {
     return { vTokenAddress, realToken, oracle, vPool, vPoolWrapper };
   }
 
+  async function getPoolSettings(vTokenAddress: string) {
+    let {
+      settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
+    } = await clearingHouseTest.pools(vTokenAddress);
+    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
+  }
+
   before(async () => {
     await activateMainnetFork();
 
@@ -651,7 +659,12 @@ describe('Clearing House Scenario 1', () => {
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
     rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
+    await clearingHouseTest.updateCollateralSettings({
+      token: rBase.address,
+      oracle: rBaseOracle.address,
+      twapDuration: 300,
+      supported: true,
+    });
   });
 
   after(deactivateMainnetFork);
@@ -731,12 +744,14 @@ describe('Clearing House Scenario 1', () => {
     });
 
     it('Add Token Position Support - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedVTokens(vTokenAddress, true);
-      expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.true;
+      const settings = await getPoolSettings(vTokenAddress);
+      settings.supported = true;
+      await clearingHouseTest.connect(admin).updatePoolSettings(vTokenAddress, settings);
+      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.true;
     });
     it('Add Base Deposit Support  - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
-      expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.true;
+      // await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
+      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).supported).to.be.true;
     });
   });
 
