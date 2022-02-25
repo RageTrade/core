@@ -6,7 +6,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from './Account.sol';
-import { CTokenLib } from './CTokenLib.sol';
+import { AddressHelper } from './AddressHelper.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
@@ -15,8 +15,7 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { console } from 'hardhat/console.sol';
 
 library CTokenDepositSet {
-    using CTokenLib for IClearingHouse.Collateral;
-    using CTokenLib for address;
+    using AddressHelper for address;
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
     using SafeCast for uint256;
@@ -72,7 +71,7 @@ library CTokenDepositSet {
             IClearingHouse.Collateral storage collateral = protocol.cTokens[truncated];
 
             accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
-                collateral.getRealTwapPriceX128(),
+                collateral.settings.oracle.getTwapPriceX128(collateral.settings.twapDuration),
                 FixedPoint128.Q128
             );
         }

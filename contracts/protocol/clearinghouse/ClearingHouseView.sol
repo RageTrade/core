@@ -8,7 +8,6 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
-import { CTokenLib } from '../../libraries/CTokenLib.sol';
 
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 

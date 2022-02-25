@@ -10,7 +10,6 @@ import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
-import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IVBase } from '../interfaces/IVBase.sol';

@@ -6,7 +6,7 @@ import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenLib } from '../libraries/VTokenLib.sol';
-import { CTokenLib } from '../libraries/CTokenLib.sol';
+import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
@@ -19,8 +19,8 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract DepositTokenSetTest is AccountProtocolInfoMock {
     using CTokenDepositSet for CTokenDepositSet.Info;
-    using CTokenLib for IClearingHouse.CollateralSettings;
-    using CTokenLib for address;
+    using AddressHelper for address;
+    using AddressHelper for IERC20;
     using Uint32L8ArrayLib for uint32[8];
 
     CTokenDepositSet.Info depositTokenSet;
@@ -45,7 +45,7 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
             cToken,
             IClearingHouse.CollateralSettings(oracle, twapDuration, true)
         );
-        protocol.cTokens[CTokenLib.truncate(address(collateral.token))] = collateral;
+        protocol.cTokens[collateral.token.truncate()] = collateral;
     }
 
     function cleanDeposits() external {

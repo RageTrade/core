@@ -7,11 +7,11 @@ import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from '../../libraries/Account.sol';
+import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
-import { CTokenLib } from '../../libraries/CTokenLib.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
@@ -31,9 +31,9 @@ import { console } from 'hardhat/console.sol';
 contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim {
     using SafeERC20 for IERC20;
     using Account for Account.UserInfo;
+    using AddressHelper for IERC20;
     using VTokenLib for IVToken;
     using SignedMath for int256;
-    using CTokenLib for Collateral;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -492,7 +492,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         returns (Collateral storage collateral)
     {
         collateral = protocol.cTokens[cTokenTruncatedAddress];
-        if (collateral.eq(address(0))) revert UninitializedToken(cTokenTruncatedAddress); // TODO change to UninitializedCollateral
+        if (collateral.token.isZero()) revert UninitializedToken(cTokenTruncatedAddress); // TODO change to UninitializedCollateral
         if (checkSupported && !collateral.settings.supported) revert UnsupportedCToken(address(collateral.token));
     }
 
@@ -573,18 +573,15 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     function _updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings) internal {
-        uint32 truncated = CTokenLib.truncate(address(cToken)); // TODO refactor, add address lib
+        uint32 truncated = cToken.truncate();
 
         // doesn't allow zero address as a collateral token
-        if (address(cToken) == address(0)) revert InvalidCollateralAddress(address(0));
+        if (cToken.isZero()) revert InvalidCollateralAddress(address(0));
 
         // doesn't allow owner to change the cToken address when updating settings, once it's truncated previously
         // TODO remove so many address() castings
-        if (
-            address(protocol.cTokens[truncated].token) != address(0) &&
-            address(protocol.cTokens[truncated].token) != address(cToken)
-        ) {
-            revert IncorrectCollateralAddress(address(cToken), address(protocol.cTokens[truncated].token));
+        if (!protocol.cTokens[truncated].token.isZero() && !protocol.cTokens[truncated].token.eq(cToken)) {
+            revert IncorrectCollateralAddress(cToken, protocol.cTokens[truncated].token);
         }
 
         protocol.cTokens[truncated] = Collateral(cToken, collateralSettings);

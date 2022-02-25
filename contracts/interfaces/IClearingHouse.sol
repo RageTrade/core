@@ -16,7 +16,6 @@ import { IVBase } from './IVBase.sol';
 import { IVPoolWrapper } from './IVPoolWrapper.sol';
 import { IVToken } from './IVToken.sol';
 import { Account } from '../libraries/Account.sol';
-import { CTokenLib } from '../libraries/CTokenLib.sol';
 
 interface IClearingHouse is IGovernable {
     struct Collateral {
@@ -190,7 +189,7 @@ interface IClearingHouse is IGovernable {
     /// @notice error to denote incorrect address is supplied while updating collateral settings
     /// @param incorrectAddress incorrect address of collateral token
     /// @param correctAddress correct address of collateral token
-    error IncorrectCollateralAddress(address incorrectAddress, address correctAddress);
+    error IncorrectCollateralAddress(IERC20 incorrectAddress, IERC20 correctAddress);
 
     /// @notice error to denote invalid address supplied as a collateral token
     /// @param invalidAddress invalid address of collateral token

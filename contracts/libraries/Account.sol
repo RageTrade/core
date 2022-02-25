@@ -12,7 +12,6 @@ import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenLib } from './VTokenLib.sol';
-import { CTokenLib } from './CTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
