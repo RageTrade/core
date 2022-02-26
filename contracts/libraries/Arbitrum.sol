@@ -15,7 +15,7 @@ library Arbitrum {
 
     function getStorageGasAvailable() internal view returns (uint256) {
         (bool success, bytes memory data) = address(arbSys).staticcall(
-            abi.encodeWithSelector(arbSys.getStorageGasAvailable.selector)
+            abi.encodeCall(arbSys.getStorageGasAvailable, ())
         );
         if (!success || data.length == 0) {
             return 0;
@@ -25,7 +25,7 @@ library Arbitrum {
 
     function getCurrentTxL1GasFees() internal view returns (uint256) {
         (bool success, bytes memory data) = address(arbSys).staticcall(
-            abi.encodeWithSelector(arbGasInfo.getCurrentTxL1GasFees.selector)
+            abi.encodeCall(arbGasInfo.getCurrentTxL1GasFees, ())
         );
         if (!success || data.length == 0) {
             return 0;

@@ -29,7 +29,7 @@ interface IVPoolWrapper {
         uint24 UNISWAP_V3_DEFAULT_FEE_TIER;
     }
 
-    function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external;
+    function __VPoolWrapper_init(InitializeVPoolWrapperParams memory params) external;
 
     function vPool() external view returns (IUniswapV3Pool);
 
