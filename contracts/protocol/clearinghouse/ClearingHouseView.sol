@@ -8,7 +8,6 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
-import { CTokenLib } from '../../libraries/CTokenLib.sol';
 
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 
@@ -39,7 +38,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         view
         returns (
             IVBase vBase,
-            Account.LiquidationParams memory liquidationParams,
+            LiquidationParams memory liquidationParams,
             uint256 minRequiredMargin,
             uint256 removeLimitOrderFee,
             uint256 minimumOrderNotional
@@ -56,7 +55,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         return protocol.pools[vToken];
     }
 
-    function cTokens(uint32 cTokenId) public view returns (CTokenLib.CToken memory) {
+    function cTokens(uint32 cTokenId) public view returns (Collateral memory) {
         return protocol.cTokens[cTokenId];
     }
 

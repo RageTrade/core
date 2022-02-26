@@ -6,10 +6,12 @@ import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 import { VTokenLib } from '../libraries/VTokenLib.sol';
-import { CTokenLib } from '../libraries/CTokenLib.sol';
+import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
+import { IOracle } from '../interfaces/IOracle.sol';
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
@@ -17,8 +19,8 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract DepositTokenSetTest is AccountProtocolInfoMock {
     using CTokenDepositSet for CTokenDepositSet.Info;
-    using CTokenLib for CTokenLib.CToken;
-    using CTokenLib for address;
+    using AddressHelper for address;
+    using AddressHelper for IERC20;
     using Uint32L8ArrayLib for uint32[8];
 
     CTokenDepositSet.Info depositTokenSet;
@@ -35,12 +37,15 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
     }
 
     function init(
-        address cTokenAddress,
-        address oracleAddress,
+        IERC20 cToken,
+        IOracle oracle,
         uint32 twapDuration
     ) external {
-        CTokenLib.CToken memory token = CTokenLib.CToken(cTokenAddress, oracleAddress, twapDuration, true);
-        protocol.cTokens[token.tokenAddress.truncate()] = token;
+        IClearingHouse.Collateral memory collateral = IClearingHouse.Collateral(
+            cToken,
+            IClearingHouse.CollateralSettings(oracle, twapDuration, true)
+        );
+        protocol.cTokens[collateral.token.truncate()] = collateral;
     }
 
     function cleanDeposits() external {
@@ -49,7 +54,7 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
             if (truncatedAddress == 0) break;
 
             depositTokenSet.decreaseBalance(
-                protocol.cTokens[truncatedAddress].tokenAddress,
+                address(protocol.cTokens[truncatedAddress].token),
                 depositTokenSet.deposits[truncatedAddress]
             );
         }

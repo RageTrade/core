@@ -110,7 +110,7 @@ describe('VTokenPositionSet Library', () => {
       slotsToInitialize: 100,
     });
 
-    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const eventFilter = rageTradeFactory.filters.PoolInitialized();
     const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     vTokenAddress = events[0].args[1];
     // console.log('vTokenAddres', vTokenAddress);
@@ -145,7 +145,7 @@ describe('VTokenPositionSet Library', () => {
       slotsToInitialize: 100,
     });
 
-    const eventFilter1 = rageTradeFactory.filters.PoolInitlized();
+    const eventFilter1 = rageTradeFactory.filters.PoolInitialized();
     const events1 = await rageTradeFactory.queryFilter(eventFilter1, 'latest');
     vTokenAddress1 = events1[0].args[1];
     // console.log('vTokenAddres1', vTokenAddress);

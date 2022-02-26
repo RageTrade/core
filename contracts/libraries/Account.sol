@@ -12,7 +12,6 @@ import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { VTokenLib } from './VTokenLib.sol';
-import { CTokenLib } from './CTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
@@ -50,28 +49,18 @@ library Account {
         // rage trade pools
         mapping(IVToken => IClearingHouse.RageTradePool) pools;
         // conversion from compressed addressed to full address
-        mapping(uint32 => CTokenLib.CToken) cTokens;
+        mapping(uint32 => IClearingHouse.Collateral) cTokens;
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;
         IERC20 rBase;
         // accounting settings
-        LiquidationParams liquidationParams;
+        IClearingHouse.LiquidationParams liquidationParams;
         uint256 minRequiredMargin;
         uint256 removeLimitOrderFee;
         uint256 minimumOrderNotional;
         // reserved for adding slots in future
         uint256[100] _emptySlots;
-    }
-
-    /// @notice parameters to be used for liquidation
-    /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
-    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
-    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
-    struct LiquidationParams {
-        uint16 liquidationFeeFraction;
-        uint16 tokenLiquidationPriceDeltaBps;
-        uint16 insuranceFundFeeShareBps;
     }
 
     /// @notice error to denote that there is not enough margin for the transaction to go through
@@ -466,7 +455,7 @@ library Account {
         int256 accountMarketValue,
         int256 liquidationFee,
         uint256 fixFee,
-        LiquidationParams memory liquidationParams
+        IClearingHouse.LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
         int256 fixFeeInt = int256(fixFee);
         keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;

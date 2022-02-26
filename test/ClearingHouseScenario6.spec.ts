@@ -54,6 +54,7 @@ import {
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
 import { FundingPaymentEvent } from '../typechain-types/Account';
+import { truncate } from './utils/vToken';
 const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();
@@ -516,13 +517,20 @@ describe('Clearing House Scenario 6', () => {
       slotsToInitialize: 100,
     });
 
-    const eventFilter = rageTradeFactory.filters.PoolInitlized();
+    const eventFilter = rageTradeFactory.filters.PoolInitialized();
     const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
     const vPool = events[0].args[0];
     const vTokenAddress = events[0].args[1];
     const vPoolWrapper = events[0].args[2];
 
     return { vTokenAddress, realToken, oracle, vPool, vPoolWrapper };
+  }
+
+  async function getPoolSettings(vTokenAddress: string) {
+    let {
+      settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
+    } = await clearingHouseTest.pools(vTokenAddress);
+    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
   }
 
   before(async () => {
@@ -653,7 +661,11 @@ describe('Clearing House Scenario 6', () => {
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
     rBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    clearingHouseTest.addCollateralSupport(rBase.address, rBaseOracle.address, 300);
+    await clearingHouseTest.updateCollateralSettings(rBase.address, {
+      oracle: rBaseOracle.address,
+      twapDuration: 300,
+      supported: true,
+    });
   });
 
   after(deactivateMainnetFork);
@@ -670,7 +682,7 @@ describe('Clearing House Scenario 6', () => {
       const minimumOrderNotional = tokenAmount(1, 6).div(100);
       const minRequiredMargin = tokenAmount(20, 6);
 
-      await clearingHouseTest.setPlatformParameters(
+      await clearingHouseTest.updateProtocolSettings(
         liquidationParams,
         removeLimitOrderFee,
         minimumOrderNotional,
@@ -733,12 +745,15 @@ describe('Clearing House Scenario 6', () => {
     });
 
     it('Add Token Position Support - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedVTokens(vTokenAddress, true);
-      expect(await clearingHouseTest.supportedVTokens(vTokenAddress)).to.be.true;
+      const settings = await getPoolSettings(vTokenAddress);
+      settings.supported = true;
+      await clearingHouseTest.connect(admin).updatePoolSettings(vTokenAddress, settings);
+      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.true;
     });
+
     it('Add Base Deposit Support  - Pass', async () => {
-      await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
-      expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.true;
+      // await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
+      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).settings.supported).to.be.true;
     });
   });
 

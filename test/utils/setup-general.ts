@@ -103,7 +103,7 @@ export async function testSetup({
     slotsToInitialize: 100,
   });
 
-  const eventFilter = rageTradeFactory.filters.PoolInitlized();
+  const eventFilter = rageTradeFactory.filters.PoolInitialized();
   const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];
@@ -230,7 +230,7 @@ export async function testSetupToken({
     protocolFeePips: 500,
     slotsToInitialize: 100,
   });
-  const eventFilter = rageTradeFactory.filters.PoolInitlized();
+  const eventFilter = rageTradeFactory.filters.PoolInitialized();
   const events = await rageTradeFactory.queryFilter(eventFilter, 'latest');
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];
