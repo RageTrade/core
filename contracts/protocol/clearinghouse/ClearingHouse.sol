@@ -51,10 +51,10 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     /**
-        PLATFORM FUNCTIONS
+        SYSTEM FUNCTIONS
      */
 
-    function __ClearingHouse_init(
+    function __initialize_ClearingHouse(
         address _rageTradeFactoryAddress,
         IERC20 _defaultCollateralToken,
         IOracle _defaultCollateralTokenOracle,

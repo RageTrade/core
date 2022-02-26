@@ -105,7 +105,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         PLATFORM FUNCTIONS
      */
 
-    function __VPoolWrapper_init(InitializeVPoolWrapperParams calldata params) external initializer {
+    function __initialize_VPoolWrapper(InitializeVPoolWrapperParams calldata params) external initializer {
         clearingHouse = params.clearingHouse;
         vToken = params.vToken;
         vBase = params.vBase;
