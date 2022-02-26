@@ -10,6 +10,7 @@ import { ProxyAdminDeployer } from '../../utils/ProxyAdminDeployer.sol';
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
+import { IVBase } from '../../interfaces/IVBase.sol';
 
 /// @notice Manages deployment for ClearingHouseProxy
 /// @dev ClearingHouse proxy is deployed only once
@@ -19,7 +20,7 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
         IERC20 cBase;
         IOracle cBaseOracle;
         IInsuranceFund insuranceFund;
-        IERC20 vBase;
+        IVBase vBase;
         IOracle nativeOracle;
     }
 
@@ -33,14 +34,16 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                     new TransparentUpgradeableProxy(
                         params.clearingHouseLogicAddress,
                         address(proxyAdmin),
-                        abi.encodeWithSelector(
-                            IClearingHouse.__ClearingHouse_init.selector,
-                            address(this), // RageTradeFactory
-                            params.cBase,
-                            params.cBaseOracle,
-                            params.insuranceFund,
-                            params.vBase,
-                            params.nativeOracle
+                        abi.encodeCall(
+                            IClearingHouse.__ClearingHouse_init,
+                            (
+                                address(this), // RageTradeFactory
+                                params.cBase,
+                                params.cBaseOracle,
+                                params.insuranceFund,
+                                params.vBase,
+                                params.nativeOracle
+                            )
                         )
                     )
                 )
