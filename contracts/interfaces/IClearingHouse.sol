@@ -219,7 +219,7 @@ interface IClearingHouse is IGovernable {
     /// @param insuranceFund address of insurance fund
     /// @param vBase address of vBase
     /// @param nativeOracle address of native oracle
-    function __ClearingHouse_init(
+    function __initialize_ClearingHouse(
         address rageTradeFactoryAddress,
         IERC20 defaultCollateralToken,
         IOracle defaultCollateralTokenOracle,
@@ -227,6 +227,8 @@ interface IClearingHouse is IGovernable {
         IVBase vBase,
         IOracle nativeOracle
     ) external;
+
+    function registerPool(address full, RageTradePool calldata rageTradePool) external;
 
     /// @notice updates the collataral settings
     /// @param cToken collateral token
@@ -250,13 +252,13 @@ interface IClearingHouse is IGovernable {
         uint256 minRequiredMargin
     ) external;
 
-    /// @notice creates a new account and adds it to the accounts map
-    /// @return newAccountId - serial number of the new account created
-    function createAccount() external returns (uint256 newAccountId);
-
     /// @notice withdraws protocol fees collected in the supplied wrappers to team multisig
     /// @param wrapperAddresses list of wrapper addresses to collect fees from
     function withdrawProtocolFee(address[] calldata wrapperAddresses) external;
+
+    /// @notice creates a new account and adds it to the accounts map
+    /// @return newAccountId - serial number of the new account created
+    function createAccount() external returns (uint256 newAccountId);
 
     /// @notice deposits 'amount' of token associated with 'vTokenTruncatedAddress'
     /// @param accountNo account number
@@ -386,8 +388,6 @@ interface IClearingHouse is IGovernable {
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
 
     function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
-
-    function registerPool(address full, RageTradePool calldata rageTradePool) external;
 
     function getTwapSqrtPricesForSetDuration(IVToken vToken)
         external

@@ -1,10 +1,8 @@
 import hre from 'hardhat';
 import { smock } from '@defi-wonderland/smock';
-import { constants } from './dummyConstants';
-import { ethers, BigNumber, BigNumberish } from 'ethers';
+import { BigNumberish } from 'ethers';
 import { ClearingHouse, VPoolWrapperMock2__factory } from '../../typechain-types';
 import { setupVPool, SetupArgs } from './setup-vPool';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { toQ128 } from './fixed-point';
 
 export async function setupWrapper(setupArgs: SetupArgs) {
@@ -21,7 +19,7 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   });
 
   const vPoolWrapper = await (await smock.mock<VPoolWrapperMock2__factory>('VPoolWrapperMock2')).deploy();
-  await vPoolWrapper.__VPoolWrapper_init({
+  await vPoolWrapper.__initialize_VPoolWrapper({
     clearingHouse: signer.address,
     vToken: vToken.address,
     vBase: vBase.address,
