@@ -8,7 +8,7 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { IVToken } from '../libraries/VTokenLib.sol';
 import { IVToken } from '../libraries/VTokenLib.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
@@ -18,7 +18,7 @@ import { console } from 'hardhat/console.sol';
 contract LiquidityPositionTest is AccountProtocolInfoMock {
     using LiquidityPosition for LiquidityPosition.Info;
 
-    IClearingHouse.BalanceAdjustments public balanceAdjustments;
+    IClearingHouseStructures.BalanceAdjustments public balanceAdjustments;
     LiquidityPosition.Info public lp;
     VPoolWrapperMock public wrapper;
 

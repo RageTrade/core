@@ -10,7 +10,8 @@ import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account } from '../libraries/Account.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
@@ -38,7 +39,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
-    function update(IClearingHouse.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
+    function update(IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vToken, protocol);
     }
 
@@ -47,11 +48,11 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
     }
 
     function swapTokenAmount(IVToken vToken, int256 vTokenAmount) external {
-        dummy.swapToken(vToken, IClearingHouse.SwapParams(vTokenAmount, 0, false, false), wrapper, protocol);
+        dummy.swapToken(vToken, IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false), wrapper, protocol);
     }
 
     function swapTokenNotional(IVToken vToken, int256 vTokenNotional) external {
-        dummy.swapToken(vToken, IClearingHouse.SwapParams(vTokenNotional, 0, true, false), wrapper, protocol);
+        dummy.swapToken(vToken, IClearingHouseStructures.SwapParams(vTokenNotional, 0, true, false), wrapper, protocol);
     }
 
     function liquidityChange(
@@ -60,15 +61,16 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         int24 tickUpper,
         int128 liquidity
     ) external {
-        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams = IClearingHouse.LiquidityChangeParams(
-            tickLower,
-            tickUpper,
-            liquidity,
-            0,
-            0,
-            false,
-            IClearingHouse.LimitOrderType.NONE
-        );
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams = IClearingHouseStructures
+            .LiquidityChangeParams(
+                tickLower,
+                tickUpper,
+                liquidity,
+                0,
+                0,
+                false,
+                IClearingHouseEnums.LimitOrderType.NONE
+            );
         dummy.liquidityChange(vToken, liquidityChangeParams, wrapper, protocol);
     }
 

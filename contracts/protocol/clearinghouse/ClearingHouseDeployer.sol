@@ -8,6 +8,7 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { ProxyAdminDeployer } from '../../utils/ProxyAdminDeployer.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
+import { IClearingHouseSystemActions } from '../../interfaces/clearinghouse/IClearingHouseSystemActions.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
@@ -35,7 +36,7 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                         params.clearingHouseLogicAddress,
                         address(proxyAdmin),
                         abi.encodeCall(
-                            IClearingHouse.__initialize_ClearingHouse,
+                            IClearingHouseSystemActions.__initialize_ClearingHouse,
                             (
                                 address(this), // RageTradeFactory
                                 params.cBase,

@@ -6,6 +6,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -30,7 +31,7 @@ contract SwapSimulator {
     )
         external
         returns (
-            IClearingHouse.SwapValues memory swapValues,
+            IClearingHouseStructures.SwapValues memory swapValues,
             uint160 sqrtPriceX96End,
             SimulateSwap.SwapCache memory cache,
             SwapStep[] memory steps
@@ -83,10 +84,10 @@ contract SwapSimulator {
             SimulateSwap.SwapState memory,
             SimulateSwap.StepComputations memory
         ) onSwapStep
-    ) internal returns (IClearingHouse.SwapValues memory swapValues) {
+    ) internal returns (IClearingHouseStructures.SwapValues memory swapValues) {
         swapValues.amountSpecified = amountSpecified;
 
-        IClearingHouse.RageTradePool memory pool = clearingHouse.pools(vToken);
+        IClearingHouseStructures.Pool memory pool = clearingHouse.pools(vToken);
 
         bool exactIn = amountSpecified >= 0;
 

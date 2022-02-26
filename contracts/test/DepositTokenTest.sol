@@ -11,7 +11,7 @@ import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
@@ -41,9 +41,9 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
         IOracle oracle,
         uint32 twapDuration
     ) external {
-        IClearingHouse.Collateral memory collateral = IClearingHouse.Collateral(
+        IClearingHouseStructures.Collateral memory collateral = IClearingHouseStructures.Collateral(
             cToken,
-            IClearingHouse.CollateralSettings(oracle, twapDuration, true)
+            IClearingHouseStructures.CollateralSettings(oracle, twapDuration, true)
         );
         protocol.cTokens[collateral.token.truncate()] = collateral;
     }

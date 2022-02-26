@@ -10,7 +10,7 @@ import { Account } from '../libraries/Account.sol';
 import { VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
@@ -28,13 +28,14 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
         vTokens[vToken.truncate()] = vToken;
     }
 
-    function update(IClearingHouse.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
+    function update(IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
         VTokenPositionSet.update(dummy, balanceAdjustments, vToken, protocol);
     }
 
-    function liquidityChange(IVToken vToken, IClearingHouse.LiquidityChangeParams memory liquidityChangeParams)
-        external
-    {
+    function liquidityChange(
+        IVToken vToken,
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
+    ) external {
         VTokenPositionSet.liquidityChange(dummy, vToken, liquidityChangeParams, protocol);
     }
 

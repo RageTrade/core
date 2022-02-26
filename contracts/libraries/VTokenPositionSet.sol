@@ -14,7 +14,7 @@ import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 import { VTokenLib } from './VTokenLib.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -217,7 +217,7 @@ library VTokenPositionSet {
     /// @param protocol platform constants
     function update(
         Set storage set,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments,
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
         IVToken vToken,
         Account.ProtocolInfo storage protocol
     ) internal {
@@ -307,7 +307,7 @@ library VTokenPositionSet {
     function swapToken(
         Set storage set,
         IVToken vToken,
-        IClearingHouse.SwapParams memory swapParams,
+        IClearingHouseStructures.SwapParams memory swapParams,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return set.swapToken(vToken, swapParams, vToken.vPoolWrapper(protocol), protocol);
@@ -331,7 +331,7 @@ library VTokenPositionSet {
             set.swapToken(
                 vToken,
                 /// @dev 0 means no price limit and false means amount mentioned is token amount
-                IClearingHouse.SwapParams(vTokenAmount, 0, false, false),
+                IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
                 vToken.vPoolWrapper(protocol),
                 protocol
             );
@@ -363,7 +363,7 @@ library VTokenPositionSet {
     function liquidityChange(
         Set storage set,
         IVToken vToken,
-        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return set.liquidityChange(vToken, liquidityChangeParams, vToken.vPoolWrapper(protocol), protocol);
@@ -411,7 +411,7 @@ library VTokenPositionSet {
     function swapToken(
         Set storage set,
         IVToken vToken,
-        IClearingHouse.SwapParams memory swapParams,
+        IClearingHouseStructures.SwapParams memory swapParams,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
@@ -425,11 +425,8 @@ library VTokenPositionSet {
         vTokenAmountOut = -vTokenAmountOut;
         vBaseAmountOut = -vBaseAmountOut;
 
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments = IClearingHouse.BalanceAdjustments(
-            vBaseAmountOut,
-            vTokenAmountOut,
-            vTokenAmountOut
-        );
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
+            .BalanceAdjustments(vBaseAmountOut, vTokenAmountOut, vTokenAmountOut);
 
         set.update(balanceAdjustments, vToken, protocol);
 
@@ -446,13 +443,13 @@ library VTokenPositionSet {
     function liquidityChange(
         Set storage set,
         IVToken vToken,
-        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vToken, true, protocol);
 
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments;
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         vTokenPosition.liquidityPositions.liquidityChange(
             set.accountNo,
@@ -489,7 +486,7 @@ library VTokenPositionSet {
     ) internal {
         VTokenPosition.Position storage vTokenPosition = set.getTokenPosition(vToken, false, protocol);
 
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments;
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
         int24 currentTick = vToken.getVirtualCurrentTick(protocol);
 
         vTokenPosition.liquidityPositions.removeLimitOrder(
@@ -517,7 +514,7 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 notionalAmountClosed) {
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments;
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         set.getTokenPosition(vToken, false, protocol).liquidityPositions.closeAllLiquidityPositions(
             set.accountNo,
@@ -553,12 +550,12 @@ library VTokenPositionSet {
     function getView(Set storage set, Account.ProtocolInfo storage protocol)
         internal
         view
-        returns (int256 vBaseBalance, IClearingHouse.VTokenPositionView[] memory vTokenPositions)
+        returns (int256 vBaseBalance, IClearingHouseStructures.VTokenPositionView[] memory vTokenPositions)
     {
         vBaseBalance = set.positions[IVToken(address(protocol.vBase)).truncate()].balance;
 
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
-        vTokenPositions = new IClearingHouse.VTokenPositionView[](numberOfTokenPositions);
+        vTokenPositions = new IClearingHouseStructures.VTokenPositionView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
             vTokenPositions[i].vTokenAddress = address(protocol.vTokens[set.active[i]]);

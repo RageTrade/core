@@ -8,23 +8,28 @@ import { ProxyAdmin } from '@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Factory.sol';
 
-import { ClearingHouseDeployer, IClearingHouse } from './clearinghouse/ClearingHouseDeployer.sol';
-import { InsuranceFundDeployer, IInsuranceFund } from './insurancefund/InsuranceFundDeployer.sol';
+import { ClearingHouseDeployer } from './clearinghouse/ClearingHouseDeployer.sol';
+import { InsuranceFundDeployer } from './insurancefund/InsuranceFundDeployer.sol';
+import { VBaseDeployer } from './tokens/VBaseDeployer.sol';
+import { VTokenDeployer } from './tokens/VTokenDeployer.sol';
 import { VToken } from './tokens/VToken.sol';
-import { VBaseDeployer, IVBase } from './tokens/VBaseDeployer.sol';
-import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
-import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
+import { VPoolWrapperDeployer } from './wrapper/VPoolWrapperDeployer.sol';
 
-import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
-
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IInsuranceFund } from '../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IVBase } from '../interfaces/IVBase.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
+
+import { PriceMath } from '../libraries/PriceMath.sol';
 import { VTokenLib } from '../libraries/VTokenLib.sol';
+
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
 import { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER } from '../utils/constants.sol';
-
-import { PriceMath } from '../libraries/PriceMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -84,7 +89,7 @@ contract RageTradeFactory is
 
     struct InitializePoolParams {
         VTokenDeployer.DeployVTokenParams deployVTokenParams;
-        IClearingHouse.RageTradePoolSettings rageTradePoolInitialSettings;
+        IClearingHouse.PoolSettings rageTradePoolInitialSettings;
         uint24 liquidityFeePips;
         uint24 protocolFeePips;
         uint16 slotsToInitialize;
@@ -129,7 +134,7 @@ contract RageTradeFactory is
         vToken.setVPoolWrapper(address(vPoolWrapper));
         clearingHouse.registerPool(
             address(vToken),
-            IClearingHouse.RageTradePool(vPool, vPoolWrapper, initializePoolParams.rageTradePoolInitialSettings)
+            IClearingHouseStructures.Pool(vPool, vPoolWrapper, initializePoolParams.rageTradePoolInitialSettings)
         );
 
         emit PoolInitialized(vPool, vToken, vPoolWrapper);
