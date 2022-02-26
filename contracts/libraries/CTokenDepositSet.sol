@@ -10,7 +10,7 @@ import { AddressHelper } from './AddressHelper.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -68,7 +68,7 @@ library CTokenDepositSet {
             uint32 truncated = set.active[i];
 
             if (truncated == 0) break;
-            IClearingHouse.Collateral storage collateral = protocol.cTokens[truncated];
+            IClearingHouseStructures.Collateral storage collateral = protocol.cTokens[truncated];
 
             accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
                 collateral.settings.oracle.getTwapPriceX128(collateral.settings.twapDuration),
@@ -81,10 +81,10 @@ library CTokenDepositSet {
     function getView(Info storage set, Account.ProtocolInfo storage protocol)
         internal
         view
-        returns (IClearingHouse.DepositTokenView[] memory depositTokens)
+        returns (IClearingHouseStructures.DepositTokenView[] memory depositTokens)
     {
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
-        depositTokens = new IClearingHouse.DepositTokenView[](numberOfTokenPositions);
+        depositTokens = new IClearingHouseStructures.DepositTokenView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
             depositTokens[i].cTokenAddress = address(protocol.cTokens[set.active[i]].token);

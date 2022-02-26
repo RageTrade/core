@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { SignedMath } from './SignedMath.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -18,7 +18,7 @@ library SwapMath {
         uint24 uniswapFeePips,
         uint24 liquidityFeePips,
         uint24 protocolFeePips,
-        IClearingHouse.SwapValues memory swapValues
+        IClearingHouseStructures.SwapValues memory swapValues
     ) internal pure {
         // inflate or deinfate to undo uniswap fees if necessary, and account for our fees
         if (exactIn) {
@@ -76,7 +76,7 @@ library SwapMath {
         uint24 uniswapFeePips,
         uint24 liquidityFeePips,
         uint24 protocolFeePips,
-        IClearingHouse.SwapValues memory swapValues
+        IClearingHouseStructures.SwapValues memory swapValues
     ) internal pure {
         // swap is done so now adjusting vTokenIn and vBaseIn amounts to remove uniswap fees and add our fees
         if (exactIn) {

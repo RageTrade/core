@@ -16,7 +16,8 @@ import { VTokenLib } from './VTokenLib.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -34,7 +35,7 @@ library LiquidityPosition {
 
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
-        IClearingHouse.LimitOrderType limitOrderType;
+        IClearingHouseEnums.LimitOrderType limitOrderType;
         // the tick range of the position;
         int24 tickLower;
         int24 tickUpper;
@@ -59,8 +60,10 @@ library LiquidityPosition {
 
     function checkValidLimitOrderRemoval(Info storage info, int24 currentTick) internal view {
         if (
-            !((currentTick >= info.tickUpper && info.limitOrderType == IClearingHouse.LimitOrderType.UPPER_LIMIT) ||
-                (currentTick <= info.tickLower && info.limitOrderType == IClearingHouse.LimitOrderType.LOWER_LIMIT))
+            !((currentTick >= info.tickUpper &&
+                info.limitOrderType == IClearingHouseEnums.LimitOrderType.UPPER_LIMIT) ||
+                (currentTick <= info.tickLower &&
+                    info.limitOrderType == IClearingHouseEnums.LimitOrderType.LOWER_LIMIT))
         ) {
             revert IneligibleLimitOrderRemoval();
         }
@@ -85,7 +88,7 @@ library LiquidityPosition {
         IVToken vToken,
         int128 liquidity,
         IVPoolWrapper wrapper,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         (
             int256 basePrincipal,
@@ -130,7 +133,7 @@ library LiquidityPosition {
         uint256 accountNo,
         IVToken vToken,
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         int256 fundingPayment = position.unrealizedFundingPayment(
             wrapperValuesInside.sumAX128,

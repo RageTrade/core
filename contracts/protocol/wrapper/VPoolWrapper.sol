@@ -17,6 +17,7 @@ import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
@@ -179,7 +180,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             sqrtPriceLimitX96 = swapVTokenForVBase ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
         }
 
-        IClearingHouse.SwapValues memory swapValues;
+        IClearingHouseStructures.SwapValues memory swapValues;
         swapValues.amountSpecified = amountSpecified;
 
         SwapMath.beforeSwap(exactIn, swapVTokenForVBase, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);

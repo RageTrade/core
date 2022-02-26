@@ -8,7 +8,7 @@ import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
 import { VTokenLib } from './VTokenLib.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -141,9 +141,9 @@ library LiquidityPositionSet {
         Info storage set,
         uint256 accountNo,
         IVToken vToken,
-        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         LiquidityPosition.Info storage position = set.activate(
             liquidityChangeParams.tickLower,
@@ -169,7 +169,7 @@ library LiquidityPositionSet {
         LiquidityPosition.Info storage position,
         int128 liquidity,
         IVPoolWrapper wrapper,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         position.liquidityChange(accountNo, vToken, liquidity, wrapper, balanceAdjustments);
 
@@ -192,7 +192,7 @@ library LiquidityPositionSet {
         IVToken vToken,
         LiquidityPosition.Info storage position,
         IVPoolWrapper wrapper,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         set.liquidityChange(accountNo, vToken, position, -int128(position.liquidity), wrapper, balanceAdjustments);
     }
@@ -205,7 +205,7 @@ library LiquidityPositionSet {
         int24 tickLower,
         int24 tickUpper,
         IVPoolWrapper wrapper,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         LiquidityPosition.Info storage position = set.getLiquidityPosition(tickLower, tickUpper);
         position.checkValidLimitOrderRemoval(currentTick);
@@ -217,12 +217,12 @@ library LiquidityPositionSet {
         uint256 accountNo,
         IVToken vToken,
         IVPoolWrapper wrapper,
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
         LiquidityPosition.Info storage position;
 
         while (set.active[0] != 0) {
-            IClearingHouse.BalanceAdjustments memory balanceAdjustmentsCurrent;
+            IClearingHouseStructures.BalanceAdjustments memory balanceAdjustmentsCurrent;
 
             position = set.positions[set.active[0]];
 
@@ -237,10 +237,10 @@ library LiquidityPositionSet {
     function getView(Info storage set)
         internal
         view
-        returns (IClearingHouse.LiquidityPositionView[] memory liquidityPositions)
+        returns (IClearingHouseStructures.LiquidityPositionView[] memory liquidityPositions)
     {
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
-        liquidityPositions = new IClearingHouse.LiquidityPositionView[](numberOfTokenPositions);
+        liquidityPositions = new IClearingHouseStructures.LiquidityPositionView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
             liquidityPositions[i].limitOrderType = set.positions[set.active[i]].limitOrderType;

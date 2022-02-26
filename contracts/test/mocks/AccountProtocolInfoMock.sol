@@ -5,7 +5,7 @@ pragma solidity ^0.8.9;
 import { Account } from '../../libraries/Account.sol';
 import { VTokenLib } from '../../libraries/VTokenLib.sol';
 
-import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
@@ -17,7 +17,7 @@ abstract contract AccountProtocolInfoMock {
     uint256 public fixFee;
 
     function setAccountStorage(
-        IClearingHouse.LiquidationParams calldata _liquidationParams,
+        IClearingHouseStructures.LiquidationParams calldata _liquidationParams,
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
@@ -30,7 +30,7 @@ abstract contract AccountProtocolInfoMock {
         fixFee = _fixFee;
     }
 
-    function registerPool(address full, IClearingHouse.RageTradePool calldata rageTradePool) external virtual {
+    function registerPool(address full, IClearingHouseStructures.Pool calldata rageTradePool) external virtual {
         IVToken vToken = IVToken(full);
         uint32 truncated = vToken.truncate();
 

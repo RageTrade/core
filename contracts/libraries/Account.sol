@@ -15,7 +15,8 @@ import { VTokenLib } from './VTokenLib.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -47,15 +48,15 @@ library Account {
 
     struct ProtocolInfo {
         // rage trade pools
-        mapping(IVToken => IClearingHouse.RageTradePool) pools;
+        mapping(IVToken => IClearingHouseStructures.Pool) pools;
         // conversion from compressed addressed to full address
-        mapping(uint32 => IClearingHouse.Collateral) cTokens;
+        mapping(uint32 => IClearingHouseStructures.Collateral) cTokens;
         mapping(uint32 => IVToken) vTokens;
         // virtual base
         IVBase vBase;
         IERC20 rBase;
         // accounting settings
-        IClearingHouse.LiquidationParams liquidationParams;
+        IClearingHouseStructures.LiquidationParams liquidationParams;
         uint256 minRequiredMargin;
         uint256 removeLimitOrderFee;
         uint256 minimumOrderNotional;
@@ -144,7 +145,7 @@ library Account {
         int24 tickLower,
         int24 tickUpper,
         int128 liquidityDelta,
-        IClearingHouse.LimitOrderType limitOrderType,
+        IClearingHouseEnums.LimitOrderType limitOrderType,
         int256 tokenAmountOut,
         int256 baseAmountOut
     );
@@ -232,8 +233,8 @@ library Account {
         UserInfo storage account,
         int256 amount,
         Account.ProtocolInfo storage protocol
-    ) internal returns (IClearingHouse.BalanceAdjustments memory balanceAdjustments) {
-        balanceAdjustments = IClearingHouse.BalanceAdjustments(amount, 0, 0);
+    ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
+        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
         account.tokenPositions.update(balanceAdjustments, IVToken(address(protocol.vBase)), protocol);
     }
 
@@ -405,7 +406,7 @@ library Account {
     function swapToken(
         UserInfo storage account,
         IVToken vToken,
-        IClearingHouse.SwapParams memory swapParams,
+        IClearingHouseStructures.SwapParams memory swapParams,
         Account.ProtocolInfo storage protocol,
         bool checkMargin
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
@@ -428,7 +429,7 @@ library Account {
     function liquidityChange(
         UserInfo storage account,
         IVToken vToken,
-        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams,
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Account.ProtocolInfo storage protocol,
         bool checkMargin
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
@@ -455,7 +456,7 @@ library Account {
         int256 accountMarketValue,
         int256 liquidationFee,
         uint256 fixFee,
-        IClearingHouse.LiquidationParams memory liquidationParams
+        IClearingHouseStructures.LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
         int256 fixFeeInt = int256(fixFee);
         keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
@@ -555,14 +556,15 @@ library Account {
         uint256 liquidatorPriceX128,
         int256 fixFee,
         Account.ProtocolInfo storage protocol
-    ) internal returns (IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
         vToken.vPoolWrapper(protocol).updateGlobalFundingState();
 
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments = IClearingHouse.BalanceAdjustments({
-            vBaseIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
-            vTokenIncrease: tokensToTrade,
-            traderPositionIncrease: tokensToTrade
-        });
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
+            .BalanceAdjustments({
+                vBaseIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
+                vTokenIncrease: tokensToTrade,
+                traderPositionIncrease: tokensToTrade
+            });
 
         account.tokenPositions.update(balanceAdjustments, vToken, protocol);
         emit Account.TokenPositionChange(
@@ -572,7 +574,7 @@ library Account {
             balanceAdjustments.vBaseIncrease
         );
 
-        liquidatorBalanceAdjustments = IClearingHouse.BalanceAdjustments({
+        liquidatorBalanceAdjustments = IClearingHouseStructures.BalanceAdjustments({
             vBaseIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
             vTokenIncrease: -tokensToTrade,
             traderPositionIncrease: -tokensToTrade
@@ -601,7 +603,10 @@ library Account {
         bool checkMargin
     )
         external
-        returns (int256 insuranceFundFee, IClearingHouse.BalanceAdjustments memory liquidatorBalanceAdjustments)
+        returns (
+            int256 insuranceFundFee,
+            IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments
+        )
     {
         if (account.tokenPositions.getIsTokenRangeActive(vToken, protocol))
             revert InvalidLiquidationActiveRangePresent(vToken);
@@ -694,8 +699,8 @@ library Account {
         returns (
             address owner,
             int256 vBaseBalance,
-            IClearingHouse.DepositTokenView[] memory tokenDeposits,
-            IClearingHouse.VTokenPositionView[] memory tokenPositions
+            IClearingHouseStructures.DepositTokenView[] memory tokenDeposits,
+            IClearingHouseStructures.VTokenPositionView[] memory tokenPositions
         )
     {
         owner = account.owner;

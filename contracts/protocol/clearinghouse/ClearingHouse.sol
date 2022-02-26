@@ -21,6 +21,12 @@ import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
+import { IClearingHouseActions } from '../../interfaces/clearinghouse/IClearingHouseActions.sol';
+import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IClearingHouseEnums } from '../../interfaces/clearinghouse/IClearingHouseEnums.sol';
+import { IClearingHouseOwnerActions } from '../../interfaces/clearinghouse/IClearingHouseOwnerActions.sol';
+import { IClearingHouseSystemActions } from '../../interfaces/clearinghouse/IClearingHouseSystemActions.sol';
+
 import { Multicall } from '../../utils/Multicall.sol';
 import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
 
@@ -71,17 +77,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         _updateCollateralSettings(
             _defaultCollateralToken,
-            IClearingHouse.CollateralSettings({
-                oracle: _defaultCollateralTokenOracle,
-                twapDuration: 60,
-                supported: true
-            })
+            CollateralSettings({ oracle: _defaultCollateralTokenOracle, twapDuration: 60, supported: true })
         );
 
         __Governable_init();
     }
 
-    function registerPool(address full, RageTradePool calldata rageTradePool) external onlyRageTradeFactory {
+    function registerPool(address full, Pool calldata rageTradePool) external onlyRageTradeFactory {
         IVToken vToken = IVToken(full);
         uint32 truncated = vToken.truncate();
 
@@ -103,12 +105,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         _updateCollateralSettings(cToken, collateralSettings);
     }
 
-    function updatePoolSettings(IVToken vToken, RageTradePoolSettings calldata newSettings)
-        public
-        onlyGovernanceOrTeamMultisig
-    {
+    function updatePoolSettings(IVToken vToken, PoolSettings calldata newSettings) public onlyGovernanceOrTeamMultisig {
         protocol.pools[vToken].settings = newSettings;
-        emit RageTradePoolSettingsUpdated(vToken, newSettings);
+        emit PoolSettingsUpdated(vToken, newSettings);
     }
 
     function updateProtocolSettings(
@@ -127,7 +126,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         paused = _pause;
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseOwnerActions
     function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
@@ -142,7 +141,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         USER FUNCTIONS
      */
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function createAccount() public notPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
@@ -154,7 +153,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         emit Account.AccountCreated(msg.sender, newAccountId);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function addMargin(
         uint256 accountNo,
         uint32 cTokenTruncatedAddress,
@@ -185,7 +184,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         emit Account.DepositMargin(accountNo, address(collateral.token), amount);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function createAccountAndAddMargin(uint32 vTokenTruncatedAddress, uint256 amount)
         external
         returns (uint256 newAccountId)
@@ -194,7 +193,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         addMargin(newAccountId, vTokenTruncatedAddress, amount);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function removeMargin(
         uint256 accountNo,
         uint32 cTokenTruncatedAddress,
@@ -220,7 +219,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         emit Account.WithdrawMargin(accountNo, address(collateral.token), amount);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function updateProfit(uint256 accountNo, int256 amount) external notPaused {
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
 
@@ -244,7 +243,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         emit Account.UpdateProfit(accountNo, amount);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function swapToken(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -275,7 +274,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function updateRangeOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -312,7 +311,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function removeLimitOrder(
         uint256 accountNo,
         uint32 vTokenTruncatedAddress,
@@ -322,12 +321,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, 0);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function liquidateLiquidityPositions(uint256 accountNo) external {
         _liquidateLiquidityPositions(accountNo, 0);
     }
 
-    /// @inheritdoc IClearingHouse
+    /// @inheritdoc IClearingHouseActions
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
         uint256 accountNo,
@@ -341,7 +340,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         MULTICALL
      */
 
-    function multicallWithSingleMarginCheck(uint256 accountNo, IClearingHouse.MulticallOperation[] calldata operations)
+    function multicallWithSingleMarginCheck(uint256 accountNo, MulticallOperation[] calldata operations)
         external
         returns (bytes[] memory results)
     {
@@ -352,24 +351,24 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         bool checkProfit = false;
 
         for (uint256 i = 0; i < operations.length; i++) {
-            if (operations[i].operationType == IClearingHouse.MulticallOperationType.ADD_MARGIN) {
+            if (operations[i].operationType == MulticallOperationType.ADD_MARGIN) {
                 // ADD_MARGIN
                 (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
                 _addMargin(accountNo, account, cTokenTruncatedAddress, amount);
-            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.REMOVE_MARGIN) {
+            } else if (operations[i].operationType == MulticallOperationType.REMOVE_MARGIN) {
                 // REMOVE_MARGIN
                 (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
                 _removeMargin(accountNo, account, cTokenTruncatedAddress, amount, false);
-            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.UPDATE_PROFIT) {
+            } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
                 _updateProfit(accountNo, account, amount, false);
                 checkProfit = true;
-            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.SWAP_TOKEN) {
+            } else if (operations[i].operationType == MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
-                (uint32 vTokenTruncatedAddress, IClearingHouse.SwapParams memory sp) = abi.decode(
+                (uint32 vTokenTruncatedAddress, SwapParams memory sp) = abi.decode(
                     operations[i].data,
-                    (uint32, IClearingHouse.SwapParams)
+                    (uint32, SwapParams)
                 );
                 (int256 vTokenAmountOut, int256 vBaseAmountOut) = _swapToken(
                     account,
@@ -378,11 +377,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                     false
                 );
                 results[i] = abi.encode(vTokenAmountOut, vBaseAmountOut);
-            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.UPDATE_RANGE_ORDER) {
+            } else if (operations[i].operationType == MulticallOperationType.UPDATE_RANGE_ORDER) {
                 // UPDATE_RANGE_ORDER
-                (uint32 vTokenTruncatedAddress, IClearingHouse.LiquidityChangeParams memory lcp) = abi.decode(
+                (uint32 vTokenTruncatedAddress, LiquidityChangeParams memory lcp) = abi.decode(
                     operations[i].data,
-                    (uint32, IClearingHouse.LiquidityChangeParams)
+                    (uint32, LiquidityChangeParams)
                 );
                 (int256 vTokenAmountOut, int256 vBaseAmountOut) = _updateRangeOrder(
                     account,
@@ -391,17 +390,15 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                     false
                 );
                 results[i] = abi.encode(vTokenAmountOut, vBaseAmountOut);
-            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.REMOVE_LIMIT_ORDER) {
+            } else if (operations[i].operationType == MulticallOperationType.REMOVE_LIMIT_ORDER) {
                 // REMOVE_LIMIT_ORDER
                 (uint32 vTokenTruncatedAddress, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi
                     .decode(operations[i].data, (uint32, int24, int24, uint256));
                 _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, limitOrderFeeAndFixFee);
-            } else if (
-                operations[i].operationType == IClearingHouse.MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS
-            ) {
+            } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS) {
                 // LIQUIDATE_LIQUIDITY_POSITIONS
                 _liquidateLiquidityPositions(accountNo, 0);
-            } else if (operations[i].operationType == IClearingHouse.MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
+            } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
                 // LIQUIDATE_TOKEN_POSITION
                 (uint256 targetAccountNo, uint32 vTokenTruncatedAddress, uint16 liquidationBps) = abi.decode(
                     operations[i].data,

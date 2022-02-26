@@ -11,7 +11,8 @@ import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
@@ -35,7 +36,7 @@ contract AccountTest {
     constructor() {}
 
     function setAccountStorage(
-        IClearingHouse.LiquidationParams calldata _liquidationParams,
+        IClearingHouseStructures.LiquidationParams calldata _liquidationParams,
         uint256 _minRequiredMargin,
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
@@ -50,7 +51,7 @@ contract AccountTest {
         fixFee = _fixFee;
     }
 
-    function registerPool(address full, IClearingHouse.RageTradePool calldata rageTradePool) external {
+    function registerPool(address full, IClearingHouseStructures.Pool calldata rageTradePool) external {
         IVToken vToken = IVToken(full);
         uint32 truncated = vToken.truncate();
 
@@ -76,17 +77,17 @@ contract AccountTest {
         accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
         VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments;
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[IVToken(address(protocol.vBase)).truncate()];
-        balanceAdjustments = IClearingHouse.BalanceAdjustments(-tokenPosition.balance, 0, 0);
+        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
         set.update(balanceAdjustments, IVToken(address(protocol.vBase)), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             tokenPosition = set.positions[truncatedAddress];
-            balanceAdjustments = IClearingHouse.BalanceAdjustments(
+            balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(
                 0,
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
@@ -121,9 +122,9 @@ contract AccountTest {
         IOracle oracle,
         uint32 twapDuration
     ) external {
-        IClearingHouse.Collateral memory collateral = IClearingHouse.Collateral(
+        IClearingHouseStructures.Collateral memory collateral = IClearingHouseStructures.Collateral(
             cToken,
-            IClearingHouse.CollateralSettings(oracle, twapDuration, true)
+            IClearingHouseStructures.CollateralSettings(oracle, twapDuration, true)
         );
         protocol.cTokens[truncate(address(collateral.token))] = collateral;
     }
@@ -155,7 +156,7 @@ contract AccountTest {
     ) external {
         accounts[accountNo].swapToken(
             IVToken(vToken),
-            IClearingHouse.SwapParams(amount, 0, false, false),
+            IClearingHouseStructures.SwapParams(amount, 0, false, false),
             protocol,
             true
         );
@@ -168,7 +169,7 @@ contract AccountTest {
     ) external {
         accounts[accountNo].swapToken(
             IVToken(vToken),
-            IClearingHouse.SwapParams(amount, 0, true, false),
+            IClearingHouseStructures.SwapParams(amount, 0, true, false),
             protocol,
             true
         );
@@ -177,7 +178,7 @@ contract AccountTest {
     function liquidityChange(
         uint256 accountNo,
         address vToken,
-        IClearingHouse.LiquidityChangeParams memory liquidityChangeParams
+        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
     ) external {
         accounts[accountNo].liquidityChange(IVToken(vToken), liquidityChangeParams, protocol, true);
     }
@@ -264,7 +265,7 @@ contract AccountTest {
         returns (
             int24 tickLower,
             int24 tickUpper,
-            IClearingHouse.LimitOrderType limitOrderType,
+            IClearingHouseEnums.LimitOrderType limitOrderType,
             uint128 liquidity,
             int256 vTokenAmountIn,
             int256 sumALastX128,

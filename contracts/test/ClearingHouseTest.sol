@@ -11,7 +11,8 @@ import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 import { VTokenLib } from '../libraries/VTokenLib.sol';
 
-import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -47,17 +48,17 @@ contract ClearingHouseTest is ClearingHouse {
     function cleanPositions(uint256 accountNo) external {
         VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
-        IClearingHouse.BalanceAdjustments memory balanceAdjustments;
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[IVToken(address(protocol.vBase)).truncate()];
-        balanceAdjustments = IClearingHouse.BalanceAdjustments(-tokenPosition.balance, 0, 0);
+        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
         set.update(balanceAdjustments, IVToken(address(protocol.vBase)), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncatedAddress = set.active[i];
             if (truncatedAddress == 0) break;
             tokenPosition = set.positions[truncatedAddress];
-            balanceAdjustments = IClearingHouse.BalanceAdjustments(
+            balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(
                 0,
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
@@ -167,7 +168,7 @@ contract ClearingHouseTest is ClearingHouse {
         returns (
             int24 tickLower,
             int24 tickUpper,
-            IClearingHouse.LimitOrderType limitOrderType,
+            IClearingHouseEnums.LimitOrderType limitOrderType,
             uint128 liquidity,
             int256 sumALastX128,
             int256 sumBInsideLastX128,
