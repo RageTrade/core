@@ -115,51 +115,51 @@ describe('LiquidityPosition Library', () => {
     });
   });
 
-  describe('#netPosition', () => {
-    it('sumB=0', async () => {
-      await test.initialize(-1, 1);
+  // describe('#netPosition', () => {
+  //   it('sumB=0', async () => {
+  //     await test.initialize(-1, 1);
 
-      expect(await test.netPosition()).to.eq(0);
-    });
+  //     expect(await test.netPosition()).to.eq(0);
+  //   });
 
-    it('sumB=1 and liquidity=0', async () => {
-      await test.initialize(-1, 1);
+  //   it('sumB=1 and liquidity=0', async () => {
+  //     await test.initialize(-1, 1);
 
-      await setWrapperValueInside({
-        tickLower: -1,
-        tickUpper: 1,
-        sumBInsideX128: toQ128(1),
-      });
+  //     await setWrapperValueInside({
+  //       tickLower: -1,
+  //       tickUpper: 1,
+  //       sumBInsideX128: toQ128(1),
+  //     });
 
-      expect(await test.netPosition()).to.eq(0, 'should still be 0 as no liquidity');
-    });
+  //     expect(await test.netPosition()).to.eq(0, 'should still be 0 as no liquidity');
+  //   });
 
-    it('sumB=1 and liquidity=1', async () => {
-      await test.initialize(-1, 1);
-      await test.liquidityChange(1);
+  //   it('sumB=1 and liquidity=1', async () => {
+  //     await test.initialize(-1, 1);
+  //     await test.liquidityChange(1);
 
-      await setWrapperValueInside({
-        tickLower: -1,
-        tickUpper: 1,
-        sumBInsideX128: toQ128(1),
-      });
+  //     await setWrapperValueInside({
+  //       tickLower: -1,
+  //       tickUpper: 1,
+  //       sumBInsideX128: toQ128(1),
+  //     });
 
-      expect(await test.netPosition()).to.eq(1, '1*1');
-    });
+  //     expect(await test.netPosition()).to.eq(1, '1*1');
+  //   });
 
-    it('sumB=-1 and liquidity=1', async () => {
-      await test.initialize(-1, 1);
-      await test.liquidityChange(1);
+  //   it('sumB=-1 and liquidity=1', async () => {
+  //     await test.initialize(-1, 1);
+  //     await test.liquidityChange(1);
 
-      await setWrapperValueInside({
-        tickLower: -1,
-        tickUpper: 1,
-        sumBInsideX128: toQ128(-1),
-      });
+  //     await setWrapperValueInside({
+  //       tickLower: -1,
+  //       tickUpper: 1,
+  //       sumBInsideX128: toQ128(-1),
+  //     });
 
-      expect(await test.netPosition()).to.eq(-1, '1*-1');
-    });
-  });
+  //     expect(await test.netPosition()).to.eq(-1, '1*-1');
+  //   });
+  // });
 
   const vTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(1).toHexString(), 20);
   const oneSqrtPrice = BigNumber.from(1).shl(96);

@@ -702,4 +702,12 @@ library Account {
         tokenDeposits = account.tokenDeposits.getView(protocol);
         (vBaseBalance, tokenPositions) = account.tokenPositions.getView(protocol);
     }
+
+    function getNetPosition(
+        UserInfo storage account,
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
+    ) external view returns (int256 netPosition) {
+        return account.tokenPositions.getNetPosition(vToken, protocol);
+    }
 }

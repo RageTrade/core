@@ -434,4 +434,9 @@ interface IClearingHouse is IGovernable {
         returns (int256 accountMarketValue, int256 requiredMargin);
 
     function getAccountNetProfit(uint256 accountNo) external view returns (int256 accountNetProfit);
+
+    function getNetTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddess)
+        external
+        view
+        returns (int256 netPosition);
 }
