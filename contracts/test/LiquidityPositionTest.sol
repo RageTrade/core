@@ -35,7 +35,7 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
             lp.tickLower,
             lp.tickUpper
         );
-        lp.update(0, IVToken(address(0)), wrapperValuesInside, balanceAdjustments);
+        lp.update(0, 0, wrapperValuesInside, balanceAdjustments);
     }
 
     function netPosition(uint160 sqrtPriceCurrent) public view returns (int256) {
@@ -43,7 +43,7 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
     }
 
     function liquidityChange(int128 liquidity) public {
-        lp.liquidityChange(0, IVToken(address(0)), liquidity, wrapper, balanceAdjustments);
+        lp.liquidityChange(0, 0, liquidity, wrapper, balanceAdjustments);
     }
 
     function maxNetPosition() public view returns (uint256) {

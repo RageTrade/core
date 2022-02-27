@@ -24,6 +24,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     struct Pool {
+        IVToken vToken;
         IUniswapV3Pool vPool;
         IVPoolWrapper vPoolWrapper;
         PoolSettings settings; // mutable by governance

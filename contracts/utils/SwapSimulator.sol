@@ -24,7 +24,7 @@ contract SwapSimulator {
 
     function simulateSwap(
         IClearingHouse clearingHouse,
-        IVToken vToken,
+        uint32 poolId,
         int256 amount,
         uint160 sqrtPriceLimitX96,
         bool isNotional
@@ -41,7 +41,7 @@ contract SwapSimulator {
         // amountSpecified is positive
         swapValues = _simulateSwap(
             clearingHouse,
-            vToken,
+            poolId,
             amount < 0,
             isNotional ? amount : -amount,
             sqrtPriceLimitX96,
@@ -74,7 +74,7 @@ contract SwapSimulator {
 
     function _simulateSwap(
         IClearingHouse clearingHouse,
-        IVToken vToken,
+        uint32 poolId,
         bool swapVTokenForVBase, // zeroForOne
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
@@ -87,7 +87,7 @@ contract SwapSimulator {
     ) internal returns (IClearingHouseStructures.SwapValues memory swapValues) {
         swapValues.amountSpecified = amountSpecified;
 
-        IClearingHouseStructures.Pool memory pool = clearingHouse.pools(vToken);
+        IClearingHouseStructures.Pool memory pool = clearingHouse.getPoolInfo(poolId);
 
         bool exactIn = amountSpecified >= 0;
 

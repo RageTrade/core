@@ -270,7 +270,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
     const event = eventList[0];
     expect(event.args.accountNo).to.eq(expectedUserAccountNo);
-    expect(event.args.vToken).to.eq(expectedTokenAddress);
+    expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
     expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
     expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
   }
@@ -300,7 +300,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     const event = eventList[0];
 
     expect(event.args.accountNo).to.eq(expectedUserAccountNo);
-    expect(event.args.vToken).to.eq(expectedTokenAddress);
+    expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
     expect(event.args.tickLower).to.eq(expectedTickLower);
     expect(event.args.tickUpper).to.eq(expectedTickUpper);
     expect(event.args.amount).to.eq(expectedFundingPayment);
@@ -650,7 +650,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         vTokenSymbol: tokenSymbol,
         cTokenDecimals: decimals,
       },
-      rageTradePoolInitialSettings: {
+      poolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
@@ -799,7 +799,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
   async function getPoolSettings(vTokenAddress: string) {
     let {
       settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
-    } = await clearingHouseTest.pools(vTokenAddress);
+    } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
     return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
   }
 
@@ -915,20 +915,20 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     it('Add Token 1 Position Support - Pass', async () => {
       const settings = await getPoolSettings(vTokenAddress);
       settings.supported = true;
-      await clearingHouseTest.connect(admin).updatePoolSettings(vTokenAddress, settings);
-      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.true;
+      await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.true;
     });
 
     it('Add Token 2 Position Support - Pass', async () => {
       const settings = await getPoolSettings(vToken1Address);
       settings.supported = true;
-      await clearingHouseTest.connect(admin).updatePoolSettings(vToken1Address, settings);
-      expect((await clearingHouseTest.pools(vToken1Address)).settings.supported).to.be.true;
+      await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vToken1Address), settings);
+      expect((await clearingHouseTest.getPoolInfo(truncate(vToken1Address))).settings.supported).to.be.true;
     });
 
     it('Add Base Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(rBase.address, true);
-      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).settings.supported).to.be.true;
+      expect((await clearingHouseTest.getCollateralInfo(truncate(rBase.address))).settings.supported).to.be.true;
     });
   });
 

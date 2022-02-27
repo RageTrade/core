@@ -29,17 +29,15 @@ interface IClearingHouseView is IClearingHouseStructures {
             uint256 minimumOrderNotional
         );
 
-    function pools(IVToken vToken) external view returns (Pool memory);
+    function getPoolInfo(uint32 poolId) external view returns (Pool memory);
 
-    function cTokens(uint32 cTokenId) external view returns (Collateral memory);
-
-    function vTokens(uint32 vTokenAddressTruncated) external view returns (IVToken);
+    function getCollateralInfo(uint32 collateralId) external view returns (Collateral memory);
 
     /**
         Account.UserInfo VIEW
      */
 
-    function getAccountView(uint256 accountNo)
+    function getAccountInfo(uint256 accountNo)
         external
         view
         returns (

@@ -193,7 +193,7 @@ export async function initializePool({
       vTokenSymbol: 'vWETH',
       cTokenDecimals: 18,
     },
-    rageTradePoolInitialSettings: {
+    poolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,

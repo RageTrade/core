@@ -32,29 +32,25 @@ library CTokenDepositSet {
     // add overrides that accept vToken or truncated
     function increaseBalance(
         Info storage info,
-        address realTokenAddress,
+        uint32 collateralId,
         uint256 amount
     ) internal {
-        uint32 truncated = realTokenAddress.truncate();
-
         // consider vbase as always active because it is base (actives are needed for margin check)
-        info.active.include(truncated);
+        info.active.include(collateralId);
 
-        info.deposits[realTokenAddress.truncate()] += amount;
+        info.deposits[collateralId] += amount;
     }
 
     function decreaseBalance(
         Info storage info,
-        address realTokenAddress,
+        uint32 collateralId,
         uint256 amount
     ) internal {
-        uint32 truncated = realTokenAddress.truncate();
+        require(info.deposits[collateralId] >= amount);
+        info.deposits[collateralId] -= amount;
 
-        require(info.deposits[truncated] >= amount);
-        info.deposits[truncated] -= amount;
-
-        if (info.deposits[truncated] == 0) {
-            info.active.exclude(truncated);
+        if (info.deposits[collateralId] == 0) {
+            info.active.exclude(collateralId);
         }
     }
 
@@ -65,12 +61,12 @@ library CTokenDepositSet {
     {
         int256 accountMarketValue;
         for (uint8 i = 0; i < set.active.length; i++) {
-            uint32 truncated = set.active[i];
+            uint32 collateralId = set.active[i];
 
-            if (truncated == 0) break;
-            IClearingHouseStructures.Collateral storage collateral = protocol.cTokens[truncated];
+            if (collateralId == 0) break;
+            IClearingHouseStructures.Collateral storage collateral = protocol.collaterals[collateralId];
 
-            accountMarketValue += set.deposits[truncated].toInt256().mulDiv(
+            accountMarketValue += set.deposits[collateralId].toInt256().mulDiv(
                 collateral.settings.oracle.getTwapPriceX128(collateral.settings.twapDuration),
                 FixedPoint128.Q128
             );
@@ -78,7 +74,7 @@ library CTokenDepositSet {
         return accountMarketValue;
     }
 
-    function getView(Info storage set, Account.ProtocolInfo storage protocol)
+    function getInfo(Info storage set, Account.ProtocolInfo storage protocol)
         internal
         view
         returns (IClearingHouseStructures.DepositTokenView[] memory depositTokens)
@@ -87,7 +83,7 @@ library CTokenDepositSet {
         depositTokens = new IClearingHouseStructures.DepositTokenView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            depositTokens[i].cTokenAddress = address(protocol.cTokens[set.active[i]].token);
+            depositTokens[i].cTokenAddress = address(protocol.collaterals[set.active[i]].token);
             depositTokens[i].balance = set.deposits[set.active[i]];
         }
     }

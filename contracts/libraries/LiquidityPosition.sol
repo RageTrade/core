@@ -12,14 +12,13 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
-import { VTokenLib } from './VTokenLib.sol';
+import { PoolIdHelper } from './PoolIdHelper.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -29,7 +28,7 @@ library LiquidityPosition {
     using FullMath for uint256;
     using SafeCast for uint256;
     using LiquidityPosition for Info;
-    using VTokenLib for IVToken;
+    using PoolIdHelper for uint32;
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
@@ -85,7 +84,7 @@ library LiquidityPosition {
     function liquidityChange(
         Info storage position,
         uint256 accountNo,
-        IVToken vToken,
+        uint32 poolId,
         int128 liquidity,
         IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
@@ -96,14 +95,14 @@ library LiquidityPosition {
             IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside
         ) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
 
-        position.update(accountNo, vToken, wrapperValuesInside, balanceAdjustments);
+        position.update(accountNo, poolId, wrapperValuesInside, balanceAdjustments);
 
         balanceAdjustments.vBaseIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
         emit Account.LiquidityChange(
             accountNo,
-            vToken,
+            poolId,
             position.tickLower,
             position.tickUpper,
             liquidity,
@@ -112,7 +111,7 @@ library LiquidityPosition {
             -basePrincipal
         );
 
-        uint160 sqrtPriceCurrent = wrapper.vPool().sqrtPriceCurrent();
+        uint160 sqrtPriceCurrent = wrapper.vPool().sqrtPriceCurrent(); // TODO change to poolId.vPool()
         int256 tokenAmountCurrent;
         {
             (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
@@ -131,7 +130,7 @@ library LiquidityPosition {
     function update(
         Info storage position,
         uint256 accountNo,
-        IVToken vToken,
+        uint32 poolId,
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
@@ -144,8 +143,8 @@ library LiquidityPosition {
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
-        emit Account.FundingPayment(accountNo, vToken, position.tickLower, position.tickUpper, fundingPayment);
-        emit Account.LiquidityFee(accountNo, vToken, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
+        emit Account.FundingPayment(accountNo, poolId, position.tickLower, position.tickUpper, fundingPayment);
+        emit Account.LiquidityFee(accountNo, poolId, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
         // updating checkpoints
         position.sumALastX128 = wrapperValuesInside.sumAX128;
         position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
@@ -200,10 +199,10 @@ library LiquidityPosition {
     function baseValue(
         Info storage position,
         uint160 valuationSqrtPriceX96,
-        IVToken vToken,
+        uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256 baseValue_) {
-        return position.baseValue(valuationSqrtPriceX96, vToken.vPoolWrapper(protocol));
+        return position.baseValue(valuationSqrtPriceX96, poolId.vPoolWrapper(protocol));
     }
 
     function tokenAmountsInRange(

@@ -3,14 +3,14 @@
 pragma solidity ^0.8.9;
 
 import { Account } from '../../libraries/Account.sol';
-import { VTokenLib } from '../../libraries/VTokenLib.sol';
+import { AddressHelper } from '../../libraries/AddressHelper.sol';
 
 import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVBase } from '../../interfaces/IVBase.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
 abstract contract AccountProtocolInfoMock {
-    using VTokenLib for IVToken;
+    using AddressHelper for address;
 
     Account.ProtocolInfo public protocol;
 
@@ -30,15 +30,15 @@ abstract contract AccountProtocolInfoMock {
         fixFee = _fixFee;
     }
 
-    function registerPool(address full, IClearingHouseStructures.Pool calldata rageTradePool) external virtual {
-        IVToken vToken = IVToken(full);
-        uint32 truncated = vToken.truncate();
+    function registerPool(IClearingHouseStructures.Pool calldata poolInfo) external virtual {
+        uint32 poolId = address(poolInfo.vToken).truncate();
 
-        // pool will not be registered twice by the rage trade factory
-        assert(protocol.vTokens[truncated].eq(address(0)));
+        // this check is not present here as the tests change some things.
+        // this method is only used in these tests:
+        // AccountBasic, AccountRealistic, MarketValueAndReqMargin, VTokenPositionSet
+        // assert(address(protocol.pools[poolId].vToken).eq(address(0)));
 
-        protocol.vTokens[truncated] = vToken;
-        protocol.pools[vToken] = rageTradePool;
+        protocol.pools[poolId] = poolInfo;
     }
 
     function setVBaseAddress(IVBase _vBase) external {

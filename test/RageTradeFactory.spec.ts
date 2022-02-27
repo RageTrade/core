@@ -61,7 +61,7 @@ describe('RageTradeFactory', () => {
           vTokenSymbol: 'vTest',
           cTokenDecimals: 18,
         },
-        rageTradePoolInitialSettings: {
+        poolInitialSettings: {
           initialMarginRatio: 1,
           maintainanceMarginRatio: 2,
           twapDuration: 3,
