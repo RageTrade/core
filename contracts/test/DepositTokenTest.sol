@@ -29,11 +29,11 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
 
     constructor(address _rBase) {
         wrapper = new VPoolWrapperMock();
-        protocol.rBase = IERC20(_rBase);
+        protocol.cBase = IERC20(_rBase);
     }
 
     function initVToken(address vToken) external {
-        protocol.vTokens[vToken.truncate()] = IVToken(vToken);
+        protocol.pools[vToken.truncate()].vToken = IVToken(vToken);
     }
 
     function init(
@@ -45,27 +45,24 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
             cToken,
             IClearingHouseStructures.CollateralSettings(oracle, twapDuration, true)
         );
-        protocol.cTokens[collateral.token.truncate()] = collateral;
+        protocol.collaterals[collateral.token.truncate()] = collateral;
     }
 
     function cleanDeposits() external {
         for (uint256 i = 0; i < depositTokenSet.active.length; i++) {
-            uint32 truncatedAddress = depositTokenSet.active[i];
-            if (truncatedAddress == 0) break;
+            uint32 collateralId = depositTokenSet.active[i];
+            if (collateralId == 0) break;
 
-            depositTokenSet.decreaseBalance(
-                address(protocol.cTokens[truncatedAddress].token),
-                depositTokenSet.deposits[truncatedAddress]
-            );
+            depositTokenSet.decreaseBalance(collateralId, depositTokenSet.deposits[collateralId]);
         }
     }
 
     function increaseBalance(address realTokenAddress, uint256 amount) external {
-        depositTokenSet.increaseBalance(realTokenAddress, amount);
+        depositTokenSet.increaseBalance(realTokenAddress.truncate(), amount);
     }
 
     function decreaseBalance(address realTokenAddress, uint256 amount) external {
-        depositTokenSet.decreaseBalance(realTokenAddress, amount);
+        depositTokenSet.decreaseBalance(realTokenAddress.truncate(), amount);
     }
 
     function getAllDepositAccountMarketValue() external view returns (int256 depositValue) {

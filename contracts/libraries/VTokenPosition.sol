@@ -8,11 +8,10 @@ import { Account } from './Account.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { VTokenLib } from './VTokenLib.sol';
+import { PoolIdHelper } from './PoolIdHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
-import { IVToken } from '../interfaces/IVToken.sol';
 
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
@@ -20,7 +19,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
-    using VTokenLib for IVToken;
+    using PoolIdHelper for uint32;
     using FullMath for uint256;
     using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
@@ -60,28 +59,28 @@ library VTokenPosition {
     /// @notice returns the market value of the supplied token position
     /// @param position token position
     /// @param priceX128 price in fixed point 128
-    /// @param vToken tokenAddress corresponding to the position
+    /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(
         Position storage position,
-        IVToken vToken,
+        uint32 poolId,
         uint256 priceX128,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256 value) {
-        return marketValue(position, priceX128, vToken.vPoolWrapper(protocol));
+        return marketValue(position, priceX128, poolId.vPoolWrapper(protocol));
     }
 
     /// @notice returns the market value of the supplied token position
     /// @param position token position
-    /// @param vToken tokenAddress corresponding to the position
+    /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(
         Position storage position,
-        IVToken vToken,
+        uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
-        uint256 priceX128 = vToken.getVirtualTwapPriceX128(protocol);
-        return marketValue(position, vToken, priceX128, protocol);
+        uint256 priceX128 = poolId.getVirtualTwapPriceX128(protocol);
+        return marketValue(position, poolId, priceX128, protocol);
     }
 
     function riskSide(Position storage position) internal view returns (RISK_SIDE) {
@@ -103,23 +102,23 @@ library VTokenPosition {
 
     /// @notice returns the unrealized funding payment for the position
     /// @param position token position
-    /// @param vToken tokenAddress corresponding to the position
+    /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function unrealizedFundingPayment(
         Position storage position,
-        IVToken vToken,
+        uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, vToken.vPoolWrapper(protocol));
+        return unrealizedFundingPayment(position, poolId.vPoolWrapper(protocol));
     }
 
     function getNetPosition(
         Position storage position,
-        IVToken vToken,
+        uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal view returns (int256) {
         return
             position.netTraderPosition +
-            position.liquidityPositions.getNetPosition(vToken.vPool(protocol).sqrtPriceCurrent());
+            position.liquidityPositions.getNetPosition(poolId.vPool(protocol).sqrtPriceCurrent());
     }
 }

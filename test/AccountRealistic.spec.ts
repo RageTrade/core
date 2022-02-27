@@ -33,6 +33,7 @@ import {
 } from './utils/price-tick';
 import { amountsForLiquidity, maxLiquidityForAmounts } from './utils/liquidity';
 import { randomInt } from 'crypto';
+import { truncate } from './utils/vToken';
 
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -300,14 +301,14 @@ describe('Account Library Test Realistic', () => {
       realBase.address,
     );
 
-    const basePoolObj = await clearingHouse.pools(vBase.address);
-    await test.registerPool(vBase.address, basePoolObj);
+    const basePoolObj = await clearingHouse.getPoolInfo(truncate(vBase.address));
+    await test.registerPool(basePoolObj);
 
-    const vTokenPoolObj = await clearingHouse.pools(vTokenAddress);
-    await test.registerPool(vTokenAddress, vTokenPoolObj);
+    const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+    await test.registerPool(vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouse.pools(vTokenAddress1);
-    await test.registerPool(vTokenAddress1, vTokenPoolObj1);
+    const vTokenPoolObj1 = await clearingHouse.getPoolInfo(truncate(vTokenAddress1));
+    await test.registerPool(vTokenPoolObj1);
 
     await test.setVBaseAddress(vBase.address);
   });
@@ -532,7 +533,7 @@ describe('Account Library Test Realistic', () => {
         await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
         await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
-          'InvalidLiquidationActiveRangePresent("' + vTokenAddress + '")',
+          'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
         );
       });
       it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
@@ -546,7 +547,7 @@ describe('Account Library Test Realistic', () => {
         await changeVPoolPriceToNearestTick(3500);
 
         await expect(test.liquidateTokenPosition(0, 1, vTokenAddress1)).to.be.revertedWith(
-          'TokenInactive("' + vTokenAddress1 + '")',
+          'TokenInactive(' + Number(truncate(vTokenAddress1)) + ')',
         );
       });
       it('Liquidation - Success', async () => {
@@ -656,7 +657,7 @@ describe('Account Library Test Realistic', () => {
         await changeVPoolPriceToNearestTick(3500);
 
         await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
-          'InvalidLiquidationActiveRangePresent("' + vTokenAddress + '")',
+          'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
         );
       });
       it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {

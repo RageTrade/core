@@ -25,6 +25,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './utils/create-addresses';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 import { impersonateAccount } from './utils/impersonate-account';
+import { truncate } from './utils/vToken';
 
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
@@ -97,7 +98,7 @@ describe('VTokenPositionSet Library', () => {
         vTokenSymbol: 'vWETH',
         cTokenDecimals: 18,
       },
-      rageTradePoolInitialSettings: {
+      poolInitialSettings: {
         initialMarginRatio: 2,
         maintainanceMarginRatio: 3,
         twapDuration: 2,
@@ -132,7 +133,7 @@ describe('VTokenPositionSet Library', () => {
         vTokenSymbol: 'vWETH',
         cTokenDecimals: 18,
       },
-      rageTradePoolInitialSettings: {
+      poolInitialSettings: {
         initialMarginRatio: 2,
         maintainanceMarginRatio: 3,
         twapDuration: 2,
@@ -361,14 +362,14 @@ describe('VTokenPositionSet Library', () => {
   });
 
   async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
-    const basePoolObj = await clearingHouse.pools(vBase.address);
-    await vTokenPositionSet.registerPool(vBase.address, basePoolObj);
+    const basePoolObj = await clearingHouse.getPoolInfo(truncate(vBase.address));
+    await vTokenPositionSet.registerPool(basePoolObj);
 
-    const vTokenPoolObj = await clearingHouse.pools(vTokenAddress);
-    await vTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
+    const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+    await vTokenPositionSet.registerPool(vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouse.pools(vTokenAddress1);
-    await vTokenPositionSet.registerPool(vTokenAddress1, vTokenPoolObj1);
+    const vTokenPoolObj1 = await clearingHouse.getPoolInfo(truncate(vTokenAddress1));
+    await vTokenPositionSet.registerPool(vTokenPoolObj1);
 
     await vTokenPositionSet.setVBaseAddress(vBase.address);
   }

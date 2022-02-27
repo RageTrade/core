@@ -6,7 +6,7 @@ import { Account } from '../libraries/Account.sol';
 import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
-import { VTokenLib } from '../libraries/VTokenLib.sol';
+import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
@@ -25,7 +25,7 @@ contract AccountTest {
     using VTokenPositionSet for VTokenPositionSet.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using CTokenDepositSet for CTokenDepositSet.Info;
-    using VTokenLib for IVToken;
+    using AddressHelper for address;
 
     mapping(uint256 => Account.UserInfo) accounts;
     Account.ProtocolInfo public protocol;
@@ -36,30 +36,28 @@ contract AccountTest {
     constructor() {}
 
     function setAccountStorage(
-        IClearingHouseStructures.LiquidationParams calldata _liquidationParams,
-        uint256 _minRequiredMargin,
-        uint256 _removeLimitOrderFee,
-        uint256 _minimumOrderNotional,
-        uint256 _fixFee,
-        address _rBase
+        IClearingHouseStructures.LiquidationParams calldata liquidationParams,
+        uint256 minRequiredMargin,
+        uint256 removeLimitOrderFee,
+        uint256 minimumOrderNotional,
+        uint256 fixFee_,
+        address cBase
     ) external {
-        protocol.liquidationParams = _liquidationParams;
-        protocol.minRequiredMargin = _minRequiredMargin;
-        protocol.removeLimitOrderFee = _removeLimitOrderFee;
-        protocol.minimumOrderNotional = _minimumOrderNotional;
-        protocol.rBase = IERC20(_rBase);
-        fixFee = _fixFee;
+        protocol.liquidationParams = liquidationParams;
+        protocol.minRequiredMargin = minRequiredMargin;
+        protocol.removeLimitOrderFee = removeLimitOrderFee;
+        protocol.minimumOrderNotional = minimumOrderNotional;
+        protocol.cBase = IERC20(cBase);
+        fixFee = fixFee_;
     }
 
-    function registerPool(address full, IClearingHouseStructures.Pool calldata rageTradePool) external {
-        IVToken vToken = IVToken(full);
-        uint32 truncated = vToken.truncate();
+    function registerPool(IClearingHouseStructures.Pool calldata poolInfo) external {
+        uint32 poolId = address(poolInfo.vToken).truncate();
 
         // pool will not be registered twice by the rage trade factory
-        assert(protocol.vTokens[truncated].eq(address(0)));
+        assert(address(protocol.pools[poolId].vToken).isZero());
 
-        protocol.vTokens[truncated] = vToken;
-        protocol.pools[vToken] = rageTradePool;
+        protocol.pools[poolId] = poolInfo;
     }
 
     function setVBaseAddress(IVBase _vBase) external {
@@ -74,38 +72,38 @@ contract AccountTest {
     }
 
     function cleanPositions(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol);
         VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[IVToken(address(protocol.vBase)).truncate()];
+        tokenPosition = set.positions[address(protocol.vBase).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, IVToken(address(protocol.vBase)), protocol);
+        set.update(balanceAdjustments, address(protocol.vBase).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
-            uint32 truncatedAddress = set.active[i];
-            if (truncatedAddress == 0) break;
-            tokenPosition = set.positions[truncatedAddress];
+            uint32 poolId = set.active[i];
+            if (poolId == 0) break;
+            tokenPosition = set.positions[poolId];
             balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(
                 0,
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, protocol.vTokens[truncatedAddress], protocol);
+            set.update(balanceAdjustments, poolId, protocol);
         }
     }
 
     function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol);
         CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
-            uint32 truncatedAddress = set.active[i];
-            if (truncatedAddress == 0) break;
-            deposit = set.deposits[truncatedAddress];
-            set.decreaseBalance(address(protocol.cTokens[truncatedAddress].token), deposit);
+            uint32 collateralId = set.active[i];
+            if (collateralId == 0) break;
+            deposit = set.deposits[collateralId];
+            set.decreaseBalance(collateralId, deposit);
         }
     }
 
@@ -114,7 +112,7 @@ contract AccountTest {
     }
 
     function initToken(address vToken) external {
-        protocol.vTokens[truncate(vToken)] = IVToken(vToken);
+        protocol.pools[truncate(vToken)].vToken = IVToken(vToken);
     }
 
     function initCollateral(
@@ -126,7 +124,7 @@ contract AccountTest {
             cToken,
             IClearingHouseStructures.CollateralSettings(oracle, twapDuration, true)
         );
-        protocol.cTokens[truncate(address(collateral.token))] = collateral;
+        protocol.collaterals[truncate(address(collateral.token))] = collateral;
     }
 
     function addMargin(
@@ -155,7 +153,7 @@ contract AccountTest {
         int256 amount
     ) external {
         accounts[accountNo].swapToken(
-            IVToken(vToken),
+            vToken.truncate(),
             IClearingHouseStructures.SwapParams(amount, 0, false, false),
             protocol,
             true
@@ -168,7 +166,7 @@ contract AccountTest {
         int256 amount
     ) external {
         accounts[accountNo].swapToken(
-            IVToken(vToken),
+            vToken.truncate(),
             IClearingHouseStructures.SwapParams(amount, 0, true, false),
             protocol,
             true
@@ -180,7 +178,7 @@ contract AccountTest {
         address vToken,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
     ) external {
-        accounts[accountNo].liquidityChange(IVToken(vToken), liquidityChangeParams, protocol, true);
+        accounts[accountNo].liquidityChange(vToken.truncate(), liquidityChangeParams, protocol, true);
     }
 
     function liquidateLiquidityPositions(uint256 accountNo)
@@ -199,7 +197,7 @@ contract AccountTest {
             int256 insuranceFundFee
         )
     {
-        return Account._getLiquidationPriceX128AndFee(tokensToTrade, IVToken(vToken), protocol);
+        return Account._getLiquidationPriceX128AndFee(tokensToTrade, vToken.truncate(), protocol);
     }
 
     function liquidateTokenPosition(
@@ -210,7 +208,7 @@ contract AccountTest {
         accounts[accountNo].liquidateTokenPosition(
             accounts[liquidatorAccountNo],
             10000,
-            IVToken(vToken),
+            vToken.truncate(),
             fixFee,
             protocol,
             true
@@ -224,7 +222,7 @@ contract AccountTest {
         int24 tickUpper,
         uint256 removeLimitOrderFee
     ) external {
-        accounts[accountNo].removeLimitOrder(IVToken(vToken), tickLower, tickUpper, removeLimitOrderFee, protocol);
+        accounts[accountNo].removeLimitOrder(vToken.truncate(), tickLower, tickUpper, removeLimitOrderFee, protocol);
     }
 
     function getAccountDepositBalance(uint256 accountNo, address vToken) external view returns (uint256) {
@@ -307,6 +305,6 @@ contract AccountTest {
     }
 
     function getAccountProfit(uint256 accountNo) external view returns (int256 profit) {
-        return accounts[accountNo].tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+        return accounts[accountNo].tokenPositions.getAccountMarketValue(protocol);
     }
 }

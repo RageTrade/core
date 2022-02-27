@@ -90,7 +90,7 @@ export async function testSetup({
       vTokenSymbol: 'vTest',
       cTokenDecimals: 18,
     },
-    rageTradePoolInitialSettings: {
+    poolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,
@@ -218,7 +218,7 @@ export async function testSetupToken({
       vTokenSymbol: 'vTest',
       cTokenDecimals: 18,
     },
-    rageTradePoolInitialSettings: {
+    poolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,

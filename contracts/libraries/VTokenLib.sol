@@ -18,119 +18,102 @@ import { PriceMath } from './PriceMath.sol';
 import { console } from 'hardhat/console.sol';
 
 library VTokenLib {
-    using VTokenLib for IVToken;
-    using FullMath for uint256;
-    using PriceMath for uint160;
-    using PriceMath for uint256;
-    using UniswapV3PoolHelper for IUniswapV3Pool;
-
-    function eq(IVToken a, IVToken b) internal pure returns (bool) {
-        return address(a) == address(b);
-    }
-
-    function eq(IVToken a, address b) internal pure returns (bool) {
-        return address(a) == b;
-    }
-
-    function truncate(IVToken vToken) internal pure returns (uint32) {
-        return uint32(uint160(address(vToken)));
-    }
-
-    function decimals(IVToken vToken) internal view returns (uint8) {
-        return IERC20Metadata(address(vToken)).decimals();
-    }
-
-    function iface(IVToken vToken) internal pure returns (IVToken) {
-        return IVToken(address(vToken));
-    }
-
-    function vPool(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (IUniswapV3Pool) {
-        return protocol.pools[vToken].vPool;
-    }
-
-    function vPoolWrapper(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (IVPoolWrapper) {
-        return protocol.pools[vToken].vPoolWrapper;
-    }
-
-    function getVirtualTwapSqrtPriceX96(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint160 sqrtPriceX96)
-    {
-        return protocol.pools[vToken].vPool.twapSqrtPrice(protocol.pools[vToken].settings.twapDuration);
-    }
-
-    function getVirtualCurrentSqrtPriceX96(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint160 sqrtPriceX96)
-    {
-        return protocol.pools[vToken].vPool.sqrtPriceCurrent();
-    }
-
-    function getVirtualCurrentTick(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (int24 tick)
-    {
-        return protocol.pools[vToken].vPool.tickCurrent();
-    }
-
-    function getVirtualTwapTick(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (int24 tick)
-    {
-        return protocol.pools[vToken].vPool.twapTick(protocol.pools[vToken].settings.twapDuration);
-    }
-
-    function getVirtualTwapPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint256 priceX128)
-    {
-        return vToken.getVirtualTwapSqrtPriceX96(protocol).toPriceX128();
-    }
-
-    function getVirtualCurrentPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint256 priceX128)
-    {
-        return vToken.getVirtualCurrentSqrtPriceX96(protocol).toPriceX128();
-    }
-
-    function getRealTwapSqrtPriceX96(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint160 sqrtPriceX96)
-    {
-        sqrtPriceX96 = vToken.getRealTwapPriceX128(protocol).toSqrtPriceX96();
-    }
-
-    function getRealTwapPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
-        internal
-        view
-        returns (uint256 priceX128)
-    {
-        priceX128 = protocol.pools[vToken].settings.oracle.getTwapPriceX128(
-            protocol.pools[vToken].settings.twapDuration
-        );
-    }
-
-    function getMarginRatio(
-        IVToken vToken,
-        bool isInitialMargin,
-        Account.ProtocolInfo storage protocol
-    ) internal view returns (uint16) {
-        if (isInitialMargin) {
-            return protocol.pools[vToken].settings.initialMarginRatio;
-        } else {
-            return protocol.pools[vToken].settings.maintainanceMarginRatio;
-        }
-    }
-
-    function getIsCrossMargined(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (bool) {
-        return protocol.pools[vToken].settings.isCrossMargined;
-    }
+    // using VTokenLib for IVToken;
+    // using FullMath for uint256;
+    // using PriceMath for uint160;
+    // using PriceMath for uint256;
+    // using UniswapV3PoolHelper for IUniswapV3Pool;
+    // function eq(IVToken a, IVToken b) internal pure returns (bool) {
+    //     return address(a) == address(b);
+    // }
+    // function eq(IVToken a, address b) internal pure returns (bool) {
+    //     return address(a) == b;
+    // }
+    // function truncate(IVToken vToken) internal pure returns (uint32) {
+    //     return uint32(uint160(address(vToken)));
+    // }
+    // function decimals(IVToken vToken) internal view returns (uint8) {
+    //     return IERC20Metadata(address(vToken)).decimals();
+    // }
+    // function iface(IVToken vToken) internal pure returns (IVToken) {
+    //     return IVToken(address(vToken));
+    // }
+    // function vPool(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (IUniswapV3Pool) {
+    //     return protocol.pools[vToken].vPool;
+    // }
+    // function vPoolWrapper(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (IVPoolWrapper) {
+    //     return protocol.pools[vToken].vPoolWrapper;
+    // }
+    // function getVirtualTwapSqrtPriceX96(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (uint160 sqrtPriceX96)
+    // {
+    //     return protocol.pools[vToken].vPool.twapSqrtPrice(protocol.pools[vToken].settings.twapDuration);
+    // }
+    // function getVirtualCurrentSqrtPriceX96(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (uint160 sqrtPriceX96)
+    // {
+    //     return protocol.pools[vToken].vPool.sqrtPriceCurrent();
+    // }
+    // function getVirtualCurrentTick(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (int24 tick)
+    // {
+    //     return protocol.pools[vToken].vPool.tickCurrent();
+    // }
+    // function getVirtualTwapTick(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (int24 tick)
+    // {
+    //     return protocol.pools[vToken].vPool.twapTick(protocol.pools[vToken].settings.twapDuration);
+    // }
+    // function getVirtualTwapPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (uint256 priceX128)
+    // {
+    //     return vToken.getVirtualTwapSqrtPriceX96(protocol).toPriceX128();
+    // }
+    // function getVirtualCurrentPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (uint256 priceX128)
+    // {
+    //     return vToken.getVirtualCurrentSqrtPriceX96(protocol).toPriceX128();
+    // }
+    // function getRealTwapSqrtPriceX96(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (uint160 sqrtPriceX96)
+    // {
+    //     sqrtPriceX96 = vToken.getRealTwapPriceX128(protocol).toSqrtPriceX96();
+    // }
+    // function getRealTwapPriceX128(IVToken vToken, Account.ProtocolInfo storage protocol)
+    //     internal
+    //     view
+    //     returns (uint256 priceX128)
+    // {
+    //     priceX128 = protocol.pools[vToken].settings.oracle.getTwapPriceX128(
+    //         protocol.pools[vToken].settings.twapDuration
+    //     );
+    // }
+    // function getMarginRatio(
+    //     IVToken vToken,
+    //     bool isInitialMargin,
+    //     Account.ProtocolInfo storage protocol
+    // ) internal view returns (uint16) {
+    //     if (isInitialMargin) {
+    //         return protocol.pools[vToken].settings.initialMarginRatio;
+    //     } else {
+    //         return protocol.pools[vToken].settings.maintainanceMarginRatio;
+    //     }
+    // }
+    // function getIsCrossMargined(IVToken vToken, Account.ProtocolInfo storage protocol) internal view returns (bool) {
+    //     return protocol.pools[vToken].settings.isCrossMargined;
+    // }
 }

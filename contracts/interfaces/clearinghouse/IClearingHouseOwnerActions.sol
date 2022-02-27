@@ -15,9 +15,9 @@ interface IClearingHouseOwnerActions is IClearingHouseStructures {
     function updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings) external;
 
     /// @notice updates the rage trade pool settings
-    /// @param vToken address of vToken
+    /// @param poolId rage trade pool id
     /// @param newSettings updated rage trade pool settings
-    function updatePoolSettings(IVToken vToken, PoolSettings calldata newSettings) external;
+    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings) external;
 
     /// @notice updates the protocol settings
     /// @param liquidationParams liquidation params

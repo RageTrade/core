@@ -11,7 +11,7 @@ import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
-import { VTokenLib } from '../../libraries/VTokenLib.sol';
+import { PoolIdHelper } from '../../libraries/PoolIdHelper.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
@@ -37,8 +37,9 @@ import { console } from 'hardhat/console.sol';
 contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim {
     using SafeERC20 for IERC20;
     using Account for Account.UserInfo;
+    using AddressHelper for address;
     using AddressHelper for IERC20;
-    using VTokenLib for IVToken;
+    using PoolIdHelper for uint32;
     using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -69,7 +70,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         IOracle _nativeOracle
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
-        protocol.rBase = _defaultCollateralToken;
+        protocol.cBase = _defaultCollateralToken;
         insuranceFund = _insuranceFund;
         nativeOracle = _nativeOracle;
 
@@ -83,15 +84,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         __Governable_init();
     }
 
-    function registerPool(address full, Pool calldata rageTradePool) external onlyRageTradeFactory {
-        IVToken vToken = IVToken(full);
-        uint32 truncated = vToken.truncate();
+    function registerPool(Pool calldata poolInfo) external onlyRageTradeFactory {
+        uint32 poolId = address(poolInfo.vToken).truncate();
 
         // pool will not be registered twice by the rage trade factory
-        assert(protocol.vTokens[truncated].eq(address(0)));
+        assert(address(protocol.pools[poolId].vToken).isZero());
 
-        protocol.vTokens[truncated] = vToken;
-        protocol.pools[vToken] = rageTradePool;
+        protocol.pools[poolId] = poolInfo;
     }
 
     /**
@@ -105,9 +104,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         _updateCollateralSettings(cToken, collateralSettings);
     }
 
-    function updatePoolSettings(IVToken vToken, PoolSettings calldata newSettings) public onlyGovernanceOrTeamMultisig {
-        protocol.pools[vToken].settings = newSettings;
-        emit PoolSettingsUpdated(vToken, newSettings);
+    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings) public onlyGovernanceOrTeamMultisig {
+        protocol.pools[poolId].settings = newSettings;
+        emit PoolSettingsUpdated(poolId, newSettings);
     }
 
     function updateProtocolSettings(
@@ -134,7 +133,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
-        protocol.rBase.safeTransfer(teamMultisig(), totalProtocolFee);
+        protocol.cBase.safeTransfer(teamMultisig(), totalProtocolFee);
     }
 
     /**
@@ -172,16 +171,16 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function _addMargin(
         uint256 accountNo,
         Account.UserInfo storage account,
-        uint32 cTokenTruncatedAddress,
+        uint32 collateralId,
         uint256 amount
     ) internal notPaused {
-        Collateral storage collateral = _getCTokenWithChecks(cTokenTruncatedAddress, true);
+        Collateral storage collateral = _getCTokenWithChecks(collateralId, true);
 
         collateral.token.safeTransferFrom(msg.sender, address(this), amount);
 
         account.addMargin(address(collateral.token), amount);
-
-        emit Account.DepositMargin(accountNo, address(collateral.token), amount);
+        // TODO emit events from account
+        emit Account.DepositMargin(accountNo, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -206,17 +205,17 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function _removeMargin(
         uint256 accountNo,
         Account.UserInfo storage account,
-        uint32 cTokenTruncatedAddress,
+        uint32 collateralId,
         uint256 amount,
         bool checkMargin
     ) internal notPaused {
-        Collateral storage collateral = _getCTokenWithChecks(cTokenTruncatedAddress, false);
+        Collateral storage collateral = _getCTokenWithChecks(collateralId, false);
 
         account.removeMargin(address(collateral.token), amount, protocol, checkMargin);
 
         collateral.token.safeTransfer(msg.sender, amount);
 
-        emit Account.WithdrawMargin(accountNo, address(collateral.token), amount);
+        emit Account.WithdrawMargin(accountNo, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -236,9 +235,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         account.updateProfit(amount, protocol, checkMargin);
         if (amount > 0) {
-            protocol.rBase.safeTransferFrom(msg.sender, address(this), uint256(amount));
+            protocol.cBase.safeTransferFrom(msg.sender, address(this), uint256(amount));
         } else {
-            protocol.rBase.safeTransfer(msg.sender, uint256(-amount));
+            protocol.cBase.safeTransfer(msg.sender, uint256(-amount));
         }
         emit Account.UpdateProfit(accountNo, amount);
     }
@@ -255,13 +254,14 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function _swapToken(
         Account.UserInfo storage account,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         SwapParams memory swapParams,
         bool checkMargin
     ) internal notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
+        // TODO refactor this method
+        _getIVTokenWithChecks(poolId);
 
-        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(vToken, swapParams, protocol, checkMargin);
+        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
 
         uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
         if (vBaseAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
@@ -287,25 +287,26 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function _updateRangeOrder(
         Account.UserInfo storage account,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         LiquidityChangeParams memory liquidityChangeParams,
         bool checkMargin
     ) internal notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
+        _getIVTokenWithChecks(poolId);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
-            _checkSlippage(vToken, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
+            _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
         }
 
         (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
-            vToken,
+            poolId,
             liquidityChangeParams,
             protocol,
             checkMargin
         );
 
+        // TODO this lib is being used here causing bytecode size to increase, remove it
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(vToken, vTokenAmountOut, vBaseAmountOut, protocol)
+            VTokenPositionSet.getNotionalValue(poolId, vTokenAmountOut, vBaseAmountOut, protocol)
         );
 
         if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
@@ -470,11 +471,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
      */
 
     function _checkSlippage(
-        IVToken vToken,
+        uint32 poolId,
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = vToken.getVirtualCurrentSqrtPriceX96(protocol);
+        uint160 sqrtPriceCurrent = poolId.getVirtualCurrentSqrtPriceX96(protocol);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;
@@ -483,20 +484,20 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
     }
 
-    function _getCTokenWithChecks(uint32 cTokenTruncatedAddress, bool checkSupported)
+    function _getCTokenWithChecks(uint32 collateralId, bool checkSupported)
         internal
         view
         returns (Collateral storage collateral)
     {
-        collateral = protocol.cTokens[cTokenTruncatedAddress];
-        if (collateral.token.isZero()) revert UninitializedToken(cTokenTruncatedAddress); // TODO change to UninitializedCollateral
-        if (checkSupported && !collateral.settings.supported) revert UnsupportedCToken(address(collateral.token));
+        collateral = protocol.collaterals[collateralId];
+        if (collateral.token.isZero()) revert UninitializedToken(collateralId); // TODO change to UninitializedCollateral
+        if (checkSupported && !collateral.settings.supported) revert UnsupportedCToken(address(collateral.token)); // TODO change this to collateralId
     }
 
-    function _getIVTokenWithChecks(uint32 vTokenTruncatedAddress) internal view returns (IVToken vToken) {
-        vToken = protocol.vTokens[vTokenTruncatedAddress];
-        if (vToken.eq(address(0))) revert UninitializedToken(vTokenTruncatedAddress); // TODO change to UninitializedVToken
-        if (!protocol.pools[vToken].settings.supported) revert UnsupportedVToken(vToken);
+    function _getIVTokenWithChecks(uint32 poolId) internal view returns (IVToken vToken) {
+        vToken = protocol.pools[poolId].vToken;
+        if (address(vToken).isZero()) revert UninitializedToken(poolId); // TODO change to UninitializedVToken
+        if (!protocol.pools[poolId].settings.supported) revert UnsupportedVToken(vToken); // TODO change this to UnsupportedPool
     }
 
     function _liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
@@ -513,7 +514,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         int256 accountFee = keeperFee + insuranceFundFee;
 
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
-        protocol.rBase.safeTransfer(msg.sender, uint256(keeperFee));
+        protocol.cBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
@@ -522,19 +523,19 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function _liquidateTokenPosition(
         uint256 liquidatorAccountNo,
         uint256 accountNo,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.UserInfo storage account = accounts[accountNo];
 
-        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
+        _getIVTokenWithChecks(poolId); // TODO refactor this method
         int256 insuranceFundFee;
         (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
             accounts[liquidatorAccountNo],
             liquidationBps,
-            vToken,
+            poolId,
             _getFixFee(gasComputationUnitsClaim),
             protocol,
             true
@@ -545,45 +546,48 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function _removeLimitOrder(
         uint256 accountNo,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (uint256 keeperFee) {
         Account.UserInfo storage account = accounts[accountNo];
 
-        IVToken vToken = _getIVTokenWithChecks(vTokenTruncatedAddress);
+        _getIVTokenWithChecks(poolId);
         keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);
 
-        account.removeLimitOrder(vToken, tickLower, tickUpper, keeperFee, protocol);
+        account.removeLimitOrder(poolId, tickLower, tickUpper, keeperFee, protocol);
 
-        protocol.rBase.safeTransfer(msg.sender, keeperFee);
+        protocol.cBase.safeTransfer(msg.sender, keeperFee);
         // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function _transferInsuranceFundFee(int256 insuranceFundFee) internal {
         if (insuranceFundFee > 0) {
-            protocol.rBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
+            protocol.cBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
         } else {
             insuranceFund.claim(uint256(-insuranceFundFee));
         }
     }
 
-    function _updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings) internal {
-        uint32 truncated = cToken.truncate();
+    function _updateCollateralSettings(IERC20 collateralToken, CollateralSettings memory collateralSettings) internal {
+        uint32 collateralId = collateralToken.truncate();
 
         // doesn't allow zero address as a collateral token
-        if (cToken.isZero()) revert InvalidCollateralAddress(address(0));
+        if (collateralToken.isZero()) revert InvalidCollateralAddress(address(0));
 
         // doesn't allow owner to change the cToken address when updating settings, once it's truncated previously
         // TODO remove so many address() castings
-        if (!protocol.cTokens[truncated].token.isZero() && !protocol.cTokens[truncated].token.eq(cToken)) {
-            revert IncorrectCollateralAddress(cToken, protocol.cTokens[truncated].token);
+        if (
+            !protocol.collaterals[collateralId].token.isZero() &&
+            !protocol.collaterals[collateralId].token.eq(collateralToken)
+        ) {
+            revert IncorrectCollateralAddress(collateralToken, protocol.collaterals[collateralId].token);
         }
 
-        protocol.cTokens[truncated] = Collateral(cToken, collateralSettings);
+        protocol.collaterals[collateralId] = Collateral(collateralToken, collateralSettings);
 
-        emit CollateralSettingsUpdated(cToken, collateralSettings);
+        emit CollateralSettingsUpdated(collateralToken, collateralSettings);
     }
 
     /// @notice Gets fix fee

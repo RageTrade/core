@@ -6,12 +6,13 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
+import { AddressHelper } from './AddressHelper.sol';
 import { CTokenDepositSet } from './CTokenDepositSet.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
-import { VTokenLib } from './VTokenLib.sol';
+import { PoolIdHelper } from './PoolIdHelper.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
@@ -24,14 +25,15 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { console } from 'hardhat/console.sol';
 
 library Account {
-    using Account for Account.UserInfo;
+    using Account for UserInfo;
+    using AddressHelper for address;
     using CTokenDepositSet for CTokenDepositSet.Info;
     using FullMath for uint256;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using PoolIdHelper for uint32;
     using SafeCast for uint256;
     using SignedFullMath for int256;
     using SignedMath for int256;
-    using VTokenLib for IVToken;
     using VTokenPositionSet for VTokenPositionSet.Set;
     using VTokenPosition for VTokenPosition.Position;
 
@@ -47,14 +49,14 @@ library Account {
     }
 
     struct ProtocolInfo {
-        // rage trade pools
-        mapping(IVToken => IClearingHouseStructures.Pool) pools;
-        // conversion from compressed addressed to full address
-        mapping(uint32 => IClearingHouseStructures.Collateral) cTokens;
-        mapping(uint32 => IVToken) vTokens;
+        // poolId => PoolInfo
+        mapping(uint32 => IClearingHouseStructures.Pool) pools;
+        // collateralId => CollateralInfo
+        mapping(uint32 => IClearingHouseStructures.Collateral) collaterals;
         // virtual base
         IVBase vBase;
-        IERC20 rBase;
+        // settlement collateral / default base token
+        IERC20 cBase; // TODO rename to default collataral?
         // accounting settings
         IClearingHouseStructures.LiquidationParams liquidationParams;
         uint256 minRequiredMargin;
@@ -79,8 +81,8 @@ library Account {
     error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
 
     /// @notice error to denote that there are active ranges present during token liquidation, hence the liquidation is invalid
-    /// @param vToken shows the token address for which range is active
-    error InvalidLiquidationActiveRangePresent(IVToken vToken);
+    /// @param poolId shows the poolId for which range is active
+    error InvalidLiquidationActiveRangePresent(uint32 poolId);
 
     /// @notice denotes new account creation
     /// @param ownerAddress wallet address of account owner
@@ -89,15 +91,15 @@ library Account {
 
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
-    /// @param cTokenAddress token in which margin is deposited
+    /// @param collateralId token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 indexed accountNo, address indexed cTokenAddress, uint256 amount);
+    event DepositMargin(uint256 indexed accountNo, uint32 indexed collateralId, uint256 amount);
 
     /// @notice denotes withdrawal of margin
     /// @param accountNo serial number of the account
-    /// @param cTokenAddress token in which margin is withdrawn
+    /// @param collateralId token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 indexed accountNo, address indexed cTokenAddress, uint256 amount);
+    event WithdrawMargin(uint256 indexed accountNo, uint32 indexed collateralId, uint256 amount);
 
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account
@@ -106,25 +108,25 @@ library Account {
 
     /// @notice denotes token position change
     /// @param accountNo serial number of the account
-    /// @param vToken address of token whose position was taken
+    /// @param poolId truncated address of vtoken whose position was taken
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
     event TokenPositionChange(
         uint256 indexed accountNo,
-        IVToken indexed vToken,
+        uint32 indexed poolId,
         int256 tokenAmountOut,
         int256 baseAmountOut
     );
 
     /// @notice denotes token position change due to liquidity add/remove
     /// @param accountNo serial number of the account
-    /// @param vToken address of token whose position was taken
+    /// @param poolId address of token whose position was taken
     /// @param tickLower lower tick of the range updated
     /// @param tickUpper upper tick of the range updated
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     event LiquidityTokenPositionChange(
         uint256 indexed accountNo,
-        IVToken indexed vToken,
+        uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
         int256 tokenAmountOut
@@ -132,7 +134,7 @@ library Account {
 
     /// @notice denotes liquidity add/remove
     /// @param accountNo serial number of the account
-    /// @param vToken address of token whose position was taken
+    /// @param poolId address of token whose position was taken
     /// @param tickLower lower tick of the range updated
     /// @param tickUpper upper tick of the range updated
     /// @param liquidityDelta change in liquidity value
@@ -141,7 +143,7 @@ library Account {
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
     event LiquidityChange(
         uint256 indexed accountNo,
-        IVToken indexed vToken,
+        uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
         int128 liquidityDelta,
@@ -153,13 +155,13 @@ library Account {
     /// @notice denotes funding payment for a range / token position
     /// @dev for a token position tickLower = tickUpper = 0
     /// @param accountNo serial number of the account
-    /// @param vToken address of token for which funding was paid
+    /// @param poolId address of token for which funding was paid
     /// @param tickLower lower tick of the range for which funding was paid
     /// @param tickUpper upper tick of the range for which funding was paid
     /// @param amount amount of funding paid (negative) or received (positive)
     event FundingPayment(
         uint256 indexed accountNo,
-        IVToken indexed vToken,
+        uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
         int256 amount
@@ -168,13 +170,13 @@ library Account {
     /// @notice denotes fee payment for a range / token position
     /// @dev for a token position tickLower = tickUpper = 0
     /// @param accountNo serial number of the account
-    /// @param vToken address of token for which fee was paid
+    /// @param poolId address of token for which fee was paid
     /// @param tickLower lower tick of the range for which fee was paid
     /// @param tickUpper upper tick of the range for which fee was paid
     /// @param amount amount of fee paid (negative) or received (positive)
     event LiquidityFee(
         uint256 indexed accountNo,
-        IVToken indexed vToken,
+        uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
         int256 amount
@@ -204,7 +206,7 @@ library Account {
     /// @dev the selected token position is take from the current account and moved to liquidatorAccount at a discounted prive to current pool price
     /// @param accountNo serial number of the account
     /// @param liquidatorAccountNo  account which performed the liquidation
-    /// @param vToken address of token for whose position was liquidated
+    /// @param poolId id of the rage trade pool for whose position was liquidated
     /// @param liquidationBps the fraction of current position which was liquidated in bps
     /// @param liquidationPriceX128 price at which liquidation was performed
     /// @param liquidatorPriceX128 discounted price at which tokens were transferred to the liquidator account
@@ -212,7 +214,7 @@ library Account {
     event LiquidateTokenPosition(
         uint256 indexed accountNo,
         uint256 indexed liquidatorAccountNo,
-        IVToken indexed vToken,
+        uint32 indexed poolId,
         uint16 liquidationBps,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
@@ -232,10 +234,10 @@ library Account {
     function _updateBaseBalance(
         UserInfo storage account,
         int256 amount,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
-        account.tokenPositions.update(balanceAdjustments, IVToken(address(protocol.vBase)), protocol);
+        account.tokenPositions.update(balanceAdjustments, address(protocol.vBase).truncate(), protocol);
     }
 
     /// @notice increases deposit balance of 'vToken' by 'amount'
@@ -244,11 +246,11 @@ library Account {
     /// @param amount amount of token to deposit
     function addMargin(
         UserInfo storage account,
-        address realTokenAddress,
+        address realTokenAddress, // TODO change it to collateralId
         uint256 amount
     ) external {
         // vBASE should be an immutable constant
-        account.tokenDeposits.increaseBalance(realTokenAddress, amount);
+        account.tokenDeposits.increaseBalance(realTokenAddress.truncate(), amount);
     }
 
     /// @notice reduces deposit balance of 'vToken' by 'amount'
@@ -258,12 +260,12 @@ library Account {
     /// @param protocol set of all constants and token addresses
     function removeMargin(
         UserInfo storage account,
-        address realTokenAddress,
+        address realTokenAddress, // TODO change to collateralId
         uint256 amount,
-        Account.ProtocolInfo storage protocol,
+        ProtocolInfo storage protocol,
         bool checkMargin
     ) external {
-        account.tokenDeposits.decreaseBalance(realTokenAddress, amount);
+        account.tokenDeposits.decreaseBalance(realTokenAddress.truncate(), amount);
 
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
@@ -275,7 +277,7 @@ library Account {
     function updateProfit(
         UserInfo storage account,
         int256 amount,
-        Account.ProtocolInfo storage protocol,
+        ProtocolInfo storage protocol,
         bool checkMargin
     ) external {
         account._updateBaseBalance(amount, protocol);
@@ -297,7 +299,7 @@ library Account {
     function getAccountValueAndRequiredMargin(
         UserInfo storage account,
         bool isInitialMargin,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) external view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         return account._getAccountValueAndRequiredMargin(isInitialMargin, protocol);
     }
@@ -305,11 +307,11 @@ library Account {
     function _getAccountValueAndRequiredMargin(
         UserInfo storage account,
         bool isInitialMargin,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
         accountMarketValue = account._getAccountValue(protocol);
 
-        totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, protocol.vTokens, protocol);
+        totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, protocol);
         if (!account.tokenPositions.isEmpty()) {
             totalRequiredMargin = totalRequiredMargin < int256(protocol.minRequiredMargin)
                 ? int256(protocol.minRequiredMargin)
@@ -322,7 +324,7 @@ library Account {
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     /// @return accountPositionProfits total market value of all the positions (token ) and deposits
-    function getAccountPositionProfits(UserInfo storage account, Account.ProtocolInfo storage protocol)
+    function getAccountPositionProfits(UserInfo storage account, ProtocolInfo storage protocol)
         external
         view
         returns (int256 accountPositionProfits)
@@ -330,24 +332,24 @@ library Account {
         return account._getAccountPositionProfits(protocol);
     }
 
-    function _getAccountPositionProfits(UserInfo storage account, Account.ProtocolInfo storage protocol)
+    function _getAccountPositionProfits(UserInfo storage account, ProtocolInfo storage protocol)
         internal
         view
         returns (int256 accountPositionProfits)
     {
-        accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol.vTokens, protocol);
+        accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol);
     }
 
     /// @notice returns market value for the account based on current market conditions
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
-    function _getAccountValue(UserInfo storage account, Account.ProtocolInfo storage protocol)
+    function _getAccountValue(UserInfo storage account, ProtocolInfo storage protocol)
         internal
         view
         returns (int256 accountMarketValue)
     {
-        accountMarketValue = account._getAccountPositionProfits(protocol);
+        accountMarketValue = account._getAccountPositionProfits(protocol); // TODO error in this line
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
         return (accountMarketValue);
     }
@@ -359,7 +361,7 @@ library Account {
     function checkIfMarginAvailable(
         UserInfo storage account,
         bool isInitialMargin,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) external view {
         (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
             isInitialMargin,
@@ -372,7 +374,7 @@ library Account {
     function _checkIfMarginAvailable(
         UserInfo storage account,
         bool isInitialMargin,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) internal view {
         (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
             isInitialMargin,
@@ -385,11 +387,11 @@ library Account {
     /// @notice checks if profit is available to withdraw base token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
-    function checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) external view {
+    function checkIfProfitAvailable(UserInfo storage account, ProtocolInfo storage protocol) external view {
         _checkIfProfitAvailable(account, protocol);
     }
 
-    function _checkIfProfitAvailable(UserInfo storage account, Account.ProtocolInfo storage protocol) internal view {
+    function _checkIfProfitAvailable(UserInfo storage account, ProtocolInfo storage protocol) internal view {
         int256 totalPositionValue = account._getAccountPositionProfits(protocol);
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
@@ -400,19 +402,19 @@ library Account {
     /// @notice isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
     /// @notice sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
     /// @param account account to swap tokens for
-    /// @param vToken address of the token to swap
+    /// @param poolId id of the pool to swap tokens for
     /// @param swapParams parameters for the swap (Includes - amount, sqrtPriceLimit, isNotional, isPartialAllowed)
     /// @param protocol set of all constants and token addresses
     function swapToken(
         UserInfo storage account,
-        IVToken vToken,
+        uint32 poolId,
         IClearingHouseStructures.SwapParams memory swapParams,
-        Account.ProtocolInfo storage protocol,
+        ProtocolInfo storage protocol,
         bool checkMargin
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback and send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(vToken, swapParams, protocol);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(poolId, swapParams, protocol);
 
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
@@ -423,19 +425,19 @@ library Account {
     /// @notice the liquidity change is reverted if the sqrt price at the time of execution is beyond 'slippageToleranceBps' of 'sqrtPriceCurrent' supplied
     /// @notice whenever liquidity change is done the external token position is taken out. If 'closeTokenPosition' is true this is swapped out else it is added to the current token position
     /// @param account account to change liquidity
-    /// @param vToken address of token to swap
+    /// @param poolId id of the rage trade pool
     /// @param liquidityChangeParams parameters including lower tick, upper tick, liquidity delta, sqrtPriceCurrent, slippageToleranceBps, closeTokenPosition, limit order type
     /// @param protocol set of all constants and token addresses
     function liquidityChange(
         UserInfo storage account,
-        IVToken vToken,
+        uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
-        Account.ProtocolInfo storage protocol,
+        ProtocolInfo storage protocol,
         bool checkMargin
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // mint/burn tokens + fee + funding payment
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
-            vToken,
+            poolId,
             liquidityChangeParams,
             protocol
         );
@@ -475,7 +477,7 @@ library Account {
     function liquidateLiquidityPositions(
         UserInfo storage account,
         uint256 fixFee,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         // check basis maintanace margin
         int256 accountMarketValue;
@@ -486,7 +488,7 @@ library Account {
         if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(protocol.vTokens, protocol);
+        notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(protocol);
 
         int256 liquidationFee = notionalAmountClosed.mulDiv(protocol.liquidationParams.liquidationFeeFraction, 1e5);
         (keeperFee, insuranceFundFee) = _computeLiquidationFees(
@@ -501,12 +503,12 @@ library Account {
 
     /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
     /// @param tokensToTrade amount of tokens to trade for liquidation
-    /// @param vToken vToken being liquidated
+    /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
     function _getLiquidationPriceX128AndFee(
         int256 tokensToTrade,
-        IVToken vToken,
-        Account.ProtocolInfo storage protocol
+        uint32 poolId,
+        ProtocolInfo storage protocol
     )
         internal
         view
@@ -516,8 +518,8 @@ library Account {
             int256 insuranceFundFee
         )
     {
-        uint16 maintainanceMarginFactor = vToken.getMarginRatio(false, protocol);
-        uint256 priceX128 = vToken.getVirtualCurrentPriceX128(protocol);
+        uint16 maintainanceMarginFactor = poolId.getMarginRatio(false, protocol);
+        uint256 priceX128 = poolId.getVirtualCurrentPriceX128(protocol);
         uint256 priceDeltaX128 = priceX128.mulDiv(protocol.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
             maintainanceMarginFactor,
             1e5
@@ -541,7 +543,7 @@ library Account {
     /// @notice also charges fixFee from the account and pays to liquidator
     /// @param account is account being liquidated
     /// @param liquidatorAccount is account of liquidator
-    /// @param vToken map of vTokens allowed on the platform
+    /// @param poolId id of the rage trade pool
     /// @param tokensToTrade number of tokens to trade
     /// @param liquidationPriceX128 price at which tokens should be traded out
     /// @param liquidatorPriceX128 discounted price at which tokens should be given to liquidator
@@ -550,14 +552,14 @@ library Account {
     function _updateLiquidationAccounts(
         UserInfo storage account,
         UserInfo storage liquidatorAccount,
-        IVToken vToken,
+        uint32 poolId,
         int256 tokensToTrade,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
         int256 fixFee,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        vToken.vPoolWrapper(protocol).updateGlobalFundingState();
+        poolId.vPoolWrapper(protocol).updateGlobalFundingState();
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
             .BalanceAdjustments({
@@ -566,10 +568,10 @@ library Account {
                 traderPositionIncrease: tokensToTrade
             });
 
-        account.tokenPositions.update(balanceAdjustments, vToken, protocol);
-        emit Account.TokenPositionChange(
+        account.tokenPositions.update(balanceAdjustments, poolId, protocol);
+        emit TokenPositionChange(
             account.tokenPositions.accountNo,
-            vToken,
+            poolId,
             balanceAdjustments.vTokenIncrease,
             balanceAdjustments.vBaseIncrease
         );
@@ -580,10 +582,10 @@ library Account {
             traderPositionIncrease: -tokensToTrade
         });
 
-        liquidatorAccount.tokenPositions.update(liquidatorBalanceAdjustments, vToken, protocol);
-        emit Account.TokenPositionChange(
+        liquidatorAccount.tokenPositions.update(liquidatorBalanceAdjustments, poolId, protocol);
+        emit TokenPositionChange(
             liquidatorAccount.tokenPositions.accountNo,
-            vToken,
+            poolId,
             liquidatorBalanceAdjustments.vTokenIncrease,
             liquidatorBalanceAdjustments.vBaseIncrease
         );
@@ -591,15 +593,15 @@ library Account {
 
     /// @notice liquidates all range positions in case the account is under water
     /// @param account account to liquidate
-    /// @param vToken address of token to swap
+    /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
     function liquidateTokenPosition(
         UserInfo storage account,
         UserInfo storage liquidatorAccount,
         uint16 liquidationBps,
-        IVToken vToken,
+        uint32 poolId,
         uint256 fixFee,
-        Account.ProtocolInfo storage protocol,
+        ProtocolInfo storage protocol,
         bool checkMargin
     )
         external
@@ -608,8 +610,8 @@ library Account {
             IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments
         )
     {
-        if (account.tokenPositions.getIsTokenRangeActive(vToken, protocol))
-            revert InvalidLiquidationActiveRangePresent(vToken);
+        if (account.tokenPositions.isTokenRangeActive(poolId, protocol))
+            revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
@@ -625,7 +627,7 @@ library Account {
         int256 tokensToTrade;
         {
             VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
-                vToken,
+                poolId,
                 false,
                 protocol
             );
@@ -637,14 +639,14 @@ library Account {
         {
             (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = _getLiquidationPriceX128AndFee(
                 tokensToTrade,
-                vToken,
+                poolId,
                 protocol
             );
 
             liquidatorBalanceAdjustments = _updateLiquidationAccounts(
                 account,
                 liquidatorAccount,
-                vToken,
+                poolId,
                 tokensToTrade,
                 liquidationPriceX128,
                 liquidatorPriceX128,
@@ -663,10 +665,10 @@ library Account {
 
         if (checkMargin) liquidatorAccount._checkIfMarginAvailable(false, protocol);
 
-        emit Account.LiquidateTokenPosition(
+        emit LiquidateTokenPosition(
             account.tokenPositions.accountNo,
             liquidatorAccount.tokenPositions.accountNo,
-            vToken,
+            poolId,
             liquidationBps,
             liquidationPriceX128,
             liquidatorPriceX128,
@@ -676,24 +678,24 @@ library Account {
 
     /// @notice removes limit order based on the current price position (keeper call)
     /// @param account account to liquidate
-    /// @param vToken address of token for the range
+    /// @param poolId id of the pool for the range
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
     /// @param protocol platform constants
     function removeLimitOrder(
         UserInfo storage account,
-        IVToken vToken,
+        uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
         uint256 limitOrderFeeAndFixFee,
-        Account.ProtocolInfo storage protocol
+        ProtocolInfo storage protocol
     ) external {
-        account.tokenPositions.removeLimitOrder(vToken, tickLower, tickUpper, protocol);
+        account.tokenPositions.removeLimitOrder(poolId, tickLower, tickUpper, protocol);
 
         account._updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
     }
 
-    function getView(UserInfo storage account, Account.ProtocolInfo storage protocol)
+    function getInfo(UserInfo storage account, ProtocolInfo storage protocol)
         external
         view
         returns (
@@ -704,15 +706,15 @@ library Account {
         )
     {
         owner = account.owner;
-        tokenDeposits = account.tokenDeposits.getView(protocol);
-        (vBaseBalance, tokenPositions) = account.tokenPositions.getView(protocol);
+        tokenDeposits = account.tokenDeposits.getInfo(protocol);
+        (vBaseBalance, tokenPositions) = account.tokenPositions.getInfo(protocol);
     }
 
     function getNetPosition(
         UserInfo storage account,
-        IVToken vToken,
-        Account.ProtocolInfo storage protocol
+        uint32 poolId,
+        ProtocolInfo storage protocol
     ) external view returns (int256 netPosition) {
-        return account.tokenPositions.getNetPosition(vToken, protocol);
+        return account.tokenPositions.getNetPosition(poolId, protocol);
     }
 }

@@ -89,7 +89,7 @@ contract RageTradeFactory is
 
     struct InitializePoolParams {
         VTokenDeployer.DeployVTokenParams deployVTokenParams;
-        IClearingHouse.PoolSettings rageTradePoolInitialSettings;
+        IClearingHouseStructures.PoolSettings poolInitialSettings;
         uint24 liquidityFeePips;
         uint24 protocolFeePips;
         uint16 slotsToInitialize;
@@ -108,9 +108,9 @@ contract RageTradeFactory is
         // STEP 3: Initialize the price on the vPool
         vPool.initialize(
             initializePoolParams
-                .rageTradePoolInitialSettings
+                .poolInitialSettings
                 .oracle
-                .getTwapPriceX128(initializePoolParams.rageTradePoolInitialSettings.twapDuration)
+                .getTwapPriceX128(initializePoolParams.poolInitialSettings.twapDuration)
                 .toSqrtPriceX96()
         );
 
@@ -133,8 +133,7 @@ contract RageTradeFactory is
         vBase.authorize(address(vPoolWrapper));
         vToken.setVPoolWrapper(address(vPoolWrapper));
         clearingHouse.registerPool(
-            address(vToken),
-            IClearingHouseStructures.Pool(vPool, vPoolWrapper, initializePoolParams.rageTradePoolInitialSettings)
+            IClearingHouseStructures.Pool(vToken, vPool, vPoolWrapper, initializePoolParams.poolInitialSettings)
         );
 
         emit PoolInitialized(vPool, vToken, vPoolWrapper);

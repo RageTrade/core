@@ -138,7 +138,7 @@ describe('Clearing House Library', () => {
         vTokenSymbol: 'vWETH',
         cTokenDecimals: 18,
       },
-      rageTradePoolInitialSettings: {
+      poolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
@@ -352,25 +352,25 @@ describe('Clearing House Library', () => {
 
   describe('#TokenSupport', () => {
     before(async () => {
-      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.false;
-      expect((await clearingHouseTest.cTokens(truncate(realToken.address))).settings.supported).to.be.false;
-      expect((await clearingHouseTest.pools(vBaseAddress)).settings.supported).to.be.false;
-      expect((await clearingHouseTest.cTokens(truncate(rBase.address))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getCollateralInfo(truncate(realToken.address))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vBaseAddress))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(rBase.address))).settings.supported).to.be.false;
       // expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
       // expect(await clearingHouseTest.supportedDeposits(rBase.address)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
       const settings = await getPoolSettings(vTokenAddress);
       settings.supported = true;
-      await expect(clearingHouseTest.connect(user1).updatePoolSettings(vTokenAddress, settings)).to.be.revertedWith(
-        'Unauthorised()',
-      );
+      await expect(
+        clearingHouseTest.connect(user1).updatePoolSettings(truncate(vTokenAddress), settings),
+      ).to.be.revertedWith('Unauthorised()');
     });
     it('Add Token Position Support - Pass', async () => {
       const settings = await getPoolSettings(vTokenAddress);
       settings.supported = true;
-      await clearingHouseTest.connect(admin).updatePoolSettings(vTokenAddress, settings);
-      expect((await clearingHouseTest.pools(vTokenAddress)).settings.supported).to.be.true;
+      await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.true;
     });
     it('Add Token Deposit Support - Fail - Unauthorized', async () => {
       const { settings } = await getCollateralSettings(realToken.address);
@@ -929,7 +929,7 @@ describe('Clearing House Library', () => {
   async function getPoolSettings(vTokenAddress: string) {
     let {
       settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
-    } = await clearingHouseTest.pools(vTokenAddress);
+    } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
     return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
   }
 
@@ -937,7 +937,7 @@ describe('Clearing House Library', () => {
     let {
       token,
       settings: { oracle, twapDuration, supported },
-    } = await clearingHouseTest.cTokens(truncate(vTokenAddress));
+    } = await clearingHouseTest.getCollateralInfo(truncate(vTokenAddress));
     return { token, settings: { oracle, twapDuration, supported } };
   }
 });

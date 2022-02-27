@@ -20,6 +20,7 @@ import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { tokenAmount } from './utils/stealFunds';
+import { truncate } from './utils/vToken';
 
 describe('Account Library Test Basic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -167,11 +168,11 @@ describe('Account Library Test Basic', () => {
       realBase.address,
     );
 
-    const poolObj = await clearingHouse.pools(vBase.address);
-    await test.registerPool(vBase.address, poolObj);
+    const poolObj = await clearingHouse.getPoolInfo(truncate(vBase.address));
+    await test.registerPool(poolObj);
 
-    const poolObj2 = await clearingHouse.pools(vTokenAddress);
-    await test.registerPool(vTokenAddress, poolObj2);
+    const poolObj2 = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+    await test.registerPool(poolObj2);
 
     await test.setVBaseAddress(vBase.address);
   });

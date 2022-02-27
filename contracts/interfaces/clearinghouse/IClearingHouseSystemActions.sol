@@ -28,5 +28,5 @@ interface IClearingHouseSystemActions is IClearingHouseStructures {
         IOracle nativeOracle
     ) external;
 
-    function registerPool(address full, Pool calldata poolInfo) external;
+    function registerPool(Pool calldata poolInfo) external;
 }

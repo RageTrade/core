@@ -14,17 +14,17 @@ describe('VTokenLib Library', () => {
     vTokenLib = (await factory.deploy()) as unknown as VTokenLibTest;
   });
 
-  describe('Functions', () => {
-    // vPool address is not computed now
-    it.skip('vPool', async () => {
-      const result = await vTokenLib.vPool(vTokenAdddres);
-      expect(result.toLowerCase()).to.eq(vPoolAddress.toLowerCase());
-    });
+  // describe('Functions', () => {
+  //   // vPool address is not computed now
+  //   it.skip('vPool', async () => {
+  //     const result = await vTokenLib.vPool(vTokenAdddres);
+  //     expect(result.toLowerCase()).to.eq(vPoolAddress.toLowerCase());
+  //   });
 
-    // vPoolWrapper address is not computed now
-    it.skip('vPoolWrapper', async () => {
-      const result = await vTokenLib.vPoolWrapper(vTokenAdddres);
-      expect(result.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
-    });
-  });
+  //   // vPoolWrapper address is not computed now
+  //   it.skip('vPoolWrapper', async () => {
+  //     const result = await vTokenLib.vPoolWrapper(vTokenAdddres);
+  //     expect(result.toLowerCase()).to.eq(vPoolWrapper.toLowerCase());
+  //   });
+  // });
 });
