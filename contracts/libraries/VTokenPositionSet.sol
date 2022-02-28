@@ -145,12 +145,12 @@ library VTokenPositionSet {
         uint16 marginRatio = poolId.getMarginRatio(isInitialMargin, protocol);
 
         int256 tokenPosition = position.balance;
-        int256 liquidityMaxTokenPosition = position.liquidityPositions.maxNetPosition().toInt256();
+        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(vToken, protocol).toInt256();
 
-        longSideRisk = max(tokenPosition + liquidityMaxTokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(
-            marginRatio,
-            1e5
-        );
+        longSideRisk = max(position.netTraderPosition.mulDiv(price, FixedPoint128.Q128) + longSideRiskRanges, 0).mulDiv(
+                marginRatio,
+                1e5
+            );
 
         shortSideRisk = max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e5);
         return (longSideRisk, shortSideRisk);

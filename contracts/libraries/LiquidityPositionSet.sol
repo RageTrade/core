@@ -71,6 +71,17 @@ library LiquidityPositionSet {
         }
     }
 
+    function longSideRisk(
+        Info storage set,
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
+    ) internal view returns (uint256 risk) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            risk += set.positions[id].longSideRisk(vToken, protocol);
+        }
+    }
+
     function getLiquidityPosition(
         Info storage set,
         int24 tickLower,
