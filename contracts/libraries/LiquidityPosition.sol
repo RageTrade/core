@@ -234,10 +234,7 @@ library LiquidityPosition {
         IVPoolWrapper wrapper
     ) internal view returns (int256 baseValue_) {
         {
-            (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(
-                wrapper.vPool().sqrtPriceCurrent(),
-                false
-            );
+            (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(valuationSqrtPriceX96, false);
             uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
             baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
