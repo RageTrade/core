@@ -5,6 +5,8 @@ pragma solidity ^0.8.9;
 import { SqrtPriceMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/SqrtPriceMath.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
+
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
@@ -193,7 +195,48 @@ library LiquidityPosition {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
-        return SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true);
+        if (position.vTokenAmountIn >= 0)
+            return
+                SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true) -
+                uint256(position.vTokenAmountIn);
+        else
+            return
+                SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true) +
+                uint256(-1 * position.vTokenAmountIn);
+    }
+
+    function longSideRisk(
+        Info storage position,
+        IVToken vToken,
+        Account.ProtocolInfo storage protocol
+    ) internal view returns (uint256) {
+        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
+        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
+        uint256 longPositionExecutionPriceX96;
+        {
+            uint160 sqrtPriceTwapX96 = vToken.getVirtualTwapSqrtPriceX96(protocol);
+            uint160 sqrtPriceForExecutionPriceX96 = sqrtPriceTwapX96 <= sqrtPriceUpperX96
+                ? sqrtPriceTwapX96
+                : sqrtPriceUpperX96;
+            longPositionExecutionPriceX96 = uint256(sqrtPriceLowerX96).mulDiv(
+                sqrtPriceForExecutionPriceX96,
+                FixedPoint96.Q96
+            );
+        }
+
+        uint256 maxNetLongPosition;
+        {
+            uint256 maxLongTokens = SqrtPriceMath.getAmount0Delta(
+                sqrtPriceLowerX96,
+                sqrtPriceUpperX96,
+                position.liquidity,
+                true
+            );
+            if (position.vTokenAmountIn >= 0) maxNetLongPosition = maxLongTokens - uint256(position.vTokenAmountIn);
+            else maxNetLongPosition = maxLongTokens + uint256(-1 * position.vTokenAmountIn);
+        }
+
+        return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
     }
 
     function baseValue(
