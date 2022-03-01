@@ -53,10 +53,9 @@ library Account {
         mapping(uint32 => IClearingHouseStructures.Pool) pools;
         // collateralId => CollateralInfo
         mapping(uint32 => IClearingHouseStructures.Collateral) collaterals;
-        // virtual base
-        IVBase vBase;
-        // settlement collateral / default base token
-        IERC20 cBase; // TODO rename to default collataral?
+        IVBase vBase; // TODO change vBase to vQuote
+        // settlement collateral (makes more sense in real token) / default base token
+        IERC20 cBase; // TODO change cBase to settlementToken
         // accounting settings
         IClearingHouseStructures.LiquidationParams liquidationParams;
         uint256 minRequiredMargin;
@@ -349,7 +348,7 @@ library Account {
         view
         returns (int256 accountMarketValue)
     {
-        accountMarketValue = account._getAccountPositionProfits(protocol); // TODO error in this line
+        accountMarketValue = account._getAccountPositionProfits(protocol);
         accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
         return (accountMarketValue);
     }

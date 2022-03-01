@@ -14,6 +14,7 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 
 import { console } from 'hardhat/console.sol';
 
+// TODO rename to collateral deposit set
 library CTokenDepositSet {
     using AddressHelper for address;
     using Uint32L8ArrayLib for uint32[8];

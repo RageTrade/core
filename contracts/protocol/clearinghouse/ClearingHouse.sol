@@ -414,7 +414,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
 
         // after all the operations are done, check the margin requirements
-        if (checkProfit) account.checkIfProfitAvailable(protocol); // TODO is this needed?
+        if (checkProfit) account.checkIfProfitAvailable(protocol);
         account.checkIfMarginAvailable(true, protocol);
 
         return results;

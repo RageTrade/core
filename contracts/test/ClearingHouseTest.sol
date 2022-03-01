@@ -42,7 +42,6 @@ contract ClearingHouseTest is ClearingHouse {
         return fixFee;
     }
 
-    // TODO remove
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
         return address(vToken).truncate();
     }

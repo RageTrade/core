@@ -37,7 +37,7 @@ library VTokenPositionSet {
     using Uint32L8ArrayLib for uint32[8];
 
     // TODO include VTokenPositionSet in the name of these errors
-    error IncorrectUpdate();
+    error VTokenPositionSetIncorrectUpdate();
     error DeactivationFailed(uint32 poolId);
     error TokenInactive(uint32 poolId);
 
@@ -96,7 +96,7 @@ library VTokenPositionSet {
 
             uint160 sqrtPriceX96 = poolId.getVirtualTwapSqrtPriceX96(protocol);
             //Value of all active range position for the current vToken
-            accountMarketValue += position.liquidityPositions.baseValue(sqrtPriceX96, poolId, protocol);
+            accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
         }
 
         //Value of the base token balance

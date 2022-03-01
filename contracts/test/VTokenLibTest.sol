@@ -8,7 +8,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
-// TODO change to Pool Id Helper test
+// TODO remove
 contract VTokenLibTest is AccountProtocolInfoMock {
     using VTokenLib for IVToken;
 
