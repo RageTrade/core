@@ -43,24 +43,24 @@ library LiquidityPositionSet {
         return _exists(set.active, tickLower, tickUpper);
     }
 
-    function baseValue(
+    function marketValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
         uint32 poolId,
         Account.ProtocolInfo storage protocol
-    ) internal view returns (int256 baseValue_) {
-        baseValue_ = set.baseValue(sqrtPriceCurrent, poolId.vPoolWrapper(protocol));
+    ) internal view returns (int256 marketValue_) {
+        marketValue_ = set.marketValue(sqrtPriceCurrent, poolId.vPoolWrapper(protocol));
     }
 
-    function baseValue(
+    function marketValue(
         Info storage set,
         uint160 sqrtPriceCurrent,
         IVPoolWrapper wrapper // TODO refactor this
-    ) internal view returns (int256 baseValue_) {
+    ) internal view returns (int256 marketValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
             if (id == 0) break;
-            baseValue_ += set.positions[id].baseValue(sqrtPriceCurrent, wrapper);
+            marketValue_ += set.positions[id].marketValue(sqrtPriceCurrent, wrapper);
         }
     }
 

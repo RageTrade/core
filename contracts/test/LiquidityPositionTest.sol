@@ -50,7 +50,7 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
         return lp.maxNetPosition();
     }
 
-    function baseValue(uint160 sqrtPriceCurrent) public view returns (int256) {
-        return lp.baseValue(sqrtPriceCurrent, wrapper);
+    function marketValue(uint160 sqrtPriceCurrent) public view returns (int256) {
+        return lp.marketValue(sqrtPriceCurrent, wrapper);
     }
 }

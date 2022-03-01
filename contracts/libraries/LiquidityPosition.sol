@@ -243,13 +243,13 @@ library LiquidityPosition {
         return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
     }
 
-    function baseValue(
+    function marketValue(
         Info storage position,
         uint160 valuationSqrtPriceX96,
         uint32 poolId,
         Account.ProtocolInfo storage protocol
-    ) internal view returns (int256 baseValue_) {
-        return position.baseValue(valuationSqrtPriceX96, poolId.vPoolWrapper(protocol));
+    ) internal view returns (int256 marketValue_) {
+        return position.marketValue(valuationSqrtPriceX96, poolId.vPoolWrapper(protocol));
     }
 
     function tokenAmountsInRange(
@@ -277,23 +277,23 @@ library LiquidityPosition {
             .toInt256();
     }
 
-    function baseValue(
+    function marketValue(
         Info storage position,
         uint160 valuationSqrtPriceX96,
         IVPoolWrapper wrapper
-    ) internal view returns (int256 baseValue_) {
+    ) internal view returns (int256 marketValue_) {
         {
             (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(valuationSqrtPriceX96, false);
             uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
-            baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
+            marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getExtrapolatedValuesInside(
             position.tickLower,
             position.tickUpper
         );
-        baseValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
-        baseValue_ += position.unrealizedFundingPayment(
+        marketValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
+        marketValue_ += position.unrealizedFundingPayment(
             wrapperValuesInside.sumAX128,
             wrapperValuesInside.sumFpInsideX128
         );
