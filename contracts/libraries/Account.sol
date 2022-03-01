@@ -83,11 +83,6 @@ library Account {
     /// @param poolId shows the poolId for which range is active
     error InvalidLiquidationActiveRangePresent(uint32 poolId);
 
-    /// @notice denotes new account creation
-    /// @param ownerAddress wallet address of account owner
-    /// @param accountNo serial number of the account
-    event AccountCreated(address indexed ownerAddress, uint256 accountNo);
-
     /// @notice denotes deposit of margin
     /// @param accountNo serial number of the account
     /// @param collateralId token in which margin is deposited

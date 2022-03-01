@@ -91,6 +91,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         assert(address(protocol.pools[poolId].vToken).isZero());
 
         protocol.pools[poolId] = poolInfo;
+        emit PoolSettingsUpdated(poolId, poolInfo.settings);
     }
 
     /**
@@ -119,10 +120,18 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         protocol.removeLimitOrderFee = _removeLimitOrderFee;
         protocol.minimumOrderNotional = _minimumOrderNotional;
         protocol.minRequiredMargin = _minRequiredMargin;
+        emit ProtocolSettingsUpdated(
+            _liquidationParams,
+            _removeLimitOrderFee,
+            _minimumOrderNotional,
+            _minRequiredMargin
+        );
     }
 
+    // TODO move to paused util
     function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
         paused = _pause;
+        emit PausedUpdated(_pause);
     }
 
     /// @inheritdoc IClearingHouseOwnerActions
@@ -149,7 +158,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         newAccount.owner = msg.sender;
         newAccount.tokenPositions.accountNo = newAccountId;
 
-        emit Account.AccountCreated(msg.sender, newAccountId);
+        emit AccountCreated(msg.sender, newAccountId);
     }
 
     /// @inheritdoc IClearingHouseActions

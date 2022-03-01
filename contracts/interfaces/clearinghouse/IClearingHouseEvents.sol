@@ -9,10 +9,10 @@ import { IVToken } from '../IVToken.sol';
 import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 
 interface IClearingHouseEvents is IClearingHouseStructures {
-    // TODO this is not being used. use it somewhere?
-    /// @notice new rage trade pool supported
-    /// @param poolId address of vToken
-    event NewVTokenSupported(uint32 poolId);
+    /// @notice denotes new account creation
+    /// @param ownerAddress wallet address of account owner
+    /// @param accountNo serial number of the account
+    event AccountCreated(address indexed ownerAddress, uint256 accountNo);
 
     /// @notice new collateral supported as margin
     /// @param cTokenInfo collateral token info
@@ -34,4 +34,6 @@ interface IClearingHouseEvents is IClearingHouseStructures {
         uint256 minimumOrderNotional,
         uint256 minRequiredMargin
     );
+
+    event PausedUpdated(bool paused);
 }
