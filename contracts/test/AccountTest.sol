@@ -67,19 +67,19 @@ contract AccountTest {
     function createAccount() external {
         Account.UserInfo storage newAccount = accounts[numAccounts];
         newAccount.owner = msg.sender;
-        // newAccount.tokenPositions.accountNo = numAccounts;
+        // newAccount.tokenPositions.accountId = numAccounts;
         numAccounts++;
     }
 
-    function cleanPositions(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountNo, protocol);
-        VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
+    function cleanPositions(uint256 accountId) external {
+        accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
+        VTokenPositionSet.Set storage set = accounts[accountId].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[address(protocol.vBase).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(accountNo, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        set.update(accountId, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
@@ -90,13 +90,13 @@ contract AccountTest {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(accountNo, balanceAdjustments, poolId, protocol);
+            set.update(accountId, balanceAdjustments, poolId, protocol);
         }
     }
 
-    function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountNo, protocol);
-        CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
+    function cleanDeposits(uint256 accountId) external {
+        accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
+        CTokenDepositSet.Info storage set = accounts[accountId].tokenDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
@@ -128,31 +128,31 @@ contract AccountTest {
     }
 
     function addMargin(
-        uint256 accountNo,
+        uint256 accountId,
         address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountNo].addMargin(realTokenAddress, amount);
+        accounts[accountId].addMargin(realTokenAddress, amount);
     }
 
     function removeMargin(
-        uint256 accountNo,
+        uint256 accountId,
         address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountNo].removeMargin(realTokenAddress, amount, protocol, true);
+        accounts[accountId].removeMargin(realTokenAddress, amount, protocol, true);
     }
 
-    function updateProfit(uint256 accountNo, int256 amount) external {
-        accounts[accountNo].updateProfit(amount, protocol, true);
+    function updateProfit(uint256 accountId, int256 amount) external {
+        accounts[accountId].updateProfit(amount, protocol, true);
     }
 
     function swapTokenAmount(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         int256 amount
     ) external {
-        accounts[accountNo].swapToken(
+        accounts[accountId].swapToken(
             vToken.truncate(),
             IClearingHouseStructures.SwapParams(amount, 0, false, false),
             protocol,
@@ -161,11 +161,11 @@ contract AccountTest {
     }
 
     function swapTokenNotional(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         int256 amount
     ) external {
-        accounts[accountNo].swapToken(
+        accounts[accountId].swapToken(
             vToken.truncate(),
             IClearingHouseStructures.SwapParams(amount, 0, true, false),
             protocol,
@@ -174,18 +174,18 @@ contract AccountTest {
     }
 
     function liquidityChange(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
     ) external {
-        accounts[accountNo].liquidityChange(vToken.truncate(), liquidityChangeParams, protocol, true);
+        accounts[accountId].liquidityChange(vToken.truncate(), liquidityChangeParams, protocol, true);
     }
 
-    function liquidateLiquidityPositions(uint256 accountNo)
+    function liquidateLiquidityPositions(uint256 accountId)
         external
         returns (int256 keeperFee, int256 insuranceFundFee)
     {
-        return accounts[accountNo].liquidateLiquidityPositions(fixFee, protocol);
+        return accounts[accountId].liquidateLiquidityPositions(fixFee, protocol);
     }
 
     function getLiquidationPriceX128AndFee(int256 tokensToTrade, address vToken)
@@ -201,12 +201,12 @@ contract AccountTest {
     }
 
     function liquidateTokenPosition(
-        uint256 accountNo,
-        uint256 liquidatorAccountNo,
+        uint256 accountId,
+        uint256 liquidatorAccountId,
         address vToken
     ) external {
-        accounts[accountNo].liquidateTokenPosition(
-            accounts[liquidatorAccountNo],
+        accounts[accountId].liquidateTokenPosition(
+            accounts[liquidatorAccountId],
             10000,
             vToken.truncate(),
             fixFee,
@@ -216,20 +216,20 @@ contract AccountTest {
     }
 
     function removeLimitOrder(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         int24 tickLower,
         int24 tickUpper,
         uint256 removeLimitOrderFee
     ) external {
-        accounts[accountNo].removeLimitOrder(vToken.truncate(), tickLower, tickUpper, removeLimitOrderFee, protocol);
+        accounts[accountId].removeLimitOrder(vToken.truncate(), tickLower, tickUpper, removeLimitOrderFee, protocol);
     }
 
-    function getAccountDepositBalance(uint256 accountNo, address vToken) external view returns (uint256) {
-        return accounts[accountNo].tokenDeposits.deposits[truncate(vToken)];
+    function getAccountDepositBalance(uint256 accountId, address vToken) external view returns (uint256) {
+        return accounts[accountId].tokenDeposits.deposits[truncate(vToken)];
     }
 
-    function getAccountTokenDetails(uint256 accountNo, address vToken)
+    function getAccountTokenDetails(uint256 accountId, address vToken)
         external
         view
         returns (
@@ -238,12 +238,12 @@ contract AccountTest {
             int256 sumACkpt
         )
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[truncate(vToken)];
+        VTokenPosition.Position storage vTokenPosition = accounts[accountId].tokenPositions.positions[truncate(vToken)];
         return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Ckpt);
     }
 
-    function getAccountLiquidityPositionNum(uint256 accountNo, address vToken) external view returns (uint8 num) {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
+    function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {
+        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[truncate(vToken)]
             .liquidityPositions;
@@ -254,7 +254,7 @@ contract AccountTest {
     }
 
     function getAccountLiquidityPositionDetails(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         uint8 num
     )
@@ -272,7 +272,7 @@ contract AccountTest {
             uint256 sumFeeInsideLastX128
         )
     {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
+        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[truncate(vToken)]
             .liquidityPositions;
@@ -293,18 +293,18 @@ contract AccountTest {
         );
     }
 
-    function getAccountValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+    function getAccountValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         external
         view
         returns (int256 accountMarketValue, int256 requiredMargin)
     {
-        (accountMarketValue, requiredMargin) = accounts[accountNo].getAccountValueAndRequiredMargin(
+        (accountMarketValue, requiredMargin) = accounts[accountId].getAccountValueAndRequiredMargin(
             isInitialMargin,
             protocol
         );
     }
 
-    function getAccountProfit(uint256 accountNo) external view returns (int256 profit) {
-        return accounts[accountNo].tokenPositions.getAccountMarketValue(protocol);
+    function getAccountProfit(uint256 accountId) external view returns (int256 profit) {
+        return accounts[accountId].tokenPositions.getAccountMarketValue(protocol);
     }
 }

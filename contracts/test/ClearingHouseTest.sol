@@ -46,14 +46,14 @@ contract ClearingHouseTest is ClearingHouse {
         return address(vToken).truncate();
     }
 
-    function cleanPositions(uint256 accountNo) external {
-        VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
+    function cleanPositions(uint256 accountId) external {
+        VTokenPositionSet.Set storage set = accounts[accountId].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[address(protocol.vBase).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(accountNo, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        set.update(accountId, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
@@ -64,13 +64,13 @@ contract ClearingHouseTest is ClearingHouse {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(accountNo, balanceAdjustments, poolId, protocol);
+            set.update(accountId, balanceAdjustments, poolId, protocol);
         }
     }
 
-    function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountNo, protocol);
-        CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
+    function cleanDeposits(uint256 accountId) external {
+        accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
+        CTokenDepositSet.Info storage set = accounts[accountId].tokenDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
@@ -85,32 +85,32 @@ contract ClearingHouseTest is ClearingHouse {
         return protocol.pools[address(vToken).truncate()].vToken;
     }
 
-    function getAccountOwner(uint256 accountNo) external view returns (address owner) {
-        return accounts[accountNo].owner;
+    function getAccountOwner(uint256 accountId) external view returns (address owner) {
+        return accounts[accountId].owner;
     }
 
-    // function getAccountNumInTokenPositionSet(uint256 accountNo) external view returns (uint256 accountNoInTokenSet) {
-    //     return accounts[accountNo].tokenPositions.accountNo;
+    // function getAccountNumInTokenPositionSet(uint256 accountId) external view returns (uint256 accountIdInTokenSet) {
+    //     return accounts[accountId].tokenPositions.accountId;
     // }
 
-    function getAccountDepositBalance(uint256 accountNo, IVToken vToken) external view returns (uint256 balance) {
-        balance = accounts[accountNo].tokenDeposits.deposits[address(vToken).truncate()];
+    function getAccountDepositBalance(uint256 accountId, IVToken vToken) external view returns (uint256 balance) {
+        balance = accounts[accountId].tokenDeposits.deposits[address(vToken).truncate()];
     }
 
-    function getAccountOpenTokenPosition(uint256 accountNo, IVToken vToken)
+    function getAccountOpenTokenPosition(uint256 accountId, IVToken vToken)
         external
         view
         returns (int256 balance, int256 netTraderPosition)
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
+        VTokenPosition.Position storage vTokenPosition = accounts[accountId].tokenPositions.positions[
             address(vToken).truncate()
         ];
         balance = vTokenPosition.balance;
         netTraderPosition = vTokenPosition.netTraderPosition;
     }
 
-    function getAccountLiquidityPositionNum(uint256 accountNo, address vToken) external view returns (uint8 num) {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
+    function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {
+        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[vToken.truncate()]
             .liquidityPositions;
@@ -120,12 +120,12 @@ contract ClearingHouseTest is ClearingHouse {
         }
     }
 
-    function getAccountTokenPositionFunding(uint256 accountNo, IVToken vToken)
+    function getAccountTokenPositionFunding(uint256 accountId, IVToken vToken)
         external
         view
         returns (int256 fundingPayment)
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountNo].tokenPositions.positions[
+        VTokenPosition.Position storage vTokenPosition = accounts[accountId].tokenPositions.positions[
             address(vToken).truncate()
         ];
 
@@ -135,11 +135,11 @@ contract ClearingHouseTest is ClearingHouse {
     }
 
     function getAccountLiquidityPositionFundingAndFee(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         uint8 num
     ) external view returns (int256 fundingPayment, uint256 unrealizedLiquidityFee) {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
+        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[vToken.truncate()]
             .liquidityPositions;
@@ -161,7 +161,7 @@ contract ClearingHouseTest is ClearingHouse {
     }
 
     function getAccountLiquidityPositionDetails(
-        uint256 accountNo,
+        uint256 accountId,
         address vToken,
         uint8 num
     )
@@ -178,7 +178,7 @@ contract ClearingHouseTest is ClearingHouse {
             uint256 sumFeeInsideLastX128
         )
     {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountNo]
+        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[vToken.truncate()]
             .liquidityPositions;
@@ -198,11 +198,11 @@ contract ClearingHouseTest is ClearingHouse {
         );
     }
 
-    function getAccountValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+    function getAccountValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         external
         view
         returns (int256 accountMarketValue, int256 requiredMargin)
     {
-        return accounts[accountNo].getAccountValueAndRequiredMargin(isInitialMargin, protocol);
+        return accounts[accountId].getAccountValueAndRequiredMargin(isInitialMargin, protocol);
     }
 }

@@ -149,7 +149,7 @@ library LiquidityPositionSet {
 
     function liquidityChange(
         Info storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
@@ -163,7 +163,7 @@ library LiquidityPositionSet {
         position.limitOrderType = liquidityChangeParams.limitOrderType;
 
         set.liquidityChange(
-            accountNo,
+            accountId,
             poolId,
             position,
             liquidityChangeParams.liquidityDelta,
@@ -174,17 +174,17 @@ library LiquidityPositionSet {
 
     function liquidityChange(
         Info storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         LiquidityPosition.Info storage position,
         int128 liquidity,
         IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        position.liquidityChange(accountNo, poolId, liquidity, wrapper, balanceAdjustments);
+        position.liquidityChange(accountId, poolId, liquidity, wrapper, balanceAdjustments);
 
         emit Account.LiquidityTokenPositionChange(
-            accountNo,
+            accountId,
             poolId,
             position.tickLower,
             position.tickUpper,
@@ -198,18 +198,18 @@ library LiquidityPositionSet {
 
     function closeLiquidityPosition(
         Info storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         LiquidityPosition.Info storage position,
         IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        set.liquidityChange(accountNo, poolId, position, -int128(position.liquidity), wrapper, balanceAdjustments);
+        set.liquidityChange(accountId, poolId, position, -int128(position.liquidity), wrapper, balanceAdjustments);
     }
 
     function removeLimitOrder(
         Info storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         int24 currentTick,
         int24 tickLower,
@@ -219,12 +219,12 @@ library LiquidityPositionSet {
     ) internal {
         LiquidityPosition.Info storage position = set.getLiquidityPosition(tickLower, tickUpper);
         position.checkValidLimitOrderRemoval(currentTick);
-        set.closeLiquidityPosition(accountNo, poolId, position, wrapper, balanceAdjustments);
+        set.closeLiquidityPosition(accountId, poolId, position, wrapper, balanceAdjustments);
     }
 
     function closeAllLiquidityPositions(
         Info storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
@@ -236,7 +236,7 @@ library LiquidityPositionSet {
 
             position = set.positions[set.active[0]];
 
-            set.closeLiquidityPosition(accountNo, poolId, position, wrapper, balanceAdjustmentsCurrent);
+            set.closeLiquidityPosition(accountId, poolId, position, wrapper, balanceAdjustmentsCurrent);
 
             balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
             balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;

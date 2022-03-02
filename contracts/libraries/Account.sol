@@ -86,30 +86,30 @@ library Account {
     error InvalidLiquidationActiveRangePresent(uint32 poolId);
 
     /// @notice denotes withdrawal of profit in base token
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param amount amount of profit withdrawn
-    event UpdateProfit(uint256 indexed accountNo, int256 amount);
+    event UpdateProfit(uint256 indexed accountId, int256 amount);
 
     /// @notice denotes token position change
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param poolId truncated address of vtoken whose position was taken
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
     event TokenPositionChange(
-        uint256 indexed accountNo,
+        uint256 indexed accountId,
         uint32 indexed poolId,
         int256 tokenAmountOut,
         int256 baseAmountOut
     );
 
     /// @notice denotes token position change due to liquidity add/remove
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param poolId address of token whose position was taken
     /// @param tickLower lower tick of the range updated
     /// @param tickUpper upper tick of the range updated
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     event LiquidityTokenPositionChange(
-        uint256 indexed accountNo,
+        uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
@@ -117,7 +117,7 @@ library Account {
     );
 
     /// @notice denotes liquidity add/remove
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param poolId address of token whose position was taken
     /// @param tickLower lower tick of the range updated
     /// @param tickUpper upper tick of the range updated
@@ -126,7 +126,7 @@ library Account {
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
     event LiquidityChange(
-        uint256 indexed accountNo,
+        uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
@@ -138,13 +138,13 @@ library Account {
 
     /// @notice denotes funding payment for a range / token position
     /// @dev for a token position tickLower = tickUpper = 0
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param poolId address of token for which funding was paid
     /// @param tickLower lower tick of the range for which funding was paid
     /// @param tickUpper upper tick of the range for which funding was paid
     /// @param amount amount of funding paid (negative) or received (positive)
     event FundingPayment(
-        uint256 indexed accountNo,
+        uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
@@ -153,13 +153,13 @@ library Account {
 
     /// @notice denotes fee payment for a range / token position
     /// @dev for a token position tickLower = tickUpper = 0
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param poolId address of token for which fee was paid
     /// @param tickLower lower tick of the range for which fee was paid
     /// @param tickUpper upper tick of the range for which fee was paid
     /// @param amount amount of fee paid (negative) or received (positive)
     event LiquidityFee(
-        uint256 indexed accountNo,
+        uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
@@ -173,13 +173,13 @@ library Account {
 
     /// @notice denotes range position liquidation event
     /// @dev all range positions are liquidated and the current tokens inside the range are added in as token positions to the account
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param keeperAddress address of keeper who performed the liquidation
     /// @param liquidationFee total liquidation fee charged to the account
     /// @param keeperFee total liquidaiton fee paid to the keeper (positive only)
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enought to cover the fee)
     event LiquidateRanges(
-        uint256 indexed accountNo,
+        uint256 indexed accountId,
         address indexed keeperAddress,
         int256 liquidationFee,
         int256 keeperFee,
@@ -188,16 +188,16 @@ library Account {
 
     /// @notice denotes token position liquidation event
     /// @dev the selected token position is take from the current account and moved to liquidatorAccount at a discounted prive to current pool price
-    /// @param accountNo serial number of the account
-    /// @param liquidatorAccountNo  account which performed the liquidation
+    /// @param accountId serial number of the account
+    /// @param liquidatorAccountId  account which performed the liquidation
     /// @param poolId id of the rage trade pool for whose position was liquidated
     /// @param liquidationBps the fraction of current position which was liquidated in bps
     /// @param liquidationPriceX128 price at which liquidation was performed
     /// @param liquidatorPriceX128 discounted price at which tokens were transferred to the liquidator account
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enough to cover the fee)
     event LiquidateTokenPosition(
-        uint256 indexed accountNo,
-        uint256 indexed liquidatorAccountNo,
+        uint256 indexed accountId,
+        uint256 indexed liquidatorAccountId,
         uint32 indexed poolId,
         uint16 liquidationBps,
         uint256 liquidationPriceX128,

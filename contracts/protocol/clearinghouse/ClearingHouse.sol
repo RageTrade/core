@@ -163,22 +163,22 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     /// @inheritdoc IClearingHouseActions
     function addMargin(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 cTokenTruncatedAddress,
         uint256 amount
     ) public notPaused {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
-        _addMargin(accountNo, account, cTokenTruncatedAddress, amount);
+        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        _addMargin(accountId, account, cTokenTruncatedAddress, amount);
     }
 
-    function _getAccountAndCheckOwner(uint256 accountNo) internal view returns (Account.UserInfo storage account) {
-        account = accounts[accountNo];
+    function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.UserInfo storage account) {
+        account = accounts[accountId];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
     }
 
     // done
     function _addMargin(
-        uint256 accountNo,
+        uint256 accountId,
         Account.UserInfo storage account,
         uint32 collateralId,
         uint256 amount
@@ -189,7 +189,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         account.addMargin(address(collateral.token), amount);
 
-        emit DepositMargin(accountNo, collateralId, amount);
+        emit DepositMargin(accountId, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -203,16 +203,16 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     /// @inheritdoc IClearingHouseActions
     function removeMargin(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 cTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
-        _removeMargin(accountNo, account, cTokenTruncatedAddress, amount, true);
+        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        _removeMargin(accountId, account, cTokenTruncatedAddress, amount, true);
     }
 
     function _removeMargin(
-        uint256 accountNo,
+        uint256 accountId,
         Account.UserInfo storage account,
         uint32 collateralId,
         uint256 amount,
@@ -224,12 +224,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         collateral.token.safeTransfer(msg.sender, amount);
 
-        emit WithdrawMargin(accountNo, collateralId, amount);
+        emit WithdrawMargin(accountId, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
-    function updateProfit(uint256 accountNo, int256 amount) external notPaused {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
+    function updateProfit(uint256 accountId, int256 amount) external notPaused {
+        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
 
         _updateProfit(account, amount, true);
     }
@@ -252,11 +252,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     /// @inheritdoc IClearingHouseActions
     function swapToken(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 vTokenTruncatedAddress,
         SwapParams memory swapParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
+        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
         return _swapToken(account, vTokenTruncatedAddress, swapParams, true);
     }
 
@@ -283,11 +283,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     /// @inheritdoc IClearingHouseActions
     function updateRangeOrder(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 vTokenTruncatedAddress,
         LiquidityChangeParams calldata liquidityChangeParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
+        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
 
         return _updateRangeOrder(account, vTokenTruncatedAddress, liquidityChangeParams, true);
     }
@@ -321,30 +321,30 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     /// @inheritdoc IClearingHouseActions
     function removeLimitOrder(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper
     ) external {
-        _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, 0);
+        _removeLimitOrder(accountId, vTokenTruncatedAddress, tickLower, tickUpper, 0);
     }
 
     /// @inheritdoc IClearingHouseActions
-    function liquidateLiquidityPositions(uint256 accountNo) external {
-        _liquidateLiquidityPositions(accountNo, 0);
+    function liquidateLiquidityPositions(uint256 accountId) external {
+        _liquidateLiquidityPositions(accountId, 0);
     }
 
     /// @inheritdoc IClearingHouseActions
     function liquidateTokenPosition(
-        uint256 liquidatorAccountNo,
-        uint256 targetAccountNo,
+        uint256 liquidatorAccountId,
+        uint256 targetAccountId,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         return
             _liquidateTokenPosition(
-                accounts[liquidatorAccountNo],
-                accounts[targetAccountNo],
+                accounts[liquidatorAccountId],
+                accounts[targetAccountId],
                 vTokenTruncatedAddress,
                 liquidationBps,
                 0
@@ -355,13 +355,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         MULTICALL
      */
 
-    function multicallWithSingleMarginCheck(uint256 accountNo, MulticallOperation[] calldata operations)
+    function multicallWithSingleMarginCheck(uint256 accountId, MulticallOperation[] calldata operations)
         external
         returns (bytes[] memory results)
     {
         results = new bytes[](operations.length);
 
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
+        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
 
         bool checkProfit = false;
 
@@ -369,11 +369,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             if (operations[i].operationType == MulticallOperationType.ADD_MARGIN) {
                 // ADD_MARGIN
                 (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _addMargin(accountNo, account, cTokenTruncatedAddress, amount);
+                _addMargin(accountId, account, cTokenTruncatedAddress, amount);
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_MARGIN) {
                 // REMOVE_MARGIN
                 (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _removeMargin(accountNo, account, cTokenTruncatedAddress, amount, false);
+                _removeMargin(accountId, account, cTokenTruncatedAddress, amount, false);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
@@ -409,20 +409,20 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                 // REMOVE_LIMIT_ORDER
                 (uint32 vTokenTruncatedAddress, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi
                     .decode(operations[i].data, (uint32, int24, int24, uint256));
-                _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, limitOrderFeeAndFixFee);
+                _removeLimitOrder(accountId, vTokenTruncatedAddress, tickLower, tickUpper, limitOrderFeeAndFixFee);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS) {
                 // LIQUIDATE_LIQUIDITY_POSITIONS
-                _liquidateLiquidityPositions(accountNo, 0);
+                _liquidateLiquidityPositions(accountId, 0);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
                 // LIQUIDATE_TOKEN_POSITION
-                (uint256 targetAccountNo, uint32 vTokenTruncatedAddress, uint16 liquidationBps) = abi.decode(
+                (uint256 targetAccountId, uint32 vTokenTruncatedAddress, uint16 liquidationBps) = abi.decode(
                     operations[i].data,
                     (uint256, uint32, uint16)
                 );
                 results[i] = abi.encode(
                     _liquidateTokenPosition(
-                        accounts[accountNo],
-                        accounts[targetAccountNo],
+                        accounts[accountId],
+                        accounts[targetAccountId],
                         vTokenTruncatedAddress,
                         liquidationBps,
                         0
@@ -445,28 +445,28 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
      */
 
     function removeLimitOrderWithGasClaim(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 vTokenTruncatedAddress,
         int24 tickLower,
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
     ) external checkGasUsedClaim(gasComputationUnitsClaim) returns (uint256 keeperFee) {
         Calldata.limit(4 + 5 * 0x20);
-        return _removeLimitOrder(accountNo, vTokenTruncatedAddress, tickLower, tickUpper, gasComputationUnitsClaim);
+        return _removeLimitOrder(accountId, vTokenTruncatedAddress, tickLower, tickUpper, gasComputationUnitsClaim);
     }
 
-    function liquidateLiquidityPositionsWithGasClaim(uint256 accountNo, uint256 gasComputationUnitsClaim)
+    function liquidateLiquidityPositionsWithGasClaim(uint256 accountId, uint256 gasComputationUnitsClaim)
         external
         checkGasUsedClaim(gasComputationUnitsClaim)
         returns (int256 keeperFee)
     {
         Calldata.limit(4 + 2 * 0x20);
-        return _liquidateLiquidityPositions(accountNo, gasComputationUnitsClaim);
+        return _liquidateLiquidityPositions(accountId, gasComputationUnitsClaim);
     }
 
     function liquidateTokenPositionWithGasClaim(
-        uint256 liquidatorAccountNo,
-        uint256 targetAccountNo,
+        uint256 liquidatorAccountId,
+        uint256 targetAccountId,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
@@ -480,8 +480,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         return
             // TODO see if we really need to evaluate storage pointers and pass down from here
             _liquidateTokenPosition(
-                accounts[liquidatorAccountNo],
-                accounts[targetAccountNo],
+                accounts[liquidatorAccountId],
+                accounts[targetAccountId],
                 vTokenTruncatedAddress,
                 liquidationBps,
                 gasComputationUnitsClaim
@@ -522,12 +522,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         if (!protocol.pools[poolId].settings.supported) revert UnsupportedVToken(vToken); // TODO change this to UnsupportedPool
     }
 
-    function _liquidateLiquidityPositions(uint256 accountNo, uint256 gasComputationUnitsClaim)
+    function _liquidateLiquidityPositions(uint256 accountId, uint256 gasComputationUnitsClaim)
         internal
         notPaused
         returns (int256 keeperFee)
     {
-        Account.UserInfo storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountId];
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
             _getFixFee(gasComputationUnitsClaim),
@@ -539,7 +539,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         protocol.cBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
-        emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
+        emit Account.LiquidateRanges(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
     // TODO move this to Account library
@@ -568,13 +568,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     function _removeLimitOrder(
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (uint256 keeperFee) {
-        Account.UserInfo storage account = accounts[accountNo];
+        Account.UserInfo storage account = accounts[accountId];
 
         _checkPoolId(poolId);
         keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);

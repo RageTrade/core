@@ -28,7 +28,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
 
     VPoolWrapperMock public wrapper;
 
-    uint256 accountNo = 123;
+    uint256 accountId = 123;
 
     constructor() {
         wrapper = new VPoolWrapperMock();
@@ -42,16 +42,16 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
     }
 
     function update(IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
-        dummy.update(accountNo, balanceAdjustments, address(vToken).truncate(), protocol);
+        dummy.update(accountId, balanceAdjustments, address(vToken).truncate(), protocol);
     }
 
     function realizeFundingPaymentToAccount(IVToken vToken) external {
-        dummy.realizeFundingPayment(accountNo, address(vToken).truncate(), wrapper, protocol);
+        dummy.realizeFundingPayment(accountId, address(vToken).truncate(), wrapper, protocol);
     }
 
     function swapTokenAmount(IVToken vToken, int256 vTokenAmount) external {
         dummy.swapToken(
-            accountNo,
+            accountId,
             address(vToken).truncate(),
             IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
             wrapper,
@@ -61,7 +61,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
 
     function swapTokenNotional(IVToken vToken, int256 vTokenNotional) external {
         dummy.swapToken(
-            accountNo,
+            accountId,
             address(vToken).truncate(),
             IClearingHouseStructures.SwapParams(vTokenNotional, 0, true, false),
             wrapper,
@@ -85,7 +85,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
                 false,
                 IClearingHouseEnums.LimitOrderType.NONE
             );
-        dummy.liquidityChange(accountNo, address(vToken).truncate(), liquidityChangeParams, wrapper, protocol);
+        dummy.liquidityChange(accountId, address(vToken).truncate(), liquidityChangeParams, wrapper, protocol);
     }
 
     function liquidateLiquidityPositions(IVToken vToken) external {

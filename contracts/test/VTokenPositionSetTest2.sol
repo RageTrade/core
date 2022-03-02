@@ -22,7 +22,7 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
 
     VTokenPositionSet.Set dummy;
 
-    uint256 accountNo = 123;
+    uint256 accountId = 123;
 
     function init(IVToken vToken) external {
         dummy.activate(address(vToken).truncate());
@@ -30,7 +30,7 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
     }
 
     function update(IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
-        dummy.update(accountNo, balanceAdjustments, address(vToken).truncate(), protocol);
+        dummy.update(accountId, balanceAdjustments, address(vToken).truncate(), protocol);
     }
 
     function swap(IVToken vToken, IClearingHouseStructures.SwapParams memory swapParams) external {
@@ -41,7 +41,7 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
         IVToken vToken,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
     ) external {
-        dummy.liquidityChange(accountNo, address(vToken).truncate(), liquidityChangeParams, protocol);
+        dummy.liquidityChange(accountId, address(vToken).truncate(), liquidityChangeParams, protocol);
     }
 
     function getAllTokenPositionValue() external view returns (int256) {

@@ -230,18 +230,18 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param balanceAdjustments platform constants
     /// @param poolId id of the rage trade pool
-    /// @param accountNo account identifier, used for emitting event
+    /// @param accountId account identifier, used for emitting event
     /// @param protocol platform constants
     function update(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
         uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal {
         // TODO is vBase.truncate() is necessary? can it be passed from args?
         if (poolId != address(protocol.vBase).truncate()) {
-            set.realizeFundingPayment(accountNo, poolId, protocol);
+            set.realizeFundingPayment(accountId, poolId, protocol);
             set.active.include(poolId);
         }
         VTokenPosition.Position storage _VTokenPosition = set.positions[poolId];
@@ -259,26 +259,26 @@ library VTokenPositionSet {
     /// @notice realizes funding payment to base balance
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
-    /// @param accountNo account identifier, used for emitting event
+    /// @param accountId account identifier, used for emitting event
     /// @param protocol platform constants
     function realizeFundingPayment(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal {
-        set.realizeFundingPayment(accountNo, poolId, protocol.pools[poolId].vPoolWrapper, protocol);
+        set.realizeFundingPayment(accountId, poolId, protocol.pools[poolId].vPoolWrapper, protocol);
     }
 
     /// @notice realizes funding payment to base balance
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
-    /// @param accountNo account identifier, used for emitting event
+    /// @param accountId account identifier, used for emitting event
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param protocol platform constants
     function realizeFundingPayment(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
@@ -293,7 +293,7 @@ library VTokenPositionSet {
 
         _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
 
-        emit Account.FundingPayment(accountNo, poolId, 0, 0, fundingPayment);
+        emit Account.FundingPayment(accountId, poolId, 0, 0, fundingPayment);
     }
 
     /// @notice get or create token position
@@ -330,12 +330,12 @@ library VTokenPositionSet {
     /// @return vBaseAmountOut - base amount coming out of pool
     function swapToken(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.SwapParams memory swapParams,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        return set.swapToken(accountNo, poolId, swapParams, poolId.vPoolWrapper(protocol), protocol);
+        return set.swapToken(accountId, poolId, swapParams, poolId.vPoolWrapper(protocol), protocol);
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount
@@ -348,14 +348,14 @@ library VTokenPositionSet {
     /// @return vBaseAmountOut - base amount coming out of pool
     function swapTokenAmount(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         int256 vTokenAmount,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
             set.swapToken(
-                accountNo,
+                accountId,
                 poolId,
                 /// @dev 0 means no price limit and false means amount mentioned is token amount
                 IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
@@ -374,7 +374,7 @@ library VTokenPositionSet {
     /// @return vBaseAmountOut - base amount coming out of pool
     function swapToken(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.SwapParams memory swapParams,
         IVPoolWrapper wrapper,
@@ -393,9 +393,9 @@ library VTokenPositionSet {
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
             .BalanceAdjustments(vBaseAmountOut, vTokenAmountOut, vTokenAmountOut);
 
-        set.update(accountNo, balanceAdjustments, poolId, protocol);
+        set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        emit Account.TokenPositionChange(accountNo, poolId, vTokenAmountOut, vBaseAmountOut);
+        emit Account.TokenPositionChange(accountId, poolId, vTokenAmountOut, vBaseAmountOut);
     }
 
     /// @notice function to remove an eligible limit order
@@ -407,13 +407,13 @@ library VTokenPositionSet {
     /// @param protocol platform constants
     function removeLimitOrder(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
         Account.ProtocolInfo storage protocol
     ) internal {
-        set.removeLimitOrder(accountNo, poolId, tickLower, tickUpper, protocol.pools[poolId].vPoolWrapper, protocol);
+        set.removeLimitOrder(accountId, poolId, tickLower, tickUpper, protocol.pools[poolId].vPoolWrapper, protocol);
     }
 
     /// @notice function for liquidity add/remove
@@ -424,14 +424,14 @@ library VTokenPositionSet {
     /// @return vBaseAmountOut amount of base tokens that account received (positive) or paid (negative)
     function liquidityChange(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Account.ProtocolInfo storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         return
             set.liquidityChange(
-                accountNo,
+                accountId,
                 poolId,
                 liquidityChangeParams,
                 protocol.pools[poolId].vPoolWrapper,
@@ -446,11 +446,11 @@ library VTokenPositionSet {
     /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         Account.ProtocolInfo storage protocol
     ) internal returns (uint256 notionalAmountClosed) {
-        return set.liquidateLiquidityPositions(accountNo, poolId, protocol.pools[poolId].vPoolWrapper, protocol);
+        return set.liquidateLiquidityPositions(accountId, poolId, protocol.pools[poolId].vPoolWrapper, protocol);
     }
 
     /// @notice function to liquidate all liquidity positions
@@ -459,14 +459,14 @@ library VTokenPositionSet {
     /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         Account.ProtocolInfo storage protocol
     ) internal returns (uint256 notionalAmountClosed) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
-            notionalAmountClosed += set.liquidateLiquidityPositions(accountNo, set.active[i], protocol);
+            notionalAmountClosed += set.liquidateLiquidityPositions(accountId, set.active[i], protocol);
         }
     }
 
@@ -478,7 +478,7 @@ library VTokenPositionSet {
     /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
@@ -486,13 +486,13 @@ library VTokenPositionSet {
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         set.getTokenPosition(poolId, false, protocol).liquidityPositions.closeAllLiquidityPositions(
-            accountNo,
+            accountId,
             poolId,
             wrapper,
             balanceAdjustments
         );
 
-        set.update(accountNo, balanceAdjustments, poolId, protocol);
+        set.update(accountId, balanceAdjustments, poolId, protocol);
 
         //Returns notional value of token position closed
         return getTokenNotionalValue(poolId, balanceAdjustments.traderPositionIncrease, protocol);
@@ -504,7 +504,7 @@ library VTokenPositionSet {
     /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
     ) internal returns (uint256 notionalAmountClosed) {
@@ -512,7 +512,7 @@ library VTokenPositionSet {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
 
-            notionalAmountClosed += set.liquidateLiquidityPositions(accountNo, set.active[i], wrapper, protocol);
+            notionalAmountClosed += set.liquidateLiquidityPositions(accountId, set.active[i], wrapper, protocol);
         }
     }
 
@@ -525,7 +525,7 @@ library VTokenPositionSet {
     /// @return vBaseAmountOut amount of base tokens that account received (positive) or paid (negative)
     function liquidityChange(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
@@ -536,17 +536,17 @@ library VTokenPositionSet {
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         vTokenPosition.liquidityPositions.liquidityChange(
-            accountNo,
+            accountId,
             poolId,
             liquidityChangeParams,
             wrapper,
             balanceAdjustments
         );
 
-        set.update(accountNo, balanceAdjustments, poolId, protocol);
+        set.update(accountId, balanceAdjustments, poolId, protocol);
 
         if (liquidityChangeParams.closeTokenPosition) {
-            set.swapTokenAmount(accountNo, poolId, -balanceAdjustments.traderPositionIncrease, protocol);
+            set.swapTokenAmount(accountId, poolId, -balanceAdjustments.traderPositionIncrease, protocol);
         }
 
         return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease);
@@ -562,7 +562,7 @@ library VTokenPositionSet {
     /// @param protocol platform constants
     function removeLimitOrder(
         Set storage set,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
@@ -575,7 +575,7 @@ library VTokenPositionSet {
         int24 currentTick = poolId.getVirtualCurrentTick(protocol);
 
         vTokenPosition.liquidityPositions.removeLimitOrder(
-            accountNo,
+            accountId,
             poolId,
             currentTick,
             tickLower,
@@ -584,7 +584,7 @@ library VTokenPositionSet {
             balanceAdjustments
         );
 
-        set.update(accountNo, balanceAdjustments, poolId, protocol);
+        set.update(accountId, balanceAdjustments, poolId, protocol);
     }
 
     function getInfo(Set storage set, Account.ProtocolInfo storage protocol)

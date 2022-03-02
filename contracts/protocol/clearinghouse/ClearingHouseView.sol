@@ -67,7 +67,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         Account.UserInfo VIEW
      */
 
-    function getAccountInfo(uint256 accountNo)
+    function getAccountInfo(uint256 accountId)
         public
         view
         returns (
@@ -77,26 +77,26 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
             VTokenPositionView[] memory tokenPositions
         )
     {
-        return accounts[accountNo].getInfo(protocol);
+        return accounts[accountId].getInfo(protocol);
     }
 
     // isInitialMargin true is initial margin, false is maintainance margin
-    function getAccountMarketValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+    function getAccountMarketValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         public
         view
         returns (int256 accountMarketValue, int256 requiredMargin)
     {
-        (accountMarketValue, requiredMargin) = accounts[accountNo].getAccountValueAndRequiredMargin(
+        (accountMarketValue, requiredMargin) = accounts[accountId].getAccountValueAndRequiredMargin(
             isInitialMargin,
             protocol
         );
     }
 
-    function getAccountNetProfit(uint256 accountNo) public view returns (int256 accountNetProfit) {
-        accountNetProfit = accounts[accountNo].getAccountPositionProfits(protocol);
+    function getAccountNetProfit(uint256 accountId) public view returns (int256 accountNetProfit) {
+        accountNetProfit = accounts[accountId].getAccountPositionProfits(protocol);
     }
 
-    function getNetTokenPosition(uint256 accountNo, uint32 poolId) public view returns (int256 netPosition) {
-        return accounts[accountNo].getNetPosition(poolId, protocol);
+    function getNetTokenPosition(uint256 accountId, uint32 poolId) public view returns (int256 netPosition) {
+        return accounts[accountId].getNetPosition(poolId, protocol);
     }
 }

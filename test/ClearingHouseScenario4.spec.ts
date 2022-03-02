@@ -254,7 +254,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       .filter(event => event?.name === 'TokenPositionChange') as unknown as TokenPositionChangeEvent[];
 
     const event = eventList[0];
-    expect(event.args.accountNo).to.eq(expectedUserAccountNo);
+    expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
     expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
     expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
@@ -284,7 +284,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     const event = eventList[0];
 
-    expect(event.args.accountNo).to.eq(expectedUserAccountNo);
+    expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
     expect(event.args.tickLower).to.eq(expectedTickLower);
     expect(event.args.tickUpper).to.eq(expectedTickUpper);

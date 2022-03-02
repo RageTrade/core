@@ -11,20 +11,20 @@ import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 interface IClearingHouseEvents is IClearingHouseStructures {
     /// @notice denotes new account creation
     /// @param ownerAddress wallet address of account owner
-    /// @param accountNo serial number of the account
-    event AccountCreated(address indexed ownerAddress, uint256 accountNo);
+    /// @param accountId serial number of the account
+    event AccountCreated(address indexed ownerAddress, uint256 accountId);
 
     /// @notice denotes deposit of margin
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param collateralId token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 indexed accountNo, uint32 indexed collateralId, uint256 amount);
+    event DepositMargin(uint256 indexed accountId, uint32 indexed collateralId, uint256 amount);
 
     /// @notice denotes withdrawal of margin
-    /// @param accountNo serial number of the account
+    /// @param accountId serial number of the account
     /// @param collateralId token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 indexed accountNo, uint32 indexed collateralId, uint256 amount);
+    event WithdrawMargin(uint256 indexed accountId, uint32 indexed collateralId, uint256 amount);
 
     /// @notice new collateral supported as margin
     /// @param cTokenInfo collateral token info

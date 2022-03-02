@@ -85,7 +85,7 @@ library LiquidityPosition {
 
     function liquidityChange(
         Info storage position,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         int128 liquidity,
         IVPoolWrapper wrapper,
@@ -97,13 +97,13 @@ library LiquidityPosition {
             IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside
         ) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
 
-        position.update(accountNo, poolId, wrapperValuesInside, balanceAdjustments);
+        position.update(accountId, poolId, wrapperValuesInside, balanceAdjustments);
 
         balanceAdjustments.vBaseIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
         emit Account.LiquidityChange(
-            accountNo,
+            accountId,
             poolId,
             position.tickLower,
             position.tickUpper,
@@ -131,7 +131,7 @@ library LiquidityPosition {
 
     function update(
         Info storage position,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
@@ -145,8 +145,8 @@ library LiquidityPosition {
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
-        emit Account.FundingPayment(accountNo, poolId, position.tickLower, position.tickUpper, fundingPayment);
-        emit Account.LiquidityFee(accountNo, poolId, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
+        emit Account.FundingPayment(accountId, poolId, position.tickLower, position.tickUpper, fundingPayment);
+        emit Account.LiquidityFee(accountId, poolId, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
         // updating checkpoints
         position.sumALastX128 = wrapperValuesInside.sumAX128;
         position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
