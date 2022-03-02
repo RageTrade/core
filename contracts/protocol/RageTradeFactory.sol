@@ -24,7 +24,6 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { PriceMath } from '../libraries/PriceMath.sol';
-import { VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
@@ -41,7 +40,6 @@ contract RageTradeFactory is
     VPoolWrapperDeployer,
     VTokenDeployer
 {
-    using VTokenLib for IVToken;
     using PriceMath for uint256;
 
     IVBase public immutable vBase;

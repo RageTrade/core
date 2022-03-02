@@ -4,11 +4,9 @@ pragma solidity ^0.8.9;
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 import { Account } from '../../libraries/Account.sol';
-import { IVToken } from '../../libraries/VTokenLib.sol';
 
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
-
 import { IOracle } from '../../interfaces/IOracle.sol';
 
 import { Governable } from '../../utils/Governable.sol';

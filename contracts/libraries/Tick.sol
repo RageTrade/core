@@ -6,7 +6,6 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { LiquidityMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
 
 import { FundingPayment } from './FundingPayment.sol';
-import { VTokenLib } from './VTokenLib.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 

@@ -17,7 +17,6 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
-import { VTokenLib, IUniswapV3Pool } from '../../libraries/VTokenLib.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { Tick } from '../../libraries/Tick.sol';

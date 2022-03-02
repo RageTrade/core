@@ -19,7 +19,6 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
-import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { Tick } from '../../libraries/Tick.sol';
@@ -47,7 +46,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
     using UniswapV3PoolHelper for IUniswapV3Pool;
-    using VTokenLib for IVToken;
 
     IClearingHouse public clearingHouse;
     IVToken public vToken;

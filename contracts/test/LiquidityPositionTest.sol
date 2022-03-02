@@ -5,8 +5,6 @@ pragma solidity ^0.8.9;
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { Account } from '../libraries/Account.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
-import { IVToken } from '../libraries/VTokenLib.sol';
-import { IVToken } from '../libraries/VTokenLib.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';

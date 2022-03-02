@@ -3,7 +3,6 @@
 pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { IVToken } from '../libraries/VTokenLib.sol';
 
 import { IVBase } from './IVBase.sol';
 import { IVToken } from './IVToken.sol';

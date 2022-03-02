@@ -5,7 +5,6 @@ pragma solidity ^0.8.9;
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
-import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
 
