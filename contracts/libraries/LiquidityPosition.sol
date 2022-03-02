@@ -235,10 +235,9 @@ library LiquidityPosition {
             //
             if (position.vTokenAmountIn >= 0) {
                 //maxLongTokens in range should always be >= amount that got added to range, equality occurs when range was added at pCurrent = pHigh
-                assert(maxLongTokens>=uint256(position.vTokenAmountIn));
+                assert(maxLongTokens >= uint256(position.vTokenAmountIn));
                 maxNetLongPosition = maxLongTokens - uint256(position.vTokenAmountIn);
-            }
-            else maxNetLongPosition = maxLongTokens + uint256(-1 * position.vTokenAmountIn);
+            } else maxNetLongPosition = maxLongTokens + uint256(-1 * position.vTokenAmountIn);
         }
 
         return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
