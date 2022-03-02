@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { BigNumber, utils } from 'ethers';
+import { BigNumber, BigNumberish, utils } from 'ethers';
 import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, VBase, ClearingHouse } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
@@ -13,6 +13,8 @@ describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
+  let vBase: VBase;
+  let clearingHouse: ClearingHouse;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
 
@@ -34,12 +36,32 @@ describe('Market Value and Required Margin', () => {
     });
   };
 
+  const liqChange1 = async (tickLower: number, tickUpper: number, liq: BigNumberish) => {
+    await VTokenPositionSet.liquidityChange(vTokenAddress, {
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      liquidityDelta: liq,
+      closeTokenPosition: false,
+      limitOrderType: 0,
+      sqrtPriceCurrent: 0,
+      slippageToleranceBps: 0,
+    });
+  };
+
+  const swap = async (amount: BigNumberish, sqrtPriceLimit: number, isNotional: boolean, isPartialAllowed: boolean) => {
+    const swapParams = {
+      amount: amount,
+      sqrtPriceLimit: sqrtPriceLimit,
+      isNotional: isNotional,
+      isPartialAllowed: isPartialAllowed,
+    };
+    await VTokenPositionSet.swap(vTokenAddress, swapParams);
+  };
+
   before(async () => {
     await activateMainnetFork();
     let vPoolAddress;
     let vPoolWrapperAddress;
-    let vBase: VBase;
-    let clearingHouse: ClearingHouse;
     ({
       vTokenAddress: vTokenAddress,
       vPoolAddress: vPoolAddress,
@@ -82,7 +104,7 @@ describe('Market Value and Required Margin', () => {
     await VTokenPositionSet.setVBaseAddress(vBase.address);
   });
   after(deactivateMainnetFork);
-  describe('MarketValue and RequiredMargin', () => {
+  describe('Tight Ranges', () => {
     // Add range In Between
     // ##### State #####
     // a. CurrentTWAPTick: 194430
@@ -108,7 +130,7 @@ describe('Market Value and Required Margin', () => {
         },
       ]);
       await liqChange(-195660, -193370, 35000);
-      await matchNumbers(0, 26643485738, 13321742869);
+      await matchNumbers(0, 25054357336, 12527178668);
     });
 
     // Price Changes
@@ -121,7 +143,7 @@ describe('Market Value and Required Margin', () => {
     it('Scenario 2 - Price Moves', async () => {
       vPoolFake.observe.returns([[0, -193170 * 60], []]);
       vPoolFake.slot0.returns([0, -193170, 0, 0, 0, 0, false]);
-      await matchNumbers(-8656594064, 30221040393, 15110520196);
+      await matchNumbers(-8656594064, 26417987111, 13208993555);
     });
 
     // Add range outside
@@ -145,7 +167,7 @@ describe('Market Value and Required Margin', () => {
         },
       ]);
       await liqChange(-195660, -193370, 35000);
-      await matchNumbers(-8656594064, 85036152800, 42518076400);
+      await matchNumbers(-8656594064, 71240149059, 35620074529);
     });
 
     // Price Changes
@@ -159,7 +181,7 @@ describe('Market Value and Required Margin', () => {
       vPoolFake.observe.returns([[0, -194690 * 60], []]);
       vPoolFake.slot0.returns([0, -194690, 0, 0, 0, 0, false]);
 
-      await matchNumbers(-9383544194, 73045613802, 36522806901);
+      await matchNumbers(-9383544194, 68587488054, 34293744027);
     });
 
     // Add range outside
@@ -183,7 +205,7 @@ describe('Market Value and Required Margin', () => {
         },
       ]);
       await liqChange(-195660, -193370, 25000);
-      await matchNumbers(-9383544194, 87763161021, 43881580510);
+      await matchNumbers(-9383544194, 85115572406, 42557786203);
     });
 
     // Price Changes
@@ -197,7 +219,137 @@ describe('Market Value and Required Margin', () => {
       vPoolFake.observe.returns([[0, -196480 * 60], []]);
       vPoolFake.slot0.returns([0, -196480, 0, 0, 0, 0, false]);
 
-      await matchNumbers(-68061639307, 73379953383, 36689976691);
+      await matchNumbers(-68061639307, 75336901712, 37668450856);
+    });
+  });
+  describe('Wide Ranges', () => {
+    beforeEach(async () => {
+      const myContractFactory = await smock.mock('VTokenPositionSetTest2');
+      VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
+      await VTokenPositionSet.init(vTokenAddress);
+
+      const basePoolObj = await clearingHouse.pools(vBase.address);
+      await VTokenPositionSet.registerPool(vBase.address, basePoolObj);
+
+      const vTokenPoolObj = await clearingHouse.pools(vTokenAddress);
+      await VTokenPositionSet.registerPool(vTokenAddress, vTokenPoolObj);
+
+      await VTokenPositionSet.setVBaseAddress(vBase.address);
+
+      vPoolFake.observe.returns([[0, -198080 * 60], []]);
+      vPoolFake.slot0.returns([0, -198080, 0, 0, 0, 0, false]);
+    });
+    it('Scenario 1 - Full Range', async () => {
+      vPoolWrapperFake.liquidityChange.returns([
+        499982719827,
+        BigNumber.from('200000000000000000000'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-290188, -105972, 10100835597258300n);
+      await matchNumbers(0, 99996543965, 49998271982);
+    });
+
+    it('Scenario 2 - Concentrated Range (Same Liquidity as full range)', async () => {
+      vPoolWrapperFake.liquidityChange.returns([
+        252508487108,
+        BigNumber.from('101011935963275000000'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-211943, -184216, 10100835597258600n);
+      await matchNumbers(0, 50504222477, 25252111238);
+    });
+
+    it('Scenario 3 - Concentrated Range (Same notional value of assets as full range)', async () => {
+      vPoolWrapperFake.liquidityChange.returns([
+        499957722224,
+        BigNumber.from('200000000000000000000'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-211943, -184216, 19999291174720100n);
+      await matchNumbers(0, 99996543964, 49998271982);
+    });
+
+    it('Scenario 4 - Short Trade Position + Long Range)', async () => {
+      vPoolWrapperFake.swapToken.returns([100000000000000000000n, -249991359911]);
+      await swap(-100000000000000000000n, 0, false, false);
+
+      await matchNumbers(0, 49998271982, 24999135991);
+
+      vPoolWrapperFake.liquidityChange.returns([
+        499999999998,
+        BigNumber.from('0'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-290188, -198080, 10101184697695600n);
+      await matchNumbers(0, 50001728017, 25000864008);
+    });
+
+    it('Scenario 5 - Long Trade Position + Short Range)', async () => {
+      vPoolWrapperFake.swapToken.returns([-100000000000000000000n, 249991359914]);
+      await swap(100000000000000000000n, 0, false, false);
+
+      await matchNumbers(-3, 49998271982, 24999135991);
+
+      vPoolWrapperFake.liquidityChange.returns([
+        0,
+        BigNumber.from('200000000000000000000'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-198080, -105972, 10100835597258300n);
+      await matchNumbers(0, 49998271982, 24999135991);
+    });
+
+    it('Scenario 6 - Long Range + Short Range)', async () => {
+      vPoolWrapperFake.liquidityChange.returns([
+        500000000000,
+        BigNumber.from('0'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-290188, -198080, 10101184697695600n);
+      await matchNumbers(-2, 99999999999, 49999999999);
+
+      vPoolWrapperFake.liquidityChange.returns([
+        0,
+        BigNumber.from('200000000000000000000'),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      await liqChange1(-198080, -105972, 10100835597258300n);
+      await matchNumbers(0, 99999999999, 49999999999);
     });
   });
 });

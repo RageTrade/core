@@ -31,6 +31,9 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
         VTokenPositionSet.update(dummy, balanceAdjustments, address(vToken).truncate(), protocol);
     }
 
+    function swap(IVToken vToken, IClearingHouse.SwapParams memory swapParams) external {
+        VTokenPositionSet.swapToken(dummy, address(vToken).truncate(), swapParams, protocol);
+    }
     function liquidityChange(
         IVToken vToken,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
