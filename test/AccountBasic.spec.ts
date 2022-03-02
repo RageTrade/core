@@ -217,17 +217,17 @@ describe('Account Library Test Basic', () => {
       const liquidityChangeParams = {
         tickLower: -100,
         tickUpper: 100,
-        liquidityDelta: 5,
+        liquidityDelta: 1,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
         closeTokenPosition: false,
         limitOrderType: 0,
       };
       await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-      await checkTokenBalance(vTokenAddress, '-5');
-      await checkTokenBalance(vBaseAddress, -20000);
+      await checkTokenBalance(vTokenAddress, '-1');
+      await checkTokenBalance(vBaseAddress, -4000);
       await checkLiquidityPositionNum(vTokenAddress, 1);
-      await checkLiquidityPositionDetails(vTokenAddress, 0, -100, 100, 0, 5);
+      await checkLiquidityPositionDetails(vTokenAddress, 0, -100, 100, 0, 1);
     });
   });
 
@@ -238,7 +238,7 @@ describe('Account Library Test Basic', () => {
         const liquidityChangeParams = {
           tickLower: 194000,
           tickUpper: 195000,
-          liquidityDelta: 5,
+          liquidityDelta: 1,
           sqrtPriceCurrent: 0,
           slippageToleranceBps: 0,
           closeTokenPosition: false,
@@ -246,10 +246,10 @@ describe('Account Library Test Basic', () => {
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-        await checkTokenBalance(vTokenAddress, '-5');
-        await checkTokenBalance(vBaseAddress, -20000);
+        await checkTokenBalance(vTokenAddress, '-1');
+        await checkTokenBalance(vBaseAddress, -4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
-        await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 0, 5);
+        await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 0, 1);
       });
       it('Remove Failure - Inside Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
@@ -282,7 +282,7 @@ describe('Account Library Test Basic', () => {
         const liquidityChangeParams = {
           tickLower: 194000,
           tickUpper: 195000,
-          liquidityDelta: 5,
+          liquidityDelta: 1,
           sqrtPriceCurrent: 0,
           slippageToleranceBps: 0,
           closeTokenPosition: false,
@@ -290,10 +290,10 @@ describe('Account Library Test Basic', () => {
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-        await checkTokenBalance(vTokenAddress, '-5');
-        await checkTokenBalance(vBaseAddress, -20000);
+        await checkTokenBalance(vTokenAddress, '-1');
+        await checkTokenBalance(vBaseAddress, -4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
-        await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 1, 5);
+        await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 1, 1);
       });
       it('Remove Failure - Inside Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
@@ -327,7 +327,7 @@ describe('Account Library Test Basic', () => {
         const liquidityChangeParams = {
           tickLower: 194000,
           tickUpper: 195000,
-          liquidityDelta: 5,
+          liquidityDelta: 1,
           sqrtPriceCurrent: 0,
           slippageToleranceBps: 0,
           closeTokenPosition: false,
@@ -335,10 +335,10 @@ describe('Account Library Test Basic', () => {
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-        await checkTokenBalance(vTokenAddress, '-5');
-        await checkTokenBalance(vBaseAddress, -20000);
+        await checkTokenBalance(vTokenAddress, '-1');
+        await checkTokenBalance(vBaseAddress, -4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
-        await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 2, 5);
+        await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 2, 1);
       });
       it('Remove Failure - Inside Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
