@@ -8,7 +8,7 @@ import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeC
 
 import { Account } from '../../libraries/Account.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
-import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
+// import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { PoolIdHelper } from '../../libraries/PoolIdHelper.sol';
@@ -183,7 +183,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 collateralId,
         uint256 amount
     ) internal notPaused {
-        Collateral storage collateral = _getCTokenWithChecks(collateralId, true);
+        Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, true);
 
         collateral.token.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -218,7 +218,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 amount,
         bool checkMargin
     ) internal notPaused {
-        Collateral storage collateral = _getCTokenWithChecks(collateralId, false);
+        Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, false);
 
         account.removeMargin(address(collateral.token), amount, protocol, checkMargin);
 
@@ -267,8 +267,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         SwapParams memory swapParams,
         bool checkMargin
     ) internal notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        // TODO refactor this method
-        _getIVTokenWithChecks(poolId);
+        _checkPoolId(poolId);
 
         (vTokenAmountOut, vBaseAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
 
@@ -300,7 +299,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         LiquidityChangeParams memory liquidityChangeParams,
         bool checkMargin
     ) internal notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        _getIVTokenWithChecks(poolId);
+        _checkPoolId(poolId);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
             _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
@@ -493,7 +492,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         }
     }
 
-    function _getCTokenWithChecks(uint32 collateralId, bool checkSupported)
+    function _checkCollateralIdAndGetInfo(uint32 collateralId, bool checkSupported)
         internal
         view
         returns (Collateral storage collateral)
@@ -503,8 +502,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         if (checkSupported && !collateral.settings.supported) revert UnsupportedCToken(address(collateral.token)); // TODO change this to collateralId
     }
 
-    function _getIVTokenWithChecks(uint32 poolId) internal view returns (IVToken vToken) {
-        vToken = protocol.pools[poolId].vToken;
+    function _checkPoolId(uint32 poolId) internal view {
+        IVToken vToken = protocol.pools[poolId].vToken; // TODO remove this line
         if (address(vToken).isZero()) revert UninitializedToken(poolId); // TODO change to UninitializedVToken
         if (!protocol.pools[poolId].settings.supported) revert UnsupportedVToken(vToken); // TODO change this to UnsupportedPool
     }
@@ -539,7 +538,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
         Account.UserInfo storage account = accounts[accountNo];
 
-        _getIVTokenWithChecks(poolId); // TODO refactor this method
+        _checkPoolId(poolId); // TODO refactor this method
         int256 insuranceFundFee;
         (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
             accounts[liquidatorAccountNo],
@@ -562,13 +561,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     ) internal notPaused returns (uint256 keeperFee) {
         Account.UserInfo storage account = accounts[accountNo];
 
-        _getIVTokenWithChecks(poolId);
+        _checkPoolId(poolId);
         keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);
 
         account.removeLimitOrder(poolId, tickLower, tickUpper, keeperFee, protocol);
 
         protocol.cBase.safeTransfer(msg.sender, keeperFee);
-        // emit Account.LiqudityChange(accountNo, tickLower, tickUpper, liquidityDelta, 0, 0, 0);
     }
 
     function _transferInsuranceFundFee(int256 insuranceFundFee) internal {
