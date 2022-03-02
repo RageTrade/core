@@ -67,19 +67,19 @@ contract AccountTest {
     function createAccount() external {
         Account.UserInfo storage newAccount = accounts[numAccounts];
         newAccount.owner = msg.sender;
-        newAccount.tokenPositions.accountNo = numAccounts;
+        // newAccount.tokenPositions.accountNo = numAccounts;
         numAccounts++;
     }
 
     function cleanPositions(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol);
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountNo, protocol);
         VTokenPositionSet.Set storage set = accounts[accountNo].tokenPositions;
         VTokenPosition.Position storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[address(protocol.vBase).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        set.update(accountNo, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
@@ -90,12 +90,12 @@ contract AccountTest {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, poolId, protocol);
+            set.update(accountNo, balanceAdjustments, poolId, protocol);
         }
     }
 
     function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol);
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountNo, protocol);
         CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 

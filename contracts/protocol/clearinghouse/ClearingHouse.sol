@@ -156,7 +156,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         Account.UserInfo storage newAccount = accounts[newAccountId];
         newAccount.owner = msg.sender;
-        newAccount.tokenPositions.accountNo = newAccountId;
+        newAccount.id = uint96(newAccountId);
 
         emit AccountCreated(msg.sender, newAccountId);
     }
@@ -188,8 +188,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         collateral.token.safeTransferFrom(msg.sender, address(this), amount);
 
         account.addMargin(address(collateral.token), amount);
-        // TODO emit events from account
-        emit Account.DepositMargin(accountNo, collateralId, amount);
+
+        emit DepositMargin(accountNo, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -224,18 +224,17 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         collateral.token.safeTransfer(msg.sender, amount);
 
-        emit Account.WithdrawMargin(accountNo, collateralId, amount);
+        emit WithdrawMargin(accountNo, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
     function updateProfit(uint256 accountNo, int256 amount) external notPaused {
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountNo);
 
-        _updateProfit(accountNo, account, amount, true);
+        _updateProfit(account, amount, true);
     }
 
     function _updateProfit(
-        uint256 accountNo,
         Account.UserInfo storage account,
         int256 amount,
         bool checkMargin
@@ -248,7 +247,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         } else {
             protocol.cBase.safeTransfer(msg.sender, uint256(-amount));
         }
-        emit Account.UpdateProfit(accountNo, amount);
+        emit Account.UpdateProfit(account.id, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -338,11 +337,18 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouseActions
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
-        uint256 accountNo,
+        uint256 targetAccountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        return _liquidateTokenPosition(liquidatorAccountNo, accountNo, vTokenTruncatedAddress, liquidationBps, 0);
+        return
+            _liquidateTokenPosition(
+                accounts[liquidatorAccountNo],
+                accounts[targetAccountNo],
+                vTokenTruncatedAddress,
+                liquidationBps,
+                0
+            );
     }
 
     /**
@@ -371,7 +377,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
-                _updateProfit(accountNo, account, amount, false);
+                _updateProfit(account, amount, false);
                 checkProfit = true;
             } else if (operations[i].operationType == MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
@@ -414,7 +420,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                     (uint256, uint32, uint16)
                 );
                 results[i] = abi.encode(
-                    _liquidateTokenPosition(accountNo, targetAccountNo, vTokenTruncatedAddress, liquidationBps, 0)
+                    _liquidateTokenPosition(
+                        accounts[accountNo],
+                        accounts[targetAccountNo],
+                        vTokenTruncatedAddress,
+                        liquidationBps,
+                        0
+                    )
                 );
             } else {
                 revert InvalidMulticallOperationType(operations[i].operationType);
@@ -454,7 +466,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function liquidateTokenPositionWithGasClaim(
         uint256 liquidatorAccountNo,
-        uint256 accountNo,
+        uint256 targetAccountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
@@ -464,10 +476,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         returns (BalanceAdjustments memory liquidatorBalanceAdjustments)
     {
         Calldata.limit(4 + 5 * 0x20);
+        /// @dev liquidator account gets benefit, hence ownership is not required
         return
+            // TODO see if we really need to evaluate storage pointers and pass down from here
             _liquidateTokenPosition(
-                liquidatorAccountNo,
-                accountNo,
+                accounts[liquidatorAccountNo],
+                accounts[targetAccountNo],
                 vTokenTruncatedAddress,
                 liquidationBps,
                 gasComputationUnitsClaim
@@ -528,20 +542,21 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         emit Account.LiquidateRanges(accountNo, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
+    // TODO move this to Account library
+    // TODO see order of the arguments, in account lib targetAccount is first and vice versa is here
     function _liquidateTokenPosition(
-        uint256 liquidatorAccountNo,
-        uint256 accountNo,
+        Account.UserInfo storage liquidatorAccount,
+        Account.UserInfo storage targetAccount,
         uint32 poolId,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
-        Account.UserInfo storage account = accounts[accountNo];
 
         _checkPoolId(poolId); // TODO refactor this method
         int256 insuranceFundFee;
-        (insuranceFundFee, liquidatorBalanceAdjustments) = account.liquidateTokenPosition(
-            accounts[liquidatorAccountNo],
+        (insuranceFundFee, liquidatorBalanceAdjustments) = targetAccount.liquidateTokenPosition(
+            liquidatorAccount,
             liquidationBps,
             poolId,
             _getFixFee(gasComputationUnitsClaim),

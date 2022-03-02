@@ -53,7 +53,7 @@ contract ClearingHouseTest is ClearingHouse {
 
         tokenPosition = set.positions[address(protocol.vBase).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        set.update(accountNo, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
@@ -64,12 +64,12 @@ contract ClearingHouseTest is ClearingHouse {
                 -tokenPosition.balance,
                 -tokenPosition.netTraderPosition
             );
-            set.update(balanceAdjustments, poolId, protocol);
+            set.update(accountNo, balanceAdjustments, poolId, protocol);
         }
     }
 
     function cleanDeposits(uint256 accountNo) external {
-        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(protocol);
+        accounts[accountNo].tokenPositions.liquidateLiquidityPositions(accountNo, protocol);
         CTokenDepositSet.Info storage set = accounts[accountNo].tokenDeposits;
         uint256 deposit;
 
@@ -89,9 +89,9 @@ contract ClearingHouseTest is ClearingHouse {
         return accounts[accountNo].owner;
     }
 
-    function getAccountNumInTokenPositionSet(uint256 accountNo) external view returns (uint256 accountNoInTokenSet) {
-        return accounts[accountNo].tokenPositions.accountNo;
-    }
+    // function getAccountNumInTokenPositionSet(uint256 accountNo) external view returns (uint256 accountNoInTokenSet) {
+    //     return accounts[accountNo].tokenPositions.accountNo;
+    // }
 
     function getAccountDepositBalance(uint256 accountNo, IVToken vToken) external view returns (uint256 balance) {
         balance = accounts[accountNo].tokenDeposits.deposits[address(vToken).truncate()];

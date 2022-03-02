@@ -22,31 +22,33 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
 
     VTokenPositionSet.Set dummy;
 
+    uint256 accountNo = 123;
+
     function init(IVToken vToken) external {
-        VTokenPositionSet.activate(dummy, address(vToken).truncate());
+        dummy.activate(address(vToken).truncate());
         protocol.pools[address(vToken).truncate()].vToken = vToken;
     }
 
     function update(IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
-        VTokenPositionSet.update(dummy, balanceAdjustments, address(vToken).truncate(), protocol);
+        dummy.update(accountNo, balanceAdjustments, address(vToken).truncate(), protocol);
     }
 
     function swap(IVToken vToken, IClearingHouseStructures.SwapParams memory swapParams) external {
-        VTokenPositionSet.swapToken(dummy, address(vToken).truncate(), swapParams, protocol);
+        dummy.swapToken(accountId, address(vToken).truncate(), swapParams, protocol);
     }
 
     function liquidityChange(
         IVToken vToken,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams
     ) external {
-        VTokenPositionSet.liquidityChange(dummy, address(vToken).truncate(), liquidityChangeParams, protocol);
+        dummy.liquidityChange(accountNo, address(vToken).truncate(), liquidityChangeParams, protocol);
     }
 
     function getAllTokenPositionValue() external view returns (int256) {
-        return VTokenPositionSet.getAccountMarketValue(dummy, protocol);
+        return dummy.getAccountMarketValue(protocol);
     }
 
     function getRequiredMargin(bool isInititalMargin) external view returns (int256) {
-        return VTokenPositionSet.getRequiredMargin(dummy, isInititalMargin, protocol);
+        return dummy.getRequiredMargin(isInititalMargin, protocol);
     }
 }

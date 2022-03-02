@@ -42,12 +42,14 @@ library Account {
     /// @param tokenPositions is set of all open token positions
     /// @param tokenDeposits is set of all deposits
     struct UserInfo {
+        uint96 id;
         address owner;
         VTokenPositionSet.Set tokenPositions;
         CTokenDepositSet.Info tokenDeposits;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
+    // TODO maybe move this struct to ProtocolStateInfo file and rename UserInfo to Account.Info
     struct ProtocolInfo {
         // poolId => PoolInfo
         mapping(uint32 => IClearingHouseStructures.Pool) pools;
@@ -82,18 +84,6 @@ library Account {
     /// @notice error to denote that there are active ranges present during token liquidation, hence the liquidation is invalid
     /// @param poolId shows the poolId for which range is active
     error InvalidLiquidationActiveRangePresent(uint32 poolId);
-
-    /// @notice denotes deposit of margin
-    /// @param accountNo serial number of the account
-    /// @param collateralId token in which margin is deposited
-    /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 indexed accountNo, uint32 indexed collateralId, uint256 amount);
-
-    /// @notice denotes withdrawal of margin
-    /// @param accountNo serial number of the account
-    /// @param collateralId token in which margin is withdrawn
-    /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 indexed accountNo, uint32 indexed collateralId, uint256 amount);
 
     /// @notice denotes withdrawal of profit in base token
     /// @param accountNo serial number of the account
@@ -231,7 +221,7 @@ library Account {
         ProtocolInfo storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
-        account.tokenPositions.update(balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        account.tokenPositions.update(account.id, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
     }
 
     /// @notice increases deposit balance of 'vToken' by 'amount'
@@ -408,7 +398,7 @@ library Account {
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback and send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(poolId, swapParams, protocol);
+        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(account.id, poolId, swapParams, protocol);
 
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
@@ -431,6 +421,7 @@ library Account {
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         // mint/burn tokens + fee + funding payment
         (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
+            account.id,
             poolId,
             liquidityChangeParams,
             protocol
@@ -490,7 +481,7 @@ library Account {
         if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
         }
-        notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(protocol);
+        notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(account.id, protocol);
 
         (keeperFee, insuranceFundFee) = _computeLiquidationFees(
             accountMarketValue,
@@ -542,7 +533,7 @@ library Account {
 
     /// @notice exchanges token position between account (at liquidationPrice) and liquidator account (at liquidator price)
     /// @notice also charges fixFee from the account and pays to liquidator
-    /// @param account is account being liquidated
+    /// @param targetAccount is account being liquidated
     /// @param liquidatorAccount is account of liquidator
     /// @param poolId id of the rage trade pool
     /// @param tokensToTrade number of tokens to trade
@@ -551,7 +542,7 @@ library Account {
     /// @param fixFee is the fee to be given to liquidator to compensate for gas price
     /// @param protocol platform constants
     function _updateLiquidationAccounts(
-        UserInfo storage account,
+        UserInfo storage targetAccount,
         UserInfo storage liquidatorAccount,
         uint32 poolId,
         int256 tokensToTrade,
@@ -569,9 +560,9 @@ library Account {
                 traderPositionIncrease: tokensToTrade
             });
 
-        account.tokenPositions.update(balanceAdjustments, poolId, protocol);
+        targetAccount.tokenPositions.update(targetAccount.id, balanceAdjustments, poolId, protocol);
         emit TokenPositionChange(
-            account.tokenPositions.accountNo,
+            targetAccount.id,
             poolId,
             balanceAdjustments.vTokenIncrease,
             balanceAdjustments.vBaseIncrease
@@ -583,9 +574,9 @@ library Account {
             traderPositionIncrease: -tokensToTrade
         });
 
-        liquidatorAccount.tokenPositions.update(liquidatorBalanceAdjustments, poolId, protocol);
+        liquidatorAccount.tokenPositions.update(liquidatorAccount.id, liquidatorBalanceAdjustments, poolId, protocol);
         emit TokenPositionChange(
-            liquidatorAccount.tokenPositions.accountNo,
+            liquidatorAccount.id,
             poolId,
             liquidatorBalanceAdjustments.vTokenIncrease,
             liquidatorBalanceAdjustments.vBaseIncrease
@@ -593,11 +584,11 @@ library Account {
     }
 
     /// @notice liquidates all range positions in case the account is under water
-    /// @param account account to liquidate
+    /// @param targetAccount account to liquidate
     /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
     function liquidateTokenPosition(
-        UserInfo storage account,
+        UserInfo storage targetAccount,
         UserInfo storage liquidatorAccount,
         uint16 liquidationBps,
         uint32 poolId,
@@ -611,11 +602,11 @@ library Account {
             IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments
         )
     {
-        if (account.tokenPositions.isTokenRangeActive(poolId, protocol))
+        if (targetAccount.tokenPositions.isTokenRangeActive(poolId, protocol))
             revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
-            (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
+            (int256 accountMarketValue, int256 totalRequiredMargin) = targetAccount._getAccountValueAndRequiredMargin(
                 false,
                 protocol
             );
@@ -627,7 +618,7 @@ library Account {
 
         int256 tokensToTrade;
         {
-            VTokenPosition.Position storage vTokenPosition = account.tokenPositions.getTokenPosition(
+            VTokenPosition.Position storage vTokenPosition = targetAccount.tokenPositions.getTokenPosition(
                 poolId,
                 false,
                 protocol
@@ -645,7 +636,7 @@ library Account {
             );
 
             liquidatorBalanceAdjustments = _updateLiquidationAccounts(
-                account,
+                targetAccount,
                 liquidatorAccount,
                 poolId,
                 tokensToTrade,
@@ -656,19 +647,19 @@ library Account {
             );
         }
         {
-            int256 accountMarketValueFinal = account._getAccountValue(protocol);
+            int256 accountMarketValueFinal = targetAccount._getAccountValue(protocol);
 
             if (accountMarketValueFinal < 0) {
                 insuranceFundFee = accountMarketValueFinal;
-                account._updateBaseBalance(-accountMarketValueFinal, protocol);
+                targetAccount._updateBaseBalance(-accountMarketValueFinal, protocol);
             }
         }
 
         if (checkMargin) liquidatorAccount._checkIfMarginAvailable(false, protocol);
 
         emit LiquidateTokenPosition(
-            account.tokenPositions.accountNo,
-            liquidatorAccount.tokenPositions.accountNo,
+            targetAccount.id,
+            liquidatorAccount.id,
             poolId,
             liquidationBps,
             liquidationPriceX128,
@@ -691,7 +682,7 @@ library Account {
         uint256 limitOrderFeeAndFixFee,
         ProtocolInfo storage protocol
     ) external {
-        account.tokenPositions.removeLimitOrder(poolId, tickLower, tickUpper, protocol);
+        account.tokenPositions.removeLimitOrder(account.id, poolId, tickLower, tickUpper, protocol);
 
         account._updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
     }

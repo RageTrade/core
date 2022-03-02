@@ -84,13 +84,13 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @notice keeper call for liquidation of token position
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
     /// @param liquidatorAccountNo liquidator account number
-    /// @param accountNo account number
+    /// @param targetAccountNo account number
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
     /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
     function liquidateTokenPosition(
         uint256 liquidatorAccountNo,
-        uint256 accountNo,
+        uint256 targetAccountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
@@ -123,14 +123,14 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @notice keeper call for liquidation of token position
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
     /// @param liquidatorAccountNo liquidator account number
-    /// @param accountNo account number
+    /// @param targetAccountNo account number
     /// @param vTokenTruncatedAddress truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
     /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
     function liquidateTokenPositionWithGasClaim(
         uint256 liquidatorAccountNo,
-        uint256 accountNo,
+        uint256 targetAccountNo,
         uint32 vTokenTruncatedAddress,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
