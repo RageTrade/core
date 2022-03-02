@@ -11,7 +11,7 @@ import { AddressHelper } from '../../libraries/AddressHelper.sol';
 // import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
-import { PoolIdHelper } from '../../libraries/PoolIdHelper.sol';
+import { Protocol } from '../../libraries/Protocol.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
@@ -39,7 +39,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     using Account for Account.UserInfo;
     using AddressHelper for address;
     using AddressHelper for IERC20;
-    using PoolIdHelper for uint32;
+    using Protocol for Protocol.Info;
     using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -497,7 +497,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint160 sqrtPriceToCheck,
         uint16 slippageToleranceBps
     ) internal view {
-        uint160 sqrtPriceCurrent = poolId.getVirtualCurrentSqrtPriceX96(protocol);
+        uint160 sqrtPriceCurrent = protocol.getVirtualCurrentSqrtPriceX96For(poolId);
         uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
             ? sqrtPriceCurrent - sqrtPriceToCheck
             : sqrtPriceToCheck - sqrtPriceCurrent;

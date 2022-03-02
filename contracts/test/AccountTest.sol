@@ -3,12 +3,13 @@
 pragma solidity ^0.8.9;
 
 import { Account } from '../libraries/Account.sol';
-import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
-import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
-import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { AddressHelper } from '../libraries/AddressHelper.sol';
-import { VTokenPosition } from '../libraries/VTokenPosition.sol';
+import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
+import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
+import { Protocol } from '../libraries/Protocol.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
+import { VTokenPosition } from '../libraries/VTokenPosition.sol';
+import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
@@ -28,7 +29,7 @@ contract AccountTest {
     using AddressHelper for address;
 
     mapping(uint256 => Account.UserInfo) accounts;
-    Account.ProtocolInfo public protocol;
+    Protocol.Info public protocol;
     uint256 public fixFee;
 
     uint256 public numAccounts;

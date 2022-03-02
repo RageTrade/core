@@ -16,7 +16,7 @@ interface IClearingHouseView is IClearingHouseStructures {
         returns (uint256 realPriceX128, uint256 virtualPriceX128);
 
     /**
-        Account.ProtocolInfo VIEW
+        Protocol.Info VIEW
      */
     function protocolInfo()
         external

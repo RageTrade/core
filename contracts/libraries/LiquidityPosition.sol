@@ -13,8 +13,8 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
+import { Protocol } from './Protocol.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
-import { PoolIdHelper } from './PoolIdHelper.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
@@ -30,7 +30,7 @@ library LiquidityPosition {
     using FullMath for uint256;
     using SafeCast for uint256;
     using LiquidityPosition for Info;
-    using PoolIdHelper for uint32;
+    using Protocol for Protocol.Info;
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
@@ -208,13 +208,13 @@ library LiquidityPosition {
     function longSideRisk(
         Info storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX96;
         {
-            uint160 sqrtPriceTwapX96 = poolId.getVirtualTwapSqrtPriceX96(protocol);
+            uint160 sqrtPriceTwapX96 = protocol.getVirtualTwapSqrtPriceX96For(poolId);
             uint160 sqrtPriceForExecutionPriceX96 = sqrtPriceTwapX96 <= sqrtPriceUpperX96
                 ? sqrtPriceTwapX96
                 : sqrtPriceUpperX96;
@@ -247,9 +247,9 @@ library LiquidityPosition {
         Info storage position,
         uint160 valuationSqrtPriceX96,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256 marketValue_) {
-        return position.marketValue(valuationSqrtPriceX96, poolId.vPoolWrapper(protocol));
+        return position.marketValue(valuationSqrtPriceX96, protocol.vPoolWrapperFor(poolId));
     }
 
     function tokenAmountsInRange(

@@ -6,7 +6,7 @@ import { Account } from './Account.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
-import { PoolIdHelper } from './PoolIdHelper.sol';
+import { Protocol } from './Protocol.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
@@ -16,8 +16,8 @@ import { console } from 'hardhat/console.sol';
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for Info;
+    using Protocol for Protocol.Info;
     using Uint48L5ArrayLib for uint48[5];
-    using PoolIdHelper for uint32;
 
     struct Info {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
@@ -47,9 +47,9 @@ library LiquidityPositionSet {
         Info storage set,
         uint160 sqrtPriceCurrent,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256 marketValue_) {
-        marketValue_ = set.marketValue(sqrtPriceCurrent, poolId.vPoolWrapper(protocol));
+        marketValue_ = set.marketValue(sqrtPriceCurrent, protocol.vPoolWrapperFor(poolId));
     }
 
     function marketValue(
@@ -74,7 +74,7 @@ library LiquidityPositionSet {
     function longSideRisk(
         Info storage set,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];

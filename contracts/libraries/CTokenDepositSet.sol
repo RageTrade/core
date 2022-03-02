@@ -6,6 +6,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from './Account.sol';
+import { Protocol } from './Protocol.sol';
 import { AddressHelper } from './AddressHelper.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
@@ -55,7 +56,7 @@ library CTokenDepositSet {
         }
     }
 
-    function getAllDepositAccountMarketValue(Info storage set, Account.ProtocolInfo storage protocol)
+    function getAllDepositAccountMarketValue(Info storage set, Protocol.Info storage protocol)
         internal
         view
         returns (int256)
@@ -75,7 +76,7 @@ library CTokenDepositSet {
         return accountMarketValue;
     }
 
-    function getInfo(Info storage set, Account.ProtocolInfo storage protocol)
+    function getInfo(Info storage set, Protocol.Info storage protocol)
         internal
         view
         returns (IClearingHouseStructures.DepositTokenView[] memory depositTokens)

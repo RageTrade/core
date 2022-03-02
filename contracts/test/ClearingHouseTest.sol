@@ -10,7 +10,7 @@ import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 import { VTokenPosition } from '../libraries/VTokenPosition.sol';
 import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 import { AddressHelper } from '../libraries/AddressHelper.sol';
-import { PoolIdHelper } from '../libraries/PoolIdHelper.sol';
+import { Protocol } from '../libraries/Protocol.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
@@ -27,7 +27,7 @@ contract ClearingHouseTest is ClearingHouse {
     using CTokenDepositSet for CTokenDepositSet.Info;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
-    using PoolIdHelper for uint32;
+    using Protocol for Protocol.Info;
     using SignedFullMath for int256;
     using VTokenPositionSet for VTokenPositionSet.Set;
     using VTokenPosition for VTokenPosition.Position;
@@ -129,7 +129,7 @@ contract ClearingHouseTest is ClearingHouse {
             address(vToken).truncate()
         ];
 
-        IVPoolWrapper wrapper = address(vToken).truncate().vPoolWrapper(protocol);
+        IVPoolWrapper wrapper = protocol.vPoolWrapperFor(address(vToken).truncate());
 
         fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
@@ -147,9 +147,8 @@ contract ClearingHouseTest is ClearingHouse {
             liquidityPositionSet.active[num]
         ];
 
-        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = vToken
-            .truncate()
-            .vPoolWrapper(protocol)
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = protocol
+            .vPoolWrapperFor(vToken.truncate())
             .getExtrapolatedValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
         fundingPayment = liquidityPosition.unrealizedFundingPayment(

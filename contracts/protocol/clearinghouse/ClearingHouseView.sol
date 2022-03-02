@@ -8,7 +8,7 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
-import { PoolIdHelper } from '../../libraries/PoolIdHelper.sol';
+import { Protocol } from '../../libraries/Protocol.sol';
 
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 
@@ -17,7 +17,7 @@ import { Extsload } from '../../utils/Extsload.sol';
 abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Extsload {
     using Account for Account.UserInfo;
     using AddressHelper for address;
-    using PoolIdHelper for uint32;
+    using Protocol for Protocol.Info;
 
     // TODO rename this to getTwapSqrtPrices
     function getTwapSqrtPricesForSetDuration(IVToken vToken)
@@ -26,8 +26,8 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         returns (uint256 realPriceX128, uint256 virtualPriceX128)
     {
         uint32 poolId = address(vToken).truncate();
-        realPriceX128 = poolId.getRealTwapPriceX128(protocol);
-        virtualPriceX128 = poolId.getVirtualTwapPriceX128(protocol);
+        realPriceX128 = protocol.getRealTwapPriceX128For(poolId);
+        virtualPriceX128 = protocol.getVirtualTwapPriceX128For(poolId);
     }
 
     function isVTokenAddressAvailable(uint32 poolId) external view returns (bool) {
@@ -35,7 +35,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     /**
-        Account.ProtocolInfo VIEW
+        Protocol.Info VIEW
      */
     function protocolInfo()
         public

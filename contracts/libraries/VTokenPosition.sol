@@ -8,8 +8,8 @@ import { Account } from './Account.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { PoolIdHelper } from './PoolIdHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
+import { Protocol } from './Protocol.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -19,7 +19,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
-    using PoolIdHelper for uint32;
+    using Protocol for Protocol.Info;
     using FullMath for uint256;
     using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
@@ -65,9 +65,9 @@ library VTokenPosition {
         Position storage position,
         uint32 poolId,
         uint256 priceX128,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256 value) {
-        return marketValue(position, priceX128, poolId.vPoolWrapper(protocol));
+        return marketValue(position, priceX128, protocol.vPoolWrapperFor(poolId));
     }
 
     /// @notice returns the market value of the supplied token position
@@ -77,9 +77,9 @@ library VTokenPosition {
     function marketValue(
         Position storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256) {
-        uint256 priceX128 = poolId.getVirtualTwapPriceX128(protocol);
+        uint256 priceX128 = protocol.getVirtualTwapPriceX128For(poolId);
         return marketValue(position, poolId, priceX128, protocol);
     }
 
@@ -107,18 +107,18 @@ library VTokenPosition {
     function unrealizedFundingPayment(
         Position storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, poolId.vPoolWrapper(protocol));
+        return unrealizedFundingPayment(position, protocol.vPoolWrapperFor(poolId));
     }
 
     function getNetPosition(
         Position storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256) {
         return
             position.netTraderPosition +
-            position.liquidityPositions.getNetPosition(poolId.vPool(protocol).sqrtPriceCurrent());
+            position.liquidityPositions.getNetPosition(protocol.vPoolFor(poolId).sqrtPriceCurrent());
     }
 }
