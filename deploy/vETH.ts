@@ -40,7 +40,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         vTokenSymbol: 'vETH',
         cTokenDecimals: 18,
       },
-      rageTradePoolInitialSettings: {
+      poolInitialSettings: {
         initialMarginRatio: 20000,
         maintainanceMarginRatio: 10000,
         twapDuration: 60,
