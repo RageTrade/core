@@ -104,7 +104,7 @@ describe('Market Value and Required Margin', () => {
     await VTokenPositionSet.setVBaseAddress(vBase.address);
   });
   after(deactivateMainnetFork);
-  describe('Tight Ranges', () => {
+  describe('Base Case', () => {
     // Add range In Between
     // ##### State #####
     // a. CurrentTWAPTick: 194430
@@ -222,7 +222,7 @@ describe('Market Value and Required Margin', () => {
       await matchNumbers(-68061639307, 75336901712, 37668450856);
     });
   });
-  describe('Wide Ranges', () => {
+  describe('Additional Cases', () => {
     beforeEach(async () => {
       const myContractFactory = await smock.mock('VTokenPositionSetTest2');
       VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
