@@ -450,22 +450,30 @@ library Account {
     /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)+fixFee
     /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee + fixFee
     /// @param accountMarketValue market value of account
-    /// @param liquidationFee total liquidation fee to be charged to the account in case of an on time liquidation
+    /// @param notionalAmountClosed notional value of position closed
+    /// @param fixFee additional fixfee to be paid to the keeper
     /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
     /// @return keeperFee map of vTokens allowed on the platform
     /// @return insuranceFundFee poolwrapper for token
     function _computeLiquidationFees(
         int256 accountMarketValue,
-        int256 liquidationFee,
+        uint256 notionalAmountClosed,
         uint256 fixFee,
         IClearingHouseStructures.LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
+        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
+
+        liquidationFee = liquidationParams.maxRangeLiquidationFees < liquidationFee
+            ? liquidationParams.maxRangeLiquidationFees
+            : liquidationFee;
+        int256 liquidationFeeInt = liquidationFee.toInt256();
+
         int256 fixFeeInt = int256(fixFee);
-        keeperFee = liquidationFee.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
-        if (accountMarketValue - fixFeeInt - liquidationFee < 0) {
+        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
+        if (accountMarketValue - fixFeeInt - liquidationFeeInt < 0) {
             insuranceFundFee = accountMarketValue - keeperFee;
         } else {
-            insuranceFundFee = liquidationFee - keeperFee + fixFeeInt;
+            insuranceFundFee = liquidationFeeInt - keeperFee + fixFeeInt;
         }
     }
 
@@ -482,7 +490,7 @@ library Account {
         // check basis maintanace margin
         int256 accountMarketValue;
         int256 totalRequiredMargin;
-        int256 notionalAmountClosed;
+        uint256 notionalAmountClosed;
 
         (accountMarketValue, totalRequiredMargin) = account._getAccountValueAndRequiredMargin(false, protocol);
         if (accountMarketValue > totalRequiredMargin) {
@@ -490,10 +498,9 @@ library Account {
         }
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(protocol);
 
-        int256 liquidationFee = notionalAmountClosed.mulDiv(protocol.liquidationParams.liquidationFeeFraction, 1e5);
         (keeperFee, insuranceFundFee) = _computeLiquidationFees(
             accountMarketValue,
-            liquidationFee,
+            notionalAmountClosed,
             fixFee,
             protocol.liquidationParams
         );

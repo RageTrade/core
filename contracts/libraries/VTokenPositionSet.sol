@@ -9,6 +9,8 @@ import { Account } from './Account.sol';
 import { AddressHelper } from './AddressHelper.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
@@ -25,6 +27,7 @@ library VTokenPositionSet {
     using AddressHelper for address;
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using FullMath for uint256;
     using PoolIdHelper for uint32;
     using SafeCast for uint256;
     using SignedFullMath for int256;
@@ -109,6 +112,22 @@ library VTokenPositionSet {
         else c = b;
     }
 
+    /// @notice returns notional value of the given token amount
+    /// @param poolId id of the rage trade pool
+    /// @param vTokenAmount amount of tokens
+    /// @param protocol platform constants
+    /// @return notionalAmountClosed for the given token and base amounts
+    function getTokenNotionalValue(
+        uint32 poolId,
+        int256 vTokenAmount,
+        Account.ProtocolInfo storage protocol
+    ) internal view returns (uint256 notionalAmountClosed) {
+        notionalAmountClosed = vTokenAmount.absUint().mulDiv(
+            poolId.getVirtualTwapPriceX128(protocol),
+            FixedPoint128.Q128
+        );
+    }
+
     /// @notice returns notional value of the given base and token amounts
     /// @param poolId id of the rage trade pool
     /// @param vTokenAmount amount of tokens
@@ -120,10 +139,10 @@ library VTokenPositionSet {
         int256 vTokenAmount,
         int256 vBaseAmount,
         Account.ProtocolInfo storage protocol
-    ) internal view returns (int256 notionalAmountClosed) {
+    ) internal view returns (uint256 notionalAmountClosed) {
         notionalAmountClosed =
-            vTokenAmount.abs().mulDiv(poolId.getVirtualTwapPriceX128(protocol), FixedPoint128.Q128) +
-            vBaseAmount.abs();
+            vTokenAmount.absUint().mulDiv(poolId.getVirtualTwapPriceX128(protocol), FixedPoint128.Q128) +
+            vBaseAmount.absUint();
     }
 
     /// @notice returns the long and short side risk for range positions of a particular token
@@ -407,22 +426,22 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         uint32 poolId,
         Account.ProtocolInfo storage protocol
-    ) internal returns (int256 notionalAmountClosed) {
+    ) internal returns (uint256 notionalAmountClosed) {
         return set.liquidateLiquidityPositions(poolId, protocol.pools[poolId].vPoolWrapper, protocol);
     }
 
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(Set storage set, Account.ProtocolInfo storage protocol)
         internal
-        returns (int256 notionalAmountClosed)
+        returns (uint256 notionalAmountClosed)
     {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
@@ -437,13 +456,13 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         uint32 poolId,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
-    ) internal returns (int256 notionalAmountClosed) {
+    ) internal returns (uint256 notionalAmountClosed) {
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         set.getTokenPosition(poolId, false, protocol).liquidityPositions.closeAllLiquidityPositions(
@@ -455,18 +474,19 @@ library VTokenPositionSet {
 
         set.update(balanceAdjustments, poolId, protocol);
 
-        return getNotionalValue(poolId, balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease, protocol);
+        //Returns notional value of token position closed
+        return getTokenNotionalValue(poolId, balanceAdjustments.traderPositionIncrease, protocol);
     }
 
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of tokens coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
     function liquidateLiquidityPositions(
         Set storage set,
         IVPoolWrapper wrapper,
         Account.ProtocolInfo storage protocol
-    ) internal returns (int256 notionalAmountClosed) {
+    ) internal returns (uint256 notionalAmountClosed) {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 truncated = set.active[i];
             if (truncated == 0) break;
