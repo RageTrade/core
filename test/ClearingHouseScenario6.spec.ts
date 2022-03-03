@@ -676,6 +676,7 @@ describe('Clearing House Scenario 6', () => {
         liquidationFeeFraction: 1500,
         tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
+        maxRangeLiquidationFees: 100000000,
       };
       const fixFee = tokenAmount(10, 6);
       const removeLimitOrderFee = tokenAmount(10, 6);

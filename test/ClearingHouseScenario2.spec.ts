@@ -1,3 +1,5 @@
+//ClearingHouseScenario2
+
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { network } from 'hardhat';
@@ -833,6 +835,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         liquidationFeeFraction: 1500,
         tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
+        maxRangeLiquidationFees: 100000000,
       };
       const fixFee = tokenAmount(10, 6);
       const removeLimitOrderFee = tokenAmount(10, 6);
@@ -1370,7 +1373,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const netTokenPosition = expectedTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = 393256714158n - 47n;
+      const expectedBaseBalance = 402070684535n;
 
       const expected_MktVal_preRangeLiquidation = 31114231695n;
       const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
@@ -1385,8 +1388,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const expectedTotalNotionalAmountClosed = 0n;
       const expectedLiquidationFee = 0n;
-      const expectedKeeperFee = 4466985212n;
-      const expectedInsuranceFundFee = 4456985212n;
+      const expectedKeeperFee = 60000000n;
+      const expectedInsuranceFundFee = 50000000n;
       const feeDeductedFromLiquidatedAcct = 0n;
 
       // const MktVal_FixFee_KeeperFee = expected_MktVal_preRangeLiquidation - fixFee - expectedKeeperFee;
@@ -1418,7 +1421,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const netTokenPosition = expectedTokenBalance;
 
-      const expectedBaseBalance = 287844678219n - 46n;
+      const expectedBaseBalance = 296658648597n;
 
       const tickETH = 193370;
 
@@ -1476,7 +1479,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = -91743367496n - 46n;
+      const expectedBaseBalance = -82929397118n;
 
       const tickBTC = 66000;
 

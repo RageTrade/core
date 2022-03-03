@@ -34,6 +34,7 @@ import {
 import { amountsForLiquidity, maxLiquidityForAmounts } from './utils/liquidity';
 import { randomInt } from 'crypto';
 import { truncate } from './utils/vToken';
+import { LiquidationParamsStruct } from '../typechain-types/IClearingHouseEvents';
 
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -50,7 +51,7 @@ describe('Account Library Test Realistic', () => {
   let vToken: VToken;
   let minRequiredMargin: BigNumberish;
   let liquidationFeeFraction: BigNumberish;
-  let liquidationParams: any;
+  let liquidationParams: LiquidationParamsStruct;
   let fixFee: BigNumberish;
 
   let oracle: OracleMock;
@@ -286,6 +287,7 @@ describe('Account Library Test Realistic', () => {
       liquidationFeeFraction: 1500,
       tokenLiquidationPriceDeltaBps: 3000,
       insuranceFundFeeShareBps: 5000,
+      maxRangeLiquidationFees: 100000000,
     };
     fixFee = tokenAmount(10, 6);
     const removeLimitOrderFee = tokenAmount(10, 6);
@@ -872,55 +874,15 @@ describe('Account Library Test Realistic', () => {
 
       const priceCurrentX128 = await priceToNearestPriceX128(price, vBase, vToken);
       const notionalAmountClosed = vBaseAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-      const feeHalf = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5).div(2);
+      let fee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      fee = fee.gt(liquidationParams.maxRangeLiquidationFees)
+        ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
+        : fee;
+      const feeHalf = fee.div(2);
       expect(keeperFee).to.eq(feeHalf.add(fixFee));
       expect(insuranceFundFee).to.eq(feeHalf);
       await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmount));
       await checkTokenBalance(vBaseAddress, startBaseDetails.balance.add(vBaseAmount).sub(feeHalf.mul(2)).sub(fixFee));
-      await checkLiquidityPositionNum(vTokenAddress, 0);
-    });
-
-    it('Liquidation - Success (Account Positive to Negative)', async () => {
-      price = 4550;
-      await changeVPoolWrapperFakePrice(price);
-      await changeVPoolPriceToNearestTick(price);
-      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-      let startAccountMarketValue;
-      {
-        const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        startAccountMarketValue = accountMarketValue;
-      }
-
-      const { keeperFee, insuranceFundFee } = await test.callStatic.liquidateLiquidityPositions(0);
-
-      const sqrtPriceCurrent = tickToSqrtPriceX96(await priceToTick(price, vBase, vToken));
-      let { vBaseAmount, vTokenAmount } = amountsForLiquidity(
-        tickLower,
-        sqrtPriceCurrent,
-        tickUpper,
-        liquidity.mul(-1),
-      );
-      vBaseAmount = vBaseAmount.mul(-1);
-      vTokenAmount = vTokenAmount.mul(-1);
-      await test.liquidateLiquidityPositions(0);
-
-      const priceCurrentX128 = await priceToNearestPriceX128(price, vBase, vToken);
-      const notionalAmountClosed = vBaseAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-
-      const feeHalf = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5).div(2);
-      const expectedKeeperFee = feeHalf.add(fixFee);
-      const expectedInsuranceFundFee = startAccountMarketValue.sub(feeHalf.add(fixFee));
-
-      expect(keeperFee).to.eq(expectedKeeperFee);
-      expect(insuranceFundFee).to.eq(expectedInsuranceFundFee);
-      expect(insuranceFundFee.abs()).lt(keeperFee);
-      await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmount));
-      await checkTokenBalance(
-        vBaseAddress,
-        startBaseDetails.balance.add(vBaseAmount).sub(expectedInsuranceFundFee.add(expectedKeeperFee)),
-      );
-      await checkAccountMarketValueAndRequiredMargin(false, 0);
       await checkLiquidityPositionNum(vTokenAddress, 0);
     });
 
@@ -952,7 +914,11 @@ describe('Account Library Test Realistic', () => {
       const priceCurrentX128 = await priceToNearestPriceX128(price, vBase, vToken);
 
       const notionalAmountClosed = vBaseAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-      const feeHalf = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5).div(2);
+      let fee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      fee = fee.gt(liquidationParams.maxRangeLiquidationFees)
+        ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
+        : fee;
+      const feeHalf = fee.div(2);
       const expectedKeeperFee = feeHalf.add(fixFee);
       const expectedInsuranceFundFee = startAccountMarketValue.sub(feeHalf.add(fixFee));
 
@@ -1021,9 +987,12 @@ describe('Account Library Test Realistic', () => {
       );
 
       await test.liquidateLiquidityPositions(0);
-      const liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      let liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      liquidationFee = liquidationFee.gt(liquidationParams.maxRangeLiquidationFees)
+        ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
+        : liquidationFee;
       const expectedKeeperFee = liquidationFee
-        .mul(1e4 - liquidationParams.insuranceFundFeeShareBps)
+        .mul(10n ** 4n - BigNumber.from(liquidationParams.insuranceFundFeeShareBps).toBigInt())
         .div(1e4)
         .add(fixFee);
       const expectedInsuranceFundFee = liquidationFee.sub(keeperFee).add(fixFee);
@@ -1035,46 +1004,6 @@ describe('Account Library Test Realistic', () => {
         vBaseAddress,
         startBaseDetails.balance.add(vBaseAmountTotal).sub(liquidationFee).sub(fixFee),
       );
-      await checkLiquidityPositionNum(vTokenAddress, 0);
-    });
-
-    it('Liquidation - Success (Account Positive to Negative)', async () => {
-      price = 4550;
-      await changeVPoolWrapperFakePrice(price);
-      await changeVPoolPriceToNearestTick(price);
-      const startTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-      const startBaseDetails = await test.getAccountTokenDetails(0, vBaseAddress);
-      let startAccountMarketValue;
-      {
-        const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        startAccountMarketValue = accountMarketValue;
-      }
-
-      const { keeperFee, insuranceFundFee } = await test.callStatic.liquidateLiquidityPositions(0);
-
-      const { vBaseAmountTotal, vTokenAmountTotal, notionalAmountClosed } = await calculateNotionalAmountClosed(
-        vTokenAddress,
-        price,
-      );
-
-      await test.liquidateLiquidityPositions(0);
-
-      const liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
-      const expectedKeeperFee = liquidationFee
-        .mul(1e4 - liquidationParams.insuranceFundFeeShareBps)
-        .div(1e4)
-        .add(fixFee);
-      const expectedInsuranceFundFee = startAccountMarketValue.sub(keeperFee);
-
-      expect(keeperFee).to.eq(expectedKeeperFee);
-      expect(insuranceFundFee).to.eq(expectedInsuranceFundFee);
-      expect(insuranceFundFee.abs()).lt(keeperFee);
-      await checkTokenBalance(vTokenAddress, startTokenDetails.balance.add(vTokenAmountTotal));
-      await checkTokenBalance(
-        vBaseAddress,
-        startBaseDetails.balance.add(vBaseAmountTotal).sub(expectedInsuranceFundFee.add(expectedKeeperFee)),
-      );
-      await checkAccountMarketValueAndRequiredMargin(false, 0);
       await checkLiquidityPositionNum(vTokenAddress, 0);
     });
 
@@ -1099,9 +1028,12 @@ describe('Account Library Test Realistic', () => {
 
       await test.liquidateLiquidityPositions(0);
 
-      const liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      let liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      liquidationFee = liquidationFee.gt(liquidationParams.maxRangeLiquidationFees)
+        ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
+        : liquidationFee;
       const expectedKeeperFee = liquidationFee
-        .mul(1e4 - liquidationParams.insuranceFundFeeShareBps)
+        .mul(10n ** 4n - BigNumber.from(liquidationParams.insuranceFundFeeShareBps).toBigInt())
         .div(1e4)
         .add(fixFee);
       const expectedInsuranceFundFee = startAccountMarketValue.sub(keeperFee);

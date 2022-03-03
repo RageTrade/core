@@ -1,3 +1,4 @@
+//ClearingHouseScenario3
 //LiquidationActNegative
 
 import { expect } from 'chai';
@@ -821,6 +822,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         liquidationFeeFraction: 1500,
         tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
+        maxRangeLiquidationFees: 100000000,
       };
       const fixFee = tokenAmount(10, 6);
       const removeLimitOrderFee = tokenAmount(10, 6);
@@ -1349,7 +1351,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       const netTokenPosition = expectedTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = 409602595146n - 49n;
+      const expectedBaseBalance = 409602595097n;
 
       const expected_MktVal_preRangeLiquidation = -7421798457n;
       const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
@@ -1364,8 +1366,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
       const expectedTotalNotionalAmountClosed = 0n;
       const expectedLiquidationFee = 0n;
-      const expectedKeeperFee = 4466985550n;
-      const expectedInsuranceFundFee = -11888784007n + 2n;
+      const expectedKeeperFee = 60000000n;
+      const expectedInsuranceFundFee = -7481798455n;
       const insuranceFundStartingBalance = await rBase.balanceOf(insuranceFund.address);
 
       const feeDeductedFromLiquidatedAcct = 0n;
@@ -1399,7 +1401,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
       const netTokenPosition = expectedTokenBalance;
 
-      const expectedBaseBalance = 307279284224n - 77n;
+      // adjustment = -77n
+      const expectedBaseBalance = 307279284147n;
 
       const tickETH = 193370;
 
