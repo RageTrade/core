@@ -293,7 +293,7 @@ library VTokenPositionSet {
 
         _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
 
-        emit Account.FundingPayment(accountId, poolId, 0, 0, fundingPayment);
+        emit Account.FundingPaymentRealized(accountId, poolId, 0, 0, fundingPayment);
     }
 
     /// @notice get or create token position
@@ -395,7 +395,7 @@ library VTokenPositionSet {
 
         set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        emit Account.TokenPositionChange(accountId, poolId, vTokenAmountOut, vBaseAmountOut);
+        emit Account.TokenPositionChanged(accountId, poolId, vTokenAmountOut, vBaseAmountOut);
     }
 
     /// @notice function to remove an eligible limit order

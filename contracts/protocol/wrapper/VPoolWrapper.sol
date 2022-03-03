@@ -121,6 +121,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     function collectAccruedProtocolFee() external onlyClearingHouse returns (uint256 accruedProtocolFeeLast) {
         accruedProtocolFeeLast = accruedProtocolFee - 1;
         accruedProtocolFee = 1;
+        emit AccruedProtocolFeeCollected(accruedProtocolFeeLast);
     }
 
     // for updating global funding payment
@@ -137,16 +138,19 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function setLiquidityFee(uint24 liquidityFeePips_) external onlyGovernance {
         liquidityFeePips = liquidityFeePips_;
+        emit LiquidityFeeUpdated(liquidityFeePips_);
     }
 
     function setProtocolFee(uint24 protocolFeePips_) external onlyGovernance {
         protocolFeePips = protocolFeePips_;
+        emit ProtocolFeeUpdated(protocolFeePips_);
     }
 
     /**
         EXTERNAL UTILITY METHODS
      */
 
+    // TODO remove this method
     /// @notice swaps token
     /// @param amount: positive means long, negative means short
     /// @param isNotional: true means amountSpecified is dollar amount
@@ -227,6 +231,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         onlyClearingHouse
         checkTicks(tickLower, tickUpper)
         returns (
+            // TODO change the order reflect token0 token1 order
             int256 basePrincipal,
             int256 vTokenPrincipal,
             WrapperValuesInside memory wrapperValuesInside
@@ -252,10 +257,10 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             });
             vTokenPrincipal = _amount0.toInt256() * -1;
             basePrincipal = _amount1.toInt256() * -1;
-            // review : do we want final amount here with fees included or just the am for liq ?
-            // As per spec its am for liq only
             _collect(tickLower, tickUpper);
         }
+
+        emit LiquidityChange(tickLower, tickUpper, liquidityDelta, vTokenPrincipal, basePrincipal);
     }
 
     /**

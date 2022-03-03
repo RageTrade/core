@@ -139,7 +139,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
             uint256 wrapperFee = IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
-            emit Account.ProtocolFeeWithdrawn(wrapperAddresses[i], wrapperFee);
+            emit Account.ProtocolFeesWithdrawn(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
         protocol.cBase.safeTransfer(teamMultisig(), totalProtocolFee);
@@ -189,7 +189,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         account.addMargin(address(collateral.token), amount);
 
-        emit DepositMargin(accountId, collateralId, amount);
+        emit MarginAdded(accountId, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -221,7 +221,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         collateral.token.safeTransfer(msg.sender, amount);
 
-        emit WithdrawMargin(accountId, collateralId, amount);
+        emit MarginRemoved(accountId, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -244,7 +244,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         } else {
             protocol.cBase.safeTransfer(msg.sender, uint256(-amount));
         }
-        emit Account.UpdateProfit(account.id, amount);
+        emit Account.ProfitUpdated(account.id, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -519,7 +519,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         protocol.cBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
-        emit Account.LiquidateRanges(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
+        emit Account.LiquidityPositionsLiquidated(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
     // TODO move this to Account library

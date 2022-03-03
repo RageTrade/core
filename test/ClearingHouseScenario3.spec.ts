@@ -28,7 +28,7 @@ import {
   RageTradeFactory,
 } from '../typechain-types';
 
-import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
+import { AccountInterface, TokenPositionChangedEvent } from '../typechain-types/Account';
 
 import {
   UNISWAP_V3_FACTORY_ADDRESS,
@@ -55,7 +55,7 @@ import {
 
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
-import { FundingPaymentEvent } from '../typechain-types/Account';
+import { FundingPaymentRealizedEvent } from '../typechain-types/Account';
 import { truncate } from './utils/vToken';
 const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -252,7 +252,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         }
       })
       .filter(event => event !== null)
-      .filter(event => event?.name === 'TokenPositionChange') as unknown as TokenPositionChangeEvent[];
+      .filter(event => event?.name === 'TokenPositionChanged') as unknown as TokenPositionChangedEvent[];
 
     const event = eventList[0];
     expect(event.args.accountId).to.eq(expectedUserAccountNo);
@@ -281,7 +281,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         }
       })
       .filter(event => event !== null)
-      .filter(event => event?.name === 'FundingPayment') as unknown as FundingPaymentEvent[];
+      .filter(event => event?.name === 'FundingPaymentRealized') as unknown as FundingPaymentRealizedEvent[];
 
     const event = eventList[0];
 

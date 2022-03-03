@@ -102,7 +102,7 @@ library LiquidityPosition {
         balanceAdjustments.vBaseIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
-        emit Account.LiquidityChange(
+        emit Account.LiquidityChanged(
             accountId,
             poolId,
             position.tickLower,
@@ -145,8 +145,14 @@ library LiquidityPosition {
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
-        emit Account.FundingPayment(accountId, poolId, position.tickLower, position.tickUpper, fundingPayment);
-        emit Account.LiquidityFee(accountId, poolId, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
+        emit Account.FundingPaymentRealized(accountId, poolId, position.tickLower, position.tickUpper, fundingPayment);
+        emit Account.LiquidityPositionEarningsRealized(
+            accountId,
+            poolId,
+            position.tickLower,
+            position.tickUpper,
+            unrealizedLiquidityFee
+        );
         // updating checkpoints
         position.sumALastX128 = wrapperValuesInside.sumAX128;
         position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;

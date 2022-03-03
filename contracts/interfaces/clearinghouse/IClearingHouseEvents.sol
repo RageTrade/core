@@ -18,13 +18,13 @@ interface IClearingHouseEvents is IClearingHouseStructures {
     /// @param accountId serial number of the account
     /// @param collateralId token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event DepositMargin(uint256 indexed accountId, uint32 indexed collateralId, uint256 amount);
+    event MarginAdded(uint256 indexed accountId, uint32 indexed collateralId, uint256 amount);
 
     /// @notice denotes withdrawal of margin
     /// @param accountId serial number of the account
     /// @param collateralId token in which margin is withdrawn
     /// @param amount amount of tokens withdrawn
-    event WithdrawMargin(uint256 indexed accountId, uint32 indexed collateralId, uint256 amount);
+    event MarginRemoved(uint256 indexed accountId, uint32 indexed collateralId, uint256 amount);
 
     /// @notice new collateral supported as margin
     /// @param cTokenInfo collateral token info

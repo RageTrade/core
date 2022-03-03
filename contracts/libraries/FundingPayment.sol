@@ -24,6 +24,8 @@ library FundingPayment {
         uint48 timestampLast;
     }
 
+    event FundingPaymentStateUpdated(FundingPayment.Info fundingPayment);
+
     function update(
         Info storage info,
         int256 tokenAmount,
@@ -37,6 +39,8 @@ library FundingPayment {
         info.sumAX128 += a;
         info.sumBX128 += tokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
         info.timestampLast = blockTimestamp;
+
+        emit FundingPaymentStateUpdated(info);
     }
 
     /// @notice Positive A value means at this duration, longs pay shorts. Negative means shorts pay longs.

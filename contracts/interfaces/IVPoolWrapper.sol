@@ -18,6 +18,20 @@ interface IVPoolWrapper {
 
     event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);
 
+    event LiquidityChange(
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta,
+        int256 vTokenPrincipal,
+        int256 basePrincipal
+    );
+
+    event AccruedProtocolFeeCollected(uint256 amount);
+
+    event LiquidityFeeUpdated(uint24 liquidityFeePips);
+
+    event ProtocolFeeUpdated(uint24 protocolFeePips);
+
     struct InitializeVPoolWrapperParams {
         IClearingHouse clearingHouse;
         IVToken vToken;

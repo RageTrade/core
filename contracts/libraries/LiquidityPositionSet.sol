@@ -172,6 +172,7 @@ library LiquidityPositionSet {
         );
     }
 
+    // TODO rename changeLiquidity
     function liquidityChange(
         Info storage set,
         uint256 accountId,
@@ -183,7 +184,7 @@ library LiquidityPositionSet {
     ) internal {
         position.liquidityChange(accountId, poolId, liquidity, wrapper, balanceAdjustments);
 
-        emit Account.LiquidityTokenPositionChange(
+        emit Account.TokenPositionChangedDueToLiquidityChanged(
             accountId,
             poolId,
             position.tickLower,

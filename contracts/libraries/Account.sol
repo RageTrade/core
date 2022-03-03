@@ -70,14 +70,14 @@ library Account {
     /// @notice denotes withdrawal of profit in base token
     /// @param accountId serial number of the account
     /// @param amount amount of profit withdrawn
-    event UpdateProfit(uint256 indexed accountId, int256 amount);
+    event ProfitUpdated(uint256 indexed accountId, int256 amount);
 
     /// @notice denotes token position change
     /// @param accountId serial number of the account
     /// @param poolId truncated address of vtoken whose position was taken
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
-    event TokenPositionChange(
+    event TokenPositionChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int256 tokenAmountOut,
@@ -90,7 +90,7 @@ library Account {
     /// @param tickLower lower tick of the range updated
     /// @param tickUpper upper tick of the range updated
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    event LiquidityTokenPositionChange(
+    event TokenPositionChangedDueToLiquidityChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
@@ -107,7 +107,7 @@ library Account {
     /// @param limitOrderType the type of range position
     /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
-    event LiquidityChange(
+    event LiquidityChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
@@ -125,7 +125,7 @@ library Account {
     /// @param tickLower lower tick of the range for which funding was paid
     /// @param tickUpper upper tick of the range for which funding was paid
     /// @param amount amount of funding paid (negative) or received (positive)
-    event FundingPayment(
+    event FundingPaymentRealized(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
@@ -140,7 +140,7 @@ library Account {
     /// @param tickLower lower tick of the range for which fee was paid
     /// @param tickUpper upper tick of the range for which fee was paid
     /// @param amount amount of fee paid (negative) or received (positive)
-    event LiquidityFee(
+    event LiquidityPositionEarningsRealized(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
@@ -151,7 +151,7 @@ library Account {
     /// @notice denotes protocol fee withdrawal from a pool wrapper
     /// @param wrapperAddress address of token for which fee was paid
     /// @param feeAmount amount of protocol fee which was withdrawn
-    event ProtocolFeeWithdrawn(address indexed wrapperAddress, uint256 feeAmount);
+    event ProtocolFeesWithdrawn(address indexed wrapperAddress, uint256 feeAmount);
 
     /// @notice denotes range position liquidation event
     /// @dev all range positions are liquidated and the current tokens inside the range are added in as token positions to the account
@@ -160,7 +160,7 @@ library Account {
     /// @param liquidationFee total liquidation fee charged to the account
     /// @param keeperFee total liquidaiton fee paid to the keeper (positive only)
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enought to cover the fee)
-    event LiquidateRanges(
+    event LiquidityPositionsLiquidated(
         uint256 indexed accountId,
         address indexed keeperAddress,
         int256 liquidationFee,
@@ -177,7 +177,7 @@ library Account {
     /// @param liquidationPriceX128 price at which liquidation was performed
     /// @param liquidatorPriceX128 discounted price at which tokens were transferred to the liquidator account
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enough to cover the fee)
-    event LiquidateTokenPosition(
+    event TokenPositionLiquidated(
         uint256 indexed accountId,
         uint256 indexed liquidatorAccountId,
         uint32 indexed poolId,
@@ -543,7 +543,7 @@ library Account {
             });
 
         targetAccount.tokenPositions.update(targetAccount.id, balanceAdjustments, poolId, protocol);
-        emit TokenPositionChange(
+        emit TokenPositionChanged(
             targetAccount.id,
             poolId,
             balanceAdjustments.vTokenIncrease,
@@ -557,7 +557,7 @@ library Account {
         });
 
         liquidatorAccount.tokenPositions.update(liquidatorAccount.id, liquidatorBalanceAdjustments, poolId, protocol);
-        emit TokenPositionChange(
+        emit TokenPositionChanged(
             liquidatorAccount.id,
             poolId,
             liquidatorBalanceAdjustments.vTokenIncrease,
@@ -639,7 +639,7 @@ library Account {
 
         if (checkMargin) liquidatorAccount._checkIfMarginAvailable(false, protocol);
 
-        emit LiquidateTokenPosition(
+        emit TokenPositionLiquidated(
             targetAccount.id,
             liquidatorAccount.id,
             poolId,
