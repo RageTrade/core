@@ -139,7 +139,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 totalProtocolFee;
         for (uint256 i = 0; i < wrapperAddresses.length; i++) {
             uint256 wrapperFee = IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
-            emit Account.ProtocolFeeWithdrawm(wrapperAddresses[i], wrapperFee);
+            emit Account.ProtocolFeeWithdrawn(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
         protocol.cBase.safeTransfer(teamMultisig(), totalProtocolFee);
@@ -193,12 +193,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     /// @inheritdoc IClearingHouseActions
-    function createAccountAndAddMargin(uint32 vTokenTruncatedAddress, uint256 amount)
-        external
-        returns (uint256 newAccountId)
-    {
+    function createAccountAndAddMargin(uint32 poolId, uint256 amount) external returns (uint256 newAccountId) {
         newAccountId = createAccount();
-        addMargin(newAccountId, vTokenTruncatedAddress, amount);
+        addMargin(newAccountId, poolId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -253,11 +250,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouseActions
     function swapToken(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         SwapParams memory swapParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
-        return _swapToken(account, vTokenTruncatedAddress, swapParams, true);
+        return _swapToken(account, poolId, swapParams, true);
     }
 
     function _swapToken(
@@ -284,12 +281,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouseActions
     function updateRangeOrder(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         LiquidityChangeParams calldata liquidityChangeParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
         Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
 
-        return _updateRangeOrder(account, vTokenTruncatedAddress, liquidityChangeParams, true);
+        return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
     }
 
     function _updateRangeOrder(
@@ -322,11 +319,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouseActions
     function removeLimitOrder(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         int24 tickLower,
         int24 tickUpper
     ) external {
-        _removeLimitOrder(accountId, vTokenTruncatedAddress, tickLower, tickUpper, 0);
+        _removeLimitOrder(accountId, poolId, tickLower, tickUpper, 0);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -338,14 +335,14 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function liquidateTokenPosition(
         uint256 liquidatorAccountId,
         uint256 targetAccountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint16 liquidationBps
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         return
             _liquidateTokenPosition(
                 accounts[liquidatorAccountId],
                 accounts[targetAccountId],
-                vTokenTruncatedAddress,
+                poolId,
                 liquidationBps,
                 0
             );
@@ -381,52 +378,35 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
                 checkProfit = true;
             } else if (operations[i].operationType == MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
-                (uint32 vTokenTruncatedAddress, SwapParams memory sp) = abi.decode(
-                    operations[i].data,
-                    (uint32, SwapParams)
-                );
-                (int256 vTokenAmountOut, int256 vBaseAmountOut) = _swapToken(
-                    account,
-                    vTokenTruncatedAddress,
-                    sp,
-                    false
-                );
+                (uint32 poolId, SwapParams memory sp) = abi.decode(operations[i].data, (uint32, SwapParams));
+                (int256 vTokenAmountOut, int256 vBaseAmountOut) = _swapToken(account, poolId, sp, false);
                 results[i] = abi.encode(vTokenAmountOut, vBaseAmountOut);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_RANGE_ORDER) {
                 // UPDATE_RANGE_ORDER
-                (uint32 vTokenTruncatedAddress, LiquidityChangeParams memory lcp) = abi.decode(
+                (uint32 poolId, LiquidityChangeParams memory lcp) = abi.decode(
                     operations[i].data,
                     (uint32, LiquidityChangeParams)
                 );
-                (int256 vTokenAmountOut, int256 vBaseAmountOut) = _updateRangeOrder(
-                    account,
-                    vTokenTruncatedAddress,
-                    lcp,
-                    false
-                );
+                (int256 vTokenAmountOut, int256 vBaseAmountOut) = _updateRangeOrder(account, poolId, lcp, false);
                 results[i] = abi.encode(vTokenAmountOut, vBaseAmountOut);
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_LIMIT_ORDER) {
                 // REMOVE_LIMIT_ORDER
-                (uint32 vTokenTruncatedAddress, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi
-                    .decode(operations[i].data, (uint32, int24, int24, uint256));
-                _removeLimitOrder(accountId, vTokenTruncatedAddress, tickLower, tickUpper, limitOrderFeeAndFixFee);
+                (uint32 poolId, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi.decode(
+                    operations[i].data,
+                    (uint32, int24, int24, uint256)
+                );
+                _removeLimitOrder(accountId, poolId, tickLower, tickUpper, limitOrderFeeAndFixFee);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS) {
                 // LIQUIDATE_LIQUIDITY_POSITIONS
                 _liquidateLiquidityPositions(accountId, 0);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
                 // LIQUIDATE_TOKEN_POSITION
-                (uint256 targetAccountId, uint32 vTokenTruncatedAddress, uint16 liquidationBps) = abi.decode(
+                (uint256 targetAccountId, uint32 poolId, uint16 liquidationBps) = abi.decode(
                     operations[i].data,
                     (uint256, uint32, uint16)
                 );
                 results[i] = abi.encode(
-                    _liquidateTokenPosition(
-                        accounts[accountId],
-                        accounts[targetAccountId],
-                        vTokenTruncatedAddress,
-                        liquidationBps,
-                        0
-                    )
+                    _liquidateTokenPosition(accounts[accountId], accounts[targetAccountId], poolId, liquidationBps, 0)
                 );
             } else {
                 revert InvalidMulticallOperationType(operations[i].operationType);
@@ -446,13 +426,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function removeLimitOrderWithGasClaim(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
     ) external checkGasUsedClaim(gasComputationUnitsClaim) returns (uint256 keeperFee) {
         Calldata.limit(4 + 5 * 0x20);
-        return _removeLimitOrder(accountId, vTokenTruncatedAddress, tickLower, tickUpper, gasComputationUnitsClaim);
+        return _removeLimitOrder(accountId, poolId, tickLower, tickUpper, gasComputationUnitsClaim);
     }
 
     function liquidateLiquidityPositionsWithGasClaim(uint256 accountId, uint256 gasComputationUnitsClaim)
@@ -467,7 +447,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     function liquidateTokenPositionWithGasClaim(
         uint256 liquidatorAccountId,
         uint256 targetAccountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
     )
@@ -482,7 +462,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             _liquidateTokenPosition(
                 accounts[liquidatorAccountId],
                 accounts[targetAccountId],
-                vTokenTruncatedAddress,
+                poolId,
                 liquidationBps,
                 gasComputationUnitsClaim
             );

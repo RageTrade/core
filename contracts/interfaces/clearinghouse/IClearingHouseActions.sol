@@ -9,31 +9,29 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @return newAccountId - serial number of the new account created
     function createAccount() external returns (uint256 newAccountId);
 
-    /// @notice deposits 'amount' of token associated with 'vTokenTruncatedAddress'
+    /// @notice deposits 'amount' of token associated with 'poolId'
     /// @param accountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to deposit
+    /// @param poolId truncated address of token to deposit
     /// @param amount amount of token to deposit
     function addMargin(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint256 amount
     ) external;
 
-    /// @notice creates a new account and deposits 'amount' of token associated with 'vTokenTruncatedAddress'
-    /// @param vTokenTruncatedAddress truncated address of token to deposit
+    /// @notice creates a new account and deposits 'amount' of token associated with 'poolId'
+    /// @param poolId truncated address of token to deposit
     /// @param amount amount of token to deposit
     /// @return newAccountId - serial number of the new account created
-    function createAccountAndAddMargin(uint32 vTokenTruncatedAddress, uint256 amount)
-        external
-        returns (uint256 newAccountId);
+    function createAccountAndAddMargin(uint32 poolId, uint256 amount) external returns (uint256 newAccountId);
 
-    /// @notice withdraws 'amount' of token associated with 'vTokenTruncatedAddress'
+    /// @notice withdraws 'amount' of token associated with 'poolId'
     /// @param accountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param amount amount of token to withdraw
     function removeMargin(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint256 amount
     ) external;
 
@@ -42,36 +40,36 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @param amount amount of token to withdraw
     function updateProfit(uint256 accountId, int256 amount) external;
 
-    /// @notice swaps token associated with 'vTokenTruncatedAddress' by 'amount' (Long if amount>0 else Short)
+    /// @notice swaps token associated with 'poolId' by 'amount' (Long if amount>0 else Short)
     /// @param accountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param swapParams swap parameters
     function swapToken(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         SwapParams memory swapParams
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
-    /// @notice updates range order of token associated with 'vTokenTruncatedAddress' by 'liquidityDelta' (Adds if amount>0 else Removes)
+    /// @notice updates range order of token associated with 'poolId' by 'liquidityDelta' (Adds if amount>0 else Removes)
     /// @notice also can be used to update limitOrderType
     /// @param accountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param liquidityChangeParams liquidity change parameters
     function updateRangeOrder(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         LiquidityChangeParams calldata liquidityChangeParams
     ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
 
     /// @notice keeper call to remove a limit order
     /// @dev checks the position of current price relative to limit order and checks limitOrderType
     /// @param accountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param tickLower liquidity change parameters
     /// @param tickUpper liquidity change parameters
     function removeLimitOrder(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         int24 tickLower,
         int24 tickUpper
     ) external;
@@ -85,27 +83,27 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
     /// @param liquidatorAccountId liquidator account id
     /// @param targetAccountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
     /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
     function liquidateTokenPosition(
         uint256 liquidatorAccountId,
         uint256 targetAccountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint16 liquidationBps
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
 
     /// @notice keeper call to remove a limit order
     /// @dev checks the position of current price relative to limit order and checks limitOrderType
     /// @param accountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param tickLower liquidity change parameters
     /// @param tickUpper liquidity change parameters
     /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     /// @return keeperFee : amount of fees paid to caller
     function removeLimitOrderWithGasClaim(
         uint256 accountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
@@ -124,14 +122,14 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
     /// @param liquidatorAccountId liquidator account id
     /// @param targetAccountId account id
-    /// @param vTokenTruncatedAddress truncated address of token to withdraw
+    /// @param poolId truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
     /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
     /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
     function liquidateTokenPositionWithGasClaim(
         uint256 liquidatorAccountId,
         uint256 targetAccountId,
-        uint32 vTokenTruncatedAddress,
+        uint32 poolId,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
     ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);

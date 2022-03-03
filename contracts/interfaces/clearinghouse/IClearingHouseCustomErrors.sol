@@ -42,8 +42,8 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
     error InvalidMulticallOperationType(MulticallOperationType multicallOperationType);
 
     /// @notice error to denote usage of unitialized token
-    /// @param vTokenTruncatedAddress unitialized truncated address supplied
-    error UninitializedToken(uint32 vTokenTruncatedAddress);
+    /// @param poolId unitialized truncated address supplied
+    error UninitializedToken(uint32 poolId);
 
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
