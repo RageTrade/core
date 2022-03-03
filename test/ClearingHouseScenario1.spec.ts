@@ -58,7 +58,7 @@ const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Scenario 1', () => {
+describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
   let vBaseAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
@@ -674,6 +674,7 @@ describe('Clearing House Scenario 1', () => {
         liquidationFeeFraction: 1500,
         tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
+        maxRangeLiquidationFees: 100000000,
       };
       const fixFee = tokenAmount(10, 6);
       const removeLimitOrderFee = tokenAmount(10, 6);
@@ -753,7 +754,7 @@ describe('Clearing House Scenario 1', () => {
     });
   });
 
-  describe('#Scenario 1', async () => {
+  describe('#Scenario', async () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await vPoolWrapper.setBlockTimestamp(0);
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);

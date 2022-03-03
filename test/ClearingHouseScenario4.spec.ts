@@ -817,6 +817,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         liquidationFeeFraction: 1500,
         tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
+        maxRangeLiquidationFees: 100000000,
       };
       const fixFee = tokenAmount(10, 6);
       const removeLimitOrderFee = tokenAmount(10, 6);
@@ -918,7 +919,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     });
   });
 
-  describe('#Scenario Liquidation', async () => {
+  describe('#Scneario', async () => {
     it('Acct[0] Initial Collateral Deposit = 2M USDC', async () => {
       await addMargin(user0, user0AccountNo, rBase.address, tokenAmount(2n * 10n ** 6n, 6));
       await checkRealBaseBalance(user0.address, tokenAmount(0n, 6));
