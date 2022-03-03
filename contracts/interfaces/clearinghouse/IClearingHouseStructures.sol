@@ -75,10 +75,13 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
     /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
     /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
+    /// @param maxRangeLiquidationFees specifies the the maximum range liquidation fees (in settlement token amount decimals)
+
     struct LiquidationParams {
         uint16 liquidationFeeFraction;
         uint16 tokenLiquidationPriceDeltaBps;
         uint16 insuranceFundFeeShareBps;
+        uint128 maxRangeLiquidationFees;
     }
 
     struct DepositTokenView {
