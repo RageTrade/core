@@ -22,7 +22,7 @@ import { ClearingHouse } from '../protocol/clearinghouse/ClearingHouse.sol';
 import { console } from 'hardhat/console.sol';
 
 contract ClearingHouseTest is ClearingHouse {
-    using Account for Account.UserInfo;
+    using Account for Account.Info;
     using AddressHelper for address;
     using CollateralDeposit for CollateralDeposit.Set;
     using LiquidityPositionSet for LiquidityPosition.Set;

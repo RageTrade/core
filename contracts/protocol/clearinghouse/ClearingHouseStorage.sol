@@ -21,7 +21,7 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     Protocol.Info internal protocol;
 
     uint256 public numAccounts;
-    mapping(uint256 => Account.UserInfo) accounts;
+    mapping(uint256 => Account.Info) accounts;
 
     // TODO use openzeppelin pauser
     bool public paused;

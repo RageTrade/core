@@ -21,14 +21,14 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract AccountTest {
-    using Account for Account.UserInfo;
+    using Account for Account.Info;
     using VTokenPosition for VTokenPosition.Info;
     using VTokenPositionSet for VTokenPosition.Set;
     using LiquidityPositionSet for LiquidityPosition.Set;
     using CollateralDeposit for CollateralDeposit.Set;
     using AddressHelper for address;
 
-    mapping(uint256 => Account.UserInfo) accounts;
+    mapping(uint256 => Account.Info) accounts;
     Protocol.Info public protocol;
     uint256 public fixFee;
 
@@ -66,7 +66,7 @@ contract AccountTest {
     }
 
     function createAccount() external {
-        Account.UserInfo storage newAccount = accounts[numAccounts];
+        Account.Info storage newAccount = accounts[numAccounts];
         newAccount.owner = msg.sender;
         // newAccount.tokenPositions.accountId = numAccounts;
         numAccounts++;

@@ -25,16 +25,16 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { console } from 'hardhat/console.sol';
 
 library Account {
-    using Account for UserInfo;
     using AddressHelper for address;
     using FullMath for uint256;
     using SafeCast for uint256;
     using SignedFullMath for int256;
     using SignedMath for int256;
 
-    using Protocol for Protocol.Info;
+    using Account for Account.Info;
     using CollateralDeposit for CollateralDeposit.Set;
     using LiquidityPositionSet for LiquidityPosition.Set;
+    using Protocol for Protocol.Info;
     using VTokenPosition for VTokenPosition.Info;
     using VTokenPositionSet for VTokenPosition.Set;
 
@@ -42,7 +42,7 @@ library Account {
     /// @param owner specifies the account owner
     /// @param tokenPositions is set of all open token positions
     /// @param tokenDeposits is set of all deposits
-    struct UserInfo {
+    struct Info {
         uint96 id;
         address owner;
         VTokenPosition.Set tokenPositions;
@@ -190,7 +190,7 @@ library Account {
 
     /// @notice checks if 'account' is initialized
     /// @param account pointer to 'account' struct
-    function _isInitialized(UserInfo storage account) internal view returns (bool) {
+    function _isInitialized(Account.Info storage account) internal view returns (bool) {
         return account.owner != address(0);
     }
 
@@ -199,7 +199,7 @@ library Account {
     /// @param amount amount of balance to update
     /// @param protocol platform constants
     function _updateBaseBalance(
-        UserInfo storage account,
+        Account.Info storage account,
         int256 amount,
         Protocol.Info storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
@@ -212,7 +212,7 @@ library Account {
     /// @param collateralId collateral id of the token
     /// @param amount amount of token to deposit
     function addMargin(
-        UserInfo storage account,
+        Account.Info storage account,
         uint32 collateralId,
         uint256 amount
     ) external {
@@ -226,7 +226,7 @@ library Account {
     /// @param amount amount of token to remove
     /// @param protocol set of all constants and token addresses
     function removeMargin(
-        UserInfo storage account,
+        Account.Info storage account,
         uint32 collateralId,
         uint256 amount,
         Protocol.Info storage protocol,
@@ -242,7 +242,7 @@ library Account {
     /// @param amount amount of profit(base token) to add/remove
     /// @param protocol set of all constants and token addresses
     function updateProfit(
-        UserInfo storage account,
+        Account.Info storage account,
         int256 amount,
         Protocol.Info storage protocol,
         bool checkMargin
@@ -263,7 +263,7 @@ library Account {
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
     /// @return totalRequiredMargin total margin required to keep the account above selected margin requirement (intial/maintainance)
     function getAccountValueAndRequiredMargin(
-        UserInfo storage account,
+        Account.Info storage account,
         bool isInitialMargin,
         Protocol.Info storage protocol
     ) external view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
@@ -271,7 +271,7 @@ library Account {
     }
 
     function _getAccountValueAndRequiredMargin(
-        UserInfo storage account,
+        Account.Info storage account,
         bool isInitialMargin,
         Protocol.Info storage protocol
     ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
@@ -290,7 +290,7 @@ library Account {
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     /// @return accountPositionProfits total market value of all the positions (token ) and deposits
-    function getAccountPositionProfits(UserInfo storage account, Protocol.Info storage protocol)
+    function getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
         external
         view
         returns (int256 accountPositionProfits)
@@ -298,7 +298,7 @@ library Account {
         return account._getAccountPositionProfits(protocol);
     }
 
-    function _getAccountPositionProfits(UserInfo storage account, Protocol.Info storage protocol)
+    function _getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
         internal
         view
         returns (int256 accountPositionProfits)
@@ -310,7 +310,7 @@ library Account {
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
-    function _getAccountValue(UserInfo storage account, Protocol.Info storage protocol)
+    function _getAccountValue(Account.Info storage account, Protocol.Info storage protocol)
         internal
         view
         returns (int256 accountMarketValue)
@@ -325,7 +325,7 @@ library Account {
     /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
     /// @param protocol set of all constants and token addresses
     function checkIfMarginAvailable(
-        UserInfo storage account,
+        Account.Info storage account,
         bool isInitialMargin,
         Protocol.Info storage protocol
     ) external view {
@@ -338,7 +338,7 @@ library Account {
     }
 
     function _checkIfMarginAvailable(
-        UserInfo storage account,
+        Account.Info storage account,
         bool isInitialMargin,
         Protocol.Info storage protocol
     ) internal view {
@@ -353,11 +353,11 @@ library Account {
     /// @notice checks if profit is available to withdraw base token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
-    function checkIfProfitAvailable(UserInfo storage account, Protocol.Info storage protocol) external view {
+    function checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) external view {
         _checkIfProfitAvailable(account, protocol);
     }
 
-    function _checkIfProfitAvailable(UserInfo storage account, Protocol.Info storage protocol) internal view {
+    function _checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) internal view {
         int256 totalPositionValue = account._getAccountPositionProfits(protocol);
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
@@ -372,7 +372,7 @@ library Account {
     /// @param swapParams parameters for the swap (Includes - amount, sqrtPriceLimit, isNotional, isPartialAllowed)
     /// @param protocol set of all constants and token addresses
     function swapToken(
-        UserInfo storage account,
+        Account.Info storage account,
         uint32 poolId,
         IClearingHouseStructures.SwapParams memory swapParams,
         Protocol.Info storage protocol,
@@ -395,7 +395,7 @@ library Account {
     /// @param liquidityChangeParams parameters including lower tick, upper tick, liquidity delta, sqrtPriceCurrent, slippageToleranceBps, closeTokenPosition, limit order type
     /// @param protocol set of all constants and token addresses
     function liquidityChange(
-        UserInfo storage account,
+        Account.Info storage account,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Protocol.Info storage protocol,
@@ -450,7 +450,7 @@ library Account {
     /// @param account account to liquidate
     /// @param protocol set of all constants and token addresses
     function liquidateLiquidityPositions(
-        UserInfo storage account,
+        Account.Info storage account,
         uint256 fixFee,
         Protocol.Info storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
@@ -524,8 +524,8 @@ library Account {
     /// @param fixFee is the fee to be given to liquidator to compensate for gas price
     /// @param protocol platform constants
     function _updateLiquidationAccounts(
-        UserInfo storage targetAccount,
-        UserInfo storage liquidatorAccount,
+        Account.Info storage targetAccount,
+        Account.Info storage liquidatorAccount,
         uint32 poolId,
         int256 tokensToTrade,
         uint256 liquidationPriceX128,
@@ -570,8 +570,8 @@ library Account {
     /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
     function liquidateTokenPosition(
-        UserInfo storage targetAccount,
-        UserInfo storage liquidatorAccount,
+        Account.Info storage targetAccount,
+        Account.Info storage liquidatorAccount,
         uint16 liquidationBps,
         uint32 poolId,
         uint256 fixFee,
@@ -657,7 +657,7 @@ library Account {
     /// @param tickUpper upper tick index for the range
     /// @param protocol platform constants
     function removeLimitOrder(
-        UserInfo storage account,
+        Account.Info storage account,
         uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
@@ -669,7 +669,7 @@ library Account {
         account._updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
     }
 
-    function getInfo(UserInfo storage account, Protocol.Info storage protocol)
+    function getInfo(Account.Info storage account, Protocol.Info storage protocol)
         external
         view
         returns (
@@ -685,7 +685,7 @@ library Account {
     }
 
     function getNetPosition(
-        UserInfo storage account,
+        Account.Info storage account,
         uint32 poolId,
         Protocol.Info storage protocol
     ) external view returns (int256 netPosition) {

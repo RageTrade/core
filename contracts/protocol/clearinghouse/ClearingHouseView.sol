@@ -15,7 +15,7 @@ import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 import { Extsload } from '../../utils/Extsload.sol';
 
 abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Extsload {
-    using Account for Account.UserInfo;
+    using Account for Account.Info;
     using AddressHelper for address;
     using Protocol for Protocol.Info;
 
@@ -64,7 +64,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     /**
-        Account.UserInfo VIEW
+        Account.Info VIEW
      */
 
     function getAccountInfo(uint256 accountId)

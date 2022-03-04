@@ -36,7 +36,7 @@ import { console } from 'hardhat/console.sol';
 
 contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim {
     using SafeERC20 for IERC20;
-    using Account for Account.UserInfo;
+    using Account for Account.Info;
     using AddressHelper for address;
     using AddressHelper for IERC20;
     using Protocol for Protocol.Info;
@@ -154,7 +154,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
 
-        Account.UserInfo storage newAccount = accounts[newAccountId];
+        Account.Info storage newAccount = accounts[newAccountId];
         newAccount.owner = msg.sender;
         newAccount.id = uint96(newAccountId);
 
@@ -167,11 +167,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 cTokenTruncatedAddress,
         uint256 amount
     ) public notPaused {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
         _addMargin(accountId, account, cTokenTruncatedAddress, amount);
     }
 
-    function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.UserInfo storage account) {
+    function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.Info storage account) {
         account = accounts[accountId];
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
     }
@@ -179,7 +179,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     // done
     function _addMargin(
         uint256 accountId,
-        Account.UserInfo storage account,
+        Account.Info storage account,
         uint32 collateralId,
         uint256 amount
     ) internal notPaused {
@@ -204,13 +204,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 cTokenTruncatedAddress,
         uint256 amount
     ) external notPaused {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
         _removeMargin(accountId, account, cTokenTruncatedAddress, amount, true);
     }
 
     function _removeMargin(
         uint256 accountId,
-        Account.UserInfo storage account,
+        Account.Info storage account,
         uint32 collateralId,
         uint256 amount,
         bool checkMargin
@@ -226,13 +226,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     /// @inheritdoc IClearingHouseActions
     function updateProfit(uint256 accountId, int256 amount) external notPaused {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         _updateProfit(account, amount, true);
     }
 
     function _updateProfit(
-        Account.UserInfo storage account,
+        Account.Info storage account,
         int256 amount,
         bool checkMargin
     ) internal notPaused {
@@ -253,12 +253,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         SwapParams memory swapParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
         return _swapToken(account, poolId, swapParams, true);
     }
 
     function _swapToken(
-        Account.UserInfo storage account,
+        Account.Info storage account,
         uint32 poolId,
         SwapParams memory swapParams,
         bool checkMargin
@@ -284,13 +284,13 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         LiquidityChangeParams calldata liquidityChangeParams
     ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
     }
 
     function _updateRangeOrder(
-        Account.UserInfo storage account,
+        Account.Info storage account,
         uint32 poolId,
         LiquidityChangeParams memory liquidityChangeParams,
         bool checkMargin
@@ -358,7 +358,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     {
         results = new bytes[](operations.length);
 
-        Account.UserInfo storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         bool checkProfit = false;
 
@@ -507,7 +507,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         notPaused
         returns (int256 keeperFee)
     {
-        Account.UserInfo storage account = accounts[accountId];
+        Account.Info storage account = accounts[accountId];
         int256 insuranceFundFee;
         (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
             _getFixFee(gasComputationUnitsClaim),
@@ -525,8 +525,8 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     // TODO move this to Account library
     // TODO see order of the arguments, in account lib targetAccount is first and vice versa is here
     function _liquidateTokenPosition(
-        Account.UserInfo storage liquidatorAccount,
-        Account.UserInfo storage targetAccount,
+        Account.Info storage liquidatorAccount,
+        Account.Info storage targetAccount,
         uint32 poolId,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
@@ -554,7 +554,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
     ) internal notPaused returns (uint256 keeperFee) {
-        Account.UserInfo storage account = accounts[accountId];
+        Account.Info storage account = accounts[accountId];
 
         _checkPoolId(poolId);
         keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);
