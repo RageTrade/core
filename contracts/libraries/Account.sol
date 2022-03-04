@@ -208,30 +208,30 @@ library Account {
 
     /// @notice increases deposit balance of 'vToken' by 'amount'
     /// @param account account to deposit balance into
-    /// @param realTokenAddress address of token to deposit
+    /// @param collateralId collateral id of the token
     /// @param amount amount of token to deposit
     function addMargin(
         UserInfo storage account,
-        address realTokenAddress, // TODO change it to collateralId
+        uint32 collateralId,
         uint256 amount
     ) external {
         // vBASE should be an immutable constant
-        account.tokenDeposits.increaseBalance(realTokenAddress.truncate(), amount);
+        account.tokenDeposits.increaseBalance(collateralId, amount);
     }
 
     /// @notice reduces deposit balance of 'vToken' by 'amount'
     /// @param account account to deposit balance into
-    /// @param realTokenAddress address of token to remove
+    /// @param collateralId collateral id of the token
     /// @param amount amount of token to remove
     /// @param protocol set of all constants and token addresses
     function removeMargin(
         UserInfo storage account,
-        address realTokenAddress, // TODO change to collateralId
+        uint32 collateralId,
         uint256 amount,
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account.tokenDeposits.decreaseBalance(realTokenAddress.truncate(), amount);
+        account.tokenDeposits.decreaseBalance(collateralId, amount);
 
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
@@ -248,7 +248,6 @@ library Account {
     ) external {
         account._updateBaseBalance(amount, protocol);
 
-        // TODO is not doing checkIfProfitAvailable in multicall safe?
         if (checkMargin && amount < 0) {
             account._checkIfProfitAvailable(protocol);
             account._checkIfMarginAvailable(true, protocol);

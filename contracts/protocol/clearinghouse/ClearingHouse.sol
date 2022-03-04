@@ -187,7 +187,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         collateral.token.safeTransferFrom(msg.sender, address(this), amount);
 
-        account.addMargin(address(collateral.token), amount);
+        account.addMargin(collateralId, amount);
 
         emit MarginAdded(accountId, collateralId, amount);
     }
@@ -217,7 +217,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     ) internal notPaused {
         Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, false);
 
-        account.removeMargin(address(collateral.token), amount, protocol, checkMargin);
+        account.removeMargin(collateralId, amount, protocol, checkMargin);
 
         collateral.token.safeTransfer(msg.sender, amount);
 
