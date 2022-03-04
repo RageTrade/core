@@ -87,15 +87,35 @@ library LiquidityPosition {
         Info storage position,
         uint256 accountId,
         uint32 poolId,
-        int128 liquidity,
+        int128 liquidityDelta,
         IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        (
-            int256 basePrincipal,
-            int256 vTokenPrincipal,
-            IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside
-        ) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
+        int256 vTokenPrincipal;
+        int256 basePrincipal;
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside;
+
+        if (liquidityDelta > 0) {
+            uint256 vTokenPrincipal_;
+            uint256 basePrincipal_;
+            (vTokenPrincipal_, basePrincipal_, wrapperValuesInside) = wrapper.mint(
+                position.tickLower,
+                position.tickUpper,
+                uint128(liquidityDelta)
+            );
+            vTokenPrincipal = vTokenPrincipal_.toInt256();
+            basePrincipal = basePrincipal_.toInt256();
+        } else {
+            uint256 vTokenPrincipal_;
+            uint256 basePrincipal_;
+            (vTokenPrincipal_, basePrincipal_, wrapperValuesInside) = wrapper.burn(
+                position.tickLower,
+                position.tickUpper,
+                uint128(-liquidityDelta)
+            );
+            vTokenPrincipal = -vTokenPrincipal_.toInt256();
+            basePrincipal = -basePrincipal_.toInt256();
+        }
 
         position.update(accountId, poolId, wrapperValuesInside, balanceAdjustments);
 
@@ -107,7 +127,7 @@ library LiquidityPosition {
             poolId,
             position.tickLower,
             position.tickUpper,
-            liquidity,
+            liquidityDelta,
             position.limitOrderType,
             -vTokenPrincipal,
             -basePrincipal
@@ -120,10 +140,10 @@ library LiquidityPosition {
             balanceAdjustments.traderPositionIncrease += (tokenAmountCurrent - position.vTokenAmountIn);
         }
 
-        if (liquidity > 0) {
-            position.liquidity += uint128(liquidity);
-        } else if (liquidity < 0) {
-            position.liquidity -= uint128(liquidity * -1);
+        if (liquidityDelta > 0) {
+            position.liquidity += uint128(liquidityDelta);
+        } else if (liquidityDelta < 0) {
+            position.liquidity -= uint128(-liquidityDelta);
         }
 
         position.vTokenAmountIn = tokenAmountCurrent + vTokenPrincipal;

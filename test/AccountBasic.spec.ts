@@ -136,10 +136,22 @@ describe('Account Library Test Basic', () => {
       }
     });
 
-    vPoolWrapperFake.liquidityChange.returns((input: any) => {
+    vPoolWrapperFake.mint.returns((input: any) => {
       return [
-        input.liquidityDelta * 4000,
-        input.liquidityDelta,
+        input.liquidity,
+        input.liquidity.mul(4000),
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ];
+    });
+    vPoolWrapperFake.burn.returns((input: any) => {
+      return [
+        input.liquidity,
+        input.liquidity.mul(4000),
         {
           sumAX128: 0,
           sumBInsideX128: 0,

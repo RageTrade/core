@@ -9,7 +9,7 @@ import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/i
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
-import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+// import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
@@ -23,6 +23,7 @@ import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { Tick } from '../../libraries/Tick.sol';
 import { PriceMath } from '../../libraries/PriceMath.sol';
+import { SafeCast } from '../../libraries/SafeCast.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { SignedFullMath } from '../../libraries/SignedFullMath.sol';
 import { SwapMath } from '../../libraries/SwapMath.sol';
@@ -39,9 +40,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using FundingPayment for FundingPayment.Info;
     using SignedMath for int256;
     using SignedFullMath for int256;
-
     using PriceMath for uint160;
     using SafeCast for uint256;
+    using SafeCast for uint128;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
@@ -222,45 +223,61 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         return (swapValues.vTokenIn, swapValues.vBaseIn);
     }
 
-    function liquidityChange(
+    function mint(
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidityDelta
+        uint128 liquidity
     )
         external
         onlyClearingHouse
         checkTicks(tickLower, tickUpper)
         returns (
-            // TODO change the order reflect token0 token1 order
-            int256 basePrincipal,
-            int256 vTokenPrincipal,
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
         updateGlobalFundingState();
-        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
-        if (liquidityDelta > 0) {
-            (uint256 _amount0, uint256 _amount1) = vPool.mint({
-                recipient: address(this),
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount: uint128(liquidityDelta),
-                data: ''
-            });
-            vTokenPrincipal = _amount0.toInt256();
-            basePrincipal = _amount1.toInt256();
-        } else {
-            (uint256 _amount0, uint256 _amount1) = vPool.burn({
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount: uint128(liquidityDelta * -1)
-            });
-            vTokenPrincipal = _amount0.toInt256() * -1;
-            basePrincipal = _amount1.toInt256() * -1;
-            _collect(tickLower, tickUpper);
-        }
+        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidity.toInt128(), vPool.tickCurrent());
 
-        emit LiquidityChange(tickLower, tickUpper, liquidityDelta, vTokenPrincipal, basePrincipal);
+        (uint256 _amount0, uint256 _amount1) = vPool.mint({
+            recipient: address(this),
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount: liquidity,
+            data: ''
+        });
+
+        vTokenPrincipal = _amount0;
+        basePrincipal = _amount1;
+    }
+
+    function burn(
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    )
+        external
+        onlyClearingHouse
+        checkTicks(tickLower, tickUpper)
+        returns (
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
+            WrapperValuesInside memory wrapperValuesInside
+        )
+    {
+        updateGlobalFundingState();
+        wrapperValuesInside = _updateTicks(tickLower, tickUpper, -liquidity.toInt128(), vPool.tickCurrent());
+
+        (uint256 _amount0, uint256 _amount1) = vPool.burn({
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount: liquidity
+        });
+
+        vTokenPrincipal = _amount0;
+        basePrincipal = _amount1;
+        _collect(tickLower, tickUpper);
     }
 
     /**

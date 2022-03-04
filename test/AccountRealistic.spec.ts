@@ -94,19 +94,42 @@ describe('Account Library Test Realistic', () => {
       }
     });
 
-    vPoolWrapperFake.liquidityChange.returns((input: any) => {
+    vPoolWrapperFake.mint.returns((input: any) => {
       //   const sqrtPriceCurrent = priceX128ToSqrtPriceX96(priceX128);
       const sqrtPriceCurrent = sqrtPriceX96;
       const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
         input.tickLower,
         sqrtPriceCurrent,
         input.tickUpper,
-        input.liquidityDelta,
+        input.liquidity,
+        true, // round up for add liquidity
       );
 
       return [
-        vBaseAmount,
         vTokenAmount,
+        vBaseAmount,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ];
+    });
+    vPoolWrapperFake.burn.returns((input: any) => {
+      //   const sqrtPriceCurrent = priceX128ToSqrtPriceX96(priceX128);
+      const sqrtPriceCurrent = sqrtPriceX96;
+      const { vBaseAmount, vTokenAmount } = amountsForLiquidity(
+        input.tickLower,
+        sqrtPriceCurrent,
+        input.tickUpper,
+        input.liquidity,
+        false, // round down for remove liquidity
+      );
+
+      return [
+        vTokenAmount,
+        vBaseAmount,
         {
           sumAX128: 0,
           sumBInsideX128: 0,

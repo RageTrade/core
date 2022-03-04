@@ -18,13 +18,9 @@ interface IVPoolWrapper {
 
     event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);
 
-    event LiquidityChange(
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidityDelta,
-        int256 vTokenPrincipal,
-        int256 basePrincipal
-    );
+    event Mint(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 basePrincipal);
+
+    event Burn(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 basePrincipal);
 
     event AccruedProtocolFeeCollected(uint256 amount);
 
@@ -58,15 +54,27 @@ interface IVPoolWrapper {
         view
         returns (WrapperValuesInside memory wrapperValuesInside);
 
-    function liquidityChange(
+    function mint(
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidity
+        uint128 liquidity
     )
         external
         returns (
-            int256 vBaseAmount,
-            int256 vTokenAmount,
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
+            WrapperValuesInside memory wrapperValuesInside
+        );
+
+    function burn(
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    )
+        external
+        returns (
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
             WrapperValuesInside memory wrapperValuesInside
         );
 
