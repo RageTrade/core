@@ -17,9 +17,9 @@ import { console } from 'hardhat/console.sol';
 
 library CollateralDeposit {
     using AddressHelper for address;
-    using Uint32L8ArrayLib for uint32[8];
-    using SignedFullMath for int256;
     using SafeCast for uint256;
+    using SignedFullMath for int256;
+    using Uint32L8ArrayLib for uint32[8];
 
     struct Set {
         // fixed length array of truncate(tokenAddress)

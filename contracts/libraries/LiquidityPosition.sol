@@ -25,14 +25,14 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { console } from 'hardhat/console.sol';
 
 library LiquidityPosition {
-    using PriceMath for uint160;
-    using SignedFullMath for int256;
     using FullMath for uint256;
+    using PriceMath for uint160;
     using SafeCast for uint256;
-    using LiquidityPosition for Info;
-    using Protocol for Protocol.Info;
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
+
+    using LiquidityPosition for LiquidityPosition.Info;
+    using Protocol for Protocol.Info;
 
     struct Set {
         // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime

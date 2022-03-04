@@ -19,12 +19,13 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
-    using Protocol for Protocol.Info;
     using FullMath for uint256;
     using SignedFullMath for int256;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
+
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPosition.Set;
-    using UniswapV3PoolHelper for IUniswapV3Pool;
+    using Protocol for Protocol.Info;
 
     enum RISK_SIDE {
         LONG,

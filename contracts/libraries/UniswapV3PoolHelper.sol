@@ -10,8 +10,8 @@ import { PriceMath } from './PriceMath.sol';
 import { console } from 'hardhat/console.sol';
 
 library UniswapV3PoolHelper {
-    using UniswapV3PoolHelper for IUniswapV3Pool;
     using PriceMath for uint160;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
 
     error IllegalTwapDuration(uint32 period);
     error OracleConsultFailed();

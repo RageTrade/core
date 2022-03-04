@@ -14,9 +14,10 @@ import { PriceMath } from './PriceMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 
 library Protocol {
-    using UniswapV3PoolHelper for IUniswapV3Pool;
     using PriceMath for uint160;
     using PriceMath for uint256;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
+
     using Protocol for Protocol.Info;
 
     struct Info {
