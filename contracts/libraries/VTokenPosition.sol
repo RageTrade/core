@@ -31,13 +31,25 @@ library VTokenPosition {
         SHORT
     }
 
-    struct Position {
+    struct Info {
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
         int256 sumAX128Ckpt; // later look into cint64
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPositionSet.Info liquidityPositions;
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
+    }
+
+    /// @notice stores info for VTokenPositionSet
+    /// @param active list of all active token truncated addresses
+    /// @param positions mapping from truncated token addresses to VTokenPosition struct for that address
+    struct Set {
+        // fixed length array of truncate(tokenAddress)
+        // open positions in 8 different pairs at same time.
+        // single per pool because it's fungible, allows for having
+        uint32[8] active;
+        mapping(uint32 => VTokenPosition.Info) positions;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
@@ -48,7 +60,7 @@ library VTokenPosition {
     /// @param priceX128 price in fixed point 128
     /// @param wrapper pool wrapper corresponding to position
     function marketValue(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint256 priceX128,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
@@ -62,7 +74,7 @@ library VTokenPosition {
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
         uint256 priceX128,
         Protocol.Info storage protocol
@@ -75,7 +87,7 @@ library VTokenPosition {
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256) {
@@ -83,14 +95,18 @@ library VTokenPosition {
         return marketValue(position, poolId, priceX128, protocol);
     }
 
-    function riskSide(Position storage position) internal view returns (RISK_SIDE) {
+    function riskSide(VTokenPosition.Info storage position) internal view returns (RISK_SIDE) {
         return position.balance > 0 ? RISK_SIDE.LONG : RISK_SIDE.SHORT;
     }
 
     /// @notice returns the unrealized funding payment for the trader position
     /// @param position token position
     /// @param wrapper pool wrapper corresponding to position
-    function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
+    function unrealizedFundingPayment(VTokenPosition.Info storage position, IVPoolWrapper wrapper)
+        internal
+        view
+        returns (int256)
+    {
         int256 extrapolatedSumAX128 = wrapper.getExtrapolatedSumAX128();
         int256 unrealizedFpBill = -FundingPayment.bill(
             extrapolatedSumAX128,
@@ -105,7 +121,7 @@ library VTokenPosition {
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function unrealizedFundingPayment(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256) {
@@ -113,7 +129,7 @@ library VTokenPosition {
     }
 
     function getNetPosition(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256) {

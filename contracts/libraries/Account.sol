@@ -34,8 +34,8 @@ library Account {
     using SafeCast for uint256;
     using SignedFullMath for int256;
     using SignedMath for int256;
-    using VTokenPositionSet for VTokenPositionSet.Set;
-    using VTokenPosition for VTokenPosition.Position;
+    using VTokenPositionSet for VTokenPosition.Set;
+    using VTokenPosition for VTokenPosition.Info;
 
     /// @notice account info for user
     /// @param owner specifies the account owner
@@ -44,7 +44,7 @@ library Account {
     struct UserInfo {
         uint96 id;
         address owner;
-        VTokenPositionSet.Set tokenPositions;
+        VTokenPosition.Set tokenPositions;
         CollateralDeposit.Set tokenDeposits;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
@@ -599,7 +599,7 @@ library Account {
 
         int256 tokensToTrade;
         {
-            VTokenPosition.Position storage vTokenPosition = targetAccount.tokenPositions.getTokenPosition(
+            VTokenPosition.Info storage vTokenPosition = targetAccount.tokenPositions.getTokenPosition(
                 poolId,
                 false,
                 protocol

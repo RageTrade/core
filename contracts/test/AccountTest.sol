@@ -22,8 +22,8 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract AccountTest {
     using Account for Account.UserInfo;
-    using VTokenPosition for VTokenPosition.Position;
-    using VTokenPositionSet for VTokenPositionSet.Set;
+    using VTokenPosition for VTokenPosition.Info;
+    using VTokenPositionSet for VTokenPosition.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using CollateralDeposit for CollateralDeposit.Set;
     using AddressHelper for address;
@@ -74,8 +74,8 @@ contract AccountTest {
 
     function cleanPositions(uint256 accountId) external {
         accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
-        VTokenPositionSet.Set storage set = accounts[accountId].tokenPositions;
-        VTokenPosition.Position storage tokenPosition;
+        VTokenPosition.Set storage set = accounts[accountId].tokenPositions;
+        VTokenPosition.Info storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[address(protocol.vBase).truncate()];
@@ -239,7 +239,7 @@ contract AccountTest {
             int256 sumACkpt
         )
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountId].tokenPositions.positions[truncate(vToken)];
+        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[truncate(vToken)];
         return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Ckpt);
     }
 

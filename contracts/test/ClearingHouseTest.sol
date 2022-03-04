@@ -29,8 +29,8 @@ contract ClearingHouseTest is ClearingHouse {
     using LiquidityPosition for LiquidityPosition.Info;
     using Protocol for Protocol.Info;
     using SignedFullMath for int256;
-    using VTokenPositionSet for VTokenPositionSet.Set;
-    using VTokenPosition for VTokenPosition.Position;
+    using VTokenPositionSet for VTokenPosition.Set;
+    using VTokenPosition for VTokenPosition.Info;
 
     uint256 public fixFee;
 
@@ -47,8 +47,8 @@ contract ClearingHouseTest is ClearingHouse {
     }
 
     function cleanPositions(uint256 accountId) external {
-        VTokenPositionSet.Set storage set = accounts[accountId].tokenPositions;
-        VTokenPosition.Position storage tokenPosition;
+        VTokenPosition.Set storage set = accounts[accountId].tokenPositions;
+        VTokenPosition.Info storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
         tokenPosition = set.positions[address(protocol.vBase).truncate()];
@@ -102,7 +102,7 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 balance, int256 netTraderPosition)
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountId].tokenPositions.positions[
+        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[
             address(vToken).truncate()
         ];
         balance = vTokenPosition.balance;
@@ -125,7 +125,7 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 fundingPayment)
     {
-        VTokenPosition.Position storage vTokenPosition = accounts[accountId].tokenPositions.positions[
+        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[
             address(vToken).truncate()
         ];
 

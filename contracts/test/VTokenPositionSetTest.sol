@@ -20,11 +20,11 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 contract VTokenPositionSetTest is AccountProtocolInfoMock {
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using AddressHelper for address;
-    using VTokenPositionSet for VTokenPositionSet.Set;
+    using VTokenPositionSet for VTokenPosition.Set;
     using Uint32L8ArrayLib for uint32[8];
 
     mapping(uint32 => IVToken) vTokens;
-    VTokenPositionSet.Set dummy;
+    VTokenPosition.Set dummy;
 
     VPoolWrapperMock public wrapper;
 
@@ -105,7 +105,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
             int256 netTraderPosition
         )
     {
-        VTokenPosition.Position storage pos = dummy.positions[address(vToken).truncate()];
+        VTokenPosition.Info storage pos = dummy.positions[address(vToken).truncate()];
         return (pos.balance, pos.sumAX128Ckpt, pos.netTraderPosition);
     }
 }

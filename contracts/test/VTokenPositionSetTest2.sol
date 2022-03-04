@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.9;
 
-import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
-import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
-import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
-import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { Account } from '../libraries/Account.sol';
 import { AddressHelper } from '../libraries/AddressHelper.sol';
+import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
+import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
+import { VTokenPosition } from '../libraries/VTokenPosition.sol';
+import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
+import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
@@ -18,9 +19,9 @@ contract VTokenPositionSetTest2 is AccountProtocolInfoMock {
     using Uint32L8ArrayLib for uint32[8];
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using AddressHelper for address;
-    using VTokenPositionSet for VTokenPositionSet.Set;
+    using VTokenPositionSet for VTokenPosition.Set;
 
-    VTokenPositionSet.Set dummy;
+    VTokenPosition.Set dummy;
 
     uint256 accountId = 123;
 
