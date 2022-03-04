@@ -18,10 +18,11 @@ import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionSetTest is AccountProtocolInfoMock {
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
     using AddressHelper for address;
-    using VTokenPositionSet for VTokenPosition.Set;
     using Uint32L8ArrayLib for uint32[8];
+
+    using LiquidityPositionSet for LiquidityPosition.Set;
+    using VTokenPositionSet for VTokenPosition.Set;
 
     mapping(uint32 => IVToken) vTokens;
     VTokenPosition.Set dummy;

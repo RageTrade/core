@@ -27,15 +27,16 @@ import { console } from 'hardhat/console.sol';
 library Account {
     using Account for UserInfo;
     using AddressHelper for address;
-    using CollateralDeposit for CollateralDeposit.Set;
     using FullMath for uint256;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
-    using Protocol for Protocol.Info;
     using SafeCast for uint256;
     using SignedFullMath for int256;
     using SignedMath for int256;
-    using VTokenPositionSet for VTokenPosition.Set;
+
+    using Protocol for Protocol.Info;
+    using CollateralDeposit for CollateralDeposit.Set;
+    using LiquidityPositionSet for LiquidityPosition.Set;
     using VTokenPosition for VTokenPosition.Info;
+    using VTokenPositionSet for VTokenPosition.Set;
 
     /// @notice account info for user
     /// @param owner specifies the account owner

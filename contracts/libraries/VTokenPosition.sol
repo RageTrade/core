@@ -23,22 +23,12 @@ library VTokenPosition {
     using FullMath for uint256;
     using SignedFullMath for int256;
     using LiquidityPosition for LiquidityPosition.Info;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using LiquidityPositionSet for LiquidityPosition.Set;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
     enum RISK_SIDE {
         LONG,
         SHORT
-    }
-
-    struct Info {
-        int256 balance; // vTokenLong - vTokenShort
-        int256 netTraderPosition;
-        int256 sumAX128Ckpt; // later look into cint64
-        // this is moved from accounts to here because of the in margin available check
-        // the loop needs to be done over liquidity positions of same token only
-        LiquidityPositionSet.Info liquidityPositions;
-        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
     /// @notice stores info for VTokenPositionSet
@@ -50,6 +40,16 @@ library VTokenPosition {
         // single per pool because it's fungible, allows for having
         uint32[8] active;
         mapping(uint32 => VTokenPosition.Info) positions;
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
+    }
+
+    struct Info {
+        int256 balance; // vTokenLong - vTokenShort
+        int256 netTraderPosition;
+        int256 sumAX128Ckpt; // later look into cint64
+        // this is moved from accounts to here because of the in margin available check
+        // the loop needs to be done over liquidity positions of same token only
+        LiquidityPosition.Set liquidityPositions;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 

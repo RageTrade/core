@@ -8,10 +8,10 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 import { console } from 'hardhat/console.sol';
 
 contract LiquidityPositionSetTest {
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using LiquidityPositionSet for LiquidityPosition.Set;
     using LiquidityPosition for LiquidityPosition.Info;
 
-    LiquidityPositionSet.Info liquidityPositions;
+    LiquidityPosition.Set liquidityPositions;
     VPoolWrapperMock public wrapper;
 
     constructor() {

@@ -25,16 +25,16 @@ import { console } from 'hardhat/console.sol';
 
 library VTokenPositionSet {
     using AddressHelper for address;
-    using LiquidityPosition for LiquidityPosition.Info;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
     using FullMath for uint256;
-    using Protocol for Protocol.Info;
     using SafeCast for uint256;
     using SignedFullMath for int256;
     using SignedMath for int256;
+    using Uint32L8ArrayLib for uint32[8];
+
+    using LiquidityPositionSet for LiquidityPosition.Set;
+    using Protocol for Protocol.Info;
     using VTokenPosition for VTokenPosition.Info;
     using VTokenPositionSet for VTokenPosition.Set;
-    using Uint32L8ArrayLib for uint32[8];
 
     // TODO include VTokenPositionSet in the name of these errors
     error VTokenPositionSetIncorrectUpdate();

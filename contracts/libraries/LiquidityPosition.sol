@@ -34,6 +34,14 @@ library LiquidityPosition {
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
+    struct Set {
+        // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
+        uint48[5] active;
+        // concat(tickLow,tickHigh)
+        mapping(uint48 => LiquidityPosition.Info) positions;
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
+    }
+
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
         IClearingHouseEnums.LimitOrderType limitOrderType;

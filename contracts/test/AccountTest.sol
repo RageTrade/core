@@ -24,7 +24,7 @@ contract AccountTest {
     using Account for Account.UserInfo;
     using VTokenPosition for VTokenPosition.Info;
     using VTokenPositionSet for VTokenPosition.Set;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using LiquidityPositionSet for LiquidityPosition.Set;
     using CollateralDeposit for CollateralDeposit.Set;
     using AddressHelper for address;
 
@@ -244,7 +244,7 @@ contract AccountTest {
     }
 
     function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
+        LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[truncate(vToken)]
             .liquidityPositions;
@@ -273,7 +273,7 @@ contract AccountTest {
             uint256 sumFeeInsideLastX128
         )
     {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
+        LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[truncate(vToken)]
             .liquidityPositions;

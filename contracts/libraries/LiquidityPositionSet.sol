@@ -15,28 +15,20 @@ import { console } from 'hardhat/console.sol';
 
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
-    using LiquidityPositionSet for Info;
+    using LiquidityPositionSet for LiquidityPosition.Set;
     using Protocol for Protocol.Info;
     using Uint48L5ArrayLib for uint48[5];
-
-    struct Info {
-        // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
-        uint48[5] active;
-        // concat(tickLow,tickHigh)
-        mapping(uint48 => LiquidityPosition.Info) positions;
-        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
-    }
 
     error IllegalTicks(int24 tickLower, int24 tickUpper);
     error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
     error InactiveRange();
 
-    function isEmpty(Info storage set) internal view returns (bool) {
+    function isEmpty(LiquidityPosition.Set storage set) internal view returns (bool) {
         return set.active[0] == 0;
     }
 
     function isPositionActive(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         int24 tickLower,
         int24 tickUpper
     ) internal view returns (bool) {
@@ -44,7 +36,7 @@ library LiquidityPositionSet {
     }
 
     function marketValue(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint160 sqrtPriceCurrent,
         uint32 poolId,
         Protocol.Info storage protocol
@@ -53,7 +45,7 @@ library LiquidityPositionSet {
     }
 
     function marketValue(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint160 sqrtPriceCurrent,
         IVPoolWrapper wrapper // TODO refactor this
     ) internal view returns (int256 marketValue_) {
@@ -64,7 +56,7 @@ library LiquidityPositionSet {
         }
     }
 
-    function maxNetPosition(Info storage set) internal view returns (uint256 risk) {
+    function maxNetPosition(LiquidityPosition.Set storage set) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
             risk += set.positions[id].maxNetPosition();
@@ -72,7 +64,7 @@ library LiquidityPositionSet {
     }
 
     function longSideRisk(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (uint256 risk) {
@@ -83,7 +75,7 @@ library LiquidityPositionSet {
     }
 
     function getLiquidityPosition(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         int24 tickLower,
         int24 tickUpper
     ) internal view returns (LiquidityPosition.Info storage position) {
@@ -99,7 +91,7 @@ library LiquidityPositionSet {
     }
 
     function activate(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         int24 tickLower,
         int24 tickUpper
     ) internal returns (LiquidityPosition.Info storage position) {
@@ -115,7 +107,7 @@ library LiquidityPositionSet {
         }
     }
 
-    function deactivate(Info storage set, LiquidityPosition.Info storage position) internal {
+    function deactivate(LiquidityPosition.Set storage set, LiquidityPosition.Info storage position) internal {
         if (position.liquidity != 0) {
             revert DeactivationFailed(position.tickLower, position.tickUpper, position.liquidity);
         }
@@ -148,7 +140,7 @@ library LiquidityPositionSet {
     }
 
     function liquidityChange(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
@@ -174,7 +166,7 @@ library LiquidityPositionSet {
 
     // TODO rename changeLiquidity
     function liquidityChange(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         LiquidityPosition.Info storage position,
@@ -198,7 +190,7 @@ library LiquidityPositionSet {
     }
 
     function closeLiquidityPosition(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         LiquidityPosition.Info storage position,
@@ -209,7 +201,7 @@ library LiquidityPositionSet {
     }
 
     function removeLimitOrder(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         int24 currentTick,
@@ -224,7 +216,7 @@ library LiquidityPositionSet {
     }
 
     function closeAllLiquidityPositions(
-        Info storage set,
+        LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         IVPoolWrapper wrapper,
@@ -245,7 +237,7 @@ library LiquidityPositionSet {
         }
     }
 
-    function getInfo(Info storage set)
+    function getInfo(LiquidityPosition.Set storage set)
         internal
         view
         returns (IClearingHouseStructures.LiquidityPositionView[] memory liquidityPositions)
@@ -266,7 +258,11 @@ library LiquidityPositionSet {
         }
     }
 
-    function getNetPosition(Info storage set, uint160 sqrtPriceCurrent) internal view returns (int256 netPosition) {
+    function getNetPosition(LiquidityPosition.Set storage set, uint160 sqrtPriceCurrent)
+        internal
+        view
+        returns (int256 netPosition)
+    {
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {

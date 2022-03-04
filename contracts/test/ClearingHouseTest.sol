@@ -25,7 +25,7 @@ contract ClearingHouseTest is ClearingHouse {
     using Account for Account.UserInfo;
     using AddressHelper for address;
     using CollateralDeposit for CollateralDeposit.Set;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
+    using LiquidityPositionSet for LiquidityPosition.Set;
     using LiquidityPosition for LiquidityPosition.Info;
     using Protocol for Protocol.Info;
     using SignedFullMath for int256;
@@ -110,7 +110,7 @@ contract ClearingHouseTest is ClearingHouse {
     }
 
     function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
+        LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[vToken.truncate()]
             .liquidityPositions;
@@ -139,7 +139,7 @@ contract ClearingHouseTest is ClearingHouse {
         address vToken,
         uint8 num
     ) external view returns (int256 fundingPayment, uint256 unrealizedLiquidityFee) {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
+        LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[vToken.truncate()]
             .liquidityPositions;
@@ -177,7 +177,7 @@ contract ClearingHouseTest is ClearingHouse {
             uint256 sumFeeInsideLastX128
         )
     {
-        LiquidityPositionSet.Info storage liquidityPositionSet = accounts[accountId]
+        LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
             .positions[vToken.truncate()]
             .liquidityPositions;
