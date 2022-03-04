@@ -15,14 +15,13 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 
 import { console } from 'hardhat/console.sol';
 
-// TODO rename to collateral deposit set
-library CTokenDepositSet {
+library CollateralDeposit {
     using AddressHelper for address;
     using Uint32L8ArrayLib for uint32[8];
     using SignedFullMath for int256;
     using SafeCast for uint256;
 
-    struct Info {
+    struct Set {
         // fixed length array of truncate(tokenAddress)
         // open positions in 8 different pairs at same time.
         // single per pool because it's fungible, allows for having
@@ -33,7 +32,7 @@ library CTokenDepositSet {
 
     // add overrides that accept vToken or truncated
     function increaseBalance(
-        Info storage info,
+        CollateralDeposit.Set storage info,
         uint32 collateralId,
         uint256 amount
     ) internal {
@@ -44,7 +43,7 @@ library CTokenDepositSet {
     }
 
     function decreaseBalance(
-        Info storage info,
+        CollateralDeposit.Set storage info,
         uint32 collateralId,
         uint256 amount
     ) internal {
@@ -56,7 +55,7 @@ library CTokenDepositSet {
         }
     }
 
-    function getAllDepositAccountMarketValue(Info storage set, Protocol.Info storage protocol)
+    function getAllDepositAccountMarketValue(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
         internal
         view
         returns (int256)
@@ -76,7 +75,7 @@ library CTokenDepositSet {
         return accountMarketValue;
     }
 
-    function getInfo(Info storage set, Protocol.Info storage protocol)
+    function getInfo(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
         internal
         view
         returns (IClearingHouseStructures.DepositTokenView[] memory depositTokens)

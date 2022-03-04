@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { Account } from '../libraries/Account.sol';
-import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
+import { CollateralDeposit } from '../libraries/CollateralDeposit.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
 import { VTokenPositionSet } from '../libraries/VTokenPositionSet.sol';
 import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
@@ -24,7 +24,7 @@ import { console } from 'hardhat/console.sol';
 contract ClearingHouseTest is ClearingHouse {
     using Account for Account.UserInfo;
     using AddressHelper for address;
-    using CTokenDepositSet for CTokenDepositSet.Info;
+    using CollateralDeposit for CollateralDeposit.Set;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using LiquidityPosition for LiquidityPosition.Info;
     using Protocol for Protocol.Info;
@@ -70,7 +70,7 @@ contract ClearingHouseTest is ClearingHouse {
 
     function cleanDeposits(uint256 accountId) external {
         accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
-        CTokenDepositSet.Info storage set = accounts[accountId].tokenDeposits;
+        CollateralDeposit.Set storage set = accounts[accountId].tokenDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {

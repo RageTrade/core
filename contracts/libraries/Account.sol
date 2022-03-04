@@ -7,7 +7,7 @@ import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullM
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { AddressHelper } from './AddressHelper.sol';
-import { CTokenDepositSet } from './CTokenDepositSet.sol';
+import { CollateralDeposit } from './CollateralDeposit.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
@@ -27,7 +27,7 @@ import { console } from 'hardhat/console.sol';
 library Account {
     using Account for UserInfo;
     using AddressHelper for address;
-    using CTokenDepositSet for CTokenDepositSet.Info;
+    using CollateralDeposit for CollateralDeposit.Set;
     using FullMath for uint256;
     using LiquidityPositionSet for LiquidityPositionSet.Info;
     using Protocol for Protocol.Info;
@@ -45,7 +45,7 @@ library Account {
         uint96 id;
         address owner;
         VTokenPositionSet.Set tokenPositions;
-        CTokenDepositSet.Info tokenDeposits;
+        CollateralDeposit.Set tokenDeposits;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
