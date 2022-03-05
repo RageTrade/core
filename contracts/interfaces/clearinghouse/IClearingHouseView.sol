@@ -8,7 +8,7 @@ import { IVBase } from '../IVBase.sol';
 import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 
 interface IClearingHouseView is IClearingHouseStructures {
-    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
+    function isPoolIdAvailable(uint32 truncated) external view returns (bool);
 
     function getTwapSqrtPricesForSetDuration(IVToken vToken)
         external

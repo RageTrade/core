@@ -30,7 +30,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         virtualPriceX128 = protocol.getVirtualTwapPriceX128For(poolId);
     }
 
-    function isVTokenAddressAvailable(uint32 poolId) external view returns (bool) {
+    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
         return address(protocol.pools[poolId].vToken).isZero() && poolId != address(protocol.vBase).truncate();
     }
 

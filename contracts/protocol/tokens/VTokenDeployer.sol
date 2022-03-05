@@ -28,8 +28,9 @@ abstract contract VTokenDeployer {
         vToken = IVToken(GoodAddressDeployer.deploy(0, bytecode, _isIVTokenAddressGood));
     }
 
-    // returns true if last 4 bytes are non-zero, also extended to add more conditions in VPoolFactory
-    function _isIVTokenAddressGood(address addr) internal view virtual returns (bool) {
-        return uint32(uint160(addr)) != 0;
-    }
+    /// @notice Checks if it is fine to deploy vToken at the provided address
+    /// @dev This method is implemented in RageTradeFactory
+    /// @param addr potential address of vToken
+    /// @return true if last 4 bytes are non-zero,
+    function _isIVTokenAddressGood(address addr) internal view virtual returns (bool);
 }

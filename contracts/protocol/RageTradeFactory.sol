@@ -23,6 +23,7 @@ import { IVBase } from '../interfaces/IVBase.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
+import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { PriceMath } from '../libraries/PriceMath.sol';
 
 import { BaseOracle } from '../oracles/BaseOracle.sol';
@@ -40,6 +41,7 @@ contract RageTradeFactory is
     VPoolWrapperDeployer,
     VTokenDeployer
 {
+    using AddressHelper for address;
     using PriceMath for uint256;
 
     IVBase public immutable vBase;
@@ -152,9 +154,13 @@ contract RageTradeFactory is
     }
 
     function _isIVTokenAddressGood(address addr) internal view virtual override returns (bool) {
+        uint32 poolId = addr.truncate();
         return
-            super._isIVTokenAddressGood(addr) &&
+            // Zero element is considered empty in Uint32L8Array.sol
+            poolId != 0 &&
+            // vToken should be token0 and vBase should be token1 in UniswapV3Pool
             (uint160(addr) < uint160(address(vBase))) &&
-            clearingHouse.isVTokenAddressAvailable(uint32(uint160(addr)));
+            // there should not be a collision in poolIds
+            clearingHouse.isPoolIdAvailable(poolId);
     }
 }
