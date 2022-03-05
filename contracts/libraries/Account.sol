@@ -185,6 +185,7 @@ library Account {
         uint16 liquidationBps,
         uint256 liquidationPriceX128,
         uint256 liquidatorPriceX128,
+        uint256 fixFee,
         int256 insuranceFundFee
     );
 
@@ -646,6 +647,7 @@ library Account {
             liquidationBps,
             liquidationPriceX128,
             liquidatorPriceX128,
+            fixFee,
             insuranceFundFee
         );
     }
