@@ -164,11 +164,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouseActions
     function addMargin(
         uint256 accountId,
-        uint32 cTokenTruncatedAddress,
+        uint32 collateralId,
         uint256 amount
     ) public notPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
-        _addMargin(accountId, account, cTokenTruncatedAddress, amount);
+        _addMargin(accountId, account, collateralId, amount);
     }
 
     function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.Info storage account) {
@@ -201,11 +201,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     /// @inheritdoc IClearingHouseActions
     function removeMargin(
         uint256 accountId,
-        uint32 cTokenTruncatedAddress,
+        uint32 collateralId,
         uint256 amount
     ) external notPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
-        _removeMargin(accountId, account, cTokenTruncatedAddress, amount, true);
+        _removeMargin(accountId, account, collateralId, amount, true);
     }
 
     function _removeMargin(
@@ -365,12 +365,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         for (uint256 i = 0; i < operations.length; i++) {
             if (operations[i].operationType == MulticallOperationType.ADD_MARGIN) {
                 // ADD_MARGIN
-                (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _addMargin(accountId, account, cTokenTruncatedAddress, amount);
+                (uint32 collateralId, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
+                _addMargin(accountId, account, collateralId, amount);
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_MARGIN) {
                 // REMOVE_MARGIN
-                (uint32 cTokenTruncatedAddress, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _removeMargin(accountId, account, cTokenTruncatedAddress, amount, false);
+                (uint32 collateralId, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
+                _removeMargin(accountId, account, collateralId, amount, false);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
