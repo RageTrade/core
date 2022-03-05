@@ -127,9 +127,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     // for updating global funding payment
     function updateGlobalFundingState() public {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            IVToken(address(vToken)) // TODO use IVToken as custom type
-        );
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
         fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
 
@@ -315,7 +313,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function getExtrapolatedSumAX128() public view returns (int256) {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(vToken);
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
         return
             FundingPayment.extrapolatedSumAX128(
                 fpGlobal.sumAX128,
@@ -411,9 +409,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // );
 
         if (state.liquidity > 0 && vTokenAmount > 0) {
-            (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-                vToken // TODO use IVToken as custom type
-            );
+            (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
             fpGlobal.update(
                 swapVTokenForVBase ? vTokenAmount.toInt256() : -vTokenAmount.toInt256(), // when trader goes long, LP goes short
                 state.liquidity,

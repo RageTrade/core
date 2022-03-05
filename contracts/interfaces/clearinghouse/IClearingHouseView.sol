@@ -10,10 +10,7 @@ import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 interface IClearingHouseView is IClearingHouseStructures {
     function isPoolIdAvailable(uint32 truncated) external view returns (bool);
 
-    function getTwapSqrtPricesForSetDuration(IVToken vToken)
-        external
-        view
-        returns (uint256 realPriceX128, uint256 virtualPriceX128);
+    function getTwapPrices(IVToken vToken) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
 
     /**
         Protocol.Info VIEW

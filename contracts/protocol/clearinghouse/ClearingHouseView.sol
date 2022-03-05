@@ -19,12 +19,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     using AddressHelper for address;
     using Protocol for Protocol.Info;
 
-    // TODO rename this to getTwapSqrtPrices
-    function getTwapSqrtPricesForSetDuration(IVToken vToken)
-        external
-        view
-        returns (uint256 realPriceX128, uint256 virtualPriceX128)
-    {
+    function getTwapPrices(IVToken vToken) external view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
         uint32 poolId = address(vToken).truncate();
         realPriceX128 = protocol.getRealTwapPriceX128For(poolId);
         virtualPriceX128 = protocol.getVirtualTwapPriceX128For(poolId);
