@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
-    deployments: { deploy, get },
+    deployments: { deploy, },
     getNamedAccounts,
   } = hre;
 
@@ -16,7 +16,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-    await hre.tenderly.verify({
+    
+    await hre.tenderly.push({
       name: 'VPoolWrapper',
       address: deployment.address,
     });
