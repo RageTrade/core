@@ -8,7 +8,7 @@ import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-etherscan';
-import '@tenderly/hardhat-tenderly';
+import '@protodev-rage/hardhat-tenderly';
 import { ethers } from 'ethers';
 
 config();
