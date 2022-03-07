@@ -336,20 +336,8 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouseActions
-    function liquidateTokenPosition(
-        uint256 liquidatorAccountId,
-        uint256 targetAccountId,
-        uint32 poolId,
-        uint16 liquidationBps
-    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        return
-            _liquidateTokenPosition(
-                accounts[liquidatorAccountId],
-                accounts[targetAccountId],
-                poolId,
-                liquidationBps,
-                0
-            );
+    function liquidateTokenPosition(uint256 targetAccountId, uint32 poolId) external returns (int256 keeperFee) {
+        return _liquidateTokenPosition(targetAccountId, poolId, 0);
     }
 
     /**
@@ -405,13 +393,8 @@ contract ClearingHouse is
                 _liquidateLiquidityPositions(accountId, 0);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
                 // LIQUIDATE_TOKEN_POSITION
-                (uint256 targetAccountId, uint32 poolId, uint16 liquidationBps) = abi.decode(
-                    operations[i].data,
-                    (uint256, uint32, uint16)
-                );
-                results[i] = abi.encode(
-                    _liquidateTokenPosition(accounts[accountId], accounts[targetAccountId], poolId, liquidationBps, 0)
-                );
+                uint32 poolId = abi.decode(operations[i].data, (uint32));
+                results[i] = abi.encode(_liquidateTokenPosition(accountId, poolId, 0));
             } else {
                 revert InvalidMulticallOperationType(operations[i].operationType);
             }
@@ -449,26 +432,14 @@ contract ClearingHouse is
     }
 
     function liquidateTokenPositionWithGasClaim(
-        uint256 liquidatorAccountId,
         uint256 targetAccountId,
         uint32 poolId,
-        uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    )
-        external
-        checkGasUsedClaim(gasComputationUnitsClaim)
-        returns (BalanceAdjustments memory liquidatorBalanceAdjustments)
-    {
+    ) external checkGasUsedClaim(gasComputationUnitsClaim) returns (int256 keeperFee) {
         Calldata.limit(4 + 5 * 0x20);
         /// @dev liquidator account gets benefit, hence ownership is not required
         return
-            _liquidateTokenPosition(
-                accounts[liquidatorAccountId],
-                accounts[targetAccountId],
-                poolId,
-                liquidationBps,
-                gasComputationUnitsClaim
-            );
+            _liquidateTokenPosition(targetAccountId, poolId, gasComputationUnitsClaim);
     }
 
     /**
@@ -528,25 +499,21 @@ contract ClearingHouse is
 
     // TODO move this to Account library. is it possible?
     function _liquidateTokenPosition(
-        Account.Info storage liquidatorAccount,
-        Account.Info storage targetAccount,
+        uint256 accountId,
         uint32 poolId,
-        uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    ) internal whenNotPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
+    ) internal whenNotPaused returns (int256 keeperFee) {
+        Account.Info storage account = accounts[accountId];
 
         _checkPoolId(poolId);
         int256 insuranceFundFee;
-        (insuranceFundFee, liquidatorBalanceAdjustments) = targetAccount.liquidateTokenPosition(
-            liquidatorAccount,
-            liquidationBps,
+        (keeperFee, insuranceFundFee) = account.liquidateTokenPosition(
             poolId,
             _getFixFee(gasComputationUnitsClaim),
-            protocol,
-            true
+            protocol
         );
-
+        if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
+        protocol.cBase.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
     }
 

@@ -66,14 +66,20 @@ interface IClearingHouseStructures is IClearingHouseEnums {
 
     /// @notice parameters to be used for liquidation
     /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
-    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
+    /// @param closeFactorMMThresholdBps specifies the MM threshold for partial liquidation (scaled by 1e4)
+    /// @param partialLiquidationCloseFactorBps specifies the the % of position to be liquidated if partial liquidation should occur (scaled by 1e4)
     /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
+    /// @param liquidationSlippageSqrtToleranceBps specifies the the maximum sqrt price slippage threshold (can be set to - actual price slippage tolerance / 2) (scaled by 1e4)
     /// @param maxRangeLiquidationFees specifies the the maximum range liquidation fees (in settlement token amount decimals)
+    /// @param minNotionalLiquidatable specifies the the minimum notional value of position for it to be eligible for partial liquidation (in settlement token amount decimals)
     struct LiquidationParams {
         uint16 liquidationFeeFraction;
-        uint16 tokenLiquidationPriceDeltaBps;
+        uint16 closeFactorMMThresholdBps;
+        uint16 partialLiquidationCloseFactorBps;
         uint16 insuranceFundFeeShareBps;
+        uint16 liquidationSlippageSqrtToleranceBps;
         uint128 maxRangeLiquidationFees;
+        uint128 minNotionalLiquidatable;
     }
 
     struct MulticallOperation {
