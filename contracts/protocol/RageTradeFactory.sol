@@ -17,8 +17,6 @@ import { VBaseDeployer, IVBase } from './tokens/VBaseDeployer.sol';
 import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
 import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
 
-import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
-
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
