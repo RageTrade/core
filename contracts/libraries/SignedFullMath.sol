@@ -15,7 +15,7 @@ library SignedFullMath {
         uint256 b,
         uint256 denominator
     ) internal pure returns (int256 result) {
-        result = int256(FullMath.mulDiv(a < 0 ? uint256(-1 * a) : uint256(a), b, denominator));
+        result = FullMath.mulDiv(a < 0 ? uint256(-1 * a) : uint256(a), b, denominator).toInt256();
         if (a < 0) {
             result = -result;
         }
