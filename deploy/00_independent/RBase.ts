@@ -5,7 +5,7 @@ import { IERC20Metadata__factory } from '../../typechain-types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
-    deployments: { deploy, save, execute },
+    deployments: { deploy, save },
     getNamedAccounts,
   } = hre;
 
@@ -20,17 +20,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
     });
 
-    await execute(
-      'RBase',
-      { from: deployer },
-      'mint',
-      deployer,
-      hre.ethers.BigNumber.from(10).pow(8)
-    )
-
     if (deployment.newlyDeployed) {
-
-      await hre.tenderly.push({
+      await hre.tenderly.verify({
         name: 'RealBaseMock',
         address: deployment.address,
       });

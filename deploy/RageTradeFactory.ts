@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { getNetworkInfo } from './network-info';
 import {
   ClearingHouse__factory,
   InsuranceFund__factory,
@@ -33,48 +34,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-
-    await hre.tenderly.push({
+    await hre.tenderly.verify({
       name: 'RageTradeFactory',
       address: deployment.address,
     });
   }
 
   const vBaseAddress = await read('RageTradeFactory', 'vBase');
-  console.log('VBase : ', vBaseAddress);
   await save('VBase', { abi: VBase__factory.abi, address: vBaseAddress });
-
-  await hre.tenderly.push({
-    name: 'VBase',
+  await hre.tenderly.verify({
+    name: 'ProxyAdmin',
     address: vBaseAddress,
   });
 
   const clearingHouseAddress = await read('RageTradeFactory', 'clearingHouse');
-  console.log('ClearingHouse : ', clearingHouseAddress)
   await save('ClearingHouse', { abi: ClearingHouse__factory.abi, address: clearingHouseAddress });
-
-
-  await hre.tenderly.push({
+  await hre.tenderly.verify({
     name: 'TransparentUpgradeableProxy',
     address: clearingHouseAddress,
   });
 
   const proxyAdminAddress = await read('RageTradeFactory', 'proxyAdmin');
-  console.log('ProxyAdmin : ', proxyAdminAddress)
   await save('ProxyAdmin', { abi: ProxyAdmin__factory.abi, address: proxyAdminAddress });
-
-
-  await hre.tenderly.push({
+  await hre.tenderly.verify({
     name: 'ProxyAdmin',
     address: proxyAdminAddress,
   });
 
   const insuranceFundAddress = await read('ClearingHouse', 'insuranceFund');
-  console.log('InsuranceFund : ', insuranceFundAddress)
   await save('InsuranceFund', { abi: InsuranceFund__factory.abi, address: insuranceFundAddress });
-
-
-  await hre.tenderly.push({
+  await hre.tenderly.verify({
     name: 'TransparentUpgradeableProxy',
     address: insuranceFundAddress,
   });

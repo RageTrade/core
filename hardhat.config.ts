@@ -71,6 +71,32 @@ export default {
             enabled: true,
             runs: 200,
           },
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.8.10/metadata.html
+            bytecodeHash: 'none',
+          },
+          outputSelection: {
+            '*': {
+              '*': ['storageLayout'],
+            },
+          },
+        },
+      },
+      {
+        version: '0.7.6',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.7.6/metadata.html
+            bytecodeHash: 'none',
+          },
           outputSelection: {
             '*': {
               '*': ['storageLayout'],
@@ -108,9 +134,5 @@ export default {
     deployer: {
       default: 0,
     },
-  },
-  tenderly: {
-    project: process.env.TENDERLY_PROJECT || "protodev-staging",
-    username: process.env.TENDERLY_USERNAME || "protodev"
   },
 };

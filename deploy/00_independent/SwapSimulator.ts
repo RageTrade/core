@@ -5,6 +5,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
     deployments: { deploy },
     getNamedAccounts,
+    network,
   } = hre;
 
   const { deployer } = await getNamedAccounts();
@@ -16,8 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-    
-    await hre.tenderly.push({
+    await hre.tenderly.verify({
       name: 'SwapSimulator',
       address: deployment.address,
     });
