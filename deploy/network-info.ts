@@ -36,6 +36,14 @@ export const arbitrumTestnetInfo: NetworkInfo = {
   ETH_USD_ORACLE: '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8'
 };
 
+export const optimisticKovanInfo: NetworkInfo = {
+  clearingHouseContractName: 'ClearingHouseEthereum',
+  UNISWAP_V3_FACTORY_ADDRESS,
+  UNISWAP_V3_DEFAULT_FEE_TIER,
+  UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  ETH_USD_ORACLE: '0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261'
+};
+
 export const rinkebyInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouseEthereum',
   UNISWAP_V3_FACTORY_ADDRESS,
@@ -48,6 +56,8 @@ export function getNetworkInfo(chainId?: number): NetworkInfo {
   switch (chainId) {
     case 4:
       return rinkebyInfo;
+    case 69:
+      return optimisticKovanInfo;
     case 42161:
       return arbitrumInfo;
     case 421611:

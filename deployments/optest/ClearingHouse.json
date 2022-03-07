@@ -1,5 +1,5 @@
 {
-  "address": "0x8cf9305A8C10E1e0EeF3b4b97cDD2436E4b8df2D",
+  "address": "0x661575AB9f602e2c735dEa07d92e127a08af2E5d",
   "abi": [
     {
       "inputs": [
@@ -67,8 +67,57 @@
       "type": "error"
     },
     {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "incorrectAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20",
+          "name": "correctAddress",
+          "type": "address"
+        }
+      ],
+      "name": "IncorrectCollateralAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "invalidAddress",
+          "type": "address"
+        }
+      ],
+      "name": "InvalidCollateralAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum IClearingHouseEnums.MulticallOperationType",
+          "name": "multicallOperationType",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidMulticallOperationType",
+      "type": "error"
+    },
+    {
       "inputs": [],
       "name": "InvalidTokenLiquidationParameters",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "keeperFee",
+          "type": "int256"
+        }
+      ],
+      "name": "KeeperFeeNotPositive",
       "type": "error"
     },
     {
@@ -117,11 +166,11 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "rTokenAddress",
+          "name": "cTokenAddress",
           "type": "address"
         }
       ],
-      "name": "UnsupportedRToken",
+      "name": "UnsupportedCToken",
       "type": "error"
     },
     {
@@ -144,6 +193,42 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "contract IERC20",
+          "name": "cToken",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            },
+            {
+              "internalType": "uint32",
+              "name": "twapDuration",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "supported",
+              "type": "bool"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct IClearingHouseStructures.CollateralSettings",
+          "name": "cTokenInfo",
+          "type": "tuple"
+        }
+      ],
+      "name": "CollateralSettingsUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": true,
           "internalType": "address",
           "name": "previousGovernance",
@@ -157,6 +242,123 @@
         }
       ],
       "name": "GovernanceTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
+        }
+      ],
+      "name": "NewVTokenSupported",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "initialMarginRatio",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "maintainanceMarginRatio",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint32",
+              "name": "twapDuration",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "supported",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isCrossMargined",
+              "type": "bool"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct IClearingHouseStructures.PoolSettings",
+          "name": "settings",
+          "type": "tuple"
+        }
+      ],
+      "name": "PoolSettingsUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "liquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "tokenLiquidationPriceDeltaBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "insuranceFundFeeShareBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint128",
+              "name": "maxRangeLiquidationFees",
+              "type": "uint128"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct IClearingHouseStructures.LiquidationParams",
+          "name": "liquidationParams",
+          "type": "tuple"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "removeLimitOrderFee",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "minimumOrderNotional",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "minRequiredMargin",
+          "type": "uint256"
+        }
+      ],
+      "name": "ProtocolSettingsUpdated",
       "type": "event"
     },
     {
@@ -187,7 +389,12 @@
         },
         {
           "internalType": "contract IERC20",
-          "name": "_rBase",
+          "name": "_defaultCollateralToken",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IOracle",
+          "name": "_defaultCollateralTokenOracle",
           "type": "address"
         },
         {
@@ -206,30 +413,7 @@
           "type": "address"
         }
       ],
-      "name": "__ClearingHouse_init",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "rTokenAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "oracleAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "uint32",
-          "name": "twapDuration",
-          "type": "uint32"
-        }
-      ],
-      "name": "addCollateralSupport",
+      "name": "__initialize_ClearingHouse",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -243,7 +427,7 @@
         },
         {
           "internalType": "uint32",
-          "name": "rTokenTruncatedAddress",
+          "name": "cTokenTruncatedAddress",
           "type": "uint32"
         },
         {
@@ -260,6 +444,30 @@
     {
       "inputs": [],
       "name": "createAccount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "newAccountId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "vTokenTruncatedAddress",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "createAccountAndAddMargin",
       "outputs": [
         {
           "internalType": "uint256",
@@ -314,38 +522,9 @@
           "internalType": "uint256",
           "name": "accountNo",
           "type": "uint256"
-        },
-        {
-          "internalType": "bool",
-          "name": "isInitialMargin",
-          "type": "bool"
         }
       ],
-      "name": "getAccountMarketValueAndRequiredMargin",
-      "outputs": [
-        {
-          "internalType": "int256",
-          "name": "accountMarketValue",
-          "type": "int256"
-        },
-        {
-          "internalType": "int256",
-          "name": "requiredMargin",
-          "type": "int256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "accountNo",
-          "type": "uint256"
-        }
-      ],
-      "name": "getAccountView",
+      "name": "getAccountInfo",
       "outputs": [
         {
           "internalType": "address",
@@ -361,7 +540,7 @@
           "components": [
             {
               "internalType": "address",
-              "name": "rTokenAddress",
+              "name": "cTokenAddress",
               "type": "address"
             },
             {
@@ -370,7 +549,7 @@
               "type": "uint256"
             }
           ],
-          "internalType": "struct IClearingHouse.DepositTokenView[]",
+          "internalType": "struct IClearingHouseStructures.DepositTokenView[]",
           "name": "tokenDeposits",
           "type": "tuple[]"
         },
@@ -399,7 +578,7 @@
             {
               "components": [
                 {
-                  "internalType": "enum IClearingHouse.LimitOrderType",
+                  "internalType": "enum IClearingHouseEnums.LimitOrderType",
                   "name": "limitOrderType",
                   "type": "uint8"
                 },
@@ -444,14 +623,207 @@
                   "type": "uint256"
                 }
               ],
-              "internalType": "struct IClearingHouse.LiquidityPositionView[]",
+              "internalType": "struct IClearingHouseStructures.LiquidityPositionView[]",
               "name": "liquidityPositions",
               "type": "tuple[]"
             }
           ],
-          "internalType": "struct IClearingHouse.VTokenPositionView[]",
+          "internalType": "struct IClearingHouseStructures.VTokenPositionView[]",
           "name": "tokenPositions",
           "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "accountNo",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isInitialMargin",
+          "type": "bool"
+        }
+      ],
+      "name": "getAccountMarketValueAndRequiredMargin",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "accountMarketValue",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "requiredMargin",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "accountNo",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAccountNetProfit",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "accountNetProfit",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "collateralId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getCollateralInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "twapDuration",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "supported",
+                  "type": "bool"
+                }
+              ],
+              "internalType": "struct IClearingHouseStructures.CollateralSettings",
+              "name": "settings",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct IClearingHouseStructures.Collateral",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "accountNo",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getNetTokenPosition",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "netPosition",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getPoolInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IVToken",
+              "name": "vToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IUniswapV3Pool",
+              "name": "vPool",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVPoolWrapper",
+              "name": "vPoolWrapper",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "initialMarginRatio",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "maintainanceMarginRatio",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "twapDuration",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "supported",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "isCrossMargined",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ],
+              "internalType": "struct IClearingHouseStructures.PoolSettings",
+              "name": "settings",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct IClearingHouseStructures.Pool",
+          "name": "",
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -495,19 +867,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "realToken",
-          "type": "address"
-        }
-      ],
-      "name": "initRealToken",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "insuranceFund",
       "outputs": [
@@ -523,27 +882,8 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "realToken",
-          "type": "address"
-        }
-      ],
-      "name": "isRealTokenAlreadyInitilized",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint32",
-          "name": "truncated",
+          "name": "poolId",
           "type": "uint32"
         }
       ],
@@ -567,13 +907,7 @@
         }
       ],
       "name": "liquidateLiquidityPositions",
-      "outputs": [
-        {
-          "internalType": "int256",
-          "name": "keeperFee",
-          "type": "int256"
-        }
-      ],
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -644,7 +978,7 @@
               "type": "int256"
             }
           ],
-          "internalType": "struct IClearingHouse.BalanceAdjustments",
+          "internalType": "struct IClearingHouseStructures.BalanceAdjustments",
           "name": "liquidatorBalanceAdjustments",
           "type": "tuple"
         }
@@ -700,9 +1034,64 @@
               "type": "int256"
             }
           ],
-          "internalType": "struct IClearingHouse.BalanceAdjustments",
+          "internalType": "struct IClearingHouseStructures.BalanceAdjustments",
           "name": "liquidatorBalanceAdjustments",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "data",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "multicall",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "results",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "accountNo",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "enum IClearingHouseEnums.MulticallOperationType",
+              "name": "operationType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct IClearingHouseStructures.MulticallOperation[]",
+          "name": "operations",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "multicallWithSingleMarginCheck",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "results",
+          "type": "bytes[]"
         }
       ],
       "stateMutability": "nonpayable",
@@ -748,69 +1137,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "contract IVToken",
-          "name": "vToken",
-          "type": "address"
-        }
-      ],
-      "name": "pools",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "contract IUniswapV3Pool",
-              "name": "vPool",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IVPoolWrapper",
-              "name": "vPoolWrapper",
-              "type": "address"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "uint16",
-                  "name": "initialMarginRatio",
-                  "type": "uint16"
-                },
-                {
-                  "internalType": "uint16",
-                  "name": "maintainanceMarginRatio",
-                  "type": "uint16"
-                },
-                {
-                  "internalType": "uint32",
-                  "name": "twapDuration",
-                  "type": "uint32"
-                },
-                {
-                  "internalType": "bool",
-                  "name": "whitelisted",
-                  "type": "bool"
-                },
-                {
-                  "internalType": "contract IOracle",
-                  "name": "oracle",
-                  "type": "address"
-                }
-              ],
-              "internalType": "struct IClearingHouse.RageTradePoolSettings",
-              "name": "settings",
-              "type": "tuple"
-            }
-          ],
-          "internalType": "struct IClearingHouse.RageTradePool",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "protocolInfo",
       "outputs": [
@@ -835,9 +1161,14 @@
               "internalType": "uint16",
               "name": "insuranceFundFeeShareBps",
               "type": "uint16"
+            },
+            {
+              "internalType": "uint128",
+              "name": "maxRangeLiquidationFees",
+              "type": "uint128"
             }
           ],
-          "internalType": "struct Account.LiquidationParams",
+          "internalType": "struct IClearingHouseStructures.LiquidationParams",
           "name": "liquidationParams",
           "type": "tuple"
         },
@@ -862,55 +1193,6 @@
     },
     {
       "inputs": [],
-      "name": "rBase",
-      "outputs": [
-        {
-          "internalType": "contract IERC20",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint32",
-          "name": "rTokenId",
-          "type": "uint32"
-        }
-      ],
-      "name": "rTokens",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "tokenAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "oracleAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "uint32",
-              "name": "oracleTimeHorizon",
-              "type": "uint32"
-            }
-          ],
-          "internalType": "struct RTokenLib.RToken",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "rageTradeFactoryAddress",
       "outputs": [
         {
@@ -925,31 +1207,12 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "realTokenInitilized",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "full",
-          "type": "address"
-        },
-        {
           "components": [
+            {
+              "internalType": "contract IVToken",
+              "name": "vToken",
+              "type": "address"
+            },
             {
               "internalType": "contract IUniswapV3Pool",
               "name": "vPool",
@@ -979,7 +1242,12 @@
                 },
                 {
                   "internalType": "bool",
-                  "name": "whitelisted",
+                  "name": "supported",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "isCrossMargined",
                   "type": "bool"
                 },
                 {
@@ -988,13 +1256,13 @@
                   "type": "address"
                 }
               ],
-              "internalType": "struct IClearingHouse.RageTradePoolSettings",
+              "internalType": "struct IClearingHouseStructures.PoolSettings",
               "name": "settings",
               "type": "tuple"
             }
           ],
-          "internalType": "struct IClearingHouse.RageTradePool",
-          "name": "rageTradePool",
+          "internalType": "struct IClearingHouseStructures.Pool",
+          "name": "poolInfo",
           "type": "tuple"
         }
       ],
@@ -1027,13 +1295,7 @@
         }
       ],
       "name": "removeLimitOrder",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "keeperFee",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -1085,7 +1347,7 @@
         },
         {
           "internalType": "uint32",
-          "name": "rTokenTruncatedAddress",
+          "name": "cTokenTruncatedAddress",
           "type": "uint32"
         },
         {
@@ -1102,24 +1364,6 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "accountNo",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "removeProfit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "bool",
           "name": "_pause",
           "type": "bool"
@@ -1128,89 +1372,6 @@
       "name": "setPaused",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint16",
-              "name": "liquidationFeeFraction",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "tokenLiquidationPriceDeltaBps",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "insuranceFundFeeShareBps",
-              "type": "uint16"
-            }
-          ],
-          "internalType": "struct Account.LiquidationParams",
-          "name": "_liquidationParams",
-          "type": "tuple"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_removeLimitOrderFee",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_minimumOrderNotional",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_minRequiredMargin",
-          "type": "uint256"
-        }
-      ],
-      "name": "setPlatformParameters",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "supportedDeposits",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "contract IVToken",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "supportedVTokens",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1248,7 +1409,7 @@
               "type": "bool"
             }
           ],
-          "internalType": "struct IClearingHouse.SwapParams",
+          "internalType": "struct IClearingHouseStructures.SwapParams",
           "name": "swapParams",
           "type": "tuple"
         }
@@ -1311,9 +1472,44 @@
     {
       "inputs": [
         {
-          "internalType": "contract IVToken",
-          "name": "vToken",
+          "internalType": "contract IERC20",
+          "name": "cToken",
           "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            },
+            {
+              "internalType": "uint32",
+              "name": "twapDuration",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "supported",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IClearingHouseStructures.CollateralSettings",
+          "name": "collateralSettings",
+          "type": "tuple"
+        }
+      ],
+      "name": "updateCollateralSettings",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
         },
         {
           "components": [
@@ -1334,7 +1530,12 @@
             },
             {
               "internalType": "bool",
-              "name": "whitelisted",
+              "name": "supported",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isCrossMargined",
               "type": "bool"
             },
             {
@@ -1343,12 +1544,80 @@
               "type": "address"
             }
           ],
-          "internalType": "struct IClearingHouse.RageTradePoolSettings",
+          "internalType": "struct IClearingHouseStructures.PoolSettings",
           "name": "newSettings",
           "type": "tuple"
         }
       ],
-      "name": "updateRageTradePoolSettings",
+      "name": "updatePoolSettings",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "accountNo",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "amount",
+          "type": "int256"
+        }
+      ],
+      "name": "updateProfit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "liquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "tokenLiquidationPriceDeltaBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "insuranceFundFeeShareBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint128",
+              "name": "maxRangeLiquidationFees",
+              "type": "uint128"
+            }
+          ],
+          "internalType": "struct IClearingHouseStructures.LiquidationParams",
+          "name": "_liquidationParams",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_removeLimitOrderFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_minimumOrderNotional",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_minRequiredMargin",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateProtocolSettings",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1398,12 +1667,12 @@
               "type": "bool"
             },
             {
-              "internalType": "enum IClearingHouse.LimitOrderType",
+              "internalType": "enum IClearingHouseEnums.LimitOrderType",
               "name": "limitOrderType",
               "type": "uint8"
             }
           ],
-          "internalType": "struct IClearingHouse.LiquidityChangeParams",
+          "internalType": "struct IClearingHouseStructures.LiquidityChangeParams",
           "name": "liquidityChangeParams",
           "type": "tuple"
         }
@@ -1427,61 +1696,6 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "add",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "status",
-          "type": "bool"
-        }
-      ],
-      "name": "updateSupportedDeposits",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "contract IVToken",
-          "name": "add",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "status",
-          "type": "bool"
-        }
-      ],
-      "name": "updateSupportedVTokens",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint32",
-          "name": "vTokenAddressTruncated",
-          "type": "uint32"
-        }
-      ],
-      "name": "vTokens",
-      "outputs": [
-        {
-          "internalType": "contract IVToken",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "address[]",
           "name": "wrapperAddresses",
           "type": "address[]"
@@ -1492,5 +1706,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "numDeployments": 1
 }

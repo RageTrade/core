@@ -18,9 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       '6' // base decimals
     ],
     from: deployer,
-    log: true,
-    gasPrice: '0xd2d61a',
-    gasLimit: 81279421
+    log: true
   });
 
   if (deployment.newlyDeployed) {

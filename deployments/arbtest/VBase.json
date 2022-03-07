@@ -1,5 +1,5 @@
 {
-  "address": "0xFf28fA1Be230BE7fe9a9C294019E23B5CE65e159",
+  "address": "0xFD5E69d4251F80D8459E107973ee3375F2E8773E",
   "abi": [
     {
       "inputs": [
@@ -340,7 +340,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "to",
           "type": "address"
         },
         {
@@ -364,12 +364,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "sender",
+          "name": "from",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "to",
           "type": "address"
         },
         {
@@ -402,5 +402,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "numDeployments": 1
 }

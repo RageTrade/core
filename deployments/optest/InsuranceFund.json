@@ -1,5 +1,5 @@
 {
-  "address": "0x4Abc4D9C06FE7F0aE0c275DfA812Fadd4cA14Bd6",
+  "address": "0xF25298acBE13835d784013998620BA4fA829075D",
   "abi": [
     {
       "inputs": [],
@@ -79,7 +79,7 @@
           "type": "string"
         }
       ],
-      "name": "__InsuranceFund_init",
+      "name": "__initialize_InsuranceFund",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -307,7 +307,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "to",
           "type": "address"
         },
         {
@@ -331,12 +331,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "sender",
+          "name": "from",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "to",
           "type": "address"
         },
         {
@@ -369,5 +369,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "numDeployments": 1
 }

@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   try {
     await get('ETH-vToken');
     alreadyDeployed = true;
-  } catch (e) { console.log('ERR:', e) }
+  } catch (e) { console.log((e as Error).message) }
 
   if (!alreadyDeployed) {
     const { deployer } = await getNamedAccounts();
