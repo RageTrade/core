@@ -110,7 +110,7 @@ export default {
     },
   },
   tenderly: {
-    project: process.env.TENDERLY_PROJECT || "protodev-staging",
-    username: process.env.TENDERLY_USERNAME || "protodev"
+    project: process.env.TENDERLY_PROJECT,
+    username: process.env.TENDERLY_USERNAME
   },
 };

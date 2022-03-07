@@ -13,10 +13,11 @@ import { InsuranceFundDeployer } from './insurancefund/InsuranceFundDeployer.sol
 import { VBaseDeployer } from './tokens/VBaseDeployer.sol';
 import { VTokenDeployer } from './tokens/VTokenDeployer.sol';
 import { VToken } from './tokens/VToken.sol';
-import { VBaseDeployer, IVBase } from './tokens/VBaseDeployer.sol';
-import { VTokenDeployer, IVToken } from './tokens/VTokenDeployer.sol';
-import { VPoolWrapperDeployer, IVPoolWrapper } from './wrapper/VPoolWrapperDeployer.sol';
+import { VPoolWrapperDeployer } from './wrapper/VPoolWrapperDeployer.sol';
 
+import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IInsuranceFund } from '../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVBase } from '../interfaces/IVBase.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
