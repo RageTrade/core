@@ -34,7 +34,7 @@ import {
 import { amountsForLiquidity, maxLiquidityForAmounts } from './utils/liquidity';
 import { randomInt } from 'crypto';
 import { truncate } from './utils/vToken';
-import { LiquidationParamsStruct } from '../typechain-types/IClearingHouseEvents';
+import { IClearingHouseStructures } from '../typechain-types/IClearingHouseEvents';
 
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -51,7 +51,7 @@ describe('Account Library Test Realistic', () => {
   let vToken: VToken;
   let minRequiredMargin: BigNumberish;
   let liquidationFeeFraction: BigNumberish;
-  let liquidationParams: LiquidationParamsStruct;
+  let liquidationParams: IClearingHouseStructures.LiquidationParamsStruct;
   let fixFee: BigNumberish;
 
   let oracle: OracleMock;
