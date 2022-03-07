@@ -1,5 +1,5 @@
 {
-  "address": "0x93fb98a87Aa1002E940f5b5Fb15444d1337ca2dF",
+  "address": "0x5739C2023Ba0f06C9c38fd4e0CDB596Bb4F6a104",
   "abi": [
     {
       "inputs": [
@@ -496,7 +496,7 @@
         },
         {
           "internalType": "uint32",
-          "name": "cTokenTruncatedAddress",
+          "name": "collateralId",
           "type": "uint32"
         },
         {
@@ -906,7 +906,7 @@
           "type": "address"
         }
       ],
-      "name": "getTwapSqrtPricesForSetDuration",
+      "name": "getTwapPrices",
       "outputs": [
         {
           "internalType": "uint256",
@@ -956,7 +956,7 @@
           "type": "uint32"
         }
       ],
-      "name": "isVTokenAddressAvailable",
+      "name": "isPoolIdAvailable",
       "outputs": [
         {
           "internalType": "bool",
@@ -1416,7 +1416,7 @@
         },
         {
           "internalType": "uint32",
-          "name": "cTokenTruncatedAddress",
+          "name": "collateralId",
           "type": "uint32"
         },
         {
