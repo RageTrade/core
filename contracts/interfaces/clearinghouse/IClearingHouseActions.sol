@@ -81,17 +81,10 @@ interface IClearingHouseActions is IClearingHouseStructures {
 
     /// @notice keeper call for liquidation of token position
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
-    /// @param liquidatorAccountId liquidator account id
     /// @param targetAccountId account id
     /// @param poolId truncated address of token to withdraw
-    /// @param liquidationBps fraction of the token position to be transferred in BPS
-    /// @return liquidatorBalanceAdjustments - balance changes in liquidator vQuote and token balance and net token position
-    function liquidateTokenPosition(
-        uint256 liquidatorAccountId,
-        uint256 targetAccountId,
-        uint32 poolId,
-        uint16 liquidationBps
-    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
+    /// @return keeperFee - amount of fees transferred to keeper
+    function liquidateTokenPosition(uint256 targetAccountId, uint32 poolId) external returns (int256 keeperFee);
 
     /// @notice keeper call to remove a limit order
     /// @dev checks the position of current price relative to limit order and checks limitOrderType
@@ -120,17 +113,13 @@ interface IClearingHouseActions is IClearingHouseStructures {
 
     /// @notice keeper call for liquidation of token position
     /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
-    /// @param liquidatorAccountId liquidator account id
     /// @param targetAccountId account id
     /// @param poolId truncated address of token to withdraw
-    /// @param liquidationBps fraction of the token position to be transferred in BPS
     /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
-    /// @return liquidatorBalanceAdjustments - balance changes in liquidator vQuote and token balance and net token position
+    /// @return keeperFee - amount of fees transferred to keeper
     function liquidateTokenPositionWithGasClaim(
-        uint256 liquidatorAccountId,
         uint256 targetAccountId,
         uint32 poolId,
-        uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    ) external returns (BalanceAdjustments memory liquidatorBalanceAdjustments);
+    ) external returns (int256 keeperFee);
 }

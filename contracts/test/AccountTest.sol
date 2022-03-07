@@ -186,31 +186,8 @@ contract AccountTest {
         return accounts[accountId].liquidateLiquidityPositions(fixFee, protocol);
     }
 
-    function getLiquidationPriceX128AndFee(int256 tokensToTrade, address vToken)
-        external
-        view
-        returns (
-            uint256 liquidationPriceX128,
-            uint256 liquidatorPriceX128,
-            int256 insuranceFundFee
-        )
-    {
-        return Account._getLiquidationPriceX128AndFee(tokensToTrade, vToken.truncate(), protocol);
-    }
-
-    function liquidateTokenPosition(
-        uint256 accountId,
-        uint256 liquidatorAccountId,
-        address vToken
-    ) external {
-        accounts[accountId].liquidateTokenPosition(
-            accounts[liquidatorAccountId],
-            10000,
-            vToken.truncate(),
-            fixFee,
-            protocol,
-            true
-        );
+    function liquidateTokenPosition(uint256 accountId, address vToken) external {
+        accounts[accountId].liquidateTokenPosition(vToken.truncate(), fixFee, protocol);
     }
 
     function removeLimitOrder(

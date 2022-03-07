@@ -343,85 +343,90 @@ library Account {
     }
 
     /// @notice liquidates all range positions in case the account is under water
-    /// @param targetAccount account to liquidate
+    /// @param account account to liquidate
     /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
     function liquidateTokenPosition(
-        Account.Info storage targetAccount,
-        Account.Info storage liquidatorAccount,
-        uint16 liquidationBps,
+        Account.Info storage account,
         uint32 poolId,
         uint256 fixFee,
-        Protocol.Info storage protocol,
-        bool checkMargin
-    )
-        external
-        returns (
-            int256 insuranceFundFee,
-            IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments
-        )
-    {
-        if (targetAccount.tokenPositions.isTokenRangeActive(poolId))
+        Protocol.Info storage protocol
+    ) external returns (int256 keeperFee, int256 insuranceFundFee) {
+        bool isPartialLiquidation;
+        if (account.tokenPositions.isTokenRangeActive(poolId, protocol))
             revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
-            (int256 accountMarketValue, int256 totalRequiredMargin) = targetAccount._getAccountValueAndRequiredMargin(
+            (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
                 false,
                 protocol
             );
 
             if (accountMarketValue > totalRequiredMargin) {
                 revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+            } else if (
+                accountMarketValue >
+                totalRequiredMargin.mulDiv(protocol.liquidationParams.closeFactorMMThresholdBps, 1e4)
+            ) {
+                isPartialLiquidation = true;
             }
         }
 
         int256 tokensToTrade;
         {
-            VTokenPosition.Info storage vTokenPosition = targetAccount.tokenPositions.getTokenPosition(poolId, false);
-            tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
-        }
-
-        uint256 liquidationPriceX128;
-        uint256 liquidatorPriceX128;
-        {
-            (liquidationPriceX128, liquidatorPriceX128, insuranceFundFee) = _getLiquidationPriceX128AndFee(
-                tokensToTrade,
+            VTokenPosition.Info storage vTokenPosition = account.tokenPositions.getTokenPosition(
                 poolId,
+                false,
                 protocol
             );
-
-            liquidatorBalanceAdjustments = _updateLiquidationAccounts(
-                targetAccount,
-                liquidatorAccount,
-                poolId,
-                tokensToTrade,
-                liquidationPriceX128,
-                liquidatorPriceX128,
-                int256(fixFee),
-                protocol
-            );
-        }
-        {
-            int256 accountMarketValueFinal = targetAccount._getAccountValue(protocol);
-
-            if (accountMarketValueFinal < 0) {
-                insuranceFundFee = accountMarketValueFinal;
-                targetAccount._updateVQuoteBalance(-accountMarketValueFinal);
+            tokensToTrade = -vTokenPosition.balance;
+            uint256 tokenNotionalValue = VTokenPositionSet.getTokenNotionalValue(poolId, tokensToTrade, protocol);
+            if (isPartialLiquidation && tokenNotionalValue > protocol.liquidationParams.minNotionalLiquidatable) {
+                tokensToTrade = tokensToTrade.mulDiv(protocol.liquidationParams.partialLiquidationCloseFactorBps, 1e4);
             }
         }
 
-        if (checkMargin) liquidatorAccount._checkIfMarginAvailable(false, protocol);
+        {
+            uint160 sqrtPriceLimit;
+            {
+                uint160 sqrtTwapPrice = protocol.getVirtualTwapSqrtPriceX96For(poolId);
+                if (tokensToTrade > 0) {
+                    sqrtPriceLimit = uint256(sqrtTwapPrice)
+                        .mulDiv(protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
+                        .toUint160();
+                } else {
+                    sqrtPriceLimit = uint256(sqrtTwapPrice)
+                        .mulDiv(protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
+                        .toUint160();
+                }
+            }
 
-        emit TokenPositionLiquidated(
-            targetAccount.id,
-            liquidatorAccount.id,
-            poolId,
-            liquidationBps,
-            liquidationPriceX128,
-            liquidatorPriceX128,
-            fixFee,
-            insuranceFundFee
-        );
+            (int256 vTokenAmountSwapped, ) = account.tokenPositions.swapToken(
+                account.id,
+                poolId,
+                IClearingHouseStructures.SwapParams(tokensToTrade, sqrtPriceLimit, false, true),
+                protocol
+            );
+
+            uint256 notionalAmountClosed = VTokenPositionSet.getTokenNotionalValue(
+                poolId,
+                vTokenAmountSwapped,
+                protocol
+            );
+
+            int256 accountMarketValueFinal = account._getAccountValue(protocol);
+
+            (keeperFee, insuranceFundFee) = _computeLiquidationFees(
+                accountMarketValueFinal,
+                notionalAmountClosed,
+                fixFee,
+                protocol.liquidationParams
+            );
+        }
+
+        account._updateVQuoteBalance(-(keeperFee + insuranceFundFee), protocol);
+
+        emit TokenPositionLiquidated(account.id, 0, poolId, 0, 0, 0, insuranceFundFee);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)
