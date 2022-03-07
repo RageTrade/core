@@ -1,4 +1,6 @@
 import hre from "hardhat"
+
+// @NOTE: add index.ts in deployments/network to export stuff
 // import deployments from "../deployments/rinkeby/"
 import deployments from "../deployments/arbtest"
 
