@@ -2,19 +2,13 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import {
   IUniswapV3Pool__factory,
+  RageTradeFactory__factory,
   VPoolWrapper__factory,
   VToken__factory,
 } from '../typechain-types';
-
-import { getNetworkInfo } from './network-info'
-import { AggregatorV3Interface__factory } from '../typechain-types';
-
-import {
-  PoolInitializedEvent,
-  VTokenDeployer,
-  RageTradeFactory,
-  IClearingHouse
-} from '../typechain-types/RageTradeFactory';
+import { ethers } from 'ethers';
+import { TypedEvent } from '../typechain-types/common';
+import { PoolInitializedEvent } from '../typechain-types/RageTradeFactory';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -23,58 +17,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   } = hre;
 
   let alreadyDeployed = false;
-
   try {
     await get('ETH-vToken');
     alreadyDeployed = true;
-  } catch (e) { console.log('ERR:', e) }
+  } catch {}
 
   if (!alreadyDeployed) {
     const { deployer } = await getNamedAccounts();
 
+    // deploying an index price oracle for the token
     const ethIndexOracleDeployment = await deploy('ETH-IndexOracle', {
-      contract: 'ChainlinkOracle',
-      // for rinkeby: 0x8A753747A1Fa494EC906cE90E9f37563A8AF630e
-      args: [
-        '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8',
-        18,
-        6
-      ],
+      contract: 'OracleMock', // TODO change to ChainLinkOracle
       from: deployer,
       log: true,
     });
+    await execute('ETH-IndexOracle', { from: deployer }, 'setSqrtPriceX96', '0x03f2102ff45be0b5f51f3d');
 
-    await save('ETH-IndexOracle', {
-      abi: AggregatorV3Interface__factory.abi,
-      address: getNetworkInfo(hre.network.config.chainId).ETH_USD_ORACLE!
-    })
-
-    console.log('ETH-IndexOracle : ', ethIndexOracleDeployment.address)
-
-    const deployVTokenParams: VTokenDeployer.DeployVTokenParamsStruct = {
-      vTokenName: 'Virtual ETH (Rage Trade)',
-      vTokenSymbol: 'vETH',
-      cTokenDecimals: 18,
-    }
-
-    const rageTradePoolInitialSettings: IClearingHouse.RageTradePoolSettingsStruct = {
-      initialMarginRatio: 20000,
-      maintainanceMarginRatio: 10000,
-      twapDuration: 300,
-      supported: true,
-      isCrossMargined: true,
-      oracle: ethIndexOracleDeployment.address
-    }
-
-    const params: RageTradeFactory.InitializePoolParamsStruct = {
-      deployVTokenParams,
-      rageTradePoolInitialSettings,
+    // TODO add typecheck here, else life can get too hard when any breaking change would take place in initializePool signature
+    const tx = await execute('RageTradeFactory', { from: deployer }, 'initializePool', {
+      deployVTokenParams: {
+        vTokenName: 'Virtual ETH (Rage Trade)',
+        vTokenSymbol: 'vETH',
+        cTokenDecimals: 18,
+      },
+      rageTradePoolInitialSettings: {
+        initialMarginRatio: 20000,
+        maintainanceMarginRatio: 10000,
+        twapDuration: 60,
+        supported: true,
+        isCrossMargined: true,
+        oracle: ethIndexOracleDeployment.address,
+      },
       liquidityFeePips: 1000,
       protocolFeePips: 500,
-      slotsToInitialize: 10,
-    }
-
-    const tx = await execute('RageTradeFactory', { from: deployer }, 'initializePool', params);
+      slotsToInitialize: 0,
+    });
 
     const poolInitializedLog = tx.events?.find(
       event => event?.event === 'PoolInitialized',
@@ -84,34 +61,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     await save('ETH-vToken', { abi: VToken__factory.abi, address: poolInitializedLog.args.vToken });
-    console.log('ETH-vToken : ', poolInitializedLog.args.vToken)
-
-
-    await hre.tenderly.push({
-      name: 'VToken',
-      address: poolInitializedLog.args.vToken,
-    });
-
-    await save('ETH-vPool', {
-      abi: IUniswapV3Pool__factory.abi,
-      address: poolInitializedLog.args.vPool,
-    });
-    console.log('ETH-vPool : ', poolInitializedLog.args.vPool)
-
-
-    await hre.tenderly.push({
-      name: 'IUniswapV3Pool',
-      address: poolInitializedLog.args.vPool,
-    });
-
+    await save('ETH-vPool', { abi: IUniswapV3Pool__factory.abi, address: poolInitializedLog.args.vPool });
     await save('ETH-vPoolWrapper', { abi: VPoolWrapper__factory.abi, address: poolInitializedLog.args.vPoolWrapper });
-    console.log('ETH-vPoolWrapper : ', poolInitializedLog.args.vPoolWrapper)
-
-
-    await hre.tenderly.push({
-      name: 'TransparentUpgradeableProxy',
-      address: poolInitializedLog.args.vPoolWrapper,
-    });
   }
 };
 
