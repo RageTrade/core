@@ -752,6 +752,23 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.5.0.tgz#3fd75d57de172b3743cdfc1206883f56430409cc"
   integrity sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==
 
+"@protodev-rage/hardhat-tenderly@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@protodev-rage/hardhat-tenderly/-/hardhat-tenderly-1.0.13.tgz#3b1fb23eee455a5f9b874d8ee1ce9b02c9cfa69d"
+  integrity sha512-/DrQlpjEgIalAFdx0jDMXL/eZMgywwbuusTBHkvMr+ySpZBiMN209MDs43o0qePGklPn7c1QYYTcpvqSRR0fBQ==
+  dependencies:
+    axios "^0.21.1"
+    fs-extra "^9.0.1"
+    js-yaml "^3.14.0"
+
+"@ragetrade/sdk@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-0.3.0.tgz#b0b152674a0339a16f5fa5cf4f920fde6644113d"
+  integrity sha512-akEiWxVtxYNL/sH/6Z4fiD5x9HnR6MvnXIKeMM4Sscmpe3/Bgb65vnWf6ssqvp3k+Iep0U4mtToTjwg9Yvq6uw==
+  dependencies:
+    "@uniswap/v3-sdk" "^3.8.1"
+    ethers "^5.5.3"
+
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.3.3.tgz#590f77d85d45bc7ecc4e06c654f41345db6ca967"
@@ -896,14 +913,6 @@
   integrity sha512-XIB2XbzHTN6ieIjfIMV9hlVcfPU26s2vafYWQcZHWXHOxiaRZYEDKEwdl129Zyg50+foYV2jCgtrqSA6qNuNSA==
   dependencies:
     defer-to-connect "^1.0.1"
-
-"@tenderly/hardhat-tenderly@git+https://github.com/protodev-rage/hardhat-tenderly.git#4fdcb94d8e775f9ca326fb64a8030b00aa5e3a2e":
-  version "1.0.13"
-  resolved "git+https://github.com/protodev-rage/hardhat-tenderly.git#4fdcb94d8e775f9ca326fb64a8030b00aa5e3a2e"
-  dependencies:
-    axios "^0.21.1"
-    fs-extra "^9.0.1"
-    js-yaml "^3.14.0"
 
 "@truffle/error@^0.0.14":
   version "0.0.14"
@@ -1214,7 +1223,7 @@
     base64-sol "1.0.1"
     hardhat-watcher "^2.1.1"
 
-"@uniswap/v3-sdk@^3.8.2":
+"@uniswap/v3-sdk@^3.8.1", "@uniswap/v3-sdk@^3.8.2":
   version "3.8.2"
   resolved "https://registry.yarnpkg.com/@uniswap/v3-sdk/-/v3-sdk-3.8.2.tgz#6e10eebe0da851a4f6a5036a1e70a896a5c239d4"
   integrity sha512-JVrs1ZuWKP8JmYi5hxFliOnCFAEREwMpE7qB6rKPCo155/pIRyQ90lJfQZCJO7pP/webx5t5JFxCOytmDIp29Q==
@@ -4015,7 +4024,7 @@ ethers@^5.0.1, ethers@^5.0.2, ethers@^5.0.24, ethers@^5.4.7, ethers@^5.5.0:
     "@ethersproject/web" "5.5.0"
     "@ethersproject/wordlists" "5.5.0"
 
-ethers@^5.5.4:
+ethers@^5.5.3, ethers@^5.5.4:
   version "5.5.4"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.5.4.tgz#e1155b73376a2f5da448e4a33351b57a885f4352"
   integrity sha512-N9IAXsF8iKhgHIC6pquzRgPBJEzc9auw3JoRkaKe+y4Wl/LFBtDDunNe7YmdomontECAcC5APaAgWZBiu1kirw==
