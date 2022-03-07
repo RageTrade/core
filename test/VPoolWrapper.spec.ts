@@ -1,5 +1,6 @@
+import hre from 'hardhat';
 import { BigNumber, BigNumberish, FixedNumber } from '@ethersproject/bignumber';
-import { ethers } from 'ethers';
+import { ethers, Signer } from 'ethers';
 import { VPoolWrapperMock2, VBase, VToken, UniswapV3Pool, SimulateSwapTest } from '../typechain-types';
 import { SwapEvent } from '../typechain-types/VPoolWrapper';
 import { Q128, Q96, toQ128, toQ96 } from './utils/fixed-point';
@@ -70,8 +71,8 @@ describe('PoolWrapper', () => {
         timestampLast: 100,
       };
       const sumFeeGlobalX128 = toQ128(4);
-      vPoolWrapper.setVariable('fpGlobal', fpGlobal);
-      vPoolWrapper.setVariable('sumFeeGlobalX128', toQ128(4));
+      await vPoolWrapper.setVariable('fpGlobal', fpGlobal);
+      await vPoolWrapper.setVariable('sumFeeGlobalX128', toQ128(4));
 
       // add liquidity in the middle
       const { tick } = await vPool.slot0();
