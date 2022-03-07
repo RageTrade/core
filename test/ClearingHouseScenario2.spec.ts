@@ -25,6 +25,7 @@ import {
   Account__factory,
   InsuranceFund,
   UniswapV3Pool,
+  RealTokenMockDecimals,
 } from '../typechain-types';
 
 import { AccountInterface, TokenPositionChangedEvent } from '../typechain-types/Account';
@@ -96,8 +97,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
   let oracle: OracleMock;
   let oracle1: OracleMock;
 
-  let realToken: RealTokenMock;
-  let realToken1: RealTokenMock;
+  let realToken: RealTokenMockDecimals;
+  let realToken1: RealTokenMockDecimals;
 
   let vPool1: IUniswapV3Pool;
   let vPoolWrapper1: VPoolWrapperMockRealistic;
