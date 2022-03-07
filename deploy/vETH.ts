@@ -13,7 +13,7 @@ import {
   PoolInitializedEvent,
   VTokenDeployer,
   RageTradeFactory,
-  IClearingHouse
+  IClearingHouseStructures
 } from '../typechain-types/RageTradeFactory';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -34,9 +34,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const ethIndexOracleDeployment = await deploy('ETH-IndexOracle', {
       contract: 'ChainlinkOracle',
-      // for rinkeby: 0x8A753747A1Fa494EC906cE90E9f37563A8AF630e
       args: [
-        '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8',
+        getNetworkInfo(hre.network.config.chainId).ETH_USD_ORACLE,
         18,
         6
       ],
@@ -57,7 +56,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       cTokenDecimals: 18,
     }
 
-    const rageTradePoolInitialSettings: IClearingHouse.RageTradePoolSettingsStruct = {
+    const poolInitialSettings: IClearingHouseStructures.PoolSettingsStruct = {
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
       twapDuration: 300,
@@ -68,7 +67,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const params: RageTradeFactory.InitializePoolParamsStruct = {
       deployVTokenParams,
-      rageTradePoolInitialSettings,
+      poolInitialSettings,
       liquidityFeePips: 1000,
       protocolFeePips: 500,
       slotsToInitialize: 10,
