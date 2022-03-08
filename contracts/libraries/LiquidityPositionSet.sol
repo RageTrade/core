@@ -19,9 +19,9 @@ library LiquidityPositionSet {
     using Protocol for Protocol.Info;
     using Uint48L5ArrayLib for uint48[5];
 
-    error IllegalTicks(int24 tickLower, int24 tickUpper);
-    error DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
-    error InactiveRange();
+    error LPS_IllegalTicks(int24 tickLower, int24 tickUpper);
+    error LPS_DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
+    error LPS_InactiveRange();
 
     function isEmpty(LiquidityPosition.Set storage set) internal view returns (bool) {
         return set.active[0] == 0;
@@ -84,13 +84,13 @@ library LiquidityPositionSet {
         int24 tickUpper
     ) internal view returns (LiquidityPosition.Info storage position) {
         if (tickLower > tickUpper) {
-            revert IllegalTicks(tickLower, tickUpper);
+            revert LPS_IllegalTicks(tickLower, tickUpper);
         }
 
         uint48 positionId = Uint48Lib.concat(tickLower, tickUpper);
         position = set.positions[positionId];
 
-        if (!position.isInitialized()) revert InactiveRange();
+        if (!position.isInitialized()) revert LPS_InactiveRange();
         return position;
     }
 
@@ -100,7 +100,7 @@ library LiquidityPositionSet {
         int24 tickUpper
     ) internal returns (LiquidityPosition.Info storage position) {
         if (tickLower > tickUpper) {
-            revert IllegalTicks(tickLower, tickUpper);
+            revert LPS_IllegalTicks(tickLower, tickUpper);
         }
 
         uint48 positionId = _include(set.active, tickLower, tickUpper);
@@ -113,7 +113,7 @@ library LiquidityPositionSet {
 
     function deactivate(LiquidityPosition.Set storage set, LiquidityPosition.Info storage position) internal {
         if (position.liquidity != 0) {
-            revert DeactivationFailed(position.tickLower, position.tickUpper, position.liquidity);
+            revert LPS_DeactivationFailed(position.tickLower, position.tickUpper, position.liquidity);
         }
 
         _exclude(set.active, position.tickLower, position.tickUpper);
@@ -168,7 +168,6 @@ library LiquidityPositionSet {
         );
     }
 
-    // TODO rename changeLiquidity
     function liquidityChange(
         LiquidityPosition.Set storage set,
         uint256 accountId,
@@ -211,7 +210,6 @@ library LiquidityPositionSet {
         int24 currentTick,
         int24 tickLower,
         int24 tickUpper,
-        IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
         Protocol.Info storage protocol
     ) internal {

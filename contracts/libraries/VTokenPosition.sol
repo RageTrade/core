@@ -54,8 +54,6 @@ library VTokenPosition {
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
-    error AlreadyInitialized();
-
     /// @notice returns the market value of the supplied token position
     /// @param position token position
     /// @param priceX128 price in fixed point 128

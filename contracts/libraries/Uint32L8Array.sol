@@ -5,12 +5,12 @@ pragma solidity ^0.8.9;
 library Uint32L8ArrayLib {
     using Uint32L8ArrayLib for uint32[8];
 
-    error IllegalElement(uint32 element);
-    error NoSpaceLeftToInsert(uint32 element);
+    error U32L8_IllegalElement(uint32 element);
+    error U32L8_NoSpaceLeftToInsert(uint32 element);
 
     function include(uint32[8] storage array, uint32 element) internal {
         if (element == 0) {
-            revert IllegalElement(0);
+            revert U32L8_IllegalElement(0);
         }
 
         uint256 emptyIndex = 8; // max index is 7
@@ -25,7 +25,7 @@ library Uint32L8ArrayLib {
         }
 
         if (emptyIndex == 8) {
-            revert NoSpaceLeftToInsert(element);
+            revert U32L8_NoSpaceLeftToInsert(element);
         }
 
         array[emptyIndex] = element;
@@ -33,7 +33,7 @@ library Uint32L8ArrayLib {
 
     function exclude(uint32[8] storage array, uint32 element) internal {
         if (element == 0) {
-            revert IllegalElement(0);
+            revert U32L8_IllegalElement(0);
         }
 
         uint256 elementIndex = 8;

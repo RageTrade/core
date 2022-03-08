@@ -37,9 +37,9 @@ library VTokenPositionSet {
     using VTokenPositionSet for VTokenPosition.Set;
 
     // TODO include VTokenPositionSet in the name of these errors
-    error VTokenPositionSetIncorrectUpdate();
-    error DeactivationFailed(uint32 poolId);
-    error TokenInactive(uint32 poolId);
+    error VPS_IncorrectUpdate();
+    error VPS_DeactivationFailed(uint32 poolId);
+    error VPS_TokenInactive(uint32 poolId);
 
     /// @notice returns true if the set does not have any token position active
     /// @param set VTokenPositionSet
@@ -204,7 +204,7 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     function deactivate(VTokenPosition.Set storage set, uint32 poolId) internal {
         if (set.positions[poolId].balance != 0 || !set.positions[poolId].liquidityPositions.isEmpty()) {
-            revert DeactivationFailed(poolId);
+            revert VPS_DeactivationFailed(poolId);
         }
 
         set.active.exclude(poolId);
@@ -302,7 +302,7 @@ library VTokenPositionSet {
             if (createNew) {
                 set.activate(poolId);
             } else if (!set.active.exists(poolId)) {
-                revert TokenInactive(poolId);
+                revert VPS_TokenInactive(poolId);
             }
         }
 

@@ -60,8 +60,8 @@ library LiquidityPosition {
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
-    error AlreadyInitialized();
-    error IneligibleLimitOrderRemoval();
+    error LP_AlreadyInitialized();
+    error LP_IneligibleLimitOrderRemoval();
 
     function isInitialized(Info storage info) internal view returns (bool) {
         return info.tickLower != 0 || info.tickUpper != 0;
@@ -74,7 +74,7 @@ library LiquidityPosition {
                 (currentTick <= info.tickLower &&
                     info.limitOrderType == IClearingHouseEnums.LimitOrderType.LOWER_LIMIT))
         ) {
-            revert IneligibleLimitOrderRemoval();
+            revert LP_IneligibleLimitOrderRemoval();
         }
     }
 
@@ -84,7 +84,7 @@ library LiquidityPosition {
         int24 tickUpper
     ) internal {
         if (position.isInitialized()) {
-            revert AlreadyInitialized();
+            revert LP_AlreadyInitialized();
         }
 
         position.tickLower = tickLower;
