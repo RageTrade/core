@@ -575,30 +575,18 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     await clearingHouseTest.connect(keeper).liquidateLiquidityPositions(userAccountNo);
   }
 
-  async function liquidateTokenPosition(
-    keeper: SignerWithAddress,
-    keeperAccountNo: BigNumberish,
-    userAccountNo: BigNumberish,
-    tokenAddress: string,
-    liquidationBps: BigNumberish,
-  ) {
+  async function liquidateTokenPosition(keeper: SignerWithAddress, userAccountNo: BigNumberish, tokenAddress: string) {
     const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest
-      .connect(keeper)
-      .liquidateTokenPosition(keeperAccountNo, userAccountNo, truncatedAddress, liquidationBps);
+    await clearingHouseTest.connect(keeper).liquidateTokenPosition(userAccountNo, truncatedAddress);
   }
 
   async function liquidateTokenPositionAndCheck(
     keeper: SignerWithAddress,
-    keeperAccountNo: BigNumberish,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    liquidationBps: BigNumberish,
   ) {
     const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest
-      .connect(keeper)
-      .liquidateTokenPosition(keeperAccountNo, userAccountNo, truncatedAddress, liquidationBps);
+    await clearingHouseTest.connect(keeper).liquidateTokenPosition(userAccountNo, truncatedAddress);
   }
 
   async function initializePool(
@@ -833,9 +821,12 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     it('Set Params', async () => {
       const liquidationParams = {
         liquidationFeeFraction: 1500,
-        tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
+        closeFactorMMThresholdBps: 7500,
+        partialLiquidationCloseFactorBps: 5000,
+        liquidationSlippageSqrtToleranceBps: 150,
+        minNotionalLiquidatable: 100000000,
       };
       const fixFee = parseTokenAmount(10, 6);
       const removeLimitOrderFee = parseTokenAmount(10, 6);
@@ -857,9 +848,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
       expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
-      expect(protocol.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
-        liquidationParams.tokenLiquidationPriceDeltaBps,
-      );
+
       expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
       expect(protocol.removeLimitOrderFee).eq(removeLimitOrderFee);
@@ -1451,7 +1440,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
       // await logPoolPrice(vPool,vToken);
 
-      await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vTokenAddress, liquidationBps);
+      await liquidateTokenPosition(keeper, user1AccountNo, vTokenAddress);
 
       await checkVTokenBalance(user1AccountNo, vTokenAddress, expectedVTokenBalance);
       await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
@@ -1510,7 +1499,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
       const LiquidationAccountVQuoteBalancePositLiquidation = 0n;
 
-      await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vToken1Address, liquidationBps1);
+      await liquidateTokenPosition(keeper, user1AccountNo, vToken1Address);
 
       await checkVTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);

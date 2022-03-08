@@ -174,9 +174,12 @@ describe('Account Library Test Basic', () => {
 
     const liquidationParams = {
       liquidationFeeFraction: 1500,
-      tokenLiquidationPriceDeltaBps: 3000,
       insuranceFundFeeShareBps: 5000,
       maxRangeLiquidationFees: 100000000,
+      closeFactorMMThresholdBps: 7500,
+      partialLiquidationCloseFactorBps: 5000,
+      liquidationSlippageSqrtToleranceBps: 150,
+      minNotionalLiquidatable: 100000000,
     };
     const fixFee = parseTokenAmount(10, 6);
     const removeLimitOrderFee = parseTokenAmount(10, 6);
@@ -404,7 +407,7 @@ describe('Account Library Test Basic', () => {
       expect(test.liquidateLiquidityPositions(0)).to.be.reverted; // feeFraction=15/10=1.5
     });
     it('Liquidate Token Positions - Fail', async () => {
-      expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.reverted;
+      expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
     });
   });
 });

@@ -683,9 +683,12 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     it('Set Params', async () => {
       const liquidationParams = {
         liquidationFeeFraction: 1500,
-        tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
+        closeFactorMMThresholdBps: 7500,
+        partialLiquidationCloseFactorBps: 5000,
+        liquidationSlippageSqrtToleranceBps: 150,
+        minNotionalLiquidatable: 100000000,
       };
       const fixFee = parseTokenAmount(10, 6);
       const removeLimitOrderFee = parseTokenAmount(10, 6);
@@ -707,9 +710,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
       expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
-      expect(protocol.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
-        liquidationParams.tokenLiquidationPriceDeltaBps,
-      );
+
       expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
       expect(protocol.removeLimitOrderFee).eq(removeLimitOrderFee);

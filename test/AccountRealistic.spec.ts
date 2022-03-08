@@ -325,9 +325,12 @@ describe('Account Library Test Realistic', () => {
 
     liquidationParams = {
       liquidationFeeFraction: 1500,
-      tokenLiquidationPriceDeltaBps: 3000,
       insuranceFundFeeShareBps: 5000,
       maxRangeLiquidationFees: 100000000,
+      closeFactorMMThresholdBps: 7500,
+      partialLiquidationCloseFactorBps: 5000,
+      liquidationSlippageSqrtToleranceBps: 150,
+      minNotionalLiquidatable: 100000000,
     };
     fixFee = parseTokenAmount(10, 6);
     const removeLimitOrderFee = parseTokenAmount(10, 6);
@@ -521,13 +524,13 @@ describe('Account Library Test Realistic', () => {
         const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
           await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
 
-        expect(liquidationPriceX128).to.eq(priceX128.add(priceX128.mul(300).div(10000)));
-        expect(liquidatorPriceX128).to.eq(priceX128.add(priceX128.mul(150).div(10000)));
-        expect(insuranceFundFee).to.eq(
-          tokensToTrade.mul(liquidationPriceX128.sub(liquidatorPriceX128)).div(1n << 128n),
-        );
-      });
-    });
+    //     expect(liquidationPriceX128).to.eq(priceX128.add(priceX128.mul(300).div(10000)));
+    //     expect(liquidatorPriceX128).to.eq(priceX128.add(priceX128.mul(150).div(10000)));
+    //     expect(insuranceFundFee).to.eq(
+    //       tokensToTrade.mul(liquidationPriceX128.sub(liquidatorPriceX128)).div(1n << 128n),
+    //     );
+    //   });
+    // });
 
     describe('#Token Position Liquidation Scenarios', () => {
       beforeEach(async () => {
@@ -551,7 +554,7 @@ describe('Account Library Test Realistic', () => {
         await changeVPoolPriceToNearestTick(4000);
 
         let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
         );
       });
@@ -571,7 +574,7 @@ describe('Account Library Test Realistic', () => {
 
         await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
-        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
         );
       });
@@ -580,12 +583,12 @@ describe('Account Library Test Realistic', () => {
 
         await changeVPoolPriceToNearestTick(3500);
 
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.reverted;
+        expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
       });
       it('Liquidation Fail (No Token Position)', async () => {
         await changeVPoolPriceToNearestTick(3500);
 
-        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress1)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(1, vTokenAddress1)).to.be.revertedWith(
           'TokenInactive(' + Number(truncate(vTokenAddress1)) + ')',
         );
       });
@@ -595,7 +598,7 @@ describe('Account Library Test Realistic', () => {
         const startLiquidatedVTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
 
-        await test.liquidateTokenPosition(0, 1, vTokenAddress);
+        await test.liquidateTokenPosition(1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
@@ -630,7 +633,7 @@ describe('Account Library Test Realistic', () => {
         const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
         const startLiquidatedSettlementTokenDeposits = await test.getAccountDepositBalance(0, settlementToken.address);
 
-        await test.liquidateTokenPosition(0, 1, vTokenAddress);
+        await test.liquidateTokenPosition(1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
@@ -674,7 +677,7 @@ describe('Account Library Test Realistic', () => {
         await changeVPoolPriceToNearestTick(4000);
 
         let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
         );
       });
@@ -695,7 +698,7 @@ describe('Account Library Test Realistic', () => {
 
         await changeVPoolPriceToNearestTick(3500);
 
-        await expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.revertedWith(
+        await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
           'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
         );
       });
@@ -704,7 +707,7 @@ describe('Account Library Test Realistic', () => {
 
         await changeVPoolPriceToNearestTick(3500);
 
-        expect(test.liquidateTokenPosition(0, 1, vTokenAddress)).to.be.reverted;
+        expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
       });
       it('Liquidation - Success', async () => {
         await changeVPoolPriceToNearestTick(4500);
@@ -712,7 +715,7 @@ describe('Account Library Test Realistic', () => {
         const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
 
-        await test.liquidateTokenPosition(0, 1, vTokenAddress);
+        await test.liquidateTokenPosition(1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
@@ -747,7 +750,7 @@ describe('Account Library Test Realistic', () => {
         const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
         const startLiquidatedSettlementTokenDeposits = await test.getAccountDepositBalance(0, settlementToken.address);
 
-        await test.liquidateTokenPosition(0, 1, vTokenAddress);
+        await test.liquidateTokenPosition(1, vTokenAddress);
 
         const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
         const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
