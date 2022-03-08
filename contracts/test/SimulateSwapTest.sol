@@ -80,17 +80,17 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     }
 
     function simulateSwap3(
-        bool swapVTokenForVBase,
+        bool swapVTokenForVQuote,
         int256 amountSpecified,
         uint24 fee
-    ) public returns (int256 vTokenIn, int256 vBaseIn) {
+    ) public returns (int256 vTokenIn, int256 vQuoteIn) {
         // case isNotional true
         // amountSpecified is positive
         return
             vPool.simulateSwap(
-                swapVTokenForVBase,
+                swapVTokenForVQuote,
                 amountSpecified,
-                swapVTokenForVBase ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
+                swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
                 fee,
                 _onSwapSwap
             );

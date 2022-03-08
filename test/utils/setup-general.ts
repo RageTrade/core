@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import { FakeContract, smock } from '@defi-wonderland/smock';
-import { ClearingHouse, ERC20, VBase, RageTradeFactory } from '../../typechain-types';
+import { ClearingHouse, ERC20, VQuote, RageTradeFactory } from '../../typechain-types';
 import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
@@ -59,8 +59,8 @@ export async function testSetup({
 
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
-  //VBase
-  const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+  //VQuote
+  const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
 
   //Oracle
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
@@ -76,7 +76,7 @@ export async function testSetup({
   // const vPoolFactory = await (
   //   await hre.ethers.getContractFactory('VPoolFactory')
   // ).deploy(
-  //   vBase.address,
+  //   vQuote.address,
   //   clearingHouse.address,
   //   vPoolWrapperDeployer.address,
   //   UNISWAP_FACTORY_ADDRESS,
@@ -112,7 +112,7 @@ export async function testSetup({
 
   return {
     realBase,
-    vBase,
+    vQuote,
     oracle,
     clearingHouse,
     clearingHouseLogic,
@@ -132,9 +132,9 @@ export async function testSetupBase(signer?: SignerWithAddress) {
   const realBase = await smock.fake<ERC20>('ERC20');
   realBase.decimals.returns(6);
 
-  //VBase
-  // const vBase = await smock.fake<VBase>('VBase', { address: '0x8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' });
-  // vBase.decimals.returns(6);
+  //VQuote
+  // const vQuote = await smock.fake<VQuote>('VQuote', { address: '0x8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' });
+  // vQuote.decimals.returns(6);
 
   const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 3);
   const futureInsurnaceFundAddress = await getCreateAddressFor(signer, 4);
@@ -173,12 +173,12 @@ export async function testSetupBase(signer?: SignerWithAddress) {
 
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
-  const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
+  const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
   // const constants = (await clearingHouse.protocolInfo()).constants;
 
   return {
     realBase,
-    vBase,
+    vQuote,
     clearingHouse,
     rageTradeFactory,
     insuranceFund,

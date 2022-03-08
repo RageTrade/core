@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IVToken } from '../IVToken.sol';
-import { IVBase } from '../IVBase.sol';
+import { IVQuote } from '../IVQuote.sol';
 
 import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 
@@ -19,7 +19,7 @@ interface IClearingHouseView is IClearingHouseStructures {
         external
         view
         returns (
-            IVBase vBase,
+            IVQuote vQuote,
             LiquidationParams memory liquidationParams,
             uint256 minRequiredMargin,
             uint256 removeLimitOrderFee,
@@ -39,7 +39,7 @@ interface IClearingHouseView is IClearingHouseStructures {
         view
         returns (
             address owner,
-            int256 vBaseBalance,
+            int256 vQuoteBalance,
             DepositTokenView[] memory tokenDeposits,
             VTokenPositionView[] memory tokenPositions
         );

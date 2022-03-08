@@ -1,21 +1,21 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { TickMath, maxLiquidityForAmounts as maxLiquidityForAmounts_, SqrtPriceMath } from '@uniswap/v3-sdk';
 import JSBI from 'jsbi';
-import { VBase, VToken } from '../../typechain-types';
+import { VQuote, VToken } from '../../typechain-types';
 import { tickToSqrtPriceX96, ERC20Decimals } from './price-tick';
 
 export function maxLiquidityForAmounts(
   sqrtPriceCurrent: BigNumberish,
   tickLower: number,
   tickUpper: number,
-  vBaseAmount: BigNumberish,
+  vQuoteAmount: BigNumberish,
   vTokenAmount: BigNumberish,
   useFullPrecision: boolean,
 ) {
   sqrtPriceCurrent = BigNumber.from(sqrtPriceCurrent);
-  vBaseAmount = BigNumber.from(vBaseAmount);
+  vQuoteAmount = BigNumber.from(vQuoteAmount);
   vTokenAmount = BigNumber.from(vTokenAmount);
-  let [amount0, amount1] = [JSBI.BigInt(vTokenAmount.toString()), JSBI.BigInt(vBaseAmount.toString())];
+  let [amount0, amount1] = [JSBI.BigInt(vTokenAmount.toString()), JSBI.BigInt(vQuoteAmount.toString())];
 
   return BigNumber.from(
     maxLiquidityForAmounts_(
@@ -52,10 +52,10 @@ export function amountsForLiquidity(
   let amount1 = SqrtPriceMath.getAmount1Delta(sqrtPriceLowerJSBI, sqrtPriceMiddleJSBI, liquidityJSBI, roundUp);
 
   let vTokenAmount = amount0;
-  let vBaseAmount = amount1;
+  let vQuoteAmount = amount1;
 
   return {
-    vBaseAmount: BigNumber.from(vBaseAmount.toString()),
+    vQuoteAmount: BigNumber.from(vQuoteAmount.toString()),
     vTokenAmount: BigNumber.from(vTokenAmount.toString()),
   };
 }

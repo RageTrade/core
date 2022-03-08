@@ -6,7 +6,7 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
-import { IVBase } from '../interfaces/IVBase.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -25,7 +25,7 @@ library Protocol {
         mapping(uint32 => IClearingHouseStructures.Pool) pools;
         // collateralId => CollateralInfo
         mapping(uint32 => IClearingHouseStructures.Collateral) collaterals;
-        IVBase vBase; // TODO change vBase to vQuote
+        IVQuote vQuote; // TODO change vQuote to vQuote
         // settlement collateral (makes more sense in real token) / default base token
         IERC20 cBase; // TODO change cBase to settlementToken
         // accounting settings

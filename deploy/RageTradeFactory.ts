@@ -4,7 +4,7 @@ import {
   ClearingHouse__factory,
   InsuranceFund__factory,
   ProxyAdmin__factory,
-  VBase__factory,
+  VQuote__factory,
 } from '../typechain-types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -39,37 +39,33 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
   }
 
-  const vBaseAddress = await read('RageTradeFactory', 'vBase');
-  console.log('VBase : ', vBaseAddress);
-  await save('VBase', { abi: VBase__factory.abi, address: vBaseAddress });
-
+  const vQuoteAddress = await read('RageTradeFactory', 'vQuote');
+  await save('VQuote', { abi: VQuote__factory.abi, address: vQuoteAddress });
+  console.log('saved "VQuote":', vQuoteAddress);
   await hre.tenderly.push({
-    name: 'VBase',
-    address: vBaseAddress,
+    name: 'VQuote',
+    address: vQuoteAddress,
   });
 
   const clearingHouseAddress = await read('RageTradeFactory', 'clearingHouse');
-  console.log('ClearingHouse : ', clearingHouseAddress);
   await save('ClearingHouse', { abi: ClearingHouse__factory.abi, address: clearingHouseAddress });
-
+  console.log('saved "ClearingHouse":', clearingHouseAddress);
   await hre.tenderly.push({
     name: 'TransparentUpgradeableProxy',
     address: clearingHouseAddress,
   });
 
   const proxyAdminAddress = await read('RageTradeFactory', 'proxyAdmin');
-  console.log('ProxyAdmin : ', proxyAdminAddress);
   await save('ProxyAdmin', { abi: ProxyAdmin__factory.abi, address: proxyAdminAddress });
-
+  console.log('saved "ProxyAdmin":', proxyAdminAddress);
   await hre.tenderly.push({
     name: 'ProxyAdmin',
     address: proxyAdminAddress,
   });
 
   const insuranceFundAddress = await read('ClearingHouse', 'insuranceFund');
-  console.log('InsuranceFund : ', insuranceFundAddress);
   await save('InsuranceFund', { abi: InsuranceFund__factory.abi, address: insuranceFundAddress });
-
+  console.log('saved "InsuranceFund":', insuranceFundAddress);
   await hre.tenderly.push({
     name: 'TransparentUpgradeableProxy',
     address: insuranceFundAddress,

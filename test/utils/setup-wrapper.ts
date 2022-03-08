@@ -7,7 +7,7 @@ import { toQ128 } from './fixed-point';
 
 export async function setupWrapper(setupArgs: SetupArgs) {
   const signer = setupArgs.signer ?? (await hre.ethers.getSigners())[0];
-  const { vPool, vBase, vToken, oracle } = await setupVPool(setupArgs);
+  const { vPool, vQuote, vToken, oracle } = await setupVPool(setupArgs);
 
   const clearingHouse = await smock.fake<ClearingHouse>('ClearingHouse', {
     address: signer.address,
@@ -22,7 +22,7 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   await vPoolWrapper.__initialize_VPoolWrapper({
     clearingHouse: signer.address,
     vToken: vToken.address,
-    vBase: vBase.address,
+    vQuote: vQuote.address,
     vPool: vPool.address,
     liquidityFeePips: setupArgs.liquidityFee ?? 1000,
     protocolFeePips: setupArgs.protocolFee ?? 500,
@@ -31,10 +31,10 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   // await vPoolWrapper.setOracle(oracle.address);
   hre.tracer.nameTags[vPoolWrapper.address] = 'vPoolWrapper';
 
-  await vBase.setVariable('isAuth', { [vPoolWrapper.address]: true });
+  await vQuote.setVariable('isAuth', { [vPoolWrapper.address]: true });
   await vToken.setVariable('vPoolWrapper', vPoolWrapper.address);
 
-  return { vPoolWrapper, vPool, vBase, vToken, oracle };
+  return { vPoolWrapper, vPool, vQuote, vToken, oracle };
 
   async function setTwapSqrtPricesForSetDuration({
     realPriceX128,

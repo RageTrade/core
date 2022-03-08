@@ -14,7 +14,7 @@ import { LiquidityPosition } from '../libraries/LiquidityPosition.sol';
 
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
-import { IVBase } from '../interfaces/IVBase.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -61,8 +61,8 @@ contract AccountTest {
         protocol.pools[poolId] = poolInfo;
     }
 
-    function setVBaseAddress(IVBase _vBase) external {
-        protocol.vBase = _vBase;
+    function setVQuoteAddress(IVQuote _vQuote) external {
+        protocol.vQuote = _vQuote;
     }
 
     function createAccount() external {
@@ -78,9 +78,9 @@ contract AccountTest {
         VTokenPosition.Info storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[address(protocol.vBase).truncate()];
+        tokenPosition = set.positions[address(protocol.vQuote).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(accountId, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        set.update(accountId, balanceAdjustments, address(protocol.vQuote).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];

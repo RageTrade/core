@@ -30,7 +30,7 @@ describe('CTokenDepositSet Library', () => {
   let vTokenAddress: string;
   let vTokenAddress1: string;
 
-  let vBaseAddress: string;
+  let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
 

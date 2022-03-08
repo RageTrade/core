@@ -48,7 +48,7 @@ interface IClearingHouseActions is IClearingHouseStructures {
         uint256 accountId,
         uint32 poolId,
         SwapParams memory swapParams
-    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
+    ) external returns (int256 vTokenAmountOut, int256 vQuoteAmountOut);
 
     /// @notice updates range order of token associated with 'poolId' by 'liquidityDelta' (Adds if amount>0 else Removes)
     /// @notice also can be used to update limitOrderType
@@ -59,7 +59,7 @@ interface IClearingHouseActions is IClearingHouseStructures {
         uint256 accountId,
         uint32 poolId,
         LiquidityChangeParams calldata liquidityChangeParams
-    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut);
+    ) external returns (int256 vTokenAmountOut, int256 vQuoteAmountOut);
 
     /// @notice keeper call to remove a limit order
     /// @dev checks the position of current price relative to limit order and checks limitOrderType

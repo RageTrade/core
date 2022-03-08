@@ -11,7 +11,7 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IClearingHouseSystemActions } from '../../interfaces/clearinghouse/IClearingHouseSystemActions.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
-import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVQuote } from '../../interfaces/IVQuote.sol';
 
 /// @notice Manages deployment for ClearingHouseProxy
 /// @dev ClearingHouse proxy is deployed only once
@@ -21,7 +21,7 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
         IERC20 cBase;
         IOracle cBaseOracle;
         IInsuranceFund insuranceFund;
-        IVBase vBase;
+        IVQuote vQuote;
         IOracle nativeOracle;
     }
 
@@ -42,7 +42,7 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                                 params.cBase,
                                 params.cBaseOracle,
                                 params.insuranceFund,
-                                params.vBase,
+                                params.vQuote,
                                 params.nativeOracle
                             )
                         )

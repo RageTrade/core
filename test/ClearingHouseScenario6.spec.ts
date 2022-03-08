@@ -21,7 +21,7 @@ import {
   IUniswapV3Pool,
   VPoolWrapperMockRealistic,
   VToken,
-  VBase,
+  VQuote,
   Account__factory,
 } from '../typechain-types';
 
@@ -61,7 +61,7 @@ config();
 const { ALCHEMY_KEY } = process.env;
 
 describe('Clearing House Scenario 6', () => {
-  let vBaseAddress: string;
+  let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
   let oracleAddress: string;
@@ -70,7 +70,7 @@ describe('Clearing House Scenario 6', () => {
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
-  let vBase: VBase;
+  let vQuote: VQuote;
 
   let signers: SignerWithAddress[];
   let admin: SignerWithAddress;
@@ -183,8 +183,8 @@ describe('Clearing House Scenario 6', () => {
     tokenAmount: BigNumberish,
   ) {
     await cBase.connect(user).approve(clearingHouseTest.address, tokenAmount);
-    const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVBaseAddress, tokenAmount);
+    const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
+    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
   }
 
   async function swapToken(
@@ -540,9 +540,9 @@ describe('Clearing House Scenario 6', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
-    const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    // vBase = await vBaseFactory.deploy(REAL_BASE);
-    // vBaseAddress = vBase.address;
+    const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
+    // vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
 
@@ -590,14 +590,14 @@ describe('Clearing House Scenario 6', () => {
       nativeOracle.address,
     );
 
-    vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
-    vBaseAddress = vBase.address;
+    vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
+    vQuoteAddress = vQuote.address;
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
 
     const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
-    // await vBase.transferOwnership(VPoolFactory.address);
+    // await vQuote.transferOwnership(VPoolFactory.address);
     // const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
     // realToken = await realTokenFactory.deploy();
 
@@ -751,7 +751,7 @@ describe('Clearing House Scenario 6', () => {
       expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.true;
     });
 
-    it('Add Base Deposit Support  - Pass', async () => {
+    it('AddVQuote Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(cBase.address, true);
       expect((await clearingHouseTest.getCollateralInfo(truncate(cBase.address))).settings.supported).to.be.true;
     });
@@ -760,7 +760,7 @@ describe('Clearing House Scenario 6', () => {
   describe('#Scenario 1', async () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await vPoolWrapper.setBlockTimestamp(0);
-      const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
     });
@@ -787,7 +787,7 @@ describe('Clearing House Scenario 6', () => {
         user0,
         user0AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -808,7 +808,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 600', async () => {
       const timestampIncrease = 600;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-      const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -837,7 +837,7 @@ describe('Clearing House Scenario 6', () => {
         user2,
         user2AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,
@@ -860,7 +860,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -882,7 +882,7 @@ describe('Clearing House Scenario 6', () => {
         user1,
         user1AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -901,7 +901,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 1300', async () => {
       const timestampIncrease = 1300;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -923,7 +923,7 @@ describe('Clearing House Scenario 6', () => {
         user1,
         user1AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -942,7 +942,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 1400', async () => {
       const timestampIncrease = 1400;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -964,7 +964,7 @@ describe('Clearing House Scenario 6', () => {
         user1,
         user1AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -984,7 +984,7 @@ describe('Clearing House Scenario 6', () => {
       const timestampIncrease = 1900;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
@@ -1011,7 +1011,7 @@ describe('Clearing House Scenario 6', () => {
         user2,
         user2AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,
@@ -1032,7 +1032,7 @@ describe('Clearing House Scenario 6', () => {
       const timestampIncrease = 2500;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
-      const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
@@ -1060,7 +1060,7 @@ describe('Clearing House Scenario 6', () => {
         user2,
         user2AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,

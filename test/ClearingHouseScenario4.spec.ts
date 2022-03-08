@@ -20,7 +20,7 @@ import {
   IUniswapV3Pool,
   VPoolWrapperMockRealistic,
   VToken,
-  VBase,
+  VQuote,
   Account__factory,
   InsuranceFund,
   UniswapV3Pool,
@@ -63,7 +63,7 @@ config();
 const { ALCHEMY_KEY } = process.env;
 
 describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
-  let vBaseAddress: string;
+  let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
   let oracleAddress: string;
@@ -71,7 +71,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
-  let vBase: VBase;
+  let vQuote: VQuote;
 
   let signers: SignerWithAddress[];
   let admin: SignerWithAddress;
@@ -210,8 +210,8 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     tokenAmount: BigNumberish,
   ) {
     await cBase.connect(user).approve(clearingHouseTest.address, tokenAmount);
-    const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVBaseAddress, tokenAmount);
+    const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
+    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
   }
 
   async function swapToken(
@@ -459,7 +459,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
   async function logPoolPrice(pool: IUniswapV3Pool, token: VToken) {
     const { sqrtPriceX96 } = await pool.slot0();
-    console.log(await sqrtPriceX96ToPrice(sqrtPriceX96, vBase, token));
+    console.log(await sqrtPriceX96ToPrice(sqrtPriceX96, vQuote, token));
   }
 
   async function checkGlobalParams(
@@ -764,10 +764,10 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
-    vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
-    vBaseAddress = vBase.address;
+    vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
+    vQuoteAddress = vQuote.address;
 
-    // await vBase.transferOwnership(VPoolFactory.address);
+    // await vQuote.transferOwnership(VPoolFactory.address);
     cBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
     await clearingHouseTest.updateCollateralSettings(cBase.address, {
       oracle: cBaseOracle.address,
@@ -795,9 +795,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     cBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
 
-    // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    // vBase = await vBaseFactory.deploy(REAL_BASE);
-    // vBaseAddress = vBase.address;
+    // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
+    // vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
 
@@ -914,7 +914,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       expect((await clearingHouseTest.getPoolInfo(truncate(vToken1Address))).settings.supported).to.be.true;
     });
 
-    it('Add Base Deposit Support  - Pass', async () => {
+    it('AddVQuote Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(cBase.address, true);
       expect((await clearingHouseTest.getCollateralInfo(truncate(cBase.address))).settings.supported).to.be.true;
     });
@@ -951,7 +951,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp And Oracle Update - 0', async () => {
       await changeWrapperTimestampAndCheck(0);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
     });
 
@@ -972,7 +972,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user0,
         user0AccountNo,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -992,7 +992,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp And Oracle Update - 100', async () => {
       await changeWrapperTimestampAndCheck(100);
-      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1013,7 +1013,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user0,
         user0AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -1033,7 +1033,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 600', async () => {
       await changeWrapperTimestampAndCheck(600);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
     });
 
@@ -1056,7 +1056,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user1AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,
@@ -1073,9 +1073,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 1000', async () => {
       await changeWrapperTimestampAndCheck(1000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1091,7 +1091,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user1,
         user1AccountNo,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -1107,9 +1107,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 1500', async () => {
       await changeWrapperTimestampAndCheck(1500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1132,7 +1132,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user1AccountNo,
         vPool,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,
@@ -1149,9 +1149,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 2000', async () => {
       await changeWrapperTimestampAndCheck(2000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1172,7 +1172,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user1,
         user1AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -1224,9 +1224,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 2500', async () => {
       await changeWrapperTimestampAndCheck(2500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1249,7 +1249,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user2AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapToken1Amount,
         0,
         false,
@@ -1271,9 +1271,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 2600', async () => {
       await changeWrapperTimestampAndCheck(2600);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1296,7 +1296,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user2AccountNo,
         vPool,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapToken2Amount,
         0,
         false,
@@ -1317,9 +1317,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 3000', async () => {
       await changeWrapperTimestampAndCheck(3000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(62651.8307931874, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(62651.8307931874, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1330,7 +1330,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const swapToken1Amount = 1603821958n - 1n;
       const expectedToken1Balance = 2411056861n - 1n;
       const expectedBaseBalance = -1886026299492n - 2n;
-      const sqrtPriceThreshold = await priceToSqrtPriceX96(69901.5224104205, vBase, vToken1);
+      const sqrtPriceThreshold = await priceToSqrtPriceX96(69901.5224104205, vQuote, vToken1);
 
       const expectedTokenAmountOut = swapToken1Amount;
 
@@ -1356,7 +1356,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const swapToken1Amount = 1603821958n - 1n;
       const expectedToken1Balance = 2411056861n - 1n;
       const expectedBaseBalance = -1886026299492n - 2n;
-      const sqrtPriceThreshold = await priceToSqrtPriceX96(69901.5224104205, vBase, vToken1);
+      const sqrtPriceThreshold = await priceToSqrtPriceX96(69901.5224104205, vQuote, vToken1);
 
       const expectedTokenAmountOut = swapToken1Amount;
 
@@ -1368,7 +1368,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user2AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapToken1Amount + 100000000n,
         sqrtPriceThreshold,
         false,
@@ -1385,9 +1385,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 3500', async () => {
       await changeWrapperTimestampAndCheck(3500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(69929.4872137556, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(69929.4872137556, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1413,7 +1413,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user2AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapBaseAmount,
         0,
         true,
@@ -1435,9 +1435,9 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Timestamp and Oracle Update - 4000', async () => {
       await changeWrapperTimestampAndCheck(4000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(73522.0163840689, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(73522.0163840689, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1463,7 +1463,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         user2AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapBaseAmount,
         0,
         true,

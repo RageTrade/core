@@ -46,7 +46,7 @@ const { ALCHEMY_KEY } = process.env;
 describe('Clearing House Library', () => {
   let test: AccountTest;
 
-  let vBaseAddress: string;
+  let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
   let oracleAddress: string;
@@ -167,9 +167,9 @@ describe('Clearing House Library', () => {
 
     cBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
 
-    // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    // const vBase = await vBaseFactory.deploy(REAL_BASE);
-    // vBaseAddress = vBase.address;
+    // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
+    // const vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
 
@@ -214,10 +214,10 @@ describe('Clearing House Library', () => {
     const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
     hre.tracer.nameTags[insuranceFund.address] = 'insuranceFund';
 
-    const vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
-    vBaseAddress = vBase.address;
+    const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
+    vQuoteAddress = vQuote.address;
 
-    // await vBase.transferOwnership(VPoolFactory.address);
+    // await vQuote.transferOwnership(VPoolFactory.address);
     // const realTokenFactory = await hre.ethers.getContractFactory('RealTokenMock');
     // realToken = await realTokenFactory.deploy();
 
@@ -249,11 +249,11 @@ describe('Clearing House Library', () => {
     vTokenAddress1 = out1.vTokenAddress;
 
     // console.log('### Is VToken 0 ? ###');
-    // console.log(BigNumber.from(vTokenAddress).lt(vBaseAddress));
+    // console.log(BigNumber.from(vTokenAddress).lt(vQuoteAddress));
     // console.log(vTokenAddress);
-    // console.log(vBaseAddress);
-    // console.log('### Base decimals ###');
-    // console.log(await vBase.decimals());
+    // console.log(vQuoteAddress);
+    // console.log('###VQuote decimals ###');
+    // console.log(await vQuote.decimals());
 
     // constants = await VPoolFactory.constants();
     cBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
@@ -343,8 +343,8 @@ describe('Clearing House Library', () => {
     it('vToken Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);
     });
-    // it('vBase Intialized', async () => {
-    //   expect(await clearingHouseTest.getTokenAddressInVTokens(vBaseAddress)).to.eq(vBaseAddress);
+    // it('vQuote Intialized', async () => {
+    //   expect(await clearingHouseTest.getTokenAddressInVTokens(vQuoteAddress)).to.eq(vQuoteAddress);
     // });
     it('Other Address Not Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(dummyTokenAddress)).to.eq(ADDRESS_ZERO);
@@ -355,9 +355,9 @@ describe('Clearing House Library', () => {
     before(async () => {
       expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.false;
       expect((await clearingHouseTest.getCollateralInfo(truncate(realToken.address))).settings.supported).to.be.false;
-      expect((await clearingHouseTest.getPoolInfo(truncate(vBaseAddress))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vQuoteAddress))).settings.supported).to.be.false;
       expect((await clearingHouseTest.getPoolInfo(truncate(cBase.address))).settings.supported).to.be.false;
-      // expect(await clearingHouseTest.supportedVTokens(vBaseAddress)).to.be.false;
+      // expect(await clearingHouseTest.supportedVTokens(vQuoteAddress)).to.be.false;
       // expect(await clearingHouseTest.supportedDeposits(cBase.address)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
@@ -385,7 +385,7 @@ describe('Clearing House Library', () => {
     //     'Invalid Address',
     //   );
     // });
-    it('Add Base Deposit Support  - Pass', async () => {
+    it('AddVQuote Deposit Support  - Pass', async () => {
       const { settings } = await getCollateralSettings(cBase.address);
       settings.supported = true;
       await clearingHouseTest.connect(admin).updateCollateralSettings(cBase.address, settings);
@@ -496,7 +496,7 @@ describe('Clearing House Library', () => {
 
   describe('#Deposit', () => {
     it('Fail - Access Denied', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       await expect(
         clearingHouseTest.connect(user2).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
@@ -586,7 +586,7 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, tokenAmount('100000', 6));
       expect(await cBase.balanceOf(user1.address)).to.eq(0);
       expect(await cBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
-      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
+      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
       expect(accountTokenPosition.balance).to.eq(tokenAmount('100000', 6));
     });
 
@@ -594,7 +594,7 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, -tokenAmount('100000', 6));
       expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
       expect(await cBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
-      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
+      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
       expect(accountTokenPosition.balance).to.eq(0);
     });
   });
@@ -629,7 +629,7 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.cleanPositions(user1AccountNo);
     });
     it('Fail - Access Denied', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       const swapParams = {
         amount: tokenAmount('10000', 18),
         sqrtPriceLimit: 0,
@@ -694,7 +694,7 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.cleanPositions(user1AccountNo);
     });
     it('Fail - Access Denied', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       const swapParams = {
         amount: tokenAmount('10000', 6),
         sqrtPriceLimit: 0,
@@ -756,7 +756,7 @@ describe('Clearing House Library', () => {
         isPartialAllowed: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
-      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vBaseAddress);
+      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
       expect(accountTokenPosition.balance).to.eq(amount.mul(-1));
     });
   });
@@ -773,7 +773,7 @@ describe('Clearing House Library', () => {
       tickUpper = tick + 100;
     });
     it('Fail - Access Denied', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vBaseAddress);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       const liquidityChangeParams = {
         tickLower: tickLower,
         tickUpper: tickUpper,

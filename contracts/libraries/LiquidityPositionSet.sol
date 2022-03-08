@@ -234,7 +234,7 @@ library LiquidityPositionSet {
 
             set.closeLiquidityPosition(accountId, poolId, position, balanceAdjustmentsCurrent, protocol);
 
-            balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
+            balanceAdjustments.vQuoteIncrease += balanceAdjustmentsCurrent.vQuoteIncrease;
             balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;
             balanceAdjustments.traderPositionIncrease += balanceAdjustmentsCurrent.traderPositionIncrease;
         }

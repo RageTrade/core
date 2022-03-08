@@ -51,9 +51,9 @@ contract ClearingHouseTest is ClearingHouse {
         VTokenPosition.Info storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[address(protocol.vBase).truncate()];
+        tokenPosition = set.positions[address(protocol.vQuote).truncate()];
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(accountId, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        set.update(accountId, balanceAdjustments, address(protocol.vQuote).truncate(), protocol);
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];

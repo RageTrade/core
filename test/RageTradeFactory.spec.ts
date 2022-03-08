@@ -3,7 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import hre from 'hardhat';
-import { ClearingHouse, ERC20, RageTradeFactory, VBase } from '../typechain-types';
+import { ClearingHouse, ERC20, RageTradeFactory, VQuote } from '../typechain-types';
 
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { setupClearingHouse, initializePool } from './utils/setup-clearinghouse';
@@ -17,17 +17,17 @@ describe('RageTradeFactory', () => {
   after(deactivateMainnetFork);
 
   describe('#constructor', () => {
-    it('deploys VBase at good address', async () => {
+    it('deploys VQuote at good address', async () => {
       for (let i = 0; i < 5; i++) {
-        const { vBase } = await setupClearingHouse({});
-        expect(vBase.address[2].toLowerCase()).to.eq('f');
+        const { vQuote } = await setupClearingHouse({});
+        expect(vQuote.address[2].toLowerCase()).to.eq('f');
       }
     });
 
     // TODO add this test case
     it.skip('initializes values', async () => {
-      const { vBase, clearingHouse } = await setupClearingHouse({});
-      // expect(await clearingHouse.vBase)
+      const { vQuote, clearingHouse } = await setupClearingHouse({});
+      // expect(await clearingHouse.vQuote)
     });
 
     it('governance and teamMultisig is deployer', async () => {
@@ -48,7 +48,7 @@ describe('RageTradeFactory', () => {
 
   describe('#initializePool', () => {
     it('deploys vToken at good address', async () => {
-      let { rageTradeFactory, vBase } = await setupClearingHouse({});
+      let { rageTradeFactory, vQuote } = await setupClearingHouse({});
 
       // todo change cTokenAddress requirement to cTokenDecimals
       const realToken = await smock.fake<ERC20>('ERC20');
@@ -79,7 +79,7 @@ describe('RageTradeFactory', () => {
 
       // vTokenAddress should be such that in UniswapV3Pool it becomes token0 always
       const vTokenAddress = events[0].args.vToken;
-      expect(BigNumber.from(vTokenAddress).lt(vBase.address)).to.be.true;
+      expect(BigNumber.from(vTokenAddress).lt(vQuote.address)).to.be.true;
     });
   });
 

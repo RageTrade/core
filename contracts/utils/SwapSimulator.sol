@@ -75,7 +75,7 @@ contract SwapSimulator {
     function _simulateSwap(
         IClearingHouse clearingHouse,
         uint32 poolId,
-        bool swapVTokenForVBase, // zeroForOne
+        bool swapVTokenForVQuote, // zeroForOne
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
         function(
@@ -92,7 +92,7 @@ contract SwapSimulator {
         bool exactIn = amountSpecified >= 0;
 
         if (sqrtPriceLimitX96 == 0) {
-            sqrtPriceLimitX96 = swapVTokenForVBase ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+            sqrtPriceLimitX96 = swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
         }
 
         (uint24 uniswapFeePips, uint24 liquidityFeePips, uint24 protocolFeePips) = (
@@ -101,18 +101,25 @@ contract SwapSimulator {
             pool.vPoolWrapper.protocolFeePips()
         );
 
-        SwapMath.beforeSwap(exactIn, swapVTokenForVBase, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);
+        SwapMath.beforeSwap(
+            exactIn,
+            swapVTokenForVQuote,
+            uniswapFeePips,
+            liquidityFeePips,
+            protocolFeePips,
+            swapValues
+        );
 
         {
             // simulate swap and update our tick states
-            (swapValues.vTokenIn, swapValues.vBaseIn) = pool.vPool.simulateSwap(
-                swapVTokenForVBase,
+            (swapValues.vTokenIn, swapValues.vQuoteIn) = pool.vPool.simulateSwap(
+                swapVTokenForVQuote,
                 amountSpecified,
                 sqrtPriceLimitX96,
                 onSwapStep
             );
         }
 
-        SwapMath.afterSwap(exactIn, swapVTokenForVBase, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);
+        SwapMath.afterSwap(exactIn, swapVTokenForVQuote, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);
     }
 }

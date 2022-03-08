@@ -86,7 +86,7 @@ library VTokenPositionSet {
         }
 
         //Value of the base token balance
-        accountMarketValue += set.positions[address(protocol.vBase).truncate()].balance; // TODO ensure vToken truncated cannot be vBase truncated ever
+        accountMarketValue += set.positions[address(protocol.vQuote).truncate()].balance; // TODO ensure vToken truncated cannot be vQuote truncated ever
     }
 
     /// @notice returns the max of two int256 numbers
@@ -117,18 +117,18 @@ library VTokenPositionSet {
     /// @notice returns notional value of the given base and token amounts
     /// @param poolId id of the rage trade pool
     /// @param vTokenAmount amount of tokens
-    /// @param vBaseAmount amount of base
+    /// @param vQuoteAmount amount of base
     /// @param protocol platform constants
     /// @return notionalAmountClosed for the given token and base amounts
     function getNotionalValue(
         uint32 poolId,
         int256 vTokenAmount,
-        int256 vBaseAmount,
+        int256 vQuoteAmount,
         Protocol.Info storage protocol
     ) internal view returns (uint256 notionalAmountClosed) {
         notionalAmountClosed =
             vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128For(poolId), FixedPoint128.Q128) +
-            vBaseAmount.absUint();
+            vQuoteAmount.absUint();
     }
 
     /// @notice returns the long and short side risk for range positions of a particular token
@@ -227,8 +227,8 @@ library VTokenPositionSet {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal {
-        // TODO is vBase.truncate() is necessary? can it be passed from args?
-        if (poolId != address(protocol.vBase).truncate()) {
+        // TODO is vQuote.truncate() is necessary? can it be passed from args?
+        if (poolId != address(protocol.vQuote).truncate()) {
             set.realizeFundingPayment(accountId, poolId, protocol);
             set.active.include(poolId);
         }
@@ -236,8 +236,8 @@ library VTokenPositionSet {
         _VTokenPosition.balance += balanceAdjustments.vTokenIncrease;
         _VTokenPosition.netTraderPosition += balanceAdjustments.traderPositionIncrease;
 
-        VTokenPosition.Info storage _VBasePosition = set.positions[address(protocol.vBase).truncate()]; // TODO take vBaseTruncate from above
-        _VBasePosition.balance += balanceAdjustments.vBaseIncrease;
+        VTokenPosition.Info storage _VQuotePosition = set.positions[address(protocol.vQuote).truncate()]; // TODO take vQuoteTruncate from above
+        _VQuotePosition.balance += balanceAdjustments.vQuoteIncrease;
 
         if (_VTokenPosition.balance == 0 && _VTokenPosition.liquidityPositions.active[0] == 0) {
             set.deactivate(poolId);
@@ -275,9 +275,9 @@ library VTokenPositionSet {
         VTokenPosition.Info storage _VTokenPosition = set.positions[poolId];
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
 
-        VTokenPosition.Info storage _VBasePosition = set.positions[address(protocol.vBase).truncate()]; // TODO take vBaseTruncate from above
+        VTokenPosition.Info storage _VQuotePosition = set.positions[address(protocol.vQuote).truncate()]; // TODO take vQuoteTruncate from above
         int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
-        _VBasePosition.balance += fundingPayment;
+        _VQuotePosition.balance += fundingPayment;
 
         _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
 
@@ -297,8 +297,8 @@ library VTokenPositionSet {
         bool createNew,
         Protocol.Info storage protocol
     ) internal returns (VTokenPosition.Info storage position) {
-        // TODO is vBase.truncate() is necessary? can it be passed from args?
-        if (poolId != address(protocol.vBase).truncate()) {
+        // TODO is vQuote.truncate() is necessary? can it be passed from args?
+        if (poolId != address(protocol.vQuote).truncate()) {
             if (createNew) {
                 set.activate(poolId);
             } else if (!set.active.exists(poolId)) {
@@ -315,14 +315,14 @@ library VTokenPositionSet {
     /// @param swapParams parameters for swap
     /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
-    /// @return vBaseAmountOut - base amount coming out of pool
+    /// @return vQuoteAmountOut - base amount coming out of pool
     function swapToken(
         VTokenPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.SwapParams memory swapParams,
         Protocol.Info storage protocol
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         return set.swapToken(accountId, poolId, swapParams, protocol.vPoolWrapperFor(poolId), protocol);
     }
 
@@ -333,14 +333,14 @@ library VTokenPositionSet {
     /// @param vTokenAmount amount of the token
     /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
-    /// @return vBaseAmountOut - base amount coming out of pool
+    /// @return vQuoteAmountOut - base amount coming out of pool
     function swapTokenAmount(
         VTokenPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         int256 vTokenAmount,
         Protocol.Info storage protocol
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         return
             set.swapToken(
                 accountId,
@@ -359,7 +359,7 @@ library VTokenPositionSet {
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
-    /// @return vBaseAmountOut - base amount coming out of pool
+    /// @return vQuoteAmountOut - base amount coming out of pool
     function swapToken(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -367,8 +367,8 @@ library VTokenPositionSet {
         IClearingHouseStructures.SwapParams memory swapParams,
         IVPoolWrapper wrapper,
         Protocol.Info storage protocol
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        (vTokenAmountOut, vBaseAmountOut) = wrapper.swapToken(
+    ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+        (vTokenAmountOut, vQuoteAmountOut) = wrapper.swapToken(
             swapParams.amount,
             swapParams.sqrtPriceLimit,
             swapParams.isNotional
@@ -376,14 +376,14 @@ library VTokenPositionSet {
 
         // change direction basis uniswap to balance increase
         vTokenAmountOut = -vTokenAmountOut;
-        vBaseAmountOut = -vBaseAmountOut;
+        vQuoteAmountOut = -vQuoteAmountOut;
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
-            .BalanceAdjustments(vBaseAmountOut, vTokenAmountOut, vTokenAmountOut);
+            .BalanceAdjustments(vQuoteAmountOut, vTokenAmountOut, vTokenAmountOut);
 
         set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        emit Account.TokenPositionChanged(accountId, poolId, vTokenAmountOut, vBaseAmountOut);
+        emit Account.TokenPositionChanged(accountId, poolId, vTokenAmountOut, vQuoteAmountOut);
     }
 
     /// @notice function to remove an eligible limit order
@@ -409,14 +409,14 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
     /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @return vBaseAmountOut amount of base tokens that account received (positive) or paid (negative)
+    /// @return vQuoteAmountOut amount of base tokens that account received (positive) or paid (negative)
     function liquidityChange(
         VTokenPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Protocol.Info storage protocol
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         return
             set.liquidityChange(
                 accountId,
@@ -494,7 +494,7 @@ library VTokenPositionSet {
     /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @return vBaseAmountOut amount of base tokens that account received (positive) or paid (negative)
+    /// @return vQuoteAmountOut amount of base tokens that account received (positive) or paid (negative)
     function liquidityChange(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -502,7 +502,7 @@ library VTokenPositionSet {
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         IVPoolWrapper wrapper,
         Protocol.Info storage protocol
-    ) internal returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, true, protocol);
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
@@ -521,7 +521,7 @@ library VTokenPositionSet {
             set.swapTokenAmount(accountId, poolId, -balanceAdjustments.traderPositionIncrease, protocol);
         }
 
-        return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vBaseIncrease);
+        return (balanceAdjustments.vTokenIncrease, balanceAdjustments.vQuoteIncrease);
     }
 
     /// @notice function to remove an eligible limit order
@@ -562,9 +562,9 @@ library VTokenPositionSet {
     function getInfo(VTokenPosition.Set storage set, Protocol.Info storage protocol)
         internal
         view
-        returns (int256 vBaseBalance, IClearingHouseStructures.VTokenPositionView[] memory vTokenPositions)
+        returns (int256 vQuoteBalance, IClearingHouseStructures.VTokenPositionView[] memory vTokenPositions)
     {
-        vBaseBalance = set.positions[address(protocol.vBase).truncate()].balance; // TODO can be optimized?
+        vQuoteBalance = set.positions[address(protocol.vQuote).truncate()].balance; // TODO can be optimized?
 
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
         vTokenPositions = new IClearingHouseStructures.VTokenPositionView[](numberOfTokenPositions);

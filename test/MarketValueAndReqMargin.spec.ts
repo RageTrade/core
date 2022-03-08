@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { BigNumber, BigNumberish, utils } from 'ethers';
-import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, VBase, ClearingHouse } from '../typechain-types';
+import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, VQuote, ClearingHouse } from '../typechain-types';
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
@@ -13,7 +13,7 @@ describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
-  let vBase: VBase;
+  let vQuote: VQuote;
   let clearingHouse: ClearingHouse;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
@@ -67,7 +67,7 @@ describe('Market Value and Required Margin', () => {
       vPoolAddress: vPoolAddress,
       vPoolWrapperAddress: vPoolWrapperAddress,
       clearingHouse,
-      vBase,
+      vQuote,
     } = await testSetup({
       initialMarginRatio: 20000,
       maintainanceMarginRatio: 10000,
@@ -95,13 +95,13 @@ describe('Market Value and Required Margin', () => {
     VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
     await VTokenPositionSet.init(vTokenAddress);
 
-    // const basePoolObj = await clearingHouse.getPoolInfo(truncate(vBase.address));
-    // await VTokenPositionSet.registerPool(vBase.address, basePoolObj);
+    // const basePoolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
+    // await VTokenPositionSet.registerPool(vQuote.address, basePoolObj);
 
     const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
     await VTokenPositionSet.registerPool(vTokenPoolObj);
 
-    await VTokenPositionSet.setVBaseAddress(vBase.address);
+    await VTokenPositionSet.setVQuoteAddress(vQuote.address);
   });
   after(deactivateMainnetFork);
   describe('Base Case', () => {
@@ -258,13 +258,13 @@ describe('Market Value and Required Margin', () => {
       VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
       await VTokenPositionSet.init(vTokenAddress);
 
-      // const basePoolObj = await clearingHouse.getPoolInfo(truncate(vBase.address));
-      // await VTokenPositionSet.registerPool(vBase.address, basePoolObj);
+      // const basePoolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
+      // await VTokenPositionSet.registerPool(vQuote.address, basePoolObj);
 
       const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
       await VTokenPositionSet.registerPool(vTokenPoolObj);
 
-      await VTokenPositionSet.setVBaseAddress(vBase.address);
+      await VTokenPositionSet.setVQuoteAddress(vQuote.address);
 
       vPoolFake.observe.returns([[0, -198080 * 60], []]);
       vPoolFake.slot0.returns([0, -198080, 0, 0, 0, 0, false]);
