@@ -2,7 +2,7 @@ export const skip = () => true;
 
 export interface NetworkInfo {
   clearingHouseContractName: string;
-  cBaseAddress?: string;
+  settlementTokenAddress?: string;
   UNISWAP_V3_FACTORY_ADDRESS: string;
   UNISWAP_V3_DEFAULT_FEE_TIER: number;
   UNISWAP_V3_POOL_BYTE_CODE_HASH: string;
@@ -22,7 +22,7 @@ export const defaultInfo: NetworkInfo = {
 
 export const arbitrumInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouseArbitrum',
-  cBaseAddress: '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8', // USDC Arbitrum
+  settlementTokenAddress: '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8', // USDC Arbitrum
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,

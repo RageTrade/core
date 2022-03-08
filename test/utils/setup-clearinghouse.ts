@@ -3,7 +3,14 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumberish, ethers } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import hre from 'hardhat';
-import { ClearingHouse, ERC20, VQuote, RageTradeFactory, RealTokenMock, CBaseMock } from '../../typechain-types';
+import {
+  ClearingHouse,
+  ERC20,
+  VQuote,
+  RageTradeFactory,
+  RealTokenMock,
+  SettlementTokenMock,
+} from '../../typechain-types';
 import { IClearingHouseStructures } from '../../typechain-types/RageTradeFactory';
 import { getCreateAddressFor } from './create-addresses';
 import { priceToSqrtPriceX96 } from './price-tick';
@@ -18,7 +25,7 @@ interface SetupClearingHouseArgs {
   signer?: SignerWithAddress;
   vQuoteDecimals?: number;
   uniswapFeeTierDefault?: number;
-  cBaseAddress?: string;
+  settlementTokenAddress?: string;
 }
 
 interface InitializePoolArgs {
@@ -53,7 +60,7 @@ export async function setupClearingHouse({
   signer,
   vQuoteDecimals,
   uniswapFeeTierDefault,
-  cBaseAddress,
+  settlementTokenAddress,
 }: SetupClearingHouseArgs) {
   vQuoteDecimals = vQuoteDecimals ?? 6;
 
@@ -61,16 +68,16 @@ export async function setupClearingHouse({
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   // real base
-  let cBase: CBaseMock;
-  if (cBaseAddress) {
-    cBase = await hre.ethers.getContractAt('CBaseMock', cBaseAddress);
+  let settlementToken: SettlementTokenMock;
+  if (settlementTokenAddress) {
+    settlementToken = await hre.ethers.getContractAt('SettlementTokenMock', settlementTokenAddress);
   } else {
-    const _cBase = await (await hre.ethers.getContractFactory('CBaseMock')).deploy();
-    const d = await _cBase.decimals();
-    await _cBase.mint(signer.address, parseUnits('100000', d));
-    cBase = _cBase;
+    const _settlementToken = await (await hre.ethers.getContractFactory('SettlementTokenMock')).deploy();
+    const d = await _settlementToken.decimals();
+    await _settlementToken.mint(signer.address, parseUnits('100000', d));
+    settlementToken = _settlementToken;
   }
-  hre.tracer.nameTags[cBase.address] = 'cBase';
+  hre.tracer.nameTags[settlementToken.address] = 'settlementToken';
 
   // deploying main contracts
   const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 5);
@@ -107,7 +114,7 @@ export async function setupClearingHouse({
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     insuranceFundLogic.address,
-    cBase.address,
+    settlementToken.address,
     nativeOracle.address,
   );
 
@@ -126,7 +133,7 @@ export async function setupClearingHouse({
 
   return {
     signer,
-    cBase,
+    settlementToken,
     vQuote,
     clearingHouse,
     proxyAdmin,

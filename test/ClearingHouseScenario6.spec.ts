@@ -55,7 +55,7 @@ import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
 import { FundingPaymentRealizedEvent } from '../typechain-types/Account';
 import { truncate } from './utils/vToken';
-const whaleFocBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
+const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();
 const { ALCHEMY_KEY } = process.env;
@@ -81,8 +81,8 @@ describe('Clearing House Scenario 6', () => {
   let user2: SignerWithAddress;
   let user2AccountNo: BigNumberish;
 
-  let cBase: IERC20;
-  let cBaseOracle: OracleMock;
+  let settlementToken: IERC20;
+  let settlementTokenOracle: OracleMock;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -141,8 +141,8 @@ describe('Clearing House Scenario 6', () => {
     expect(balance).to.eq(vTokenBalance);
   }
 
-  async function checkCBaseBalance(address: string, tokenAmount: BigNumberish) {
-    expect(await cBase.balanceOf(address)).to.eq(tokenAmount);
+  async function checkSettlementTokenBalance(address: string, tokenAmount: BigNumberish) {
+    expect(await settlementToken.balanceOf(address)).to.eq(tokenAmount);
   }
 
   async function checkLiquidityPositionNum(accountNo: BigNumberish, vTokenAddress: string, num: BigNumberish) {
@@ -182,7 +182,7 @@ describe('Clearing House Scenario 6', () => {
     tokenAddress: string,
     tokenAmount: BigNumberish,
   ) {
-    await cBase.connect(user).approve(clearingHouseTest.address, tokenAmount);
+    await settlementToken.connect(user).approve(clearingHouseTest.address, tokenAmount);
     const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
     await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
   }
@@ -536,7 +536,7 @@ describe('Clearing House Scenario 6', () => {
   before(async () => {
     await activateMainnetFork();
 
-    cBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    settlementToken = await hre.ethers.getContractAt('IERC20', REAL_BASE);
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
@@ -586,7 +586,7 @@ describe('Clearing House Scenario 6', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
-      cBase.address,
+      settlementToken.address,
       nativeOracle.address,
     );
 
@@ -660,9 +660,9 @@ describe('Clearing House Scenario 6', () => {
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
-    cBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    await clearingHouseTest.updateCollateralSettings(cBase.address, {
-      oracle: cBaseOracle.address,
+    settlementTokenOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    await clearingHouseTest.updateCollateralSettings(settlementToken.address, {
+      oracle: settlementTokenOracle.address,
       twapDuration: 300,
       supported: true,
     });
@@ -711,13 +711,13 @@ describe('Clearing House Scenario 6', () => {
 
   describe('#Initialize', () => {
     it('Steal Funds', async () => {
-      await stealFunds(REAL_BASE, 6, user0.address, '1000000', whaleFocBase);
-      await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleFocBase);
-      await stealFunds(REAL_BASE, 6, user2.address, '1000000', whaleFocBase);
+      await stealFunds(REAL_BASE, 6, user0.address, '1000000', whaleFosettlementToken);
+      await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleFosettlementToken);
+      await stealFunds(REAL_BASE, 6, user2.address, '1000000', whaleFosettlementToken);
 
-      expect(await cBase.balanceOf(user0.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await cBase.balanceOf(user2.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user0.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user2.address)).to.eq(tokenAmount('1000000', 6));
     });
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user0).createAccount();
@@ -752,8 +752,9 @@ describe('Clearing House Scenario 6', () => {
     });
 
     it('AddVQuote Deposit Support  - Pass', async () => {
-      // await clearingHouseTest.connect(admin).updateSupportedDeposits(cBase.address, true);
-      expect((await clearingHouseTest.getCollateralInfo(truncate(cBase.address))).settings.supported).to.be.true;
+      // await clearingHouseTest.connect(admin).updateSupportedDeposits(settlementToken.address, true);
+      expect((await clearingHouseTest.getCollateralInfo(truncate(settlementToken.address))).settings.supported).to.be
+        .true;
     });
   });
 
@@ -765,10 +766,10 @@ describe('Clearing House Scenario 6', () => {
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
     });
     it('Acct[0] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user0, user0AccountNo, cBase.address, tokenAmount(10n ** 5n, 6));
-      await checkCBaseBalance(user0.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(10n ** 5n, 6));
-      await checkDepositBalance(user0AccountNo, cBase.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user0, user0AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await checkSettlementTokenBalance(user0.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(10n ** 5n, 6));
+      await checkDepositBalance(user0AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
     });
     it('Acct[0] Adds Liq b/w ticks (-200820 to -199360) @ tickCurrent = -199590', async () => {
       const tickLower = -200820;
@@ -814,10 +815,10 @@ describe('Clearing House Scenario 6', () => {
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
     it('Acct[2] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user2, user2AccountNo, cBase.address, tokenAmount(10n ** 5n, 6));
-      await checkCBaseBalance(user2.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 5n, 6));
-      await checkDepositBalance(user2AccountNo, cBase.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user2, user2AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await checkSettlementTokenBalance(user2.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 5n, 6));
+      await checkDepositBalance(user2AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
     });
     it('Acct[2] Short ETH : Price Changes (StartTick = -199590, EndTick = -199700)', async () => {
       const startTick = -199590;
@@ -852,10 +853,10 @@ describe('Clearing House Scenario 6', () => {
       );
     });
     it('Acct[1] Initial Collateral Deposit = 1mil USDC', async () => {
-      await addMargin(user1, user1AccountNo, cBase.address, tokenAmount(10n ** 6n, 6));
-      await checkCBaseBalance(user1.address, tokenAmount(0, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 5n + 10n ** 6n, 6));
-      await checkDepositBalance(user1AccountNo, cBase.address, tokenAmount(10n ** 6n, 6));
+      await addMargin(user1, user1AccountNo, settlementToken.address, tokenAmount(10n ** 6n, 6));
+      await checkSettlementTokenBalance(user1.address, tokenAmount(0, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 5n + 10n ** 6n, 6));
+      await checkDepositBalance(user1AccountNo, settlementToken.address, tokenAmount(10n ** 6n, 6));
     });
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;

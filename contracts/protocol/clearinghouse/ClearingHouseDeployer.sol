@@ -18,8 +18,8 @@ import { IVQuote } from '../../interfaces/IVQuote.sol';
 abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
     struct DeployClearingHouseParams {
         address clearingHouseLogicAddress;
-        IERC20 cBase;
-        IOracle cBaseOracle;
+        IERC20 settlementToken;
+        IOracle settlementTokenOracle;
         IInsuranceFund insuranceFund;
         IVQuote vQuote;
         IOracle nativeOracle;
@@ -39,8 +39,8 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                             IClearingHouseSystemActions.__initialize_ClearingHouse,
                             (
                                 address(this), // RageTradeFactory
-                                params.cBase,
-                                params.cBaseOracle,
+                                params.settlementToken,
+                                params.settlementTokenOracle,
                                 params.insuranceFund,
                                 params.vQuote,
                                 params.nativeOracle

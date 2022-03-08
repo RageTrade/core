@@ -58,7 +58,7 @@ import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
 import { FundingPaymentRealizedEvent } from '../typechain-types/Account';
 import { truncate } from './utils/vToken';
-const whaleFocBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
+const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();
 const { ALCHEMY_KEY } = process.env;
@@ -87,8 +87,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
   let keeper: SignerWithAddress;
   let keeperAccountNo: BigNumberish;
 
-  let cBase: IERC20;
-  let cBaseOracle: OracleMock;
+  let settlementToken: IERC20;
+  let settlementTokenOracle: OracleMock;
 
   let vTokenAddress: string;
   let vToken1Address: string;
@@ -185,8 +185,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     expect(balance).to.eq(vTokenBalance);
   }
 
-  async function checkCBaseBalance(address: string, tokenAmount: BigNumberish) {
-    expect(await cBase.balanceOf(address)).to.eq(tokenAmount);
+  async function checkSettlementTokenBalance(address: string, tokenAmount: BigNumberish) {
+    expect(await settlementToken.balanceOf(address)).to.eq(tokenAmount);
   }
 
   async function checkLiquidityPositionNum(accountNo: BigNumberish, vTokenAddress: string, num: BigNumberish) {
@@ -226,7 +226,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     tokenAddress: string,
     tokenAmount: BigNumberish,
   ) {
-    await cBase.connect(user).approve(clearingHouseTest.address, tokenAmount);
+    await settlementToken.connect(user).approve(clearingHouseTest.address, tokenAmount);
     const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
     await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
   }
@@ -774,7 +774,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
-      cBase.address,
+      settlementToken.address,
       nativeOracle.address,
     );
 
@@ -786,9 +786,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     vQuoteAddress = vQuote.address;
 
     // await vQuote.transferOwnership(VPoolFactory.address);
-    cBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    await clearingHouseTest.updateCollateralSettings(cBase.address, {
-      oracle: cBaseOracle.address,
+    settlementTokenOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    await clearingHouseTest.updateCollateralSettings(settlementToken.address, {
+      oracle: settlementTokenOracle.address,
       twapDuration: 300,
       supported: true,
     });
@@ -811,7 +811,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
-    cBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    settlementToken = await hre.ethers.getContractAt('IERC20', REAL_BASE);
 
     // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
     // vQuote = await vQuoteFactory.deploy(REAL_BASE);
@@ -872,15 +872,15 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
   describe('#Initialize', () => {
     it('Steal Funds', async () => {
-      await stealFunds(REAL_BASE, 6, user0.address, '2000000', whaleFocBase);
-      await stealFunds(REAL_BASE, 6, user1.address, '2000000', whaleFocBase);
-      await stealFunds(REAL_BASE, 6, user2.address, '10000000', whaleFocBase);
-      await stealFunds(REAL_BASE, 6, keeper.address, '1000000', whaleFocBase);
+      await stealFunds(REAL_BASE, 6, user0.address, '2000000', whaleFosettlementToken);
+      await stealFunds(REAL_BASE, 6, user1.address, '2000000', whaleFosettlementToken);
+      await stealFunds(REAL_BASE, 6, user2.address, '10000000', whaleFosettlementToken);
+      await stealFunds(REAL_BASE, 6, keeper.address, '1000000', whaleFosettlementToken);
 
-      expect(await cBase.balanceOf(user0.address)).to.eq(tokenAmount('2000000', 6));
-      expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('2000000', 6));
-      expect(await cBase.balanceOf(user2.address)).to.eq(tokenAmount('10000000', 6));
-      expect(await cBase.balanceOf(keeper.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user0.address)).to.eq(tokenAmount('2000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('2000000', 6));
+      expect(await settlementToken.balanceOf(user2.address)).to.eq(tokenAmount('10000000', 6));
+      expect(await settlementToken.balanceOf(keeper.address)).to.eq(tokenAmount('1000000', 6));
     });
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user0).createAccount();
@@ -931,8 +931,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     });
 
     it('AddVQuote Deposit Support  - Pass', async () => {
-      // await clearingHouseTest.connect(admin).updateSupportedDeposits(cBase.address, true);
-      expect((await clearingHouseTest.getCollateralInfo(truncate(cBase.address))).settings.supported).to.be.true;
+      // await clearingHouseTest.connect(admin).updateSupportedDeposits(settlementToken.address, true);
+      expect((await clearingHouseTest.getCollateralInfo(truncate(settlementToken.address))).settings.supported).to.be
+        .true;
     });
   });
 
@@ -941,31 +942,31 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await cleanPositionsAllAccounts(4);
     });
     it('Acct[0] Initial Collateral Deposit = 2M USDC', async () => {
-      await addMargin(user0, user0AccountNo, cBase.address, tokenAmount(2n * 10n ** 6n, 6));
-      await checkCBaseBalance(user0.address, tokenAmount(0n, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 6n, 6));
-      await checkDepositBalance(user0AccountNo, cBase.address, tokenAmount(2n * 10n ** 6n, 6));
+      await addMargin(user0, user0AccountNo, settlementToken.address, tokenAmount(2n * 10n ** 6n, 6));
+      await checkSettlementTokenBalance(user0.address, tokenAmount(0n, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 6n, 6));
+      await checkDepositBalance(user0AccountNo, settlementToken.address, tokenAmount(2n * 10n ** 6n, 6));
     });
 
     it('Acct[1] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user1, user1AccountNo, cBase.address, tokenAmount(10n ** 5n, 6));
-      await checkCBaseBalance(user1.address, tokenAmount(2n * 10n ** 6n - 10n ** 5n, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 6n + 10n ** 5n, 6));
-      await checkDepositBalance(user1AccountNo, cBase.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user1, user1AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await checkSettlementTokenBalance(user1.address, tokenAmount(2n * 10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 6n + 10n ** 5n, 6));
+      await checkDepositBalance(user1AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
     });
 
     it('Acct[2] Initial Collateral Deposit = 10m USDC', async () => {
-      await addMargin(user2, user2AccountNo, cBase.address, tokenAmount(10n ** 7n, 6));
-      await checkCBaseBalance(user2.address, tokenAmount(0n, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(12n * 10n ** 6n + 10n ** 5n, 6));
-      await checkDepositBalance(user2AccountNo, cBase.address, tokenAmount(10n ** 7n, 6));
+      await addMargin(user2, user2AccountNo, settlementToken.address, tokenAmount(10n ** 7n, 6));
+      await checkSettlementTokenBalance(user2.address, tokenAmount(0n, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(12n * 10n ** 6n + 10n ** 5n, 6));
+      await checkDepositBalance(user2AccountNo, settlementToken.address, tokenAmount(10n ** 7n, 6));
     });
 
     it('Keeper Initial Collateral Deposit = 1m USDC', async () => {
-      await addMargin(keeper, keeperAccountNo, cBase.address, tokenAmount(10n ** 6n, 6));
-      await checkCBaseBalance(keeper.address, tokenAmount(0n, 6));
-      await checkCBaseBalance(clearingHouseTest.address, tokenAmount(13n * 10n ** 6n + 10n ** 5n, 6));
-      await checkDepositBalance(keeperAccountNo, cBase.address, tokenAmount(10n ** 6n, 6));
+      await addMargin(keeper, keeperAccountNo, settlementToken.address, tokenAmount(10n ** 6n, 6));
+      await checkSettlementTokenBalance(keeper.address, tokenAmount(0n, 6));
+      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(13n * 10n ** 6n + 10n ** 5n, 6));
+      await checkDepositBalance(keeperAccountNo, settlementToken.address, tokenAmount(10n ** 6n, 6));
     });
   });
 
@@ -1405,8 +1406,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await checkTraderPositionApproximate(user1AccountNo, vTokenAddress, netTokenPosition, 8);
       // await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
       await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
-      await checkCBaseBalance(keeper.address, expectedKeeperFee);
-      await checkCBaseBalance(insuranceFund.address, expectedInsuranceFundFee);
+      await checkSettlementTokenBalance(keeper.address, expectedKeeperFee);
+      await checkSettlementTokenBalance(insuranceFund.address, expectedInsuranceFundFee);
     });
 
     it('Timestamp and Oracle Update - 4000', async () => {
@@ -1442,10 +1443,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const expectedLiquidationPriceX128 = 4123.86745092869;
       const expectedLiquidatorPriceX128 = 4063.81112882778;
 
-      const insuranceFundStartingBalance = await cBase.balanceOf(insuranceFund.address);
+      const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
       const expectedInsuranceFundFee = 1534985416n;
 
-      const liquidatocBaseBalance = 103877346504n;
+      const liquidatosettlementTokenBalance = 103877346504n;
       const liquidatocTokenPosition = -25559097903887700000n;
       const liquidatorNetTradePosition = -25559097903887700000n;
 
@@ -1462,9 +1463,12 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
 
       await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
-      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatocBaseBalance);
+      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatosettlementTokenBalance);
 
-      await checkCBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
+      await checkSettlementTokenBalance(
+        insuranceFund.address,
+        insuranceFundStartingBalance.add(expectedInsuranceFundFee),
+      );
     });
 
     it('Timestamp and Oracle Update - 4500', async () => {
@@ -1500,11 +1504,11 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const expectedLiquidationPriceX128 = 75689.824397259;
       const expectedLiquidatorPriceX128 = 74587.5454011824;
 
-      const insuranceFundStartingBalance = await cBase.balanceOf(insuranceFund.address);
+      const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
 
       const expectedInsuranceFundFee = 5527866666n;
 
-      const liquidatocBaseBalance = 477939657577n;
+      const liquidatosettlementTokenBalance = 477939657577n;
       const liquidatocToken1Position = -501494329n - 1n;
       const liquidatorNetTrade1Position = -501494329n - 1n;
 
@@ -1519,9 +1523,12 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
 
       await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
-      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatocBaseBalance);
+      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatosettlementTokenBalance);
 
-      await checkCBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
+      await checkSettlementTokenBalance(
+        insuranceFund.address,
+        insuranceFundStartingBalance.add(expectedInsuranceFundFee),
+      );
     });
   });
 });

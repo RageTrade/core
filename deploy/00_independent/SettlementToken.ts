@@ -11,11 +11,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const { cBaseAddress } = getNetworkInfo(hre.network.config.chainId);
+  const { settlementTokenAddress } = getNetworkInfo(hre.network.config.chainId);
 
-  if (cBaseAddress === undefined) {
-    const deployment = await deploy('CBase', {
-      contract: 'CBaseMock',
+  if (settlementTokenAddress === undefined) {
+    const deployment = await deploy('SettlementToken', {
+      contract: 'SettlementTokenMock',
       from: deployer,
       log: true,
     });
@@ -24,15 +24,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (deployment.newlyDeployed) {
       await hre.tenderly.push({
-        name: 'CBaseMock',
+        name: 'SettlementTokenMock',
         address: deployment.address,
       });
     }
   } else {
-    await save('CBase', { abi: IERC20Metadata__factory.abi, address: cBaseAddress });
+    await save('SettlementToken', { abi: IERC20Metadata__factory.abi, address: settlementTokenAddress });
   }
 };
 
 export default func;
 
-func.tags = ['CBase'];
+func.tags = ['SettlementToken'];

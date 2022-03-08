@@ -9,12 +9,12 @@ import { GoodAddressDeployer } from '../../libraries/GoodAddressDeployer.sol';
 import { VQuote } from '../tokens/VQuote.sol';
 
 abstract contract VQuoteDeployer {
-    function _deployVQuote(uint8 rcBaseecimals) internal returns (IVQuote vQuote) {
+    function _deployVQuote(uint8 rsettlementTokenecimals) internal returns (IVQuote vQuote) {
         return
             IVQuote(
                 GoodAddressDeployer.deploy(
                     0,
-                    abi.encodePacked(type(VQuote).creationCode, abi.encode(rcBaseecimals)),
+                    abi.encodePacked(type(VQuote).creationCode, abi.encode(rsettlementTokenecimals)),
                     _isVQuoteAddressGood
                 )
             );

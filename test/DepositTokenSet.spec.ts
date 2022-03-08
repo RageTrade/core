@@ -34,7 +34,7 @@ describe('CTokenDepositSet Library', () => {
   let ownerAddress: string;
   let testContractAddress: string;
 
-  let cBase: FakeContract<ERC20>;
+  let settlementToken: FakeContract<ERC20>;
 
   let cToken: FakeContract<ERC20>;
   let cTokenOracle: OracleMock;
@@ -47,8 +47,8 @@ describe('CTokenDepositSet Library', () => {
   before(async () => {
     await activateMainnetFork();
 
-    cBase = await smock.fake<ERC20>('ERC20');
-    cBase.decimals.returns(6);
+    settlementToken = await smock.fake<ERC20>('ERC20');
+    settlementToken.decimals.returns(6);
 
     cToken = await smock.fake<ERC20>('ERC20');
     cToken.decimals.returns(18);
@@ -63,7 +63,7 @@ describe('CTokenDepositSet Library', () => {
     signers = await hre.ethers.getSigners();
 
     const factory = await hre.ethers.getContractFactory('DepositTokenSetTest');
-    test = await factory.deploy(cBase.address);
+    test = await factory.deploy(settlementToken.address);
 
     signers = await hre.ethers.getSigners();
     const tester = signers[0];

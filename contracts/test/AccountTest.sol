@@ -42,13 +42,13 @@ contract AccountTest {
         uint256 removeLimitOrderFee,
         uint256 minimumOrderNotional,
         uint256 fixFee_,
-        address cBase
+        address settlementToken
     ) external {
         protocol.liquidationParams = liquidationParams;
         protocol.minRequiredMargin = minRequiredMargin;
         protocol.removeLimitOrderFee = removeLimitOrderFee;
         protocol.minimumOrderNotional = minimumOrderNotional;
-        protocol.cBase = IERC20(cBase);
+        protocol.settlementToken = IERC20(settlementToken);
         fixFee = fixFee_;
     }
 

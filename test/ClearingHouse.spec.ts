@@ -38,7 +38,7 @@ import { randomAddress } from './utils/random';
 import { IClearingHouseStructures } from '../typechain-types/ClearingHouse';
 import { truncate } from './utils/vToken';
 import { parseUnits } from '@ethersproject/units';
-const whaleFocBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
+const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();
 const { ALCHEMY_KEY } = process.env;
@@ -61,11 +61,11 @@ describe('Clearing House Library', () => {
   let user1AccountNo: BigNumberish;
   let user2AccountNo: BigNumberish;
 
-  let cBase: IERC20;
-  let cBaseOracle: OracleMock;
+  let settlementToken: IERC20;
+  let settlementTokenOracle: OracleMock;
 
-  let cBase1: IERC20;
-  let cBase1Oracle: OracleMock;
+  let settlementToken1: IERC20;
+  let settlementToken1Oracle: OracleMock;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -165,7 +165,7 @@ describe('Clearing House Library', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
-    cBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    settlementToken = await hre.ethers.getContractAt('IERC20', REAL_BASE);
 
     // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
     // const vQuote = await vQuoteFactory.deploy(REAL_BASE);
@@ -205,7 +205,7 @@ describe('Clearing House Library', () => {
       clearingHouseTestLogic.address,
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
-      cBase.address,
+      settlementToken.address,
       nativeOracle.address,
     );
 
@@ -256,18 +256,18 @@ describe('Clearing House Library', () => {
     // console.log(await vQuote.decimals());
 
     // constants = await VPoolFactory.constants();
-    cBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    settlementTokenOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
-    cBase1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
-    cBase1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-    await clearingHouseTest.updateCollateralSettings(cBase.address, {
-      oracle: cBaseOracle.address,
+    settlementToken1 = await hre.ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F');
+    settlementToken1Oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    await clearingHouseTest.updateCollateralSettings(settlementToken.address, {
+      oracle: settlementTokenOracle.address,
       twapDuration: 300,
       supported: false,
     });
 
-    await clearingHouseTest.updateCollateralSettings(cBase1.address, {
-      oracle: cBase1Oracle.address,
+    await clearingHouseTest.updateCollateralSettings(settlementToken1.address, {
+      oracle: settlementToken1Oracle.address,
       twapDuration: 300,
       supported: false,
     });
@@ -314,11 +314,11 @@ describe('Clearing House Library', () => {
 
   describe('#StealFunds', () => {
     it('Steal Funds', async () => {
-      await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleFocBase);
-      await stealFunds(cBase1.address, 6, user1.address, '1000000', whaleFocBase);
-      await stealFunds(REAL_BASE, 6, user2.address, 10 ** 6, whaleFocBase);
-      expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await cBase.balanceOf(user2.address)).to.eq(tokenAmount(10 ** 6, 6));
+      await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleFosettlementToken);
+      await stealFunds(settlementToken1.address, 6, user1.address, '1000000', whaleFosettlementToken);
+      await stealFunds(REAL_BASE, 6, user2.address, 10 ** 6, whaleFosettlementToken);
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user2.address)).to.eq(tokenAmount(10 ** 6, 6));
     });
   });
 
@@ -356,9 +356,9 @@ describe('Clearing House Library', () => {
       expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.false;
       expect((await clearingHouseTest.getCollateralInfo(truncate(realToken.address))).settings.supported).to.be.false;
       expect((await clearingHouseTest.getPoolInfo(truncate(vQuoteAddress))).settings.supported).to.be.false;
-      expect((await clearingHouseTest.getPoolInfo(truncate(cBase.address))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(settlementToken.address))).settings.supported).to.be.false;
       // expect(await clearingHouseTest.supportedVTokens(vQuoteAddress)).to.be.false;
-      // expect(await clearingHouseTest.supportedDeposits(cBase.address)).to.be.false;
+      // expect(await clearingHouseTest.supportedDeposits(settlementToken.address)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
       const settings = await getPoolSettings(vTokenAddress);
@@ -386,10 +386,10 @@ describe('Clearing House Library', () => {
     //   );
     // });
     it('AddVQuote Deposit Support  - Pass', async () => {
-      const { settings } = await getCollateralSettings(cBase.address);
+      const { settings } = await getCollateralSettings(settlementToken.address);
       settings.supported = true;
-      await clearingHouseTest.connect(admin).updateCollateralSettings(cBase.address, settings);
-      expect((await getCollateralSettings(cBase.address)).settings.supported).to.be.true;
+      await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken.address, settings);
+      expect((await getCollateralSettings(settlementToken.address)).settings.supported).to.be.true;
     });
   });
 
@@ -401,7 +401,7 @@ describe('Clearing House Library', () => {
 
     before(async () => {
       amount = tokenAmount('1000000', 6);
-      truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase.address);
+      truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       swapParams = {
         amount: tokenAmount('10000', 18),
         sqrtPriceLimit: 0,
@@ -508,27 +508,27 @@ describe('Clearing House Library', () => {
       ).to.be.revertedWith('UninitializedToken(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase1.address);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken1.address);
       await expect(
         clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
-      ).to.be.revertedWith('UnsupportedCToken("' + cBase1.address + '")');
+      ).to.be.revertedWith('UnsupportedCToken("' + settlementToken1.address + '")');
     });
     it('Pass', async () => {
-      await cBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
-      const truncatedCBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase.address);
+      await settlementToken.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
+      const truncatedSettlementTokenAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest
         .connect(user1)
-        .addMargin(user1AccountNo, truncatedCBaseAddress, tokenAmount('1000000', 6));
-      expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('0', 6));
-      expect(await cBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, cBase.address)).to.eq(
+        .addMargin(user1AccountNo, truncatedSettlementTokenAddress, tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('0', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
         tokenAmount('1000000', 6),
       );
     });
   });
   describe('#Withdraw', () => {
     it('Fail - Access Denied', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase.address);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await expect(
         clearingHouseTest.connect(user2).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
@@ -541,68 +541,70 @@ describe('Clearing House Library', () => {
     });
 
     it('Pass', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase.address);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('100000', 6));
-      expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
-      expect(await cBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
-      expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, cBase.address)).to.eq(
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
+      expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
         tokenAmount('900000', 6),
       );
     });
 
     it('Pass - Withdrawal after removal of token support', async () => {
-      //Add cBase1 support
-      const { settings } = await getCollateralSettings(cBase1.address);
+      //Add settlementToken1 support
+      const { settings } = await getCollateralSettings(settlementToken1.address);
       settings.supported = true;
-      await clearingHouseTest.connect(admin).updateCollateralSettings(cBase1.address, settings);
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase1.address);
+      await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken1.address, settings);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken1.address);
 
-      await cBase1.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
+      await settlementToken1.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
       await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
-      expect(await cBase1.balanceOf(user1.address)).to.eq(0);
-      expect(await cBase1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken1.balanceOf(user1.address)).to.eq(0);
+      expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
 
-      //Remove cBase1 support
+      //Remove settlementToken1 support
       settings.supported = false;
-      await clearingHouseTest.connect(admin).updateCollateralSettings(cBase1.address, settings);
+      await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken1.address, settings);
 
       await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
 
-      expect(await cBase1.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await cBase1.balanceOf(clearingHouseTest.address)).to.eq(0);
+      expect(await settlementToken1.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(0);
     });
   });
 
   describe('#Profit', () => {
     it('Fail - Access Denied', async () => {
-      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase.address);
+      const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await expect(
         clearingHouseTest.connect(user2).updateProfit(user1AccountNo, tokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
 
     it('Pass - Cover Loss', async () => {
-      await cBase.connect(user1).approve(clearingHouseTest.address, tokenAmount('100000', 6));
+      await settlementToken.connect(user1).approve(clearingHouseTest.address, tokenAmount('100000', 6));
       await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, tokenAmount('100000', 6));
-      expect(await cBase.balanceOf(user1.address)).to.eq(0);
-      expect(await cBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(0);
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
       const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
       expect(accountTokenPosition.balance).to.eq(tokenAmount('100000', 6));
     });
 
     it('Pass - Remove Profit', async () => {
       await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, -tokenAmount('100000', 6));
-      expect(await cBase.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
-      expect(await cBase.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
       const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
       expect(accountTokenPosition.balance).to.eq(0);
     });
   });
   describe('#InitLiquidity', async () => {
     it('#InitLiquidity', async () => {
-      await cBase.connect(user2).approve(clearingHouseTest.address, tokenAmount(10 ** 6, 6));
-      const truncatedCBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(cBase.address);
-      await clearingHouseTest.connect(user2).addMargin(user2AccountNo, truncatedCBaseAddress, tokenAmount(10 ** 6, 6));
+      await settlementToken.connect(user2).approve(clearingHouseTest.address, tokenAmount(10 ** 6, 6));
+      const truncatedSettlementTokenAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
+      await clearingHouseTest
+        .connect(user2)
+        .addMargin(user2AccountNo, truncatedSettlementTokenAddress, tokenAmount(10 ** 6, 6));
 
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const { sqrtPriceX96 } = await vPool.slot0();
@@ -860,21 +862,21 @@ describe('Clearing House Library', () => {
 
   describe('Multicall', () => {
     it('multicallWithSingleMarginCheck', async () => {
-      await cBase.connect(user1).approve(clearingHouseTest.address, parseUnits('1000', 6));
+      await settlementToken.connect(user1).approve(clearingHouseTest.address, parseUnits('1000', 6));
 
       const operations: Array<IClearingHouseStructures.MulticallOperationStruct> = [
         {
           operationType: 0,
           data: ethers.utils.defaultAbiCoder.encode(
             ['uint32', 'uint256'],
-            [truncate(cBase.address), parseUnits('100', 6)],
+            [truncate(settlementToken.address), parseUnits('100', 6)],
           ),
         },
         {
           operationType: 1,
           data: ethers.utils.defaultAbiCoder.encode(
             ['uint32', 'uint256'],
-            [truncate(cBase.address), parseUnits('10', 6)],
+            [truncate(settlementToken.address), parseUnits('10', 6)],
           ),
         },
         // {
