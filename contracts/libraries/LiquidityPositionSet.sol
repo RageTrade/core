@@ -44,10 +44,14 @@ library LiquidityPositionSet {
         marketValue_ = set.marketValue(sqrtPriceCurrent, protocol.vPoolWrapperFor(poolId));
     }
 
+    /// @notice Get the total market value of all active liquidity positions in the set.
+    /// @param set: Collection of active liquidity positions
+    /// @param sqrtPriceCurrent: Current price of the virtual asset
+    /// @param wrapper: address of the wrapper contract, passed once to avoid multiple sloads for wrapper
     function marketValue(
         LiquidityPosition.Set storage set,
         uint160 sqrtPriceCurrent,
-        IVPoolWrapper wrapper // TODO refactor this
+        IVPoolWrapper wrapper
     ) internal view returns (int256 marketValue_) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
