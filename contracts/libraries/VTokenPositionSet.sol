@@ -552,7 +552,6 @@ library VTokenPositionSet {
             currentTick,
             tickLower,
             tickUpper,
-            wrapper,
             balanceAdjustments,
             protocol
         );

@@ -76,6 +76,9 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         int24 tickUpper,
         int128 liquidity
     ) external {
+        // overriding the wrapper to use the mock
+        protocol.pools[address(vToken).truncate()].vPoolWrapper = wrapper;
+
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams = IClearingHouseStructures
             .LiquidityChangeParams(
                 tickLower,
