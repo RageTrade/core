@@ -5,7 +5,7 @@ import { InsuranceFund, IERC20 } from '../typechain-types';
 import { stealFunds, tokenAmount } from './utils/stealFunds';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 const realBase = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
-const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
+const whaleFocBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 describe('InsuranceFund', () => {
   let InsuranceFund: InsuranceFund;
@@ -27,15 +27,15 @@ describe('InsuranceFund', () => {
     await InsuranceFund.__initialize_InsuranceFund(realBase, signer2Address, 'Rage Trade iBase', 'iBase');
     Base = await hre.ethers.getContractAt('IERC20', realBase);
 
-    await stealFunds(realBase, 6, signer0Address, '10000', whaleForBase);
-    await stealFunds(realBase, 6, signer1Address, '10000', whaleForBase);
+    await stealFunds(realBase, 6, signer0Address, '10000', whaleFocBase);
+    await stealFunds(realBase, 6, signer1Address, '10000', whaleFocBase);
   });
 
   after(deactivateMainnetFork);
 
   describe('Functions', () => {
     it('Is initilized Correctly', async () => {
-      const _baseAdd = await InsuranceFund.rBase();
+      const _baseAdd = await InsuranceFund.cBase();
       const _clearingHouse = await InsuranceFund.clearingHouse();
       expect(_baseAdd.toLowerCase()).to.be.eq(realBase);
       expect(_clearingHouse).to.be.eq(signer2Address);
@@ -58,7 +58,7 @@ describe('InsuranceFund', () => {
     //50:50
     //100 : 50 (After reward)
     it('Deposit after : Reward, ratio 2 USDC: 1 Share', async () => {
-      await stealFunds(realBase, 6, InsuranceFund.address, '50', whaleForBase);
+      await stealFunds(realBase, 6, InsuranceFund.address, '50', whaleFocBase);
       const amount = tokenAmount('100', 6);
       await Base.connect(signers[1]).approve(InsuranceFund.address, amount);
       await InsuranceFund.connect(signers[1]).deposit(amount);

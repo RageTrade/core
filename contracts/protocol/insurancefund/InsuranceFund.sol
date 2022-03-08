@@ -14,29 +14,29 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     using SafeERC20 for IERC20;
 
-    IERC20 public rBase;
+    IERC20 public cBase;
     IClearingHouse public clearingHouse;
 
     error Unauthorised();
 
     /// @notice Initializer for Insurance Fund
-    /// @param _rBase real base token
+    /// @param _cBase real base token
     /// @param _clearingHouse address of clearing house (proxy) contract
     /// @param name "Rage Trade iBase"
     /// @param symbol "iBase"
     function __initialize_InsuranceFund(
-        IERC20 _rBase,
+        IERC20 _cBase,
         IClearingHouse _clearingHouse,
         string calldata name,
         string calldata symbol
     ) external initializer {
-        rBase = _rBase;
+        cBase = _cBase;
         clearingHouse = _clearingHouse;
         __ERC20_init(name, symbol);
     }
 
     function deposit(uint256 amount) external {
-        uint256 totalBase = rBase.balanceOf(address(this));
+        uint256 totalBase = cBase.balanceOf(address(this));
         uint256 totalShares = totalSupply();
         uint256 toMint;
         if (totalShares == 0 || totalBase == 0) {
@@ -44,20 +44,20 @@ contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
         } else {
             toMint = (amount * totalShares) / totalBase;
         }
-        rBase.safeTransferFrom(msg.sender, address(this), amount);
+        cBase.safeTransferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, toMint);
     }
 
     function withdraw(uint256 shares) external {
-        uint256 totalBase = rBase.balanceOf(address(this));
+        uint256 totalBase = cBase.balanceOf(address(this));
         uint256 totalShares = totalSupply();
         uint256 toWithdraw = (shares * totalBase) / totalShares;
         _burn(msg.sender, shares);
-        rBase.safeTransfer(msg.sender, toWithdraw);
+        cBase.safeTransfer(msg.sender, toWithdraw);
     }
 
     function claim(uint256 amount) external {
         if (address(clearingHouse) != msg.sender) revert Unauthorised();
-        rBase.safeTransfer(msg.sender, amount);
+        cBase.safeTransfer(msg.sender, amount);
     }
 }
