@@ -20,9 +20,9 @@ abstract contract InsuranceFundDeployer is ProxyAdminDeployer {
 
     function _initializeInsuranceFund(
         IInsuranceFund insuranceFund,
-        IERC20 cBase,
+        IERC20 settlementToken,
         IClearingHouse clearingHouse
     ) internal {
-        insuranceFund.__initialize_InsuranceFund(cBase, clearingHouse, 'RageTrade iBase', 'iBase');
+        insuranceFund.__initialize_InsuranceFund(settlementToken, clearingHouse, 'RageTrade iBase', 'iBase');
     }
 }

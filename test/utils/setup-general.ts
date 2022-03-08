@@ -26,7 +26,7 @@ export async function testSetup({
 }) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
-  //CBase
+  //SettlementToken
   const realBase = await smock.fake<ERC20>('ERC20');
   realBase.decimals.returns(6);
 
@@ -128,7 +128,7 @@ export async function testSetup({
 export async function testSetupBase(signer?: SignerWithAddress) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
-  //CBase
+  //SettlementToken
   const realBase = await smock.fake<ERC20>('ERC20');
   realBase.decimals.returns(6);
 

@@ -56,14 +56,14 @@ contract RageTradeFactory is
         address clearingHouseLogicAddress,
         address _vPoolWrapperLogicAddress,
         address insuranceFundLogicAddress,
-        IERC20Metadata cBase,
+        IERC20Metadata settlementToken,
         IOracle nativeOracle
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
         proxyAdmin = _deployProxyAdmin();
         proxyAdmin.transferOwnership(msg.sender);
 
         // deploys VQuote contract at an address which has most significant nibble as "f"
-        vQuote = _deployVQuote(cBase.decimals());
+        vQuote = _deployVQuote(settlementToken.decimals());
 
         // deploys InsuranceFund proxy
         IInsuranceFund insuranceFund = _deployProxyForInsuranceFund(insuranceFundLogicAddress);
@@ -74,7 +74,7 @@ contract RageTradeFactory is
         clearingHouse = _deployProxyForClearingHouseAndInitialize(
             ClearingHouseDeployer.DeployClearingHouseParams(
                 clearingHouseLogicAddress,
-                cBase,
+                settlementToken,
                 settlementTokenOracle,
                 insuranceFund,
                 vQuote,
@@ -84,7 +84,7 @@ contract RageTradeFactory is
         clearingHouse.transferGovernance(msg.sender);
         clearingHouse.transferTeamMultisig(msg.sender);
 
-        _initializeInsuranceFund(insuranceFund, cBase, clearingHouse);
+        _initializeInsuranceFund(insuranceFund, settlementToken, clearingHouse);
     }
 
     struct InitializePoolParams {

@@ -71,7 +71,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         IOracle _nativeOracle
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
-        protocol.cBase = _defaultCollateralToken;
+        protocol.settlementToken = _defaultCollateralToken;
         insuranceFund = _insuranceFund;
         nativeOracle = _nativeOracle;
 
@@ -143,7 +143,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             emit Account.ProtocolFeesWithdrawn(wrapperAddresses[i], wrapperFee);
             totalProtocolFee += wrapperFee;
         }
-        protocol.cBase.safeTransfer(teamMultisig(), totalProtocolFee);
+        protocol.settlementToken.safeTransfer(teamMultisig(), totalProtocolFee);
     }
 
     /**
@@ -241,9 +241,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         account.updateProfit(amount, protocol, checkMargin);
         if (amount > 0) {
-            protocol.cBase.safeTransferFrom(msg.sender, address(this), uint256(amount));
+            protocol.settlementToken.safeTransferFrom(msg.sender, address(this), uint256(amount));
         } else {
-            protocol.cBase.safeTransfer(msg.sender, uint256(-amount));
+            protocol.settlementToken.safeTransfer(msg.sender, uint256(-amount));
         }
         emit Account.ProfitUpdated(account.id, amount);
     }
@@ -517,7 +517,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         int256 accountFee = keeperFee + insuranceFundFee;
 
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
-        protocol.cBase.safeTransfer(msg.sender, uint256(keeperFee));
+        protocol.settlementToken.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
         emit Account.LiquidityPositionsLiquidated(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
@@ -562,12 +562,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         account.removeLimitOrder(poolId, tickLower, tickUpper, keeperFee, protocol);
 
-        protocol.cBase.safeTransfer(msg.sender, keeperFee);
+        protocol.settlementToken.safeTransfer(msg.sender, keeperFee);
     }
 
     function _transferInsuranceFundFee(int256 insuranceFundFee) internal {
         if (insuranceFundFee > 0) {
-            protocol.cBase.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
+            protocol.settlementToken.safeTransfer(address(insuranceFund), uint256(insuranceFundFee));
         } else {
             insuranceFund.claim(uint256(-insuranceFundFee));
         }

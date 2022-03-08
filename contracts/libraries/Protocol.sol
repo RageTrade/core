@@ -25,9 +25,10 @@ library Protocol {
         mapping(uint32 => IClearingHouseStructures.Pool) pools;
         // collateralId => CollateralInfo
         mapping(uint32 => IClearingHouseStructures.Collateral) collaterals;
-        IVQuote vQuote; // TODO change vQuote to vQuote
-        // settlement collateral (makes more sense in real token) / default base token
-        IERC20 cBase; // TODO change cBase to settlementToken
+        // settlement token (default collateral)
+        IERC20 settlementToken;
+        // virtual quote token (sort of fake USDC), is always token1 in uniswap pools
+        IVQuote vQuote;
         // accounting settings
         IClearingHouseStructures.LiquidationParams liquidationParams;
         uint256 minRequiredMargin;
