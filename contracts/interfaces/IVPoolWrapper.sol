@@ -54,6 +54,12 @@ interface IVPoolWrapper {
         view
         returns (WrapperValuesInside memory wrapperValuesInside);
 
+    function swap(
+        bool swapVTokenForVQuote, // zeroForOne
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96
+    ) external returns (int256 vTokenAmount, int256 vQuoteAmount);
+
     function mint(
         int24 tickLower,
         int24 tickUpper,
@@ -81,12 +87,6 @@ interface IVPoolWrapper {
     function getSumAX128() external view returns (int256);
 
     function getExtrapolatedSumAX128() external view returns (int256);
-
-    function swapToken(
-        int256 amount,
-        uint160 sqrtPriceLimit,
-        bool isNotional
-    ) external returns (int256 vTokenAmount, int256 vQuoteAmount);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
 

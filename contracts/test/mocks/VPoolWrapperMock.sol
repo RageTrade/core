@@ -126,17 +126,19 @@ contract VPoolWrapperMock is IVPoolWrapper {
         return vTokenAmount * (-4000);
     }
 
-    function swapToken(
-        int256 amount,
-        uint160, // sqrtPriceLimit,
-        bool isNotional
-    ) external pure returns (int256 vTokenAmount, int256 vQuoteAmount) {
-        if (isNotional) {
-            vTokenAmount = -amount / 4000;
-            vQuoteAmount = amount;
+    function swap(
+        bool swapVTokenForVQuote, // zeroForOne
+        int256 amountSpecified,
+        uint160
+    ) public pure returns (int256 vTokenAmount, int256 vQuoteAmount) {
+        if (amountSpecified > 0 == swapVTokenForVQuote) {
+            // ETH exactIn || ETH exactOut
+            vTokenAmount = amountSpecified;
+            vQuoteAmount = -amountSpecified * 4000;
         } else {
-            vTokenAmount = -amount;
-            vQuoteAmount = amount * 4000;
+            // USDC exactIn || USDC exactOut
+            vTokenAmount = -amountSpecified / 4000;
+            vQuoteAmount = amountSpecified;
         }
     }
 

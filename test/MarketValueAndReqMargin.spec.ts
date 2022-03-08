@@ -345,7 +345,7 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 4 - Short Trade Position + Long Range)', async () => {
-      vPoolWrapperFake.swapToken.returns([100000000000000000000n, -249991359911]);
+      vPoolWrapperFake.swap.returns([100000000000000000000n, -249991359911]);
       await swap(-100000000000000000000n, 0, false, false);
 
       await matchNumbers(0, 49998271982, 24999135991);
@@ -375,7 +375,7 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 5 - Long Trade Position + Short Range)', async () => {
-      vPoolWrapperFake.swapToken.returns([-100000000000000000000n, 249991359914]);
+      vPoolWrapperFake.swap.returns([-100000000000000000000n, 249991359914]);
       await swap(100000000000000000000n, 0, false, false);
 
       await matchNumbers(-3, 49998271982, 24999135991);
