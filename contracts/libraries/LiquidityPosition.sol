@@ -96,11 +96,13 @@ library LiquidityPosition {
         uint256 accountId,
         uint32 poolId,
         int128 liquidityDelta,
-        IVPoolWrapper wrapper,
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
+        Protocol.Info storage protocol
     ) internal {
         int256 vTokenPrincipal;
         int256 basePrincipal;
+
+        IVPoolWrapper wrapper = protocol.vPoolWrapperFor(poolId);
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside;
 
         if (liquidityDelta > 0) {
@@ -141,7 +143,7 @@ library LiquidityPosition {
             -basePrincipal
         );
 
-        uint160 sqrtPriceCurrent = wrapper.vPool().sqrtPriceCurrent(); // TODO change to poolId.vPool()
+        uint160 sqrtPriceCurrent = protocol.vPoolFor(poolId).sqrtPriceCurrent();
         int256 tokenAmountCurrent;
         {
             (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);

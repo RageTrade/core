@@ -144,8 +144,8 @@ library LiquidityPositionSet {
         uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
-        IVPoolWrapper wrapper,
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
+        Protocol.Info storage protocol
     ) internal {
         LiquidityPosition.Info storage position = set.activate(
             liquidityChangeParams.tickLower,
@@ -159,8 +159,8 @@ library LiquidityPositionSet {
             poolId,
             position,
             liquidityChangeParams.liquidityDelta,
-            wrapper,
-            balanceAdjustments
+            balanceAdjustments,
+            protocol
         );
     }
 
@@ -171,10 +171,10 @@ library LiquidityPositionSet {
         uint32 poolId,
         LiquidityPosition.Info storage position,
         int128 liquidity,
-        IVPoolWrapper wrapper,
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
+        Protocol.Info storage protocol
     ) internal {
-        position.liquidityChange(accountId, poolId, liquidity, wrapper, balanceAdjustments);
+        position.liquidityChange(accountId, poolId, liquidity, balanceAdjustments, protocol);
 
         emit Account.TokenPositionChangedDueToLiquidityChanged(
             accountId,
@@ -194,10 +194,10 @@ library LiquidityPositionSet {
         uint256 accountId,
         uint32 poolId,
         LiquidityPosition.Info storage position,
-        IVPoolWrapper wrapper,
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
+        Protocol.Info storage protocol
     ) internal {
-        set.liquidityChange(accountId, poolId, position, -int128(position.liquidity), wrapper, balanceAdjustments);
+        set.liquidityChange(accountId, poolId, position, -int128(position.liquidity), balanceAdjustments, protocol);
     }
 
     function removeLimitOrder(
@@ -208,19 +208,20 @@ library LiquidityPositionSet {
         int24 tickLower,
         int24 tickUpper,
         IVPoolWrapper wrapper,
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
+        Protocol.Info storage protocol
     ) internal {
         LiquidityPosition.Info storage position = set.getLiquidityPosition(tickLower, tickUpper);
         position.checkValidLimitOrderRemoval(currentTick);
-        set.closeLiquidityPosition(accountId, poolId, position, wrapper, balanceAdjustments);
+        set.closeLiquidityPosition(accountId, poolId, position, balanceAdjustments, protocol);
     }
 
     function closeAllLiquidityPositions(
         LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
-        IVPoolWrapper wrapper,
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
+        Protocol.Info storage protocol
     ) internal {
         LiquidityPosition.Info storage position;
 
@@ -229,7 +230,7 @@ library LiquidityPositionSet {
 
             position = set.positions[set.active[0]];
 
-            set.closeLiquidityPosition(accountId, poolId, position, wrapper, balanceAdjustmentsCurrent);
+            set.closeLiquidityPosition(accountId, poolId, position, balanceAdjustmentsCurrent, protocol);
 
             balanceAdjustments.vBaseIncrease += balanceAdjustmentsCurrent.vBaseIncrease;
             balanceAdjustments.vTokenIncrease += balanceAdjustmentsCurrent.vTokenIncrease;
