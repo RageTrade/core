@@ -17,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const clearingHouseLogic = await get('ClearingHouseLogic');
   const vPoolWrapperLogic = await get('VPoolWrapperLogic');
   const insuranceFundLogic = await get('InsuranceFundLogic');
-  const rBase = await get('RBase');
+  const cBase = await get('CBase');
   const nativeOracle = await get('NativeOracle');
 
   const deployment = await deploy('RageTradeFactory', {
@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       clearingHouseLogic.address,
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
-      rBase.address,
+      cBase.address,
       nativeOracle.address,
     ],
   });

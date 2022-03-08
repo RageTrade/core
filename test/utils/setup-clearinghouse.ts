@@ -18,7 +18,7 @@ interface SetupClearingHouseArgs {
   signer?: SignerWithAddress;
   vBaseDecimals?: number;
   uniswapFeeTierDefault?: number;
-  rBaseAddress?: string;
+  cBaseAddress?: string;
 }
 
 interface InitializePoolArgs {
@@ -53,7 +53,7 @@ export async function setupClearingHouse({
   signer,
   vBaseDecimals,
   uniswapFeeTierDefault,
-  rBaseAddress,
+  cBaseAddress,
 }: SetupClearingHouseArgs) {
   vBaseDecimals = vBaseDecimals ?? 6;
 
@@ -61,16 +61,16 @@ export async function setupClearingHouse({
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   // real base
-  let rBase: RealBaseMock;
-  if (rBaseAddress) {
-    rBase = await hre.ethers.getContractAt('RealBaseMock', rBaseAddress);
+  let cBase: RealBaseMock;
+  if (cBaseAddress) {
+    cBase = await hre.ethers.getContractAt('RealBaseMock', cBaseAddress);
   } else {
-    const _rBase = await (await hre.ethers.getContractFactory('RealBaseMock')).deploy();
-    const d = await _rBase.decimals();
-    await _rBase.mint(signer.address, parseUnits('100000', d));
-    rBase = _rBase;
+    const _cBase = await (await hre.ethers.getContractFactory('RealBaseMock')).deploy();
+    const d = await _cBase.decimals();
+    await _cBase.mint(signer.address, parseUnits('100000', d));
+    cBase = _cBase;
   }
-  hre.tracer.nameTags[rBase.address] = 'rBase';
+  hre.tracer.nameTags[cBase.address] = 'cBase';
 
   // deploying main contracts
   const futureVPoolFactoryAddress = await getCreateAddressFor(signer, 5);
@@ -107,7 +107,7 @@ export async function setupClearingHouse({
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     insuranceFundLogic.address,
-    rBase.address,
+    cBase.address,
     nativeOracle.address,
   );
 
@@ -126,7 +126,7 @@ export async function setupClearingHouse({
 
   return {
     signer,
-    rBase,
+    cBase,
     vBase,
     clearingHouse,
     proxyAdmin,

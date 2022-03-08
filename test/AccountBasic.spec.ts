@@ -35,7 +35,7 @@ describe('Account Library Test Basic', () => {
   let realBase: FakeContract<ERC20>;
   let vBase: VBase;
   let oracle: OracleMock;
-  let rBaseOracle: OracleMock;
+  let cBaseOracle: OracleMock;
 
   let vBaseAddress: string;
 
@@ -89,7 +89,7 @@ describe('Account Library Test Basic', () => {
     let vPoolAddress;
     let vPoolWrapperAddress;
 
-    ({ realBase, vBase, clearingHouse, rageTradeFactory, oracle: rBaseOracle } = await testSetupBase());
+    ({ realBase, vBase, clearingHouse, rageTradeFactory, oracle: cBaseOracle } = await testSetupBase());
 
     ({
       oracle: oracle,
@@ -193,7 +193,7 @@ describe('Account Library Test Basic', () => {
   describe('#Initialize', () => {
     it('Init', async () => {
       test.initToken(vTokenAddress);
-      test.initCollateral(realBase.address, rBaseOracle.address, 300);
+      test.initCollateral(realBase.address, cBaseOracle.address, 300);
     });
   });
 

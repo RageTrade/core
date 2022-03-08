@@ -11,11 +11,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const { rBaseAddress } = getNetworkInfo(hre.network.config.chainId);
+  const { cBaseAddress } = getNetworkInfo(hre.network.config.chainId);
 
-  if (rBaseAddress === undefined) {
-    const deployment = await deploy('RBase', {
-      contract: 'RealBaseMock',
+  if (cBaseAddress === undefined) {
+    const deployment = await deploy('CBase', {
+      contract: 'CBaseMock',
       from: deployer,
       log: true,
     });
@@ -24,15 +24,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (deployment.newlyDeployed) {
       await hre.tenderly.push({
-        name: 'RealBaseMock',
+        name: 'CBaseMock',
         address: deployment.address,
       });
     }
   } else {
-    await save('RBase', { abi: IERC20Metadata__factory.abi, address: rBaseAddress });
+    await save('CBase', { abi: IERC20Metadata__factory.abi, address: cBaseAddress });
   }
 };
 
 export default func;
 
-func.tags = ['RBase'];
+func.tags = ['CBase'];

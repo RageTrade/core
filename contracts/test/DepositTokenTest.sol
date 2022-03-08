@@ -26,9 +26,9 @@ contract DepositTokenSetTest is AccountProtocolInfoMock {
 
     VPoolWrapperMock public wrapper;
 
-    constructor(address _rBase) {
+    constructor(address _cBase) {
         wrapper = new VPoolWrapperMock();
-        protocol.cBase = IERC20(_rBase);
+        protocol.cBase = IERC20(_cBase);
     }
 
     function initVToken(address vToken) external {

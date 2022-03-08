@@ -7,7 +7,7 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 interface IInsuranceFund {
     function __initialize_InsuranceFund(
-        IERC20 rBase,
+        IERC20 cBase,
         IClearingHouse clearingHouse,
         string calldata name,
         string calldata symbol

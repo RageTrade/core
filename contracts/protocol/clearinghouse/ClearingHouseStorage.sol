@@ -29,8 +29,8 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     address public rageTradeFactoryAddress;
     IInsuranceFund public insuranceFund;
 
-    // Oracle for the chain's native currency in terms of rBase
-    // Used to provide gas refund in rBase to the liquidators
+    // Oracle for the chain's native currency in terms of cBase
+    // Used to provide gas refund in cBase to the liquidators
     IOracle public nativeOracle;
 
     // reserved for adding slots in future
