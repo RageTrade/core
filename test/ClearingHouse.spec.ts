@@ -328,14 +328,14 @@ describe('Clearing House Library', () => {
       user1AccountNo = 0;
       expect(await clearingHouseTest.numAccounts()).to.eq(1);
       expect(await clearingHouseTest.getAccountOwner(user1AccountNo)).to.eq(user1.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user1AccountNo)).to.eq(user1AccountNo);
+      // expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user1AccountNo)).to.eq(user1AccountNo);
     });
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user2).createAccount();
       user2AccountNo = 1;
       expect(await clearingHouseTest.numAccounts()).to.eq(2);
       expect(await clearingHouseTest.getAccountOwner(user2AccountNo)).to.eq(user2.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user2AccountNo)).to.eq(user2AccountNo);
+      // expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user2AccountNo)).to.eq(user2AccountNo);
     });
   });
 

@@ -8,34 +8,29 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
-import { PoolIdHelper } from '../../libraries/PoolIdHelper.sol';
+import { Protocol } from '../../libraries/Protocol.sol';
 
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
 
 import { Extsload } from '../../utils/Extsload.sol';
 
 abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Extsload {
-    using Account for Account.UserInfo;
+    using Account for Account.Info;
     using AddressHelper for address;
-    using PoolIdHelper for uint32;
+    using Protocol for Protocol.Info;
 
-    // TODO rename this to getTwapSqrtPrices
-    function getTwapSqrtPricesForSetDuration(IVToken vToken)
-        external
-        view
-        returns (uint256 realPriceX128, uint256 virtualPriceX128)
-    {
+    function getTwapPrices(IVToken vToken) external view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
         uint32 poolId = address(vToken).truncate();
-        realPriceX128 = poolId.getRealTwapPriceX128(protocol);
-        virtualPriceX128 = poolId.getVirtualTwapPriceX128(protocol);
+        realPriceX128 = protocol.getRealTwapPriceX128For(poolId);
+        virtualPriceX128 = protocol.getVirtualTwapPriceX128For(poolId);
     }
 
-    function isVTokenAddressAvailable(uint32 poolId) external view returns (bool) {
-        return address(protocol.pools[poolId].vToken).isZero(); // TODO add vBase check here
+    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
+        return address(protocol.pools[poolId].vToken).isZero() && poolId != address(protocol.vBase).truncate();
     }
 
     /**
-        Account.ProtocolInfo VIEW
+        Protocol.Info VIEW
      */
     function protocolInfo()
         public
@@ -64,10 +59,10 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     /**
-        Account.UserInfo VIEW
+        Account.Info VIEW
      */
 
-    function getAccountInfo(uint256 accountNo)
+    function getAccountInfo(uint256 accountId)
         public
         view
         returns (
@@ -77,26 +72,26 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
             VTokenPositionView[] memory tokenPositions
         )
     {
-        return accounts[accountNo].getInfo(protocol);
+        return accounts[accountId].getInfo(protocol);
     }
 
     // isInitialMargin true is initial margin, false is maintainance margin
-    function getAccountMarketValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+    function getAccountMarketValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         public
         view
         returns (int256 accountMarketValue, int256 requiredMargin)
     {
-        (accountMarketValue, requiredMargin) = accounts[accountNo].getAccountValueAndRequiredMargin(
+        (accountMarketValue, requiredMargin) = accounts[accountId].getAccountValueAndRequiredMargin(
             isInitialMargin,
             protocol
         );
     }
 
-    function getAccountNetProfit(uint256 accountNo) public view returns (int256 accountNetProfit) {
-        accountNetProfit = accounts[accountNo].getAccountPositionProfits(protocol);
+    function getAccountNetProfit(uint256 accountId) public view returns (int256 accountNetProfit) {
+        accountNetProfit = accounts[accountId].getAccountPositionProfits(protocol);
     }
 
-    function getNetTokenPosition(uint256 accountNo, uint32 poolId) public view returns (int256 netPosition) {
-        return accounts[accountNo].getNetPosition(poolId, protocol);
+    function getNetTokenPosition(uint256 accountId, uint32 poolId) public view returns (int256 netPosition) {
+        return accounts[accountId].getNetPosition(poolId, protocol);
     }
 }

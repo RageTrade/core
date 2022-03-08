@@ -359,7 +359,11 @@ describe('VPoolWrapper.swap', () => {
     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
     // );
 
-    await vPoolWrapper.liquidityChange(tickLower, tickUpper, liquidityDelta);
+    if (!BigNumber.from(liquidityDelta).isNegative()) {
+      await vPoolWrapper.mint(tickLower, tickUpper, liquidityDelta);
+    } else {
+      await vPoolWrapper.burn(tickLower, tickUpper, liquidityDelta);
+    }
   }
 
   async function extractEvents(tx: ContractTransaction | Promise<ContractTransaction>) {

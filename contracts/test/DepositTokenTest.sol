@@ -5,9 +5,8 @@ pragma solidity ^0.8.9;
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
-import { VTokenLib } from '../libraries/VTokenLib.sol';
 import { AddressHelper } from '../libraries/AddressHelper.sol';
-import { CTokenDepositSet } from '../libraries/CTokenDepositSet.sol';
+import { CollateralDeposit } from '../libraries/CollateralDeposit.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
@@ -18,12 +17,12 @@ import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract DepositTokenSetTest is AccountProtocolInfoMock {
-    using CTokenDepositSet for CTokenDepositSet.Info;
+    using CollateralDeposit for CollateralDeposit.Set;
     using AddressHelper for address;
     using AddressHelper for IERC20;
     using Uint32L8ArrayLib for uint32[8];
 
-    CTokenDepositSet.Info depositTokenSet;
+    CollateralDeposit.Set depositTokenSet;
 
     VPoolWrapperMock public wrapper;
 

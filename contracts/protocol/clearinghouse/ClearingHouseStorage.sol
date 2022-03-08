@@ -4,11 +4,10 @@ pragma solidity ^0.8.9;
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 import { Account } from '../../libraries/Account.sol';
-import { IVToken } from '../../libraries/VTokenLib.sol';
+import { Protocol } from '../../libraries/Protocol.sol';
 
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
-
 import { IOracle } from '../../interfaces/IOracle.sol';
 
 import { Governable } from '../../utils/Governable.sol';
@@ -19,10 +18,10 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     uint256[98] private _emptySlots1;
 
     // at slot # 100
-    Account.ProtocolInfo internal protocol;
+    Protocol.Info internal protocol;
 
     uint256 public numAccounts;
-    mapping(uint256 => Account.UserInfo) accounts;
+    mapping(uint256 => Account.Info) accounts;
 
     // TODO use openzeppelin pauser
     bool public paused;

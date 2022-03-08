@@ -8,8 +8,8 @@ import { Account } from './Account.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { PoolIdHelper } from './PoolIdHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
+import { Protocol } from './Protocol.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
@@ -19,25 +19,38 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { console } from 'hardhat/console.sol';
 
 library VTokenPosition {
-    using PoolIdHelper for uint32;
     using FullMath for uint256;
     using SignedFullMath for int256;
-    using LiquidityPosition for LiquidityPosition.Info;
-    using LiquidityPositionSet for LiquidityPositionSet.Info;
     using UniswapV3PoolHelper for IUniswapV3Pool;
+
+    using LiquidityPosition for LiquidityPosition.Info;
+    using LiquidityPositionSet for LiquidityPosition.Set;
+    using Protocol for Protocol.Info;
 
     enum RISK_SIDE {
         LONG,
         SHORT
     }
 
-    struct Position {
+    /// @notice stores info for VTokenPositionSet
+    /// @param active list of all active token truncated addresses
+    /// @param positions mapping from truncated token addresses to VTokenPosition struct for that address
+    struct Set {
+        // fixed length array of truncate(tokenAddress)
+        // open positions in 8 different pairs at same time.
+        // single per pool because it's fungible, allows for having
+        uint32[8] active;
+        mapping(uint32 => VTokenPosition.Info) positions;
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
+    }
+
+    struct Info {
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
         int256 sumAX128Ckpt; // later look into cint64
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
-        LiquidityPositionSet.Info liquidityPositions;
+        LiquidityPosition.Set liquidityPositions;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
@@ -48,7 +61,7 @@ library VTokenPosition {
     /// @param priceX128 price in fixed point 128
     /// @param wrapper pool wrapper corresponding to position
     function marketValue(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint256 priceX128,
         IVPoolWrapper wrapper
     ) internal view returns (int256 value) {
@@ -62,12 +75,12 @@ library VTokenPosition {
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
         uint256 priceX128,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256 value) {
-        return marketValue(position, priceX128, poolId.vPoolWrapper(protocol));
+        return marketValue(position, priceX128, protocol.vPoolWrapperFor(poolId));
     }
 
     /// @notice returns the market value of the supplied token position
@@ -75,22 +88,26 @@ library VTokenPosition {
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256) {
-        uint256 priceX128 = poolId.getVirtualTwapPriceX128(protocol);
+        uint256 priceX128 = protocol.getVirtualTwapPriceX128For(poolId);
         return marketValue(position, poolId, priceX128, protocol);
     }
 
-    function riskSide(Position storage position) internal view returns (RISK_SIDE) {
+    function riskSide(VTokenPosition.Info storage position) internal view returns (RISK_SIDE) {
         return position.balance > 0 ? RISK_SIDE.LONG : RISK_SIDE.SHORT;
     }
 
     /// @notice returns the unrealized funding payment for the trader position
     /// @param position token position
     /// @param wrapper pool wrapper corresponding to position
-    function unrealizedFundingPayment(Position storage position, IVPoolWrapper wrapper) internal view returns (int256) {
+    function unrealizedFundingPayment(VTokenPosition.Info storage position, IVPoolWrapper wrapper)
+        internal
+        view
+        returns (int256)
+    {
         int256 extrapolatedSumAX128 = wrapper.getExtrapolatedSumAX128();
         int256 unrealizedFpBill = -FundingPayment.bill(
             extrapolatedSumAX128,
@@ -105,20 +122,20 @@ library VTokenPosition {
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function unrealizedFundingPayment(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, poolId.vPoolWrapper(protocol));
+        return unrealizedFundingPayment(position, protocol.vPoolWrapperFor(poolId));
     }
 
     function getNetPosition(
-        Position storage position,
+        VTokenPosition.Info storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (int256) {
         return
             position.netTraderPosition +
-            position.liquidityPositions.getNetPosition(poolId.vPool(protocol).sqrtPriceCurrent());
+            position.liquidityPositions.getNetPosition(protocol.vPoolFor(poolId).sqrtPriceCurrent());
     }
 }

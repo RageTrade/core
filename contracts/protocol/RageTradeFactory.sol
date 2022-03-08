@@ -23,8 +23,8 @@ import { IVBase } from '../interfaces/IVBase.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
+import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { PriceMath } from '../libraries/PriceMath.sol';
-import { VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { BaseOracle } from '../oracles/BaseOracle.sol';
 import { Governable } from '../utils/Governable.sol';
@@ -41,7 +41,7 @@ contract RageTradeFactory is
     VPoolWrapperDeployer,
     VTokenDeployer
 {
-    using VTokenLib for IVToken;
+    using AddressHelper for address;
     using PriceMath for uint256;
 
     IVBase public immutable vBase;
@@ -99,6 +99,9 @@ contract RageTradeFactory is
     /// @dev An already deployed oracle contract address (implementing IOracle) is needed prior to using this
     /// @param initializePoolParams parameters for initializing the pool
     function initializePool(InitializePoolParams calldata initializePoolParams) external onlyGovernance {
+        // TODO change wrapper deployment to use CREATE2 so that we can pass wrapper address
+        // as an argument to vtoken constructer and make wrapper variable as immutable.
+        // this will save sload on all vtoken mints (swaps liqudity adds).
         // STEP 1: Deploy the virtual token ERC20, such that it will be token0
         IVToken vToken = _deployVToken(initializePoolParams.deployVTokenParams);
 
@@ -151,9 +154,13 @@ contract RageTradeFactory is
     }
 
     function _isIVTokenAddressGood(address addr) internal view virtual override returns (bool) {
+        uint32 poolId = addr.truncate();
         return
-            super._isIVTokenAddressGood(addr) &&
+            // Zero element is considered empty in Uint32L8Array.sol
+            poolId != 0 &&
+            // vToken should be token0 and vBase should be token1 in UniswapV3Pool
             (uint160(addr) < uint160(address(vBase))) &&
-            clearingHouse.isVTokenAddressAvailable(uint32(uint160(addr)));
+            // there should not be a collision in poolIds
+            clearingHouse.isPoolIdAvailable(poolId);
     }
 }

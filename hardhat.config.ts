@@ -42,6 +42,12 @@ export default {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
       allowUnlimitedContractSize: true, // TODO: remove this
+      forking: {
+        url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+      },
+    },
+    localhost: {
+      url: 'http://localhost:8545',
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,

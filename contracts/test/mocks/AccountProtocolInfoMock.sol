@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { Account } from '../../libraries/Account.sol';
+import { Protocol } from '../../libraries/Protocol.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
 
 import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
@@ -12,7 +12,7 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 abstract contract AccountProtocolInfoMock {
     using AddressHelper for address;
 
-    Account.ProtocolInfo public protocol;
+    Protocol.Info public protocol;
 
     uint256 public fixFee;
 
