@@ -570,30 +570,18 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     await clearingHouseTest.connect(keeper).liquidateLiquidityPositions(userAccountNo);
   }
 
-  async function liquidateTokenPosition(
-    keeper: SignerWithAddress,
-    keeperAccountNo: BigNumberish,
-    userAccountNo: BigNumberish,
-    tokenAddress: string,
-    liquidationBps: BigNumberish,
-  ) {
+  async function liquidateTokenPosition(keeper: SignerWithAddress, userAccountNo: BigNumberish, tokenAddress: string) {
     const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest
-      .connect(keeper)
-      .liquidateTokenPosition(keeperAccountNo, userAccountNo, truncatedAddress, liquidationBps);
+    await clearingHouseTest.connect(keeper).liquidateTokenPosition(userAccountNo, truncatedAddress);
   }
 
   async function liquidateTokenPositionAndCheck(
     keeper: SignerWithAddress,
-    keeperAccountNo: BigNumberish,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    liquidationBps: BigNumberish,
   ) {
     const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest
-      .connect(keeper)
-      .liquidateTokenPosition(keeperAccountNo, userAccountNo, truncatedAddress, liquidationBps);
+    await clearingHouseTest.connect(keeper).liquidateTokenPosition(userAccountNo, truncatedAddress);
   }
 
   async function initializePool(
@@ -828,9 +816,12 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     it('Set Params', async () => {
       const liquidationParams = {
         liquidationFeeFraction: 1500,
-        tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
+        closeFactorMMThresholdBps: 7500,
+        partialLiquidationCloseFactorBps: 5000,
+        liquidationSlippageSqrtToleranceBps: 150,
+        minNotionalLiquidatable: 100000000,
       };
       const fixFee = parseTokenAmount(10, 6);
       const removeLimitOrderFee = parseTokenAmount(10, 6);
@@ -852,9 +843,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
       expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
-      expect(protocol.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
-        liquidationParams.tokenLiquidationPriceDeltaBps,
-      );
+
       expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
       expect(protocol.removeLimitOrderFee).eq(removeLimitOrderFee);

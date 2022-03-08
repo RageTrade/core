@@ -279,9 +279,12 @@ describe('Clearing House Library', () => {
     it('Set Params', async () => {
       const liquidationParams = {
         liquidationFeeFraction: 1500,
-        tokenLiquidationPriceDeltaBps: 3000,
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
+        closeFactorMMThresholdBps: 7500,
+        partialLiquidationCloseFactorBps: 5000,
+        liquidationSlippageSqrtToleranceBps: 150,
+        minNotionalLiquidatable: 100000000,
       };
       const fixFee = parseTokenAmount(10, 6);
       const removeLimitOrderFee = parseTokenAmount(10, 6);
@@ -301,9 +304,7 @@ describe('Clearing House Library', () => {
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
       expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
-      expect(protocol.liquidationParams.tokenLiquidationPriceDeltaBps).eq(
-        liquidationParams.tokenLiquidationPriceDeltaBps,
-      );
+
       expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
       expect(protocol.removeLimitOrderFee).eq(removeLimitOrderFee);
@@ -469,7 +470,7 @@ describe('Clearing House Library', () => {
 
     it('Token Liquidation', async () => {
       await expect(
-        clearingHouseTest.connect(user2).liquidateTokenPosition(user2AccountNo, user1AccountNo, truncatedAddress, 5000),
+        clearingHouseTest.connect(user2).liquidateTokenPosition(user1AccountNo, truncatedAddress),
       ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
