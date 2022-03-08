@@ -6,7 +6,7 @@ import { Protocol } from '../../libraries/Protocol.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
 
 import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
-import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVQuote } from '../../interfaces/IVQuote.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
 abstract contract AccountProtocolInfoMock {
@@ -41,7 +41,7 @@ abstract contract AccountProtocolInfoMock {
         protocol.pools[poolId] = poolInfo;
     }
 
-    function setVBaseAddress(IVBase _vBase) external {
-        protocol.vBase = _vBase;
+    function setVQuoteAddress(IVQuote _vQuote) external {
+        protocol.vQuote = _vQuote;
     }
 }

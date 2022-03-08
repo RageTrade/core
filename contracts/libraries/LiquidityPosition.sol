@@ -129,7 +129,7 @@ library LiquidityPosition {
 
         position.update(accountId, poolId, wrapperValuesInside, balanceAdjustments);
 
-        balanceAdjustments.vBaseIncrease -= basePrincipal;
+        balanceAdjustments.vQuoteIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
         emit Account.LiquidityChanged(
@@ -170,10 +170,10 @@ library LiquidityPosition {
             wrapperValuesInside.sumAX128,
             wrapperValuesInside.sumFpInsideX128
         );
-        balanceAdjustments.vBaseIncrease += fundingPayment;
+        balanceAdjustments.vQuoteIncrease += fundingPayment;
 
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
-        balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
+        balanceAdjustments.vQuoteIncrease += unrealizedLiquidityFee;
 
         emit Account.FundingPaymentRealized(accountId, poolId, position.tickLower, position.tickUpper, fundingPayment);
         emit Account.LiquidityPositionEarningsRealized(
@@ -205,8 +205,8 @@ library LiquidityPosition {
         Info storage position,
         int256 sumAX128,
         int256 sumFpInsideX128
-    ) internal view returns (int256 vBaseIncrease) {
-        vBaseIncrease = -FundingPayment.bill(
+    ) internal view returns (int256 vQuoteIncrease) {
+        vQuoteIncrease = -FundingPayment.bill(
             sumAX128,
             sumFpInsideX128,
             position.sumALastX128,
@@ -219,9 +219,9 @@ library LiquidityPosition {
     function unrealizedFees(Info storage position, uint256 sumFeeInsideX128)
         internal
         view
-        returns (uint256 vBaseIncrease)
+        returns (uint256 vQuoteIncrease)
     {
-        vBaseIncrease = (sumFeeInsideX128 - position.sumFeeInsideLastX128).mulDiv(
+        vQuoteIncrease = (sumFeeInsideX128 - position.sumFeeInsideLastX128).mulDiv(
             position.liquidity,
             FixedPoint128.Q128
         );
@@ -292,7 +292,7 @@ library LiquidityPosition {
         Info storage position,
         uint160 sqrtPriceCurrent,
         bool roundUp
-    ) internal view returns (int256 vTokenAmount, int256 vBaseAmount) {
+    ) internal view returns (int256 vTokenAmount, int256 vQuoteAmount) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -308,7 +308,7 @@ library LiquidityPosition {
         vTokenAmount = SqrtPriceMath
             .getAmount0Delta(sqrtPriceMiddleX96, sqrtPriceUpperX96, position.liquidity, roundUp)
             .toInt256();
-        vBaseAmount = SqrtPriceMath
+        vQuoteAmount = SqrtPriceMath
             .getAmount1Delta(sqrtPriceLowerX96, sqrtPriceMiddleX96, position.liquidity, roundUp)
             .toInt256();
     }
@@ -319,9 +319,9 @@ library LiquidityPosition {
         IVPoolWrapper wrapper
     ) internal view returns (int256 marketValue_) {
         {
-            (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(valuationSqrtPriceX96, false);
+            (int256 vTokenAmount, int256 vQuoteAmount) = position.tokenAmountsInRange(valuationSqrtPriceX96, false);
             uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
-            marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
+            marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vQuoteAmount;
         }
         // adding fees
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getExtrapolatedValuesInside(

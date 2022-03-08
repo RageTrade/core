@@ -12,7 +12,7 @@ import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/i
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
-import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVQuote } from '../../interfaces/IVQuote.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';

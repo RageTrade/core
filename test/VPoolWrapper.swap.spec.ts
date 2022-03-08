@@ -2,7 +2,7 @@ import hre from 'hardhat';
 import { expect } from 'chai';
 import { MockContract } from '@defi-wonderland/smock';
 import { parseEther, parseUnits, formatEther, formatUnits } from 'ethers/lib/utils';
-import { SimulateSwapTest, UniswapV3Pool, VBase, VPoolWrapperMock2, VToken } from '../typechain-types';
+import { SimulateSwapTest, UniswapV3Pool, VQuote, VPoolWrapperMock2, VToken } from '../typechain-types';
 import { setupWrapper } from './utils/setup-wrapper';
 import { tickToPrice } from './utils/price-tick';
 import { BigNumber, BigNumberish, ContractTransaction, ethers } from 'ethers';
@@ -13,7 +13,7 @@ import assert from 'assert';
 describe('VPoolWrapper.swap', () => {
   let vPoolWrapper: MockContract<VPoolWrapperMock2>;
   let vPool: UniswapV3Pool;
-  let vBase: MockContract<VBase>;
+  let vQuote: MockContract<VQuote>;
   let vToken: MockContract<VToken>;
 
   // TODO: fuzz various liquidity and protocol fees
@@ -23,13 +23,13 @@ describe('VPoolWrapper.swap', () => {
   let simulator: SimulateSwapTest;
 
   beforeEach(async () => {
-    ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
+    ({ vPoolWrapper, vPool, vQuote, vToken } = await setupWrapper({
       rPriceInitial: 2000,
       vPriceInitial: 2000,
       uniswapFee,
       liquidityFee,
       protocolFee,
-      vBaseDecimals: 6,
+      vQuoteDecimals: 6,
       vTokenDecimals: 18,
     }));
 
@@ -65,10 +65,10 @@ describe('VPoolWrapper.swap', () => {
     const swapDirection = SWAP.VTOKEN_FOR_VBASE;
 
     let vTokenIn: BigNumber;
-    let vBaseIn: BigNumber;
+    let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(swapDirection, amountSpecified, 0);
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(swapDirection, amountSpecified, 0);
 
       // when asked to charge 1 ETH, trader should be debited by that exactly and get whatever ETH
       expect(vTokenIn).to.eq(parseEther('1'));
@@ -78,16 +78,16 @@ describe('VPoolWrapper.swap', () => {
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
-      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vBaseIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
+      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vQuoteIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
-      // and vBase amounts should be off by protocol + liquidity fees
+      // and vQuote amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
-      expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees));
+      expect(vQuoteIn).to.eq(zeroFeeSim.vQuoteIn.add(fees));
 
       // fees should be % of the zero fee swap amount
       expect(fees).to.eq(
-        zeroFeeSim.vBaseIn
+        zeroFeeSim.vQuoteIn
           .abs()
           .mul(liquidityFee + protocolFee)
           .div(1e6)
@@ -96,20 +96,20 @@ describe('VPoolWrapper.swap', () => {
     });
 
     it('mint and burn', async () => {
-      const { vTokenMintEvent, vBaseBurnEvent } = await extractEvents(
+      const { vTokenMintEvent, vQuoteBurnEvent } = await extractEvents(
         vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
       );
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
       }
-      if (!vBaseBurnEvent) {
-        throw new Error('vBaseBurnEvent not emitted');
+      if (!vQuoteBurnEvent) {
+        throw new Error('vQuoteBurnEvent not emitted');
       }
       // amount is inflated, so the inflated amount is collected as fees by uniswap
       // and more vToken is minted to sell for fees
       expect(vTokenMintEvent.args.value).to.eq(inflate(amountSpecified));
-      assert(vBaseIn.isNegative());
-      expect(vBaseBurnEvent.args.value).to.eq(vBaseIn.mul(-1).add(fees));
+      assert(vQuoteIn.isNegative());
+      expect(vQuoteBurnEvent.args.value).to.eq(vQuoteIn.mul(-1).add(fees));
     });
 
     it('fee', async () => {
@@ -134,13 +134,13 @@ describe('VPoolWrapper.swap', () => {
     const amountSpecified = parseUsdc('2000');
 
     let vTokenIn: BigNumber;
-    let vBaseIn: BigNumber;
+    let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
 
       // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
-      expect(vBaseIn).to.eq(parseUsdc('2000'));
+      expect(vQuoteIn).to.eq(parseUsdc('2000'));
     });
 
     let fees: BigNumber;
@@ -151,14 +151,14 @@ describe('VPoolWrapper.swap', () => {
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecifiedWithoutFee, 0);
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
-      // and vBase amounts should be off by protocol + liquidity fees
+      // and vQuote amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
-      // TODO there is missmatch in vBase amount.
-      expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees));
+      // TODO there is missmatch in vQuote amount.
+      expect(vQuoteIn).to.eq(zeroFeeSim.vQuoteIn.add(fees));
 
       // fees should be % of the zero fee swap amount
       expect(fees).to.eq(
-        zeroFeeSim.vBaseIn
+        zeroFeeSim.vQuoteIn
           .abs()
           .mul(liquidityFee + protocolFee)
           .div(1e6)
@@ -167,22 +167,22 @@ describe('VPoolWrapper.swap', () => {
     });
 
     it('mint and burn', async () => {
-      const { vBaseMintEvent, vTokenBurnEvent } = await extractEvents(
+      const { vQuoteMintEvent, vTokenBurnEvent } = await extractEvents(
         vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
       );
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
       }
-      if (!vBaseMintEvent) {
-        throw new Error('vBaseMintEvent not emitted');
+      if (!vQuoteMintEvent) {
+        throw new Error('vQuoteMintEvent not emitted');
       }
 
       // swap amount excludes protocol fee, liquidity fee
       // but amount is inflated to include uniswap fees, which is ignored later
-      // and fee is collected so less vBase is minted
+      // and fee is collected so less vQuote is minted
       assert(vTokenIn.isNegative());
       expect(vTokenBurnEvent.args.value).to.eq(vTokenIn.mul(-1), 'mint mismatch');
-      expect(vBaseMintEvent.args.value).to.eq(inflate(amountSpecified.sub(fees)), 'mint mismatch');
+      expect(vQuoteMintEvent.args.value).to.eq(inflate(amountSpecified.sub(fees)), 'mint mismatch');
     });
 
     it('fee', async () => {
@@ -206,10 +206,10 @@ describe('VPoolWrapper.swap', () => {
   describe('exactOut 1 ETH', () => {
     const amountSpecified = parseEther('-1');
     let vTokenIn: BigNumber;
-    let vBaseIn: BigNumber;
+    let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
 
       // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
       assert(vTokenIn.isNegative());
@@ -220,16 +220,16 @@ describe('VPoolWrapper.swap', () => {
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
-      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vBaseIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
+      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vQuoteIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
-      // and vBase amounts should be off by protocol + liquidity fees
+      // and vQuote amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
-      expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees)); // vBaseIn > 0
+      expect(vQuoteIn).to.eq(zeroFeeSim.vQuoteIn.add(fees)); // vQuoteIn > 0
 
       // fees should be % of the zero fee swap amount
       expect(fees).to.eq(
-        zeroFeeSim.vBaseIn
+        zeroFeeSim.vQuoteIn
           .abs()
           .mul(liquidityFee + protocolFee)
           .div(1e6)
@@ -238,19 +238,19 @@ describe('VPoolWrapper.swap', () => {
     });
 
     it('mint and burn', async () => {
-      const { vTokenBurnEvent, vBaseMintEvent } = await extractEvents(
+      const { vTokenBurnEvent, vQuoteMintEvent } = await extractEvents(
         vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
       );
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
       }
-      if (!vBaseMintEvent) {
-        throw new Error('vBaseMintEvent not emitted');
+      if (!vQuoteMintEvent) {
+        throw new Error('vQuoteMintEvent not emitted');
       }
       // vToken ERC0 tokens that are bought, are burned by the vPoolWrapper
       // and just the value is returned to ClearingHouse
       expect(vTokenBurnEvent.args.value).to.eq(parseEther('1'));
-      expect(vBaseMintEvent.args.value).to.eq(inflate(vBaseIn.sub(fees)));
+      expect(vQuoteMintEvent.args.value).to.eq(inflate(vQuoteIn.sub(fees)));
     });
 
     it('fee', async () => {
@@ -274,12 +274,12 @@ describe('VPoolWrapper.swap', () => {
   describe('exactOut 2000 USDC', () => {
     const amountSpecified = parseUsdc('-2000');
     let vTokenIn: BigNumber;
-    let vBaseIn: BigNumber;
+    let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vBaseIn] = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
-      assert(vBaseIn.isNegative());
-      expect(vBaseIn.mul(-1)).to.eq(parseUsdc('2000'));
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
+      assert(vQuoteIn.isNegative());
+      expect(vQuoteIn.mul(-1)).to.eq(parseUsdc('2000'));
     });
 
     let fees: BigNumber;
@@ -290,13 +290,13 @@ describe('VPoolWrapper.swap', () => {
       const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VBASE, amountSpecified.sub(fees), 0); // amountSpecified < 0
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
-      // and vBase amounts should be off by protocol + liquidity fees
+      // and vQuote amounts should be off by protocol + liquidity fees
       expect(vTokenIn).to.eq(zeroFeeSim.vTokenIn);
-      expect(vBaseIn).to.eq(zeroFeeSim.vBaseIn.add(fees)); // vBaseIn < 0
+      expect(vQuoteIn).to.eq(zeroFeeSim.vQuoteIn.add(fees)); // vQuoteIn < 0
 
       // fees should be % of the zero fee swap amount
       expect(fees).to.eq(
-        zeroFeeSim.vBaseIn
+        zeroFeeSim.vQuoteIn
           .abs()
           .mul(liquidityFee + protocolFee)
           .div(1e6)
@@ -305,17 +305,17 @@ describe('VPoolWrapper.swap', () => {
     });
 
     it('mint and burn', async () => {
-      const { vBaseBurnEvent, vTokenMintEvent } = await extractEvents(
+      const { vQuoteBurnEvent, vTokenMintEvent } = await extractEvents(
         vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
       );
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
       }
-      if (!vBaseBurnEvent) {
-        throw new Error('vBaseMintEvent not emitted');
+      if (!vQuoteBurnEvent) {
+        throw new Error('vQuoteMintEvent not emitted');
       }
       expect(vTokenMintEvent.args.value).to.eq(inflate(vTokenIn));
-      expect(vBaseBurnEvent.args.value).to.eq(parseUsdc('2000').add(fees));
+      expect(vQuoteBurnEvent.args.value).to.eq(parseUsdc('2000').add(fees));
     });
 
     it('fee', async () => {
@@ -348,13 +348,13 @@ describe('VPoolWrapper.swap', () => {
 
   async function liquidityChange(priceLower: number, priceUpper: number, liquidityDelta: BigNumberish) {
     const tickSpacing = await vPool.tickSpacing();
-    let tickLower = await priceToTick(priceLower, vBase, vToken);
-    let tickUpper = await priceToTick(priceUpper, vBase, vToken);
+    let tickLower = await priceToTick(priceLower, vQuote, vToken);
+    let tickUpper = await priceToTick(priceUpper, vQuote, vToken);
     tickLower -= tickLower % tickSpacing;
     tickUpper -= tickUpper % tickSpacing;
 
-    const priceLowerActual = await tickToPrice(tickLower, vBase, vToken);
-    const priceUpperActual = await tickToPrice(tickUpper, vBase, vToken);
+    const priceLowerActual = await tickToPrice(tickLower, vQuote, vToken);
+    const priceUpperActual = await tickToPrice(tickUpper, vQuote, vToken);
     // console.log(
     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
     // );
@@ -387,11 +387,11 @@ describe('VPoolWrapper.swap', () => {
       vTokenBurnEvent: transferEvents.find(
         event => event.address === vToken.address && event.args.to === ethers.constants.AddressZero,
       ),
-      vBaseMintEvent: transferEvents.find(
-        event => event.address === vBase.address && event.args.from === ethers.constants.AddressZero,
+      vQuoteMintEvent: transferEvents.find(
+        event => event.address === vQuote.address && event.args.from === ethers.constants.AddressZero,
       ),
-      vBaseBurnEvent: transferEvents.find(
-        event => event.address === vBase.address && event.args.to === ethers.constants.AddressZero,
+      vQuoteBurnEvent: transferEvents.find(
+        event => event.address === vQuote.address && event.args.to === ethers.constants.AddressZero,
       ),
     };
   }

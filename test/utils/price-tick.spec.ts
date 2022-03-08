@@ -3,7 +3,7 @@ import { BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { VBase, VToken } from '../../typechain-types';
+import { VQuote, VToken } from '../../typechain-types';
 import {
   priceToPriceX128,
   priceToSqrtPriceX96,
@@ -14,15 +14,15 @@ import {
 } from './price-tick';
 
 describe('price-tick util', () => {
-  let vBase: FakeContract<VBase>;
+  let vQuote: FakeContract<VQuote>;
   let vToken: FakeContract<VToken>;
 
   before(async () => {
     // this makes: isToken0 as true
-    vBase = await smock.fake<VBase>('VBase', {
+    vQuote = await smock.fake<VQuote>('VQuote', {
       address: '0x0000000000000000000000000000000000000001',
     });
-    vBase.decimals.returns(18);
+    vQuote.decimals.returns(18);
 
     vToken = await smock.fake<VToken>('VToken', {
       address: '0x0000000000000000000000000000000000000000',
@@ -51,8 +51,8 @@ describe('price-tick util', () => {
   describe('#priceToPriceX128', () => {
     for (const { price, priceX128 } of testCases) {
       it(`${price} == ${priceX128}(X128)`, async () => {
-        expect(await priceToPriceX128(price, vBase, vToken)).to.eq(priceX128);
-        expect(roundUp(await priceX128ToPrice(priceX128, vBase, vToken))).to.eq(price);
+        expect(await priceToPriceX128(price, vQuote, vToken)).to.eq(priceX128);
+        expect(roundUp(await priceX128ToPrice(priceX128, vQuote, vToken))).to.eq(price);
       });
     }
   });
@@ -69,8 +69,8 @@ describe('price-tick util', () => {
   describe('#priceToSqrtPriceX96', () => {
     for (const { price, sqrtPriceX96 } of testCases) {
       it(`sqrt(${price}) == ${sqrtPriceX96}(X96)`, async () => {
-        expect(await priceToSqrtPriceX96(price, vBase, vToken)).to.eq(sqrtPriceX96);
-        expect(roundUp(await sqrtPriceX96ToPrice(sqrtPriceX96, vBase, vToken))).to.eq(price);
+        expect(await priceToSqrtPriceX96(price, vQuote, vToken)).to.eq(sqrtPriceX96);
+        expect(roundUp(await sqrtPriceX96ToPrice(sqrtPriceX96, vQuote, vToken))).to.eq(price);
       });
     }
   });

@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
-import { IVBase } from './IVBase.sol';
+import { IVQuote } from './IVQuote.sol';
 import { IVToken } from './IVToken.sol';
 import { IClearingHouse } from './IClearingHouse.sol';
 
@@ -16,7 +16,7 @@ interface IVPoolWrapper {
         uint256 sumFeeInsideX128;
     }
 
-    event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);
+    event Swap(int256 vTokenIn, int256 vQuoteIn, uint256 liquidityFees, uint256 protocolFees);
 
     event Mint(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 basePrincipal);
 
@@ -31,7 +31,7 @@ interface IVPoolWrapper {
     struct InitializeVPoolWrapperParams {
         IClearingHouse clearingHouse;
         IVToken vToken;
-        IVBase vBase;
+        IVQuote vQuote;
         IUniswapV3Pool vPool;
         uint24 liquidityFeePips;
         uint24 protocolFeePips;
@@ -86,7 +86,7 @@ interface IVPoolWrapper {
         int256 amount,
         uint160 sqrtPriceLimit,
         bool isNotional
-    ) external returns (int256 vTokenAmount, int256 vBaseAmount);
+    ) external returns (int256 vTokenAmount, int256 vQuoteAmount);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
 

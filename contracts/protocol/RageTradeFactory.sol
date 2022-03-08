@@ -10,7 +10,7 @@ import { IUniswapV3Factory } from '@uniswap/v3-core-0.8-support/contracts/interf
 
 import { ClearingHouseDeployer } from './clearinghouse/ClearingHouseDeployer.sol';
 import { InsuranceFundDeployer } from './insurancefund/InsuranceFundDeployer.sol';
-import { VBaseDeployer } from './tokens/VBaseDeployer.sol';
+import { VQuoteDeployer } from './tokens/VQuoteDeployer.sol';
 import { VTokenDeployer } from './tokens/VTokenDeployer.sol';
 import { VToken } from './tokens/VToken.sol';
 import { VPoolWrapperDeployer } from './wrapper/VPoolWrapperDeployer.sol';
@@ -19,14 +19,14 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IInsuranceFund } from '../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
-import { IVBase } from '../interfaces/IVBase.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { PriceMath } from '../libraries/PriceMath.sol';
 
-import { BaseOracle } from '../oracles/BaseOracle.sol';
+import { SettlementTokenOracle } from '../oracles/SettlementTokenOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
 import { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER } from '../utils/constants.sol';
@@ -37,14 +37,14 @@ contract RageTradeFactory is
     Governable,
     ClearingHouseDeployer,
     InsuranceFundDeployer,
-    VBaseDeployer,
+    VQuoteDeployer,
     VPoolWrapperDeployer,
     VTokenDeployer
 {
     using AddressHelper for address;
     using PriceMath for uint256;
 
-    IVBase public immutable vBase;
+    IVQuote public immutable vQuote;
     IClearingHouse public immutable clearingHouse;
     // IInsuranceFund public insuranceFund; // stored in ClearingHouse, replacable from there
 
@@ -62,22 +62,22 @@ contract RageTradeFactory is
         proxyAdmin = _deployProxyAdmin();
         proxyAdmin.transferOwnership(msg.sender);
 
-        // deploys VBase contract at an address which has most significant nibble as "f"
-        vBase = _deployVBase(cBase.decimals());
+        // deploys VQuote contract at an address which has most significant nibble as "f"
+        vQuote = _deployVQuote(cBase.decimals());
 
         // deploys InsuranceFund proxy
         IInsuranceFund insuranceFund = _deployProxyForInsuranceFund(insuranceFundLogicAddress);
 
-        BaseOracle cBaseOracle = new BaseOracle();
+        SettlementTokenOracle settlementTokenOracle = new SettlementTokenOracle();
 
         // deploys a proxy for ClearingHouse, and initialize it as well
         clearingHouse = _deployProxyForClearingHouseAndInitialize(
             ClearingHouseDeployer.DeployClearingHouseParams(
                 clearingHouseLogicAddress,
                 cBase,
-                cBaseOracle,
+                settlementTokenOracle,
                 insuranceFund,
-                vBase,
+                vQuote,
                 nativeOracle
             )
         );
@@ -105,7 +105,7 @@ contract RageTradeFactory is
         // STEP 1: Deploy the virtual token ERC20, such that it will be token0
         IVToken vToken = _deployVToken(initializePoolParams.deployVTokenParams);
 
-        // STEP 2: Deploy vPool (token0=vToken, token1=vBase) on actual uniswap
+        // STEP 2: Deploy vPool (token0=vToken, token1=vQuote) on actual uniswap
         IUniswapV3Pool vPool = _createUniswapV3Pool(vToken);
 
         // STEP 3: Initialize the price on the vPool
@@ -124,7 +124,7 @@ contract RageTradeFactory is
             IVPoolWrapper.InitializeVPoolWrapperParams(
                 clearingHouse,
                 vToken,
-                vBase,
+                vQuote,
                 vPool,
                 initializePoolParams.liquidityFeePips,
                 initializePoolParams.protocolFeePips,
@@ -132,8 +132,8 @@ contract RageTradeFactory is
             )
         );
 
-        // STEP 5: Authorize vPoolWrapper in vToken and vBase, for minting/burning whenever needed
-        vBase.authorize(address(vPoolWrapper));
+        // STEP 5: Authorize vPoolWrapper in vToken and vQuote, for minting/burning whenever needed
+        vQuote.authorize(address(vPoolWrapper));
         vToken.setVPoolWrapper(address(vPoolWrapper));
         clearingHouse.registerPool(
             IClearingHouseStructures.Pool(vToken, vPool, vPoolWrapper, initializePoolParams.poolInitialSettings)
@@ -146,7 +146,7 @@ contract RageTradeFactory is
         return
             IUniswapV3Pool(
                 IUniswapV3Factory(UNISWAP_V3_FACTORY_ADDRESS).createPool(
-                    address(vBase),
+                    address(vQuote),
                     address(vToken),
                     UNISWAP_V3_DEFAULT_FEE_TIER
                 )
@@ -158,8 +158,8 @@ contract RageTradeFactory is
         return
             // Zero element is considered empty in Uint32L8Array.sol
             poolId != 0 &&
-            // vToken should be token0 and vBase should be token1 in UniswapV3Pool
-            (uint160(addr) < uint160(address(vBase))) &&
+            // vToken should be token0 and vQuote should be token1 in UniswapV3Pool
+            (uint160(addr) < uint160(address(vQuote))) &&
             // there should not be a collision in poolIds
             clearingHouse.isPoolIdAvailable(poolId);
     }

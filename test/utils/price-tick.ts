@@ -3,7 +3,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { TickMath } from '@uniswap/v3-sdk';
 import JSBI from 'jsbi';
-import { VBase, VToken } from '../../typechain-types';
+import { VQuote, VToken } from '../../typechain-types';
 import { fromQ128, fromQ96, Q96, toQ128, toQ96 } from './fixed-point';
 import hre from 'hardhat';
 
@@ -23,13 +23,13 @@ const tickSpacing = 10;
 
 export async function priceToTick(
   price: number,
-  vBase: ERC20Decimals,
+  vQuote: ERC20Decimals,
   vToken: ERC20Decimals,
   roundToNearestInitializableTick?: boolean,
 ): Promise<number> {
-  const vBaseDecimals = await getDecimals(vBase);
+  const vQuoteDecimals = await getDecimals(vQuote);
   const vTokenDecimals = await getDecimals(vToken);
-  price *= 10 ** (vBaseDecimals - vTokenDecimals);
+  price *= 10 ** (vQuoteDecimals - vTokenDecimals);
 
   return sqrtPriceX96ToTick(toQ96(Math.sqrt(price)), roundToNearestInitializableTick);
 }
@@ -55,11 +55,11 @@ export function tickToSqrtPriceX96(tick: number): BigNumber {
   return sqrtPriceX96;
 }
 
-export async function tickToPrice(tick: number, vBase: ERC20Decimals, vToken: ERC20Decimals): Promise<number> {
+export async function tickToPrice(tick: number, vQuote: ERC20Decimals, vToken: ERC20Decimals): Promise<number> {
   let price = fromQ96(tickToSqrtPriceX96(tick)) ** 2;
-  const vBaseDecimals = await getDecimals(vBase);
+  const vQuoteDecimals = await getDecimals(vQuote);
   const vTokenDecimals = await getDecimals(vToken);
-  price /= 10 ** (vBaseDecimals - vTokenDecimals);
+  price /= 10 ** (vQuoteDecimals - vTokenDecimals);
   return price;
 }
 
@@ -67,42 +67,46 @@ export async function tickToPrice(tick: number, vBase: ERC20Decimals, vToken: ER
  * Parses human readable prices to fixed point 128
  * and also applies the decimals.
  * @param price Human readable price
- * @param vBase VBase contract for quering decimals
+ * @param vQuote VQuote contract for quering decimals
  * @param vToken VToken contract for quering decimals
  * @returns fixed point 128 and decimals applied price
  */
-export async function priceToPriceX128(price: number, vBase: ERC20Decimals, vToken: ERC20Decimals): Promise<BigNumber> {
-  const vBaseDecimals = await getDecimals(vBase);
+export async function priceToPriceX128(
+  price: number,
+  vQuote: ERC20Decimals,
+  vToken: ERC20Decimals,
+): Promise<BigNumber> {
+  const vQuoteDecimals = await getDecimals(vQuote);
   const vTokenDecimals = await getDecimals(vToken);
   let priceX128 = toQ128(price);
-  priceX128 = priceX128.mul(BigNumber.from(10).pow(vBaseDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
+  priceX128 = priceX128.mul(BigNumber.from(10).pow(vQuoteDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
   return priceX128;
 }
 
 /**
  * Formats the fixed point price into human readable
  * @param priceX128 fixed point 128 and decimals applied price
- * @param vBase VBase contract for quering decimals
+ * @param vQuote VQuote contract for quering decimals
  * @param vToken VToken contract for quering decimals
  * @returns human readable price
  */
 export async function priceX128ToPrice(
   priceX128: BigNumberish,
-  vBase: ERC20Decimals,
+  vQuote: ERC20Decimals,
   vToken: ERC20Decimals,
 ): Promise<number> {
   priceX128 = BigNumber.from(priceX128);
   let price: number = fromQ128(priceX128);
-  const vBaseDecimals = await getDecimals(vBase);
+  const vQuoteDecimals = await getDecimals(vQuote);
   const vTokenDecimals = await getDecimals(vToken);
-  price /= 10 ** (vBaseDecimals - vTokenDecimals);
+  price /= 10 ** (vQuoteDecimals - vTokenDecimals);
   return price;
 }
 
 /**
- * Converts priceX128 (vBase per vToken) into sqrtPriceX96 (token1 per token0)
+ * Converts priceX128 (vQuote per vToken) into sqrtPriceX96 (token1 per token0)
  * @param priceX128 fixed point 128 and decimals applied price
- * @param vBase VBase contract determining the token0-token1
+ * @param vQuote VQuote contract determining the token0-token1
  * @param vToken VToken contract determining the token0-token1
  * @returns sqrtPriceX96 for use in uniswap
  */
@@ -118,38 +122,38 @@ export function sqrtPriceX96ToPriceX128(sqrtPriceX96: BigNumberish): BigNumber {
   return priceX128;
 }
 
-export async function priceToSqrtPriceX96(price: number, vBase: ERC20Decimals, vToken: ERC20Decimals) {
-  let priceX128 = await priceToPriceX128(price, vBase, vToken);
+export async function priceToSqrtPriceX96(price: number, vQuote: ERC20Decimals, vToken: ERC20Decimals) {
+  let priceX128 = await priceToPriceX128(price, vQuote, vToken);
   return priceX128ToSqrtPriceX96(priceX128);
 }
 
 // export async function priceToSqrtPriceX96WithoutContract(
 //   price: number,
-//   vBaseDecimals: BigNumberish,
+//   vQuoteDecimals: BigNumberish,
 //   vTokenDecimals: BigNumberish,
 // ) {
 //   let priceX128 = toQ128(price);
-//   priceX128 = priceX128.mul(BigNumber.from(10).pow(vBaseDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
+//   priceX128 = priceX128.mul(BigNumber.from(10).pow(vQuoteDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
 //   priceX128 = BigNumber.from(priceX128);
 
 //   let sqrtPriceX96 = sqrt(priceX128.mul(1n << 64n)); // 96 = (128 + 64) / 2
 //   return sqrtPriceX96;
 // }
 
-export async function sqrtPriceX96ToPrice(sqrtPriceX96: BigNumberish, vBase: ERC20Decimals, vToken: ERC20Decimals) {
+export async function sqrtPriceX96ToPrice(sqrtPriceX96: BigNumberish, vQuote: ERC20Decimals, vToken: ERC20Decimals) {
   const priceX128 = sqrtPriceX96ToPriceX128(sqrtPriceX96);
-  return priceX128ToPrice(priceX128, vBase, vToken);
+  return priceX128ToPrice(priceX128, vQuote, vToken);
 }
 
 export async function priceToSqrtPriceX96WithoutContract(
   price: number,
-  vBaseDecimals: BigNumberish,
+  vQuoteDecimals: BigNumberish,
   vTokenDecimals: BigNumberish,
   isToken0: boolean,
 ) {
   let priceX128 = toQ128(price);
 
-  priceX128 = priceX128.mul(BigNumber.from(10).pow(vBaseDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
+  priceX128 = priceX128.mul(BigNumber.from(10).pow(vQuoteDecimals)).div(BigNumber.from(10).pow(vTokenDecimals));
   priceX128 = BigNumber.from(priceX128);
   let sqrtPriceX96 = sqrt(priceX128.mul(1n << 64n)); // 96 = (128 + 64) / 2
 
@@ -165,10 +169,10 @@ export function initializableTick(tick: number, tickSpacing: number) {
 
 export async function priceToNearestPriceX128(
   price: number,
-  vBase: ERC20Decimals,
+  vQuote: ERC20Decimals,
   vToken: ERC20Decimals,
 ): Promise<BigNumber> {
-  return sqrtPriceX96ToPriceX128(tickToSqrtPriceX96(await priceToTick(price, vBase, vToken)));
+  return sqrtPriceX96ToPriceX128(tickToSqrtPriceX96(await priceToTick(price, vQuote, vToken)));
 }
 
 const ONE = BigNumber.from(1);

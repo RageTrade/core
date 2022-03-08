@@ -1,7 +1,7 @@
 import hre from 'hardhat';
 import { BigNumber, BigNumberish, FixedNumber } from '@ethersproject/bignumber';
-import { ethers, Signer } from 'ethers';
-import { VPoolWrapperMock2, VBase, VToken, UniswapV3Pool, SimulateSwapTest } from '../typechain-types';
+import { ethers } from 'ethers';
+import { VPoolWrapperMock2, VQuote, VToken, UniswapV3Pool, SimulateSwapTest } from '../typechain-types';
 import { SwapEvent } from '../typechain-types/VPoolWrapper';
 import { Q128, Q96, toQ128, toQ96 } from './utils/fixed-point';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
@@ -22,7 +22,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 describe('PoolWrapper', () => {
   let vPoolWrapper: MockContract<VPoolWrapperMock2>;
   let vPool: UniswapV3Pool;
-  let vBase: MockContract<VBase>;
+  let vQuote: MockContract<VQuote>;
   let vToken: MockContract<VToken>;
 
   interface Range {
@@ -35,7 +35,7 @@ describe('PoolWrapper', () => {
     let biggerRange: Range;
 
     before(async () => {
-      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
+      ({ vPoolWrapper, vPool, vQuote, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
       }));
@@ -140,10 +140,10 @@ describe('PoolWrapper', () => {
       // -30 ->   0 ===> 100 A (liquidity1)
       //   0 ->  30 ===> 100 B (liquidity1)
       //  30 ->  60 ===> 100 B (liquidity2)
-      ({ vPoolWrapper, vPool, vBase, vToken } = await setupWrapper({
+      ({ vPoolWrapper, vPool, vQuote, vToken } = await setupWrapper({
         rPriceInitial: 1,
         vPriceInitial: 1,
-        vBaseDecimals: 18,
+        vQuoteDecimals: 18,
         vTokenDecimals: 18,
         uniswapFee,
         liquidityFee,
@@ -210,8 +210,8 @@ describe('PoolWrapper', () => {
 
     describe('lp sumB', () => {
       describe('no tick cross', () => {
-        it('buy | exactIn vBase', async () => {
-          const amountSpecified = parseUnits('50', 18); // vBase
+        it('buy | exactIn vQuote', async () => {
+          const amountSpecified = parseUnits('50', 18); // vQuote
           const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
 
           const globalState = await getGlobal();
@@ -275,8 +275,8 @@ describe('PoolWrapper', () => {
           expect(valuesInside60.sumFpInsideX128).to.eq(0);
         });
 
-        it('sell | exactOut vBase', async () => {
-          const amountSpecified = parseUnits('-50', 18); // vBase
+        it('sell | exactOut vQuote', async () => {
+          const amountSpecified = parseUnits('-50', 18); // vQuote
           const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
 
           const globalState = await getGlobal();
@@ -298,8 +298,8 @@ describe('PoolWrapper', () => {
       });
 
       describe('single tick cross', () => {
-        it('buy | exactIn vBase', async () => {
-          const amountSpecified = parseUnits('150', 18); // vBase
+        it('buy | exactIn vQuote', async () => {
+          const amountSpecified = parseUnits('150', 18); // vQuote
           await vPoolWrapper.swap(false, amountSpecified, 0);
 
           const globalState = await getGlobal();
@@ -364,8 +364,8 @@ describe('PoolWrapper', () => {
           expect(values3060.sumBInsideX128).to.eq(0);
         });
 
-        it('sell | exactOut vBase', async () => {
-          const amountSpecified = parseUnits('-150', 18); // vBase
+        it('sell | exactOut vQuote', async () => {
+          const amountSpecified = parseUnits('-150', 18); // vQuote
           await vPoolWrapper.swap(true, amountSpecified, 0);
 
           const globalState = await getGlobal();
@@ -390,7 +390,7 @@ describe('PoolWrapper', () => {
 
     describe('lp fees', () => {
       describe('no tick cross', () => {
-        it('buy | exactIn vBase', async () => {
+        it('buy | exactIn vQuote', async () => {
           const amountSpecified = parseUnits('50', 18);
           const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
 
@@ -424,7 +424,7 @@ describe('PoolWrapper', () => {
           expect(globalState.sumFeeGlobalX128).to.eq(expectedFeeIncrease);
         });
 
-        it('sell | exactOut vBase', async () => {
+        it('sell | exactOut vQuote', async () => {
           const amountSpecified = parseUnits('-50', 18);
           const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
 
@@ -460,7 +460,7 @@ describe('PoolWrapper', () => {
       });
 
       describe('single tick cross', () => {
-        it('buy | exactIn vBase', async () => {
+        it('buy | exactIn vQuote', async () => {
           const amountSpecified = parseUnits('150', 18);
           await vPoolWrapper.swap(false, amountSpecified, 0);
 
@@ -507,7 +507,7 @@ describe('PoolWrapper', () => {
           expect(values3060.sumFeeInsideX128).to.eq(0);
         });
 
-        it('sell | exactOut vBase', async () => {
+        it('sell | exactOut vQuote', async () => {
           const amountSpecified = parseUnits('-150', 18);
           await vPoolWrapper.swap(true, amountSpecified, 0);
 
@@ -528,13 +528,13 @@ describe('PoolWrapper', () => {
 
   async function liquidityChange(priceLower: number, priceUpper: number, liquidityDelta: BigNumberish) {
     const tickSpacing = await vPool.tickSpacing();
-    let tickLower = await priceToTick(priceLower, vBase, vToken);
-    let tickUpper = await priceToTick(priceUpper, vBase, vToken);
+    let tickLower = await priceToTick(priceLower, vQuote, vToken);
+    let tickUpper = await priceToTick(priceUpper, vQuote, vToken);
     tickLower -= tickLower % tickSpacing;
     tickUpper -= tickUpper % tickSpacing;
 
-    const priceLowerActual = await tickToPrice(tickLower, vBase, vToken);
-    const priceUpperActual = await tickToPrice(tickUpper, vBase, vToken);
+    const priceLowerActual = await tickToPrice(tickLower, vQuote, vToken);
+    const priceUpperActual = await tickToPrice(tickUpper, vQuote, vToken);
     // console.log(
     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
     // );
@@ -566,11 +566,11 @@ describe('PoolWrapper', () => {
       vTokenBurnEvent: transferEvents.find(
         event => event.address === vToken.address && event.args.to === ethers.constants.AddressZero,
       ),
-      vBaseMintEvent: transferEvents.find(
-        event => event.address === vBase.address && event.args.from === ethers.constants.AddressZero,
+      vQuoteMintEvent: transferEvents.find(
+        event => event.address === vQuote.address && event.args.from === ethers.constants.AddressZero,
       ),
-      vBaseBurnEvent: transferEvents.find(
-        event => event.address === vBase.address && event.args.to === ethers.constants.AddressZero,
+      vQuoteBurnEvent: transferEvents.find(
+        event => event.address === vQuote.address && event.args.to === ethers.constants.AddressZero,
       ),
     };
   }

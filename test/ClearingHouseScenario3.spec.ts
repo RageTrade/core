@@ -21,7 +21,7 @@ import {
   IUniswapV3Pool,
   VPoolWrapperMockRealistic,
   VToken,
-  VBase,
+  VQuote,
   Account__factory,
   InsuranceFund,
   UniswapV3Pool,
@@ -64,7 +64,7 @@ config();
 const { ALCHEMY_KEY } = process.env;
 
 describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
-  let vBaseAddress: string;
+  let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
   let oracleAddress: string;
@@ -72,7 +72,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
-  let vBase: VBase;
+  let vQuote: VQuote;
   let rageTradeFactory: RageTradeFactory;
 
   let signers: SignerWithAddress[];
@@ -211,8 +211,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     tokenAmount: BigNumberish,
   ) {
     await cBase.connect(user).approve(clearingHouseTest.address, tokenAmount);
-    const truncatedVBaseAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVBaseAddress, tokenAmount);
+    const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
+    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
   }
 
   async function swapToken(
@@ -464,7 +464,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
   async function logPoolPrice(pool: IUniswapV3Pool, token: VToken) {
     const { sqrtPriceX96 } = await pool.slot0();
-    console.log(await sqrtPriceX96ToPrice(sqrtPriceX96, vBase, token));
+    console.log(await sqrtPriceX96ToPrice(sqrtPriceX96, vQuote, token));
   }
 
   async function checkGlobalParams(
@@ -769,10 +769,10 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
-    vBase = await hre.ethers.getContractAt('VBase', await rageTradeFactory.vBase());
-    vBaseAddress = vBase.address;
+    vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
+    vQuoteAddress = vQuote.address;
 
-    // await vBase.transferOwnership(VPoolFactory.address);
+    // await vQuote.transferOwnership(VPoolFactory.address);
     cBaseOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
     await clearingHouseTest.updateCollateralSettings(cBase.address, {
       oracle: cBaseOracle.address,
@@ -800,9 +800,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     cBase = await hre.ethers.getContractAt('IERC20', REAL_BASE);
 
-    // const vBaseFactory = await hre.ethers.getContractFactory('VBase');
-    // vBase = await vBaseFactory.deploy(REAL_BASE);
-    // vBaseAddress = vBase.address;
+    // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
+    // vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
 
@@ -920,7 +920,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       expect((await clearingHouseTest.getPoolInfo(truncate(vToken1Address))).settings.supported).to.be.true;
     });
 
-    it('Add Base Deposit Support  - Pass', async () => {
+    it('AddVQuote Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(cBase.address, true);
       expect((await clearingHouseTest.getCollateralInfo(truncate(cBase.address))).settings.supported).to.be.true;
     });
@@ -957,7 +957,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp And Oracle Update - 0', async () => {
       await changeWrapperTimestampAndCheck(0);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
     });
 
@@ -978,7 +978,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user0,
         user0AccountNo,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -998,7 +998,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp And Oracle Update - 100', async () => {
       await changeWrapperTimestampAndCheck(100);
-      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1019,7 +1019,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user0,
         user0AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -1039,7 +1039,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 600', async () => {
       await changeWrapperTimestampAndCheck(600);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(61392.883124115, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
     });
 
@@ -1062,7 +1062,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user1AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,
@@ -1079,9 +1079,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 1000', async () => {
       await changeWrapperTimestampAndCheck(1000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1097,7 +1097,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user1,
         user1AccountNo,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -1113,9 +1113,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 1500', async () => {
       await changeWrapperTimestampAndCheck(1500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3626.38967029497, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1138,7 +1138,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user1AccountNo,
         vPool,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapTokenAmount,
         0,
         false,
@@ -1155,9 +1155,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 2000', async () => {
       await changeWrapperTimestampAndCheck(2000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1178,7 +1178,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user1,
         user1AccountNo,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         tickLower,
         tickUpper,
         liquidityDelta,
@@ -1198,9 +1198,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 2500', async () => {
       await changeWrapperTimestampAndCheck(2500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1223,7 +1223,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user2AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapToken1Amount,
         0,
         false,
@@ -1245,9 +1245,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 2600', async () => {
       await changeWrapperTimestampAndCheck(2600);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(60195.3377521827, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(3602.8957500692, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1270,7 +1270,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user2AccountNo,
         vPool,
         vTokenAddress,
-        vBaseAddress,
+        vQuoteAddress,
         swapToken2Amount,
         0,
         false,
@@ -1291,9 +1291,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 3000', async () => {
       await changeWrapperTimestampAndCheck(3000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(62651.8307931874, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(62651.8307931874, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1318,7 +1318,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
         user2AccountNo,
         vPool1,
         vToken1Address,
-        vBaseAddress,
+        vQuoteAddress,
         swapToken1Amount,
         0,
         false,
@@ -1339,9 +1339,9 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     it('Timestamp and Oracle Update - 3500', async () => {
       await changeWrapperTimestampAndCheck(3500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1384,16 +1384,16 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPositionApproximate(user1AccountNo, vTokenAddress, netTokenPosition, 8);
       // await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
-      await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
+      await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
       await checkCBaseBalance(keeper.address, expectedKeeperFee);
       await checkCBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
     });
 
     it('Timestamp and Oracle Update - 4000', async () => {
       await changeWrapperTimestampAndCheck(4000);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1442,17 +1442,17 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       await checkTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatocTokenPosition, 8);
       await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
 
-      await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
-      await checkTokenBalance(keeperAccountNo, vBaseAddress, liquidatocBaseBalance);
+      await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
+      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatocBaseBalance);
 
       await checkCBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
     });
 
     it('Timestamp and Oracle Update - 4500', async () => {
       await changeWrapperTimestampAndCheck(4500);
-      const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vBase, vToken1);
+      const realSqrtPrice1 = await priceToSqrtPriceX96(81253.9881020799, vQuote, vToken1);
       await oracle1.setSqrtPriceX96(realSqrtPrice1);
-      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vBase, vToken);
+      const realSqrtPrice = await priceToSqrtPriceX96(4005.35654889087, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
@@ -1498,8 +1498,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       await checkTokenBalance(keeperAccountNo, vToken1Address, liquidatocToken1Position);
       await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
 
-      await checkTokenBalance(user1AccountNo, vBaseAddress, expectedBaseBalance);
-      await checkTokenBalance(keeperAccountNo, vBaseAddress, liquidatocBaseBalance);
+      await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
+      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatocBaseBalance);
 
       await checkCBaseBalance(insuranceFund.address, insuranceFundStartingBalance.add(expectedInsuranceFundFee));
     });

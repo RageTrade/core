@@ -18,7 +18,7 @@ import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
-import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVQuote } from '../../interfaces/IVQuote.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { IClearingHouseActions } from '../../interfaces/clearinghouse/IClearingHouseActions.sol';
@@ -67,7 +67,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         IERC20 _defaultCollateralToken,
         IOracle _defaultCollateralTokenOracle,
         IInsuranceFund _insuranceFund,
-        IVBase _vBase,
+        IVQuote _vQuote,
         IOracle _nativeOracle
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
@@ -75,7 +75,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         insuranceFund = _insuranceFund;
         nativeOracle = _nativeOracle;
 
-        protocol.vBase = _vBase;
+        protocol.vQuote = _vQuote;
 
         _updateCollateralSettings(
             _defaultCollateralToken,
@@ -253,7 +253,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountId,
         uint32 poolId,
         SwapParams memory swapParams
-    ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) external notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
         return _swapToken(account, poolId, swapParams, true);
     }
@@ -263,17 +263,17 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         SwapParams memory swapParams,
         bool checkMargin
-    ) internal notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) internal notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         _checkPoolId(poolId);
 
-        (vTokenAmountOut, vBaseAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
+        (vTokenAmountOut, vQuoteAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
 
-        uint256 vBaseAmountOutAbs = uint256(vBaseAmountOut.abs());
-        if (vBaseAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vBaseAmountOutAbs);
+        uint256 vQuoteAmountOutAbs = uint256(vQuoteAmountOut.abs());
+        if (vQuoteAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vQuoteAmountOutAbs);
 
         if (swapParams.sqrtPriceLimit != 0 && !swapParams.isPartialAllowed) {
             if (
-                !((swapParams.isNotional && vBaseAmountOut.abs() == swapParams.amount.abs()) ||
+                !((swapParams.isNotional && vQuoteAmountOut.abs() == swapParams.amount.abs()) ||
                     (!swapParams.isNotional && vTokenAmountOut.abs() == swapParams.amount.abs()))
             ) revert SlippageBeyondTolerance();
         }
@@ -284,7 +284,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountId,
         uint32 poolId,
         LiquidityChangeParams calldata liquidityChangeParams
-    ) external notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) external notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
@@ -295,14 +295,14 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         LiquidityChangeParams memory liquidityChangeParams,
         bool checkMargin
-    ) internal notPaused returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) internal notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         _checkPoolId(poolId);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
             _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
         }
 
-        (vTokenAmountOut, vBaseAmountOut) = account.liquidityChange(
+        (vTokenAmountOut, vQuoteAmountOut) = account.liquidityChange(
             poolId,
             liquidityChangeParams,
             protocol,
@@ -311,7 +311,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
         // TODO this lib is being used here causing bytecode size to increase, remove it
         uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(poolId, vTokenAmountOut, vBaseAmountOut, protocol)
+            VTokenPositionSet.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut, protocol)
         );
 
         if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
@@ -380,16 +380,16 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             } else if (operations[i].operationType == MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
                 (uint32 poolId, SwapParams memory sp) = abi.decode(operations[i].data, (uint32, SwapParams));
-                (int256 vTokenAmountOut, int256 vBaseAmountOut) = _swapToken(account, poolId, sp, false);
-                results[i] = abi.encode(vTokenAmountOut, vBaseAmountOut);
+                (int256 vTokenAmountOut, int256 vQuoteAmountOut) = _swapToken(account, poolId, sp, false);
+                results[i] = abi.encode(vTokenAmountOut, vQuoteAmountOut);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_RANGE_ORDER) {
                 // UPDATE_RANGE_ORDER
                 (uint32 poolId, LiquidityChangeParams memory lcp) = abi.decode(
                     operations[i].data,
                     (uint32, LiquidityChangeParams)
                 );
-                (int256 vTokenAmountOut, int256 vBaseAmountOut) = _updateRangeOrder(account, poolId, lcp, false);
-                results[i] = abi.encode(vTokenAmountOut, vBaseAmountOut);
+                (int256 vTokenAmountOut, int256 vQuoteAmountOut) = _updateRangeOrder(account, poolId, lcp, false);
+                results[i] = abi.encode(vTokenAmountOut, vQuoteAmountOut);
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_LIMIT_ORDER) {
                 // REMOVE_LIMIT_ORDER
                 (uint32 poolId, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi.decode(

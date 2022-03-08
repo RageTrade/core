@@ -16,7 +16,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
     uint24 public protocolFeePips; // fee paid to DAO treasury
 
     struct LiquidityRate {
-        uint256 vBasePerLiquidity;
+        uint256 vQuotePerLiquidity;
         uint256 vTokenPerLiquidity;
     }
     mapping(int24 => mapping(int24 => LiquidityRate)) internal _liquidityRates;
@@ -68,11 +68,11 @@ contract VPoolWrapperMock is IVPoolWrapper {
     function setLiquidityRates(
         int24 tickLower,
         int24 tickUpper,
-        uint256 vBasePerLiquidity,
+        uint256 vQuotePerLiquidity,
         uint256 vTokenPerLiquidity
     ) external {
         LiquidityRate storage liquidityRate = _liquidityRates[tickLower][tickUpper];
-        liquidityRate.vBasePerLiquidity = vBasePerLiquidity;
+        liquidityRate.vQuotePerLiquidity = vQuotePerLiquidity;
         liquidityRate.vTokenPerLiquidity = vTokenPerLiquidity;
     }
 
@@ -84,14 +84,14 @@ contract VPoolWrapperMock is IVPoolWrapper {
         external
         returns (
             uint256 vTokenAmount,
-            uint256 vBaseAmount,
+            uint256 vQuoteAmount,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
         _liquidity += liquidity;
 
         vTokenAmount = _liquidityRates[tickLower][tickUpper].vTokenPerLiquidity * liquidity;
-        vBaseAmount = _liquidityRates[tickLower][tickUpper].vBasePerLiquidity * liquidity;
+        vQuoteAmount = _liquidityRates[tickLower][tickUpper].vQuotePerLiquidity * liquidity;
         wrapperValuesInside = getValuesInside(tickLower, tickUpper);
     }
 
@@ -103,13 +103,13 @@ contract VPoolWrapperMock is IVPoolWrapper {
         external
         returns (
             uint256 vTokenAmount,
-            uint256 vBaseAmount,
+            uint256 vQuoteAmount,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
         _liquidity -= liquidity;
 
-        vBaseAmount = _liquidityRates[tickLower][tickUpper].vBasePerLiquidity * liquidity;
+        vQuoteAmount = _liquidityRates[tickLower][tickUpper].vQuotePerLiquidity * liquidity;
         vTokenAmount = _liquidityRates[tickLower][tickUpper].vTokenPerLiquidity * liquidity;
         wrapperValuesInside = getValuesInside(tickLower, tickUpper);
     }
@@ -130,13 +130,13 @@ contract VPoolWrapperMock is IVPoolWrapper {
         int256 amount,
         uint160, // sqrtPriceLimit,
         bool isNotional
-    ) external pure returns (int256 vTokenAmount, int256 vBaseAmount) {
+    ) external pure returns (int256 vTokenAmount, int256 vQuoteAmount) {
         if (isNotional) {
             vTokenAmount = -amount / 4000;
-            vBaseAmount = amount;
+            vQuoteAmount = amount;
         } else {
             vTokenAmount = -amount;
-            vBaseAmount = amount * 4000;
+            vQuoteAmount = amount * 4000;
         }
     }
 

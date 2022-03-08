@@ -18,7 +18,7 @@ import { VTokenPositionSet } from './VTokenPositionSet.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
-import { IVBase } from '../interfaces/IVBase.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
@@ -205,7 +205,7 @@ library Account {
         Protocol.Info storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
-        account.tokenPositions.update(account.id, balanceAdjustments, address(protocol.vBase).truncate(), protocol);
+        account.tokenPositions.update(account.id, balanceAdjustments, address(protocol.vQuote).truncate(), protocol);
     }
 
     /// @notice increases deposit balance of 'vToken' by 'amount'
@@ -378,10 +378,10 @@ library Account {
         IClearingHouseStructures.SwapParams memory swapParams,
         Protocol.Info storage protocol,
         bool checkMargin
-    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
-        // make a swap. vBaseIn and vTokenAmountOut (in and out wrt uniswap).
+    ) external returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+        // make a swap. vQuoteIn and vTokenAmountOut (in and out wrt uniswap).
         // mints erc20 tokens in callback and send to the pool
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.swapToken(account.id, poolId, swapParams, protocol);
+        (vTokenAmountOut, vQuoteAmountOut) = account.tokenPositions.swapToken(account.id, poolId, swapParams, protocol);
 
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
@@ -401,9 +401,9 @@ library Account {
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Protocol.Info storage protocol,
         bool checkMargin
-    ) external returns (int256 vTokenAmountOut, int256 vBaseAmountOut) {
+    ) external returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         // mint/burn tokens + fee + funding payment
-        (vTokenAmountOut, vBaseAmountOut) = account.tokenPositions.liquidityChange(
+        (vTokenAmountOut, vQuoteAmountOut) = account.tokenPositions.liquidityChange(
             account.id,
             poolId,
             liquidityChangeParams,
@@ -538,7 +538,7 @@ library Account {
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
             .BalanceAdjustments({
-                vBaseIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
+                vQuoteIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
                 vTokenIncrease: tokensToTrade,
                 traderPositionIncrease: tokensToTrade
             });
@@ -548,11 +548,11 @@ library Account {
             targetAccount.id,
             poolId,
             balanceAdjustments.vTokenIncrease,
-            balanceAdjustments.vBaseIncrease
+            balanceAdjustments.vQuoteIncrease
         );
 
         liquidatorBalanceAdjustments = IClearingHouseStructures.BalanceAdjustments({
-            vBaseIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
+            vQuoteIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
             vTokenIncrease: -tokensToTrade,
             traderPositionIncrease: -tokensToTrade
         });
@@ -562,7 +562,7 @@ library Account {
             liquidatorAccount.id,
             poolId,
             liquidatorBalanceAdjustments.vTokenIncrease,
-            liquidatorBalanceAdjustments.vBaseIncrease
+            liquidatorBalanceAdjustments.vQuoteIncrease
         );
     }
 
@@ -676,14 +676,14 @@ library Account {
         view
         returns (
             address owner,
-            int256 vBaseBalance,
+            int256 vQuoteBalance,
             IClearingHouseStructures.DepositTokenView[] memory tokenDeposits,
             IClearingHouseStructures.VTokenPositionView[] memory tokenPositions
         )
     {
         owner = account.owner;
         tokenDeposits = account.tokenDeposits.getInfo(protocol);
-        (vBaseBalance, tokenPositions) = account.tokenPositions.getInfo(protocol);
+        (vQuoteBalance, tokenPositions) = account.tokenPositions.getInfo(protocol);
     }
 
     function getNetPosition(

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
-import { IVBase } from '../../interfaces/IVBase.sol';
+import { IVQuote } from '../../interfaces/IVQuote.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
@@ -26,7 +26,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
-        return address(protocol.pools[poolId].vToken).isZero() && poolId != address(protocol.vBase).truncate();
+        return address(protocol.pools[poolId].vToken).isZero() && poolId != address(protocol.vQuote).truncate();
     }
 
     /**
@@ -36,14 +36,14 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         public
         view
         returns (
-            IVBase vBase,
+            IVQuote vQuote,
             LiquidationParams memory liquidationParams,
             uint256 minRequiredMargin,
             uint256 removeLimitOrderFee,
             uint256 minimumOrderNotional
         )
     {
-        vBase = protocol.vBase;
+        vQuote = protocol.vQuote;
         liquidationParams = protocol.liquidationParams;
         minRequiredMargin = protocol.minRequiredMargin;
         removeLimitOrderFee = protocol.removeLimitOrderFee;
@@ -67,7 +67,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         view
         returns (
             address owner,
-            int256 vBaseBalance,
+            int256 vQuoteBalance,
             DepositTokenView[] memory tokenDeposits,
             VTokenPositionView[] memory tokenPositions
         )

@@ -62,11 +62,11 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     /// @notice parameters to be used for account balance update
-    /// @param vBaseIncrease specifies the increase in base balance
+    /// @param vQuoteIncrease specifies the increase in base balance
     /// @param vTokenIncrease specifies the increase in token balance
     /// @param traderPositionIncrease specifies the increase in trader position
     struct BalanceAdjustments {
-        int256 vBaseIncrease;
+        int256 vQuoteIncrease;
         int256 vTokenIncrease;
         int256 traderPositionIncrease;
     }
@@ -121,7 +121,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     struct SwapValues {
         int256 amountSpecified;
         int256 vTokenIn;
-        int256 vBaseIn;
+        int256 vQuoteIn;
         uint256 liquidityFees;
         uint256 protocolFees;
     }

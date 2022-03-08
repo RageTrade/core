@@ -35,7 +35,7 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
         }
     }
 
-    /// @notice Gives Fix Fee in Base denomination for the tx
+    /// @notice Gives Fix Fee in Settlement Token denomination for the tx
     /// @param l2GasUnits: includes L2 computation and storage gas units
     function _getFixFee(uint256 l2GasUnits)
         internal
