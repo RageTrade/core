@@ -10,8 +10,8 @@ import { PriceMath } from './PriceMath.sol';
 import { console } from 'hardhat/console.sol';
 
 library UniswapV3PoolHelper {
-    using UniswapV3PoolHelper for IUniswapV3Pool;
     using PriceMath for uint160;
+    using UniswapV3PoolHelper for IUniswapV3Pool;
 
     error IllegalTwapDuration(uint32 period);
     error OracleConsultFailed();
@@ -23,7 +23,7 @@ library UniswapV3PoolHelper {
     function sqrtPriceCurrent(IUniswapV3Pool v3Pool) internal view returns (uint160 sqrtPriceX96) {
         int24 tick;
         (sqrtPriceX96, tick, , , , , ) = v3Pool.slot0();
-        // TODO remove this logic
+        // TODO remove this logic, fix the tests to make it work without the logic.
         if (sqrtPriceX96 == 0) {
             sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         }

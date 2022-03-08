@@ -8,15 +8,12 @@ import { IVBase } from '../IVBase.sol';
 import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 
 interface IClearingHouseView is IClearingHouseStructures {
-    function isVTokenAddressAvailable(uint32 truncated) external view returns (bool);
+    function isPoolIdAvailable(uint32 truncated) external view returns (bool);
 
-    function getTwapSqrtPricesForSetDuration(IVToken vToken)
-        external
-        view
-        returns (uint256 realPriceX128, uint256 virtualPriceX128);
+    function getTwapPrices(IVToken vToken) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
 
     /**
-        Account.ProtocolInfo VIEW
+        Protocol.Info VIEW
      */
     function protocolInfo()
         external
@@ -37,7 +34,7 @@ interface IClearingHouseView is IClearingHouseStructures {
         Account.UserInfo VIEW
      */
 
-    function getAccountInfo(uint256 accountNo)
+    function getAccountInfo(uint256 accountId)
         external
         view
         returns (
@@ -47,14 +44,14 @@ interface IClearingHouseView is IClearingHouseStructures {
             VTokenPositionView[] memory tokenPositions
         );
 
-    function getAccountMarketValueAndRequiredMargin(uint256 accountNo, bool isInitialMargin)
+    function getAccountMarketValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         external
         view
         returns (int256 accountMarketValue, int256 requiredMargin);
 
-    function getAccountNetProfit(uint256 accountNo) external view returns (int256 accountNetProfit);
+    function getAccountNetProfit(uint256 accountId) external view returns (int256 accountNetProfit);
 
-    function getNetTokenPosition(uint256 accountNo, uint32 vTokenTruncatedAddess)
+    function getNetTokenPosition(uint256 accountId, uint32 vTokenTruncatedAddess)
         external
         view
         returns (int256 netPosition);

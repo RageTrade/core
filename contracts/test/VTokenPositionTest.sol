@@ -9,10 +9,10 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionTest {
-    using VTokenPosition for VTokenPosition.Position;
+    using VTokenPosition for VTokenPosition.Info;
 
     uint256 num;
-    mapping(uint256 => VTokenPosition.Position) internal dummys;
+    mapping(uint256 => VTokenPosition.Info) internal dummys;
 
     VPoolWrapperMock public wrapper;
 
@@ -25,7 +25,7 @@ contract VTokenPositionTest {
         int256 _netTraderPosition,
         int256 _sumAChkpt
     ) external {
-        VTokenPosition.Position storage dummy = dummys[num++];
+        VTokenPosition.Info storage dummy = dummys[num++];
         dummy.balance = _balance;
         dummy.netTraderPosition = _netTraderPosition;
         dummy.sumAX128Ckpt = _sumAChkpt;

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { IVToken } from '../libraries/VTokenLib.sol';
 
 import { IVBase } from './IVBase.sol';
 import { IVToken } from './IVToken.sol';
@@ -18,6 +17,16 @@ interface IVPoolWrapper {
     }
 
     event Swap(int256 vTokenIn, int256 vBaseIn, uint256 liquidityFees, uint256 protocolFees);
+
+    event Mint(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 basePrincipal);
+
+    event Burn(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 basePrincipal);
+
+    event AccruedProtocolFeeCollected(uint256 amount);
+
+    event LiquidityFeeUpdated(uint24 liquidityFeePips);
+
+    event ProtocolFeeUpdated(uint24 protocolFeePips);
 
     struct InitializeVPoolWrapperParams {
         IClearingHouse clearingHouse;
@@ -45,15 +54,27 @@ interface IVPoolWrapper {
         view
         returns (WrapperValuesInside memory wrapperValuesInside);
 
-    function liquidityChange(
+    function mint(
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidity
+        uint128 liquidity
     )
         external
         returns (
-            int256 vBaseAmount,
-            int256 vTokenAmount,
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
+            WrapperValuesInside memory wrapperValuesInside
+        );
+
+    function burn(
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    )
+        external
+        returns (
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
             WrapperValuesInside memory wrapperValuesInside
         );
 

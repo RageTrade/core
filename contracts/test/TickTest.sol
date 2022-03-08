@@ -6,7 +6,6 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { FundingPayment } from '../libraries/FundingPayment.sol';
 import { Tick } from '../libraries/Tick.sol';
-import { VTokenLib } from '../libraries/VTokenLib.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -16,7 +15,6 @@ contract TickTest {
     using FundingPayment for FundingPayment.Info;
     using Tick for mapping(int24 => Tick.Info);
     using Tick for IUniswapV3Pool;
-    using VTokenLib for IVToken;
 
     mapping(int24 => Tick.Info) public ticksExtended;
 

@@ -25,7 +25,7 @@ import {
   Account__factory,
 } from '../typechain-types';
 
-import { AccountInterface, TokenPositionChangeEvent } from '../typechain-types/Account';
+import { AccountInterface, TokenPositionChangedEvent } from '../typechain-types/Account';
 
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
@@ -53,7 +53,7 @@ import {
 
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
-import { FundingPaymentEvent } from '../typechain-types/Account';
+import { FundingPaymentRealizedEvent } from '../typechain-types/Account';
 import { truncate } from './utils/vToken';
 const whaleForBase = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -225,10 +225,10 @@ describe('Clearing House Scenario 6', () => {
         }
       })
       .filter(event => event !== null)
-      .filter(event => event?.name === 'TokenPositionChange') as unknown as TokenPositionChangeEvent[];
+      .filter(event => event?.name === 'TokenPositionChanged') as unknown as TokenPositionChangedEvent[];
 
     const event = eventList[0];
-    expect(event.args.accountNo).to.eq(expectedUserAccountNo);
+    expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
     expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
     expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
@@ -254,11 +254,11 @@ describe('Clearing House Scenario 6', () => {
         }
       })
       .filter(event => event !== null)
-      .filter(event => event?.name === 'FundingPayment') as unknown as FundingPaymentEvent[];
+      .filter(event => event?.name === 'FundingPaymentRealized') as unknown as FundingPaymentRealizedEvent[];
 
     const event = eventList[0];
 
-    expect(event.args.accountNo).to.eq(expectedUserAccountNo);
+    expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
     expect(event.args.tickLower).to.eq(expectedTickLower);
     expect(event.args.tickUpper).to.eq(expectedTickUpper);
@@ -724,21 +724,21 @@ describe('Clearing House Scenario 6', () => {
       user0AccountNo = 0;
       expect(await clearingHouseTest.numAccounts()).to.eq(1);
       expect(await clearingHouseTest.getAccountOwner(user0AccountNo)).to.eq(user0.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user0AccountNo)).to.eq(user0AccountNo);
+      // expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user0AccountNo)).to.eq(user0AccountNo);
     });
     it('Create Account - 2', async () => {
       await clearingHouseTest.connect(user1).createAccount();
       user1AccountNo = 1;
       expect(await clearingHouseTest.numAccounts()).to.eq(2);
       expect(await clearingHouseTest.getAccountOwner(user1AccountNo)).to.eq(user1.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user1AccountNo)).to.eq(user1AccountNo);
+      // expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user1AccountNo)).to.eq(user1AccountNo);
     });
     it('Create Account - 3', async () => {
       await clearingHouseTest.connect(user2).createAccount();
       user2AccountNo = 2;
       expect(await clearingHouseTest.numAccounts()).to.eq(3);
       expect(await clearingHouseTest.getAccountOwner(user2AccountNo)).to.eq(user2.address);
-      expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user2AccountNo)).to.eq(user2AccountNo);
+      // expect(await clearingHouseTest.getAccountNumInTokenPositionSet(user2AccountNo)).to.eq(user2AccountNo);
     });
     it('Tokens Intialized', async () => {
       expect(await clearingHouseTest.getTokenAddressInVTokens(vTokenAddress)).to.eq(vTokenAddress);

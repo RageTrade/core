@@ -43,6 +43,6 @@ export async function setupWrapper(setupArgs: SetupArgs) {
     realPriceX128: BigNumberish;
     virtualPriceX128: BigNumberish;
   }) {
-    clearingHouse.getTwapSqrtPricesForSetDuration.returns([realPriceX128, virtualPriceX128]);
+    clearingHouse.getTwapPrices.returns([realPriceX128, virtualPriceX128]);
   }
 }

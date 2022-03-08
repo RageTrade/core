@@ -63,7 +63,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
         vPool = IUniswapV3Pool(vPoolAddress);
     }
 
-    int256 _liquidity;
+    uint256 _liquidity;
 
     function setLiquidityRates(
         int24 tickLower,
@@ -76,26 +76,41 @@ contract VPoolWrapperMock is IVPoolWrapper {
         liquidityRate.vTokenPerLiquidity = vTokenPerLiquidity;
     }
 
-    function liquidityChange(
+    function mint(
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidity
+        uint128 liquidity
     )
         external
         returns (
-            int256 vBaseAmount,
-            int256 vTokenAmount,
+            uint256 vTokenAmount,
+            uint256 vBaseAmount,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
-        if (liquidity > 0) {
-            _liquidity += liquidity;
-        } else {
-            _liquidity -= liquidity;
-        }
+        _liquidity += liquidity;
 
-        vBaseAmount = int256(_liquidityRates[tickLower][tickUpper].vBasePerLiquidity) * liquidity;
-        vTokenAmount = int256(_liquidityRates[tickLower][tickUpper].vTokenPerLiquidity) * liquidity;
+        vTokenAmount = _liquidityRates[tickLower][tickUpper].vTokenPerLiquidity * liquidity;
+        vBaseAmount = _liquidityRates[tickLower][tickUpper].vBasePerLiquidity * liquidity;
+        wrapperValuesInside = getValuesInside(tickLower, tickUpper);
+    }
+
+    function burn(
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    )
+        external
+        returns (
+            uint256 vTokenAmount,
+            uint256 vBaseAmount,
+            WrapperValuesInside memory wrapperValuesInside
+        )
+    {
+        _liquidity -= liquidity;
+
+        vBaseAmount = _liquidityRates[tickLower][tickUpper].vBasePerLiquidity * liquidity;
+        vTokenAmount = _liquidityRates[tickLower][tickUpper].vTokenPerLiquidity * liquidity;
         wrapperValuesInside = getValuesInside(tickLower, tickUpper);
     }
 

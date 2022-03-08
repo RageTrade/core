@@ -52,12 +52,12 @@ describe('PoolWrapper', () => {
     });
 
     it('adds liquidity', async () => {
-      await vPoolWrapper.liquidityChange(biggerRange.tickLower, biggerRange.tickUpper, 10_000_000);
+      await vPoolWrapper.mint(biggerRange.tickLower, biggerRange.tickUpper, 10_000_000);
       expect(await vPool.liquidity()).to.eq(10_000_000);
     });
 
     it('removes liquidity', async () => {
-      await vPoolWrapper.liquidityChange(biggerRange.tickLower, biggerRange.tickUpper, -4_000_000);
+      await vPoolWrapper.burn(biggerRange.tickLower, biggerRange.tickUpper, 4_000_000);
       expect(await vPool.liquidity()).to.eq(6_000_000);
     });
 
@@ -76,7 +76,7 @@ describe('PoolWrapper', () => {
       // add liquidity in the middle
       const { tick } = await vPool.slot0();
 
-      await vPoolWrapper.liquidityChange(smallerRange.tickLower, smallerRange.tickUpper, 4_000_000);
+      await vPoolWrapper.mint(smallerRange.tickLower, smallerRange.tickUpper, 4_000_000);
 
       fpGlobal = await getGlobal();
       // lower tick should be set to global state
@@ -153,9 +153,9 @@ describe('PoolWrapper', () => {
       liquidity1 = maxLiquidityForAmounts(sqrtPriceX96, -30, 30, parseUnits('100', 18), parseUnits('100', 18), true);
       liquidity2 = maxLiquidityForAmounts(sqrtPriceX96, 30, 60, parseUnits('100', 18), parseUnits('100', 18), true);
 
-      await vPoolWrapper.liquidityChange(-60, -30, liquidity2);
-      await vPoolWrapper.liquidityChange(-30, 30, liquidity1);
-      await vPoolWrapper.liquidityChange(30, 60, liquidity2);
+      await vPoolWrapper.mint(-60, -30, liquidity2);
+      await vPoolWrapper.mint(-30, 30, liquidity1);
+      await vPoolWrapper.mint(30, 60, liquidity2);
     });
 
     describe('values', () => {
@@ -537,8 +537,11 @@ describe('PoolWrapper', () => {
     // console.log(
     //   `adding liquidity between ${priceLowerActual} (tick: ${tickLower}) and ${priceUpperActual} (tick: ${tickUpper})`,
     // );
-
-    await vPoolWrapper.liquidityChange(tickLower, tickUpper, liquidityDelta);
+    if (!BigNumber.from(liquidityDelta).isNegative()) {
+      await vPoolWrapper.mint(tickLower, tickUpper, liquidityDelta);
+    } else {
+      await vPoolWrapper.burn(tickLower, tickUpper, liquidityDelta);
+    }
   }
 
   async function extractTransferEvents(tx: ContractTransaction | Promise<ContractTransaction>) {

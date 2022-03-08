@@ -13,8 +13,8 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
+import { Protocol } from './Protocol.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
-import { PoolIdHelper } from './PoolIdHelper.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { FundingPayment } from './FundingPayment.sol';
 
@@ -25,14 +25,22 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { console } from 'hardhat/console.sol';
 
 library LiquidityPosition {
-    using PriceMath for uint160;
-    using SignedFullMath for int256;
     using FullMath for uint256;
+    using PriceMath for uint160;
     using SafeCast for uint256;
-    using LiquidityPosition for Info;
-    using PoolIdHelper for uint32;
     using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
+
+    using LiquidityPosition for LiquidityPosition.Info;
+    using Protocol for Protocol.Info;
+
+    struct Set {
+        // multiple per pool because it's non-fungible, allows for 4 billion LP positions lifetime
+        uint48[5] active;
+        // concat(tickLow,tickHigh)
+        mapping(uint48 => LiquidityPosition.Info) positions;
+        uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
+    }
 
     struct Info {
         //Extra boolean to check if it is limit order and uint to track limit price.
@@ -85,29 +93,49 @@ library LiquidityPosition {
 
     function liquidityChange(
         Info storage position,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
-        int128 liquidity,
+        int128 liquidityDelta,
         IVPoolWrapper wrapper,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
     ) internal {
-        (
-            int256 basePrincipal,
-            int256 vTokenPrincipal,
-            IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside
-        ) = wrapper.liquidityChange(position.tickLower, position.tickUpper, liquidity);
+        int256 vTokenPrincipal;
+        int256 basePrincipal;
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside;
 
-        position.update(accountNo, poolId, wrapperValuesInside, balanceAdjustments);
+        if (liquidityDelta > 0) {
+            uint256 vTokenPrincipal_;
+            uint256 basePrincipal_;
+            (vTokenPrincipal_, basePrincipal_, wrapperValuesInside) = wrapper.mint(
+                position.tickLower,
+                position.tickUpper,
+                uint128(liquidityDelta)
+            );
+            vTokenPrincipal = vTokenPrincipal_.toInt256();
+            basePrincipal = basePrincipal_.toInt256();
+        } else {
+            uint256 vTokenPrincipal_;
+            uint256 basePrincipal_;
+            (vTokenPrincipal_, basePrincipal_, wrapperValuesInside) = wrapper.burn(
+                position.tickLower,
+                position.tickUpper,
+                uint128(-liquidityDelta)
+            );
+            vTokenPrincipal = -vTokenPrincipal_.toInt256();
+            basePrincipal = -basePrincipal_.toInt256();
+        }
+
+        position.update(accountId, poolId, wrapperValuesInside, balanceAdjustments);
 
         balanceAdjustments.vBaseIncrease -= basePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
-        emit Account.LiquidityChange(
-            accountNo,
+        emit Account.LiquidityChanged(
+            accountId,
             poolId,
             position.tickLower,
             position.tickUpper,
-            liquidity,
+            liquidityDelta,
             position.limitOrderType,
             -vTokenPrincipal,
             -basePrincipal
@@ -120,10 +148,10 @@ library LiquidityPosition {
             balanceAdjustments.traderPositionIncrease += (tokenAmountCurrent - position.vTokenAmountIn);
         }
 
-        if (liquidity > 0) {
-            position.liquidity += uint128(liquidity);
-        } else if (liquidity < 0) {
-            position.liquidity -= uint128(liquidity * -1);
+        if (liquidityDelta > 0) {
+            position.liquidity += uint128(liquidityDelta);
+        } else if (liquidityDelta < 0) {
+            position.liquidity -= uint128(-liquidityDelta);
         }
 
         position.vTokenAmountIn = tokenAmountCurrent + vTokenPrincipal;
@@ -131,7 +159,7 @@ library LiquidityPosition {
 
     function update(
         Info storage position,
-        uint256 accountNo,
+        uint256 accountId,
         uint32 poolId,
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments
@@ -145,8 +173,14 @@ library LiquidityPosition {
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vBaseIncrease += unrealizedLiquidityFee;
 
-        emit Account.FundingPayment(accountNo, poolId, position.tickLower, position.tickUpper, fundingPayment);
-        emit Account.LiquidityFee(accountNo, poolId, position.tickLower, position.tickUpper, unrealizedLiquidityFee);
+        emit Account.FundingPaymentRealized(accountId, poolId, position.tickLower, position.tickUpper, fundingPayment);
+        emit Account.LiquidityPositionEarningsRealized(
+            accountId,
+            poolId,
+            position.tickLower,
+            position.tickUpper,
+            unrealizedLiquidityFee
+        );
         // updating checkpoints
         position.sumALastX128 = wrapperValuesInside.sumAX128;
         position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
@@ -208,13 +242,13 @@ library LiquidityPosition {
     function longSideRisk(
         Info storage position,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
+        Protocol.Info storage protocol
     ) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX96;
         {
-            uint160 sqrtPriceTwapX96 = poolId.getVirtualTwapSqrtPriceX96(protocol);
+            uint160 sqrtPriceTwapX96 = protocol.getVirtualTwapSqrtPriceX96For(poolId);
             uint160 sqrtPriceForExecutionPriceX96 = sqrtPriceTwapX96 <= sqrtPriceUpperX96
                 ? sqrtPriceTwapX96
                 : sqrtPriceUpperX96;
@@ -243,13 +277,13 @@ library LiquidityPosition {
         return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
     }
 
-    function baseValue(
+    function marketValue(
         Info storage position,
         uint160 valuationSqrtPriceX96,
         uint32 poolId,
-        Account.ProtocolInfo storage protocol
-    ) internal view returns (int256 baseValue_) {
-        return position.baseValue(valuationSqrtPriceX96, poolId.vPoolWrapper(protocol));
+        Protocol.Info storage protocol
+    ) internal view returns (int256 marketValue_) {
+        return position.marketValue(valuationSqrtPriceX96, protocol.vPoolWrapperFor(poolId));
     }
 
     function tokenAmountsInRange(
@@ -277,23 +311,23 @@ library LiquidityPosition {
             .toInt256();
     }
 
-    function baseValue(
+    function marketValue(
         Info storage position,
         uint160 valuationSqrtPriceX96,
         IVPoolWrapper wrapper
-    ) internal view returns (int256 baseValue_) {
+    ) internal view returns (int256 marketValue_) {
         {
             (int256 vTokenAmount, int256 vBaseAmount) = position.tokenAmountsInRange(valuationSqrtPriceX96, false);
             uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
-            baseValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
+            marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vBaseAmount;
         }
         // adding fees
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getExtrapolatedValuesInside(
             position.tickLower,
             position.tickUpper
         );
-        baseValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
-        baseValue_ += position.unrealizedFundingPayment(
+        marketValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
+        marketValue_ += position.unrealizedFundingPayment(
             wrapperValuesInside.sumAX128,
             wrapperValuesInside.sumFpInsideX128
         );

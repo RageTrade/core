@@ -119,9 +119,19 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 13321.7428693545
     // ReqMargin (InitialMargin) 26643.485738709
     it('Scenario 1 - Add Range', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
-        125271786680,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('30105615887850845791'),
+        125271786680,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('30105615887850845791'),
+        125271786680,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -156,7 +166,17 @@ describe('Market Value and Required Margin', () => {
     //  ReqMargin (MaintenanceMargin) 42518.0764004743
     // ReqMargin (InitialMargin) 85036.1528009486
     it('Scenario 3 - Add Range Outside', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
+      vPoolWrapperFake.mint.returns([
+        0,
+        239585552683,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
         239585552683,
         0,
         {
@@ -194,7 +214,17 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 43881.5805109528
     // ReqMargin (InitialMargin) 87763.1610219056
     it('Scenario 5 - Add Range Outside', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
+      vPoolWrapperFake.mint.returns([
+        BigNumber.from('26954936243705637801'),
+        70104066864,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
         70104066864,
         BigNumber.from('26954936243705637801'),
         {
@@ -240,9 +270,19 @@ describe('Market Value and Required Margin', () => {
       vPoolFake.slot0.returns([0, -198080, 0, 0, 0, 0, false]);
     });
     it('Scenario 1 - Full Range', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
-        499982719827,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('200000000000000000000'),
+        499982719827,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('200000000000000000000'),
+        499982719827,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -255,9 +295,19 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 2 - Concentrated Range (Same Liquidity as full range)', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
-        252508487108,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('101011935963275000000'),
+        252508487108,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('101011935963275000000'),
+        252508487108,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -270,9 +320,19 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 3 - Concentrated Range (Same notional value of assets as full range)', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
-        499957722224,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('200000000000000000000'),
+        499957722224,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('200000000000000000000'),
+        499957722224,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -290,9 +350,19 @@ describe('Market Value and Required Margin', () => {
 
       await matchNumbers(0, 49998271982, 24999135991);
 
-      vPoolWrapperFake.liquidityChange.returns([
-        499999999998,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('0'),
+        499999999998,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('0'),
+        499999999998,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -310,9 +380,19 @@ describe('Market Value and Required Margin', () => {
 
       await matchNumbers(-3, 49998271982, 24999135991);
 
-      vPoolWrapperFake.liquidityChange.returns([
-        0,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('200000000000000000000'),
+        0,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('200000000000000000000'),
+        0,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -325,9 +405,19 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 6 - Long Range + Short Range)', async () => {
-      vPoolWrapperFake.liquidityChange.returns([
-        500000000000,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('0'),
+        500000000000,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('0'),
+        500000000000,
         {
           sumAX128: 0,
           sumBInsideX128: 0,
@@ -338,9 +428,19 @@ describe('Market Value and Required Margin', () => {
       await liqChange1(-290188, -198080, 10101184697695600n);
       await matchNumbers(-2, 99999999999, 49999999999);
 
-      vPoolWrapperFake.liquidityChange.returns([
-        0,
+      vPoolWrapperFake.mint.returns([
         BigNumber.from('200000000000000000000'),
+        0,
+        {
+          sumAX128: 0,
+          sumBInsideX128: 0,
+          sumFpInsideX128: 0,
+          sumFeeInsideX128: 0,
+        },
+      ]);
+      vPoolWrapperFake.burn.returns([
+        BigNumber.from('200000000000000000000'),
+        0,
         {
           sumAX128: 0,
           sumBInsideX128: 0,

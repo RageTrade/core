@@ -9,7 +9,7 @@ contract PriceMathTest {
         return PriceMath.toPriceX128(sqrtPriceX96);
     }
 
-    function toSqrtPriceX96(uint256 priceX128) public view returns (uint160 sqrtPriceX96) {
+    function toSqrtPriceX96(uint256 priceX128) public pure returns (uint160 sqrtPriceX96) {
         return PriceMath.toSqrtPriceX96(priceX128);
     }
 }

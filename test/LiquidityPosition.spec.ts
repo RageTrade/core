@@ -241,7 +241,7 @@ describe('LiquidityPosition Library', () => {
   describe('#baseValue', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
-      expect(await test.baseValue(oneSqrtPrice)).to.eq(0);
+      expect(await test.marketValue(oneSqrtPrice)).to.eq(0);
     });
 
     testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
@@ -266,7 +266,7 @@ describe('LiquidityPosition Library', () => {
         // TODO: refactor these tests
         const priceX128 = sqrtPriceCurrent.mul(sqrtPriceCurrent).div(ethers.constants.One.shl(64));
 
-        expect(await test.baseValue(sqrtPriceCurrent)).to.eq(
+        expect(await test.marketValue(sqrtPriceCurrent)).to.eq(
           baseActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
         );
       });

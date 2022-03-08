@@ -9,7 +9,7 @@ import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/i
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
-import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+// import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
@@ -19,11 +19,11 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
-import { VTokenLib } from '../../libraries/VTokenLib.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { Tick } from '../../libraries/Tick.sol';
 import { PriceMath } from '../../libraries/PriceMath.sol';
+import { SafeCast } from '../../libraries/SafeCast.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { SignedFullMath } from '../../libraries/SignedFullMath.sol';
 import { SwapMath } from '../../libraries/SwapMath.sol';
@@ -40,14 +40,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using FundingPayment for FundingPayment.Info;
     using SignedMath for int256;
     using SignedFullMath for int256;
-
     using PriceMath for uint160;
     using SafeCast for uint256;
+    using SafeCast for uint128;
     using SimulateSwap for IUniswapV3Pool;
     using Tick for IUniswapV3Pool;
     using Tick for mapping(int24 => Tick.Info);
     using UniswapV3PoolHelper for IUniswapV3Pool;
-    using VTokenLib for IVToken;
 
     IClearingHouse public clearingHouse;
     IVToken public vToken;
@@ -123,13 +122,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     function collectAccruedProtocolFee() external onlyClearingHouse returns (uint256 accruedProtocolFeeLast) {
         accruedProtocolFeeLast = accruedProtocolFee - 1;
         accruedProtocolFee = 1;
+        emit AccruedProtocolFeeCollected(accruedProtocolFeeLast);
     }
 
     // for updating global funding payment
     function updateGlobalFundingState() public {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            IVToken(address(vToken)) // TODO use IVToken as custom type
-        );
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
         fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
 
@@ -139,16 +137,19 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function setLiquidityFee(uint24 liquidityFeePips_) external onlyGovernance {
         liquidityFeePips = liquidityFeePips_;
+        emit LiquidityFeeUpdated(liquidityFeePips_);
     }
 
     function setProtocolFee(uint24 protocolFeePips_) external onlyGovernance {
         protocolFeePips = protocolFeePips_;
+        emit ProtocolFeeUpdated(protocolFeePips_);
     }
 
     /**
         EXTERNAL UTILITY METHODS
      */
 
+    // TODO remove this method
     /// @notice swaps token
     /// @param amount: positive means long, negative means short
     /// @param isNotional: true means amountSpecified is dollar amount
@@ -220,44 +221,61 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         return (swapValues.vTokenIn, swapValues.vBaseIn);
     }
 
-    function liquidityChange(
+    function mint(
         int24 tickLower,
         int24 tickUpper,
-        int128 liquidityDelta
+        uint128 liquidity
     )
         external
         onlyClearingHouse
         checkTicks(tickLower, tickUpper)
         returns (
-            int256 basePrincipal,
-            int256 vTokenPrincipal,
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
         updateGlobalFundingState();
-        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidityDelta, vPool.tickCurrent());
-        if (liquidityDelta > 0) {
-            (uint256 _amount0, uint256 _amount1) = vPool.mint({
-                recipient: address(this),
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount: uint128(liquidityDelta),
-                data: ''
-            });
-            vTokenPrincipal = _amount0.toInt256();
-            basePrincipal = _amount1.toInt256();
-        } else {
-            (uint256 _amount0, uint256 _amount1) = vPool.burn({
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount: uint128(liquidityDelta * -1)
-            });
-            vTokenPrincipal = _amount0.toInt256() * -1;
-            basePrincipal = _amount1.toInt256() * -1;
-            // review : do we want final amount here with fees included or just the am for liq ?
-            // As per spec its am for liq only
-            _collect(tickLower, tickUpper);
-        }
+        wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidity.toInt128(), vPool.tickCurrent());
+
+        (uint256 _amount0, uint256 _amount1) = vPool.mint({
+            recipient: address(this),
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount: liquidity,
+            data: ''
+        });
+
+        vTokenPrincipal = _amount0;
+        basePrincipal = _amount1;
+    }
+
+    function burn(
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    )
+        external
+        onlyClearingHouse
+        checkTicks(tickLower, tickUpper)
+        returns (
+            uint256 vTokenPrincipal,
+            uint256 basePrincipal,
+            WrapperValuesInside memory wrapperValuesInside
+        )
+    {
+        updateGlobalFundingState();
+        wrapperValuesInside = _updateTicks(tickLower, tickUpper, -liquidity.toInt128(), vPool.tickCurrent());
+
+        (uint256 _amount0, uint256 _amount1) = vPool.burn({
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount: liquidity
+        });
+
+        vTokenPrincipal = _amount0;
+        basePrincipal = _amount1;
+        _collect(tickLower, tickUpper);
     }
 
     /**
@@ -295,9 +313,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function getExtrapolatedSumAX128() public view returns (int256) {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-            IVToken(address(vToken)) // TODO use IVToken as custom type
-        );
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
         return
             FundingPayment.extrapolatedSumAX128(
                 fpGlobal.sumAX128,
@@ -393,9 +409,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // );
 
         if (state.liquidity > 0 && vTokenAmount > 0) {
-            (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapSqrtPricesForSetDuration(
-                IVToken(address(vToken)) // TODO use IVToken as custom type
-            );
+            (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
             fpGlobal.update(
                 swapVTokenForVBase ? vTokenAmount.toInt256() : -vTokenAmount.toInt256(), // when trader goes long, LP goes short
                 state.liquidity,

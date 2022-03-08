@@ -1,5 +1,5 @@
 {
-  "address": "0x60E442f88DCb4061eDA66199a49F587E25055372",
+  "address": "0x49a9b9322c3934decd9e7712B59bF1ADb345c45e",
   "abi": [
     {
       "inputs": [],
@@ -79,7 +79,7 @@
           "type": "string"
         }
       ],
-      "name": "__InsuranceFund_init",
+      "name": "__initialize_InsuranceFund",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
