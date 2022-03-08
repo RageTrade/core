@@ -41,7 +41,9 @@ contract LiquidityPositionTest is AccountProtocolInfoMock {
     }
 
     function liquidityChange(int128 liquidity) public {
-        lp.liquidityChange(0, 0, liquidity, wrapper, balanceAdjustments);
+        protocol.pools[0].vPoolWrapper = wrapper;
+        protocol.pools[0].vPool = wrapper.vPool();
+        lp.liquidityChange(0, 0, liquidity, balanceAdjustments, protocol);
     }
 
     function maxNetPosition() public view returns (uint256) {
