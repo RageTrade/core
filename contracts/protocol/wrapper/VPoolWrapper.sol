@@ -149,22 +149,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         EXTERNAL UTILITY METHODS
      */
 
-    // TODO remove this method
-    /// @notice swaps token
-    /// @param amount: positive means long, negative means short
-    /// @param isNotional: true means amountSpecified is dollar amount
-    /// @param sqrtPriceLimitX96: The Q64.96 sqrt price limit. If zero for one, the price cannot be less than this
-    /// value after the swap. If one for zero, the price cannot be greater than this value after the swap.
-    function swapToken(
-        int256 amount,
-        uint160 sqrtPriceLimitX96,
-        bool isNotional
-    ) external returns (int256 vTokenAmount, int256 vQuoteAmount) {
-        // case isNotional true
-        // amountSpecified is positive
-        return swap(amount < 0, isNotional ? amount : -amount, sqrtPriceLimitX96);
-    }
-
     /// @notice Swap vToken for vQuote, or vQuote for vToken
     /// @param swapVTokenForVQuote: The direction of the swap, true for vToken to vQuote, false for vQuote to vToken
     /// @param amountSpecified: The amount of the swap, which implicitly configures the swap as exact input (positive), or exact output (negative)
@@ -174,7 +158,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         bool swapVTokenForVQuote, // zeroForOne
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    ) public onlyClearingHouse returns (int256, int256) {
+    ) public onlyClearingHouse returns (int256 vTokenAmount, int256 vQuoteAmount) {
         bool exactIn = amountSpecified >= 0;
 
         if (sqrtPriceLimitX96 == 0) {

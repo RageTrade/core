@@ -368,10 +368,10 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Protocol.Info storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        (vTokenAmountOut, vQuoteAmountOut) = wrapper.swapToken(
-            swapParams.amount,
-            swapParams.sqrtPriceLimit,
-            swapParams.isNotional
+        (vTokenAmountOut, vQuoteAmountOut) = wrapper.swap(
+            swapParams.amount < 0,
+            swapParams.isNotional ? swapParams.amount : -swapParams.amount,
+            swapParams.sqrtPriceLimit
         );
 
         // change direction basis uniswap to balance increase

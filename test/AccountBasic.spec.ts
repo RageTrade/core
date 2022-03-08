@@ -128,11 +128,11 @@ describe('Account Library Test Basic', () => {
     });
     test = await factory.deploy();
 
-    vPoolWrapperFake.swapToken.returns((input: any) => {
-      if (input.isNotional) {
-        return [input.amount.mul(-1).div(4000), input.amount];
+    vPoolWrapperFake.swap.returns((input: any) => {
+      if (input.amountSpecified.gt(0) === input.swapVTokenForVQuote) {
+        return [input.amountSpecified, input.amountSpecified.mul(-1).mul(4000)];
       } else {
-        return [input.amount.mul(-1), input.amount.mul(4000)];
+        return [input.amountSpecified.mul(-1).div(4000), input.amountSpecified];
       }
     });
 

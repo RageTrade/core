@@ -80,17 +80,23 @@ describe('Account Library Test Realistic', () => {
     const priceX128 = await priceToNearestPriceX128(price, vQuote, vToken);
     const sqrtPriceX96 = await priceToSqrtPriceX96(price, vQuote, vToken);
 
-    vPoolWrapperFake.swapToken.returns((input: any) => {
-      if (input.isNotional) {
+    vPoolWrapperFake.swap.returns((input: any) => {
+      if (input.amountSpecified.gt(0) === input.swapVTokenForVQuote) {
         return [
-          input.amount
-            .mul(1n << 128n)
-            .div(priceX128)
+          input.amountSpecified,
+          input.amountSpecified
+            .mul(priceX128)
+            .div(1n << 128n)
             .mul(-1),
-          input.amount,
         ];
       } else {
-        return [input.amount.mul(-1), input.amount.mul(priceX128).div(1n << 128n)];
+        return [
+          input.amountSpecified
+            .mul(-1)
+            .mul(1n << 128n)
+            .div(priceX128),
+          input.amountSpecified,
+        ];
       }
     });
 
