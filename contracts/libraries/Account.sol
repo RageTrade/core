@@ -504,8 +504,8 @@ library Account {
             int256 insuranceFundFee
         )
     {
-        uint16 maintainanceMarginFactor = protocol.getMarginRatioFor(poolId, false);
-        uint256 priceX128 = protocol.getVirtualCurrentPriceX128For(poolId);
+        uint16 maintainanceMarginFactor = protocol.getMarginRatio(poolId, false);
+        uint256 priceX128 = protocol.getVirtualCurrentPriceX128(poolId);
         uint256 priceDeltaX128 = priceX128.mulDiv(protocol.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
             maintainanceMarginFactor,
             1e5
@@ -545,7 +545,7 @@ library Account {
         int256 fixFee,
         Protocol.Info storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        protocol.vPoolWrapperFor(poolId).updateGlobalFundingState();
+        protocol.vPoolWrapper(poolId).updateGlobalFundingState();
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
             .BalanceAdjustments({
