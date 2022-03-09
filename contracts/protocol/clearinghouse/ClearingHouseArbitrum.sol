@@ -9,6 +9,7 @@ import { ArbGasInfo } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbGasInfo.
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
+import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { Arbitrum } from '../../libraries/Arbitrum.sol';
 import { PriceMath } from '../../libraries/PriceMath.sol';
 
@@ -18,6 +19,7 @@ import { ClearingHouse } from './ClearingHouse.sol';
 import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
+    using AddressHelper for address;
     using FullMath for uint256;
     using PriceMath for uint160;
 
@@ -44,7 +46,7 @@ contract ClearingHouseArbitrum is ClearingHouse, TxGasPriceLimit {
         checkTxGasPrice(tx.gasprice)
         returns (uint256 fixFee)
     {
-        if (l2GasUnits == 0 || address(nativeOracle) == address(0)) return 0;
+        if (l2GasUnits == 0 || address(nativeOracle).isZero()) return 0;
 
         uint256 l1FeeInWei;
 

@@ -3,31 +3,36 @@
 pragma solidity ^0.8.9;
 
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 import { AggregatorV3Interface } from '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
 import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
-import { IOracle } from '../interfaces/IOracle.sol';
+
+import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { PriceMath } from '../libraries/PriceMath.sol';
 
+import { IOracle } from '../interfaces/IOracle.sol';
+
 contract ChainlinkOracle is IOracle {
+    using AddressHelper for address;
     using FullMath for uint256;
     using SafeCast for uint256;
-    using Address for address;
     using PriceMath for uint256;
 
     AggregatorV3Interface public aggregator;
     uint8 immutable tokenDecimals;
     uint8 immutable baseDecimals;
 
+    error NotEnoughHistory();
+    error IllegalAggregatorAddress(address aggregator);
+
     constructor(
         address _aggregator,
         uint8 _tokenDecimals,
         uint8 _baseDecimals
     ) {
-        if (_aggregator == address(0)) revert ZeroAddress();
+        if (_aggregator.isZero()) revert IllegalAggregatorAddress(address(0));
         aggregator = AggregatorV3Interface(_aggregator);
         tokenDecimals = _tokenDecimals;
         baseDecimals = _baseDecimals;

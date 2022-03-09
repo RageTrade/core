@@ -19,6 +19,7 @@ import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
 contract VTokenPositionSetTest is AccountProtocolInfoMock {
     using AddressHelper for address;
+    using AddressHelper for IVToken;
     using Uint32L8ArrayLib for uint32[8];
 
     using LiquidityPositionSet for LiquidityPosition.Set;
@@ -36,24 +37,24 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
     }
 
     function init(IVToken vToken) external {
-        VTokenPositionSet.activate(dummy, address(vToken).truncate());
-        vTokens[address(vToken).truncate()] = vToken;
+        VTokenPositionSet.activate(dummy, vToken.truncate());
+        vTokens[vToken.truncate()] = vToken;
         wrapper.setLiquidityRates(-100, 100, 4000, 1);
         wrapper.setLiquidityRates(-50, 50, 4000, 1);
     }
 
     function update(IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments, IVToken vToken) external {
-        dummy.update(accountId, balanceAdjustments, address(vToken).truncate(), protocol);
+        dummy.update(accountId, balanceAdjustments, vToken.truncate(), protocol);
     }
 
     function realizeFundingPaymentToAccount(IVToken vToken) external {
-        dummy.realizeFundingPayment(accountId, address(vToken).truncate(), wrapper, protocol);
+        dummy.realizeFundingPayment(accountId, vToken.truncate(), wrapper, protocol);
     }
 
     function swapTokenAmount(IVToken vToken, int256 vTokenAmount) external {
         dummy.swapToken(
             accountId,
-            address(vToken).truncate(),
+            vToken.truncate(),
             IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
             wrapper,
             protocol
@@ -63,7 +64,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
     function swapTokenNotional(IVToken vToken, int256 vTokenNotional) external {
         dummy.swapToken(
             accountId,
-            address(vToken).truncate(),
+            vToken.truncate(),
             IClearingHouseStructures.SwapParams(vTokenNotional, 0, true, false),
             wrapper,
             protocol
@@ -77,7 +78,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         int128 liquidity
     ) external {
         // overriding the wrapper to use the mock
-        protocol.pools[address(vToken).truncate()].vPoolWrapper = wrapper;
+        protocol.pools[vToken.truncate()].vPoolWrapper = wrapper;
 
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams = IClearingHouseStructures
             .LiquidityChangeParams(
@@ -89,15 +90,15 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
                 false,
                 IClearingHouseEnums.LimitOrderType.NONE
             );
-        dummy.liquidityChange(accountId, address(vToken).truncate(), liquidityChangeParams, wrapper, protocol);
+        dummy.liquidityChange(accountId, vToken.truncate(), liquidityChangeParams, wrapper, protocol);
     }
 
     function liquidateLiquidityPositions(IVToken vToken) external {
-        dummy.liquidateLiquidityPositions(address(vToken).truncate(), wrapper, protocol);
+        dummy.liquidateLiquidityPositions(vToken.truncate(), wrapper, protocol);
     }
 
     function getIsActive(address vToken) external view returns (bool) {
-        return dummy.active.exists(uint32(uint160(vToken)));
+        return dummy.active.exists(vToken.truncate());
     }
 
     function getPositionDetails(IVToken vToken)
@@ -109,7 +110,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
             int256 netTraderPosition
         )
     {
-        VTokenPosition.Info storage pos = dummy.positions[address(vToken).truncate()];
+        VTokenPosition.Info storage pos = dummy.positions[vToken.truncate()];
         return (pos.balance, pos.sumAX128Ckpt, pos.netTraderPosition);
     }
 

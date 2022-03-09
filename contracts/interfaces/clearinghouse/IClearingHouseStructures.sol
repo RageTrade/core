@@ -85,12 +85,12 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     struct DepositTokenView {
-        address cTokenAddress;
+        IERC20 collateral;
         uint256 balance;
     }
 
     struct VTokenPositionView {
-        address vTokenAddress;
+        IVToken vToken;
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
         int256 sumAX128Ckpt;
