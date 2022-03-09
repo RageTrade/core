@@ -586,7 +586,7 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, tokenAmount('100000', 6));
       expect(await settlementToken.balanceOf(user1.address)).to.eq(0);
       expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
-      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
+      const accountTokenPosition = await clearingHouseTest.functions.getAccountQuoteBalance(user1AccountNo);
       expect(accountTokenPosition.balance).to.eq(tokenAmount('100000', 6));
     });
 
@@ -594,7 +594,7 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, -tokenAmount('100000', 6));
       expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
       expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
-      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
+      const accountTokenPosition = await clearingHouseTest.functions.getAccountQuoteBalance(user1AccountNo);
       expect(accountTokenPosition.balance).to.eq(0);
     });
   });
@@ -758,7 +758,7 @@ describe('Clearing House Library', () => {
         isPartialAllowed: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
-      const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vQuoteAddress);
+      const accountTokenPosition = await clearingHouseTest.functions.getAccountQuoteBalance(user1AccountNo);
       expect(accountTokenPosition.balance).to.eq(amount.mul(-1));
     });
   });

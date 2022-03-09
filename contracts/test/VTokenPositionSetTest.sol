@@ -112,4 +112,8 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         VTokenPosition.Info storage pos = dummy.positions[address(vToken).truncate()];
         return (pos.balance, pos.sumAX128Ckpt, pos.netTraderPosition);
     }
+
+    function getVQuoteBalance() external view returns (int256 balance) {
+        return dummy.vQuoteBalance;
+    }
 }

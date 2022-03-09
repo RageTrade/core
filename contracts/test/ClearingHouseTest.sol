@@ -51,9 +51,7 @@ contract ClearingHouseTest is ClearingHouse {
         VTokenPosition.Info storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[address(protocol.vQuote).truncate()];
-        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(accountId, balanceAdjustments, address(protocol.vQuote).truncate(), protocol);
+        set.vQuoteBalance = 0;
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
@@ -107,6 +105,10 @@ contract ClearingHouseTest is ClearingHouse {
         ];
         balance = vTokenPosition.balance;
         netTraderPosition = vTokenPosition.netTraderPosition;
+    }
+
+    function getAccountQuoteBalance(uint256 accountId) external view returns (int256 balance) {
+        return accounts[accountId].tokenPositions.vQuoteBalance;
     }
 
     function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {

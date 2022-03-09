@@ -41,6 +41,7 @@ library VTokenPosition {
         // single per pool because it's fungible, allows for having
         uint32[8] active;
         mapping(uint32 => VTokenPosition.Info) positions;
+        int256 vQuoteBalance;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 

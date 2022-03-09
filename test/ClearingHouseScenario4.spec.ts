@@ -139,6 +139,11 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     expect(vTokenPosition.balance).to.eq(vTokenBalance);
   }
 
+  async function checkVQuoteBalance(accountNo: BigNumberish, vQuoteBalance: BigNumberish) {
+    const vQuoteBalance_ = await clearingHouseTest.getAccountQuoteBalance(accountNo);
+    expect(vQuoteBalance_).to.eq(vQuoteBalance);
+  }
+
   async function checkTokenBalanceApproxiate(
     accountNo: BigNumberish,
     vTokenAddress: string,
@@ -349,7 +354,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     );
     await checkVirtualTick(tokenPool, expectedEndTick);
     await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkSwapEvents(
       swapTxn,
       userAccountNo,
@@ -442,7 +447,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     checkApproximateTokenBalance
       ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 9)
       : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
     if (liquidityPositionNum !== -1) {
       await checkLiquidityPositionDetails(
@@ -557,7 +562,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     checkApproximateTokenBalance
       ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 9)
       : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
   }
 
