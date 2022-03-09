@@ -226,9 +226,6 @@ library VTokenPositionSet {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal {
-        // TODO remove this assert
-        assert(poolId != address(protocol.vQuote).truncate());
-
         set.realizeFundingPayment(accountId, poolId, protocol);
         set.active.include(poolId);
 
@@ -294,9 +291,6 @@ library VTokenPositionSet {
         bool createNew,
         Protocol.Info storage protocol
     ) internal returns (VTokenPosition.Info storage position) {
-        // TODO remove this assert
-        assert(poolId != address(protocol.vQuote).truncate());
-
         if (createNew) {
             set.activate(poolId);
         } else if (!set.active.exists(poolId)) {

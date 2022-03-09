@@ -461,7 +461,6 @@ contract ClearingHouse is
         Calldata.limit(4 + 5 * 0x20);
         /// @dev liquidator account gets benefit, hence ownership is not required
         return
-            // TODO see if we really need to evaluate storage pointers and pass down from here
             _liquidateTokenPosition(
                 accounts[liquidatorAccountId],
                 accounts[targetAccountId],
@@ -527,7 +526,6 @@ contract ClearingHouse is
     }
 
     // TODO move this to Account library. is it possible?
-    // TODO see order of the arguments, in account lib targetAccount is first and vice versa is here
     function _liquidateTokenPosition(
         Account.Info storage liquidatorAccount,
         Account.Info storage targetAccount,
