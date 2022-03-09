@@ -13,7 +13,6 @@ import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
 import { Protocol } from '../../libraries/Protocol.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
-import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
@@ -309,16 +308,12 @@ contract ClearingHouse is
             _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
         }
 
-        (vTokenAmountOut, vQuoteAmountOut) = account.liquidityChange(
+        uint256 notionalValueAbs;
+        (vTokenAmountOut, vQuoteAmountOut, notionalValueAbs) = account.liquidityChange(
             poolId,
             liquidityChangeParams,
             protocol,
             checkMargin
-        );
-
-        // TODO this lib is being used here causing bytecode size to increase, remove it
-        uint256 notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut, protocol)
         );
 
         if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
