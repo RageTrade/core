@@ -408,41 +408,6 @@ contract ClearingHouse is
     }
 
     /**
-        ALTERNATE LIQUIDATION METHODS FOR FIX FEE CLAIM
-     */
-
-    function removeLimitOrderWithGasClaim(
-        uint256 accountId,
-        uint32 poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        uint256 gasComputationUnitsClaim
-    ) external checkGasUsedClaim(gasComputationUnitsClaim) returns (uint256 keeperFee) {
-        Calldata.limit(4 + 5 * 0x20);
-        return _removeLimitOrder(accountId, poolId, tickLower, tickUpper, gasComputationUnitsClaim);
-    }
-
-    function liquidateLiquidityPositionsWithGasClaim(uint256 accountId, uint256 gasComputationUnitsClaim)
-        external
-        checkGasUsedClaim(gasComputationUnitsClaim)
-        returns (int256 keeperFee)
-    {
-        Calldata.limit(4 + 2 * 0x20);
-        return _liquidateLiquidityPositions(accountId, gasComputationUnitsClaim);
-    }
-
-    function liquidateTokenPositionWithGasClaim(
-        uint256 targetAccountId,
-        uint32 poolId,
-        uint256 gasComputationUnitsClaim
-    ) external checkGasUsedClaim(gasComputationUnitsClaim) returns (int256 keeperFee) {
-        Calldata.limit(4 + 5 * 0x20);
-        /// @dev liquidator account gets benefit, hence ownership is not required
-        return
-            _liquidateTokenPosition(targetAccountId, poolId, gasComputationUnitsClaim);
-    }
-
-    /**
         INTERNAL HELPERS
      */
 

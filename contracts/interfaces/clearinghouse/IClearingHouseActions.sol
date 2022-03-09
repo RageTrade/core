@@ -85,41 +85,4 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @param poolId truncated address of token to withdraw
     /// @return keeperFee - amount of fees transferred to keeper
     function liquidateTokenPosition(uint256 targetAccountId, uint32 poolId) external returns (int256 keeperFee);
-
-    /// @notice keeper call to remove a limit order
-    /// @dev checks the position of current price relative to limit order and checks limitOrderType
-    /// @param accountId account id
-    /// @param poolId truncated address of token to withdraw
-    /// @param tickLower liquidity change parameters
-    /// @param tickUpper liquidity change parameters
-    /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
-    /// @return keeperFee : amount of fees paid to caller
-    function removeLimitOrderWithGasClaim(
-        uint256 accountId,
-        uint32 poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        uint256 gasComputationUnitsClaim
-    ) external returns (uint256 keeperFee);
-
-    /// @notice keeper call for liquidation of range position
-    /// @dev removes all the active range positions and gives liquidator a percent of notional amount closed + fixedFee
-    /// @param accountId account id
-    /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
-    /// @return keeperFee : amount of fees paid to caller
-    function liquidateLiquidityPositionsWithGasClaim(uint256 accountId, uint256 gasComputationUnitsClaim)
-        external
-        returns (int256 keeperFee);
-
-    /// @notice keeper call for liquidation of token position
-    /// @dev transfers the fraction of token position at a discount to current price to liquidators account and gives liquidator some fixedFee
-    /// @param targetAccountId account id
-    /// @param poolId truncated address of token to withdraw
-    /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
-    /// @return keeperFee - amount of fees transferred to keeper
-    function liquidateTokenPositionWithGasClaim(
-        uint256 targetAccountId,
-        uint32 poolId,
-        uint256 gasComputationUnitsClaim
-    ) external returns (int256 keeperFee);
 }
