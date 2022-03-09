@@ -17,16 +17,17 @@ import { Extsload } from '../../utils/Extsload.sol';
 abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Extsload {
     using Account for Account.Info;
     using AddressHelper for address;
+    using AddressHelper for IVToken;
     using Protocol for Protocol.Info;
 
     function getTwapPrices(IVToken vToken) external view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
-        uint32 poolId = address(vToken).truncate();
+        uint32 poolId = vToken.truncate();
         realPriceX128 = protocol.getRealTwapPriceX128(poolId);
         virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
     }
 
     function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
-        return address(protocol.pools[poolId].vToken).isZero() && poolId != address(protocol.vQuote).truncate();
+        return protocol.pools[poolId].vToken.isZero() && poolId != address(protocol.vQuote).truncate(); // TODO now we don't need condition 2?
     }
 
     /**

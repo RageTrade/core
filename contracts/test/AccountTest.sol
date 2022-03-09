@@ -21,12 +21,15 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract AccountTest {
+    using AddressHelper for address;
+    using AddressHelper for IERC20;
+    using AddressHelper for IVToken;
+
     using Account for Account.Info;
     using VTokenPosition for VTokenPosition.Info;
     using VTokenPositionSet for VTokenPosition.Set;
     using LiquidityPositionSet for LiquidityPosition.Set;
     using CollateralDeposit for CollateralDeposit.Set;
-    using AddressHelper for address;
 
     mapping(uint256 => Account.Info) accounts;
     Protocol.Info public protocol;
@@ -53,10 +56,10 @@ contract AccountTest {
     }
 
     function registerPool(IClearingHouseStructures.Pool calldata poolInfo) external {
-        uint32 poolId = address(poolInfo.vToken).truncate();
+        uint32 poolId = poolInfo.vToken.truncate();
 
         // pool will not be registered twice by the rage trade factory
-        assert(address(protocol.pools[poolId].vToken).isZero());
+        assert(protocol.pools[poolId].vToken.isZero());
 
         protocol.pools[poolId] = poolInfo;
     }
@@ -106,12 +109,8 @@ contract AccountTest {
         }
     }
 
-    function truncate(address vToken) internal pure returns (uint32) {
-        return uint32(uint160(vToken));
-    }
-
     function initToken(address vToken) external {
-        protocol.pools[truncate(vToken)].vToken = IVToken(vToken);
+        protocol.pools[vToken.truncate()].vToken = IVToken(vToken);
     }
 
     function initCollateral(
@@ -123,7 +122,7 @@ contract AccountTest {
             cToken,
             IClearingHouseStructures.CollateralSettings(oracle, twapDuration, true)
         );
-        protocol.collaterals[truncate(address(collateral.token))] = collateral;
+        protocol.collaterals[collateral.token.truncate()] = collateral;
     }
 
     function addMargin(
@@ -225,7 +224,7 @@ contract AccountTest {
     }
 
     function getAccountDepositBalance(uint256 accountId, address vToken) external view returns (uint256) {
-        return accounts[accountId].tokenDeposits.deposits[truncate(vToken)];
+        return accounts[accountId].tokenDeposits.deposits[vToken.truncate()];
     }
 
     function getAccountTokenDetails(uint256 accountId, address vToken)
@@ -237,7 +236,7 @@ contract AccountTest {
             int256 sumACkpt
         )
     {
-        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[truncate(vToken)];
+        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[vToken.truncate()];
         return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Ckpt);
     }
 
@@ -248,7 +247,7 @@ contract AccountTest {
     function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {
         LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
-            .positions[truncate(vToken)]
+            .positions[vToken.truncate()]
             .liquidityPositions;
 
         for (num = 0; num < liquidityPositionSet.active.length; num++) {
@@ -277,7 +276,7 @@ contract AccountTest {
     {
         LiquidityPosition.Set storage liquidityPositionSet = accounts[accountId]
             .tokenPositions
-            .positions[truncate(vToken)]
+            .positions[vToken.truncate()]
             .liquidityPositions;
         LiquidityPosition.Info storage liquidityPosition = liquidityPositionSet.positions[
             liquidityPositionSet.active[num]

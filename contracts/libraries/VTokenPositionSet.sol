@@ -561,7 +561,7 @@ library VTokenPositionSet {
         vTokenPositions = new IClearingHouseStructures.VTokenPositionView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            vTokenPositions[i].vTokenAddress = address(protocol.pools[set.active[i]].vToken);
+            vTokenPositions[i].vToken = protocol.pools[set.active[i]].vToken;
             vTokenPositions[i].balance = set.positions[set.active[i]].balance;
             vTokenPositions[i].netTraderPosition = set.positions[set.active[i]].netTraderPosition;
             vTokenPositions[i].sumAX128Ckpt = set.positions[set.active[i]].sumAX128Ckpt;

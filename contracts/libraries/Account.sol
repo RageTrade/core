@@ -192,7 +192,7 @@ library Account {
     /// @notice checks if 'account' is initialized
     /// @param account pointer to 'account' struct
     function _isInitialized(Account.Info storage account) internal view returns (bool) {
-        return account.owner != address(0);
+        return !account.owner.isZero();
     }
 
     /// @notice updates the base balance for 'account' by 'amount'

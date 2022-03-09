@@ -86,7 +86,7 @@ library CollateralDeposit {
         depositTokens = new IClearingHouseStructures.DepositTokenView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            depositTokens[i].cTokenAddress = address(protocol.collaterals[set.active[i]].token);
+            depositTokens[i].collateral = protocol.collaterals[set.active[i]].token;
             depositTokens[i].balance = set.deposits[set.active[i]];
         }
     }

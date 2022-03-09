@@ -44,11 +44,12 @@ contract ClearingHouse is
     PausableUpgradeable, // contains storage
     Governable // contains storage
 {
-    using SafeERC20 for IERC20;
     using Account for Account.Info;
     using AddressHelper for address;
     using AddressHelper for IERC20;
+    using AddressHelper for IVToken;
     using Protocol for Protocol.Info;
+    using SafeERC20 for IERC20;
     using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -90,10 +91,10 @@ contract ClearingHouse is
     }
 
     function registerPool(Pool calldata poolInfo) external onlyRageTradeFactory {
-        uint32 poolId = address(poolInfo.vToken).truncate();
+        uint32 poolId = poolInfo.vToken.truncate();
 
         // pool will not be registered twice by the rage trade factory
-        assert(address(protocol.pools[poolId].vToken).isZero());
+        assert(protocol.pools[poolId].vToken.isZero());
 
         protocol.pools[poolId] = poolInfo;
         emit PoolSettingsUpdated(poolId, poolInfo.settings);
@@ -501,7 +502,7 @@ contract ClearingHouse is
 
     function _checkPoolId(uint32 poolId) internal view {
         Pool storage pool = protocol.pools[poolId];
-        if (address(pool.vToken).isZero()) revert PoolDoesNotExist(poolId); // TODO remove address cast
+        if (pool.vToken.isZero()) revert PoolDoesNotExist(poolId);
         if (!pool.settings.isAllowedForTrade) revert PoolNotAllowedForTrade(poolId);
     }
 

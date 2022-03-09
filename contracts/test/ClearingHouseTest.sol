@@ -22,13 +22,15 @@ import { ClearingHouse } from '../protocol/clearinghouse/ClearingHouse.sol';
 import { console } from 'hardhat/console.sol';
 
 contract ClearingHouseTest is ClearingHouse {
-    using Account for Account.Info;
     using AddressHelper for address;
+    using AddressHelper for IVToken;
+    using SignedFullMath for int256;
+
+    using Account for Account.Info;
     using CollateralDeposit for CollateralDeposit.Set;
     using LiquidityPositionSet for LiquidityPosition.Set;
     using LiquidityPosition for LiquidityPosition.Info;
     using Protocol for Protocol.Info;
-    using SignedFullMath for int256;
     using VTokenPositionSet for VTokenPosition.Set;
     using VTokenPosition for VTokenPosition.Info;
 
@@ -43,7 +45,7 @@ contract ClearingHouseTest is ClearingHouse {
     }
 
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
-        return address(vToken).truncate();
+        return vToken.truncate();
     }
 
     function cleanPositions(uint256 accountId) external {
@@ -80,7 +82,7 @@ contract ClearingHouseTest is ClearingHouse {
     }
 
     function getTokenAddressInVTokens(IVToken vToken) external view returns (IVToken vTokenInIVTokenes) {
-        return protocol.pools[address(vToken).truncate()].vToken;
+        return protocol.pools[vToken.truncate()].vToken;
     }
 
     function getAccountOwner(uint256 accountId) external view returns (address owner) {
@@ -92,7 +94,7 @@ contract ClearingHouseTest is ClearingHouse {
     // }
 
     function getAccountDepositBalance(uint256 accountId, IVToken vToken) external view returns (uint256 balance) {
-        balance = accounts[accountId].tokenDeposits.deposits[address(vToken).truncate()];
+        balance = accounts[accountId].tokenDeposits.deposits[vToken.truncate()];
     }
 
     function getAccountOpenTokenPosition(uint256 accountId, IVToken vToken)
@@ -100,9 +102,7 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 balance, int256 netTraderPosition)
     {
-        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[
-            address(vToken).truncate()
-        ];
+        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[vToken.truncate()];
         balance = vTokenPosition.balance;
         netTraderPosition = vTokenPosition.netTraderPosition;
     }
@@ -127,11 +127,9 @@ contract ClearingHouseTest is ClearingHouse {
         view
         returns (int256 fundingPayment)
     {
-        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[
-            address(vToken).truncate()
-        ];
+        VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[vToken.truncate()];
 
-        IVPoolWrapper wrapper = protocol.vPoolWrapper(address(vToken).truncate());
+        IVPoolWrapper wrapper = protocol.vPoolWrapper(vToken.truncate());
 
         fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
