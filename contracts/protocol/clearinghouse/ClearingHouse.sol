@@ -353,6 +353,7 @@ contract ClearingHouse is
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         bool checkProfit = false;
+        bool checkMargin = false;
 
         for (uint256 i = 0; i < operations.length; i++) {
             if (operations[i].operationType == MulticallOperationType.ADD_MARGIN) {
@@ -363,16 +364,19 @@ contract ClearingHouse is
                 // REMOVE_MARGIN
                 (uint32 collateralId, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
                 _removeMargin(accountId, account, collateralId, amount, false);
+                checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
                 _updateProfit(account, amount, false);
                 checkProfit = true;
+                checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
                 (uint32 poolId, SwapParams memory sp) = abi.decode(operations[i].data, (uint32, SwapParams));
                 (int256 vTokenAmountOut, int256 vQuoteAmountOut) = _swapToken(account, poolId, sp, false);
                 results[i] = abi.encode(vTokenAmountOut, vQuoteAmountOut);
+                checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_RANGE_ORDER) {
                 // UPDATE_RANGE_ORDER
                 (uint32 poolId, LiquidityChangeParams memory lcp) = abi.decode(
@@ -381,6 +385,7 @@ contract ClearingHouse is
                 );
                 (int256 vTokenAmountOut, int256 vQuoteAmountOut) = _updateRangeOrder(account, poolId, lcp, false);
                 results[i] = abi.encode(vTokenAmountOut, vQuoteAmountOut);
+                checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_LIMIT_ORDER) {
                 // REMOVE_LIMIT_ORDER
                 (uint32 poolId, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi.decode(
@@ -402,7 +407,7 @@ contract ClearingHouse is
 
         // after all the operations are done, check the margin requirements
         if (checkProfit) account.checkIfProfitAvailable(protocol);
-        account.checkIfMarginAvailable(true, protocol);
+        if (checkMargin) account.checkIfMarginAvailable(true, protocol);
 
         return results;
     }
