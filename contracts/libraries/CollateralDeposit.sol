@@ -21,6 +21,8 @@ library CollateralDeposit {
     using SignedFullMath for int256;
     using Uint32L8ArrayLib for uint32[8];
 
+    error InsufficientCollateralBalance();
+
     struct Set {
         // fixed length array of truncate(tokenAddress)
         // open positions in 8 different pairs at same time.
@@ -47,7 +49,7 @@ library CollateralDeposit {
         uint32 collateralId,
         uint256 amount
     ) internal {
-        require(info.deposits[collateralId] >= amount);
+        if(info.deposits[collateralId] < amount) revert InsufficientCollateralBalance();
         info.deposits[collateralId] -= amount;
 
         if (info.deposits[collateralId] == 0) {

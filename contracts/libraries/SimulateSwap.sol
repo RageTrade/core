@@ -18,6 +18,8 @@ library SimulateSwap {
     using SafeCast for uint256;
     using TickBitmapExtended for function(int16) external view returns (uint256);
 
+    error ZeroAmount();
+
     struct SwapCache {
         // price at the beginning of the swap
         uint160 sqrtPriceX96Start;
@@ -95,7 +97,7 @@ library SimulateSwap {
         uint24 v3PoolFee,
         function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
-        require(amountSpecified != 0, 'AS');
+        if(amountSpecified == 0) revert ZeroAmount();
 
         SwapCache memory cache;
         (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();

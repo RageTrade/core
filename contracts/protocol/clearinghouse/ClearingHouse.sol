@@ -46,6 +46,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     error Paused();
     error NotRageTradeFactory();
+    error ZeroAmount();
 
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
@@ -236,7 +237,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         int256 amount,
         bool checkMargin
     ) internal notPaused {
-        require(amount != 0, '!amount');
+        if(amount == 0) revert ZeroAmount();
 
         account.updateProfit(amount, protocol, checkMargin);
         if (amount > 0) {
