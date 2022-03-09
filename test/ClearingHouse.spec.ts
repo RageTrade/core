@@ -419,20 +419,20 @@ describe('Clearing House Library', () => {
       };
     });
     it('Pause', async () => {
-      await clearingHouseTest.setPaused(true);
+      await clearingHouseTest.pause();
       const curPaused = await clearingHouseTest.paused();
 
       expect(curPaused).to.be.true;
     });
 
     it('Create Account', async () => {
-      await expect(clearingHouseTest.createAccount()).to.be.revertedWith('Paused()');
+      await expect(clearingHouseTest.createAccount()).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('Deposit', async () => {
       expect(clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, amount)).to.be.revertedWith(
-        'Paused()',
+        'Pausable: paused',
       );
       await clearingHouseTest.paused();
     });
@@ -440,13 +440,13 @@ describe('Clearing House Library', () => {
     it('Withdraw', async () => {
       await expect(
         clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, amount),
-      ).to.be.revertedWith('Paused()');
+      ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('Profit', async () => {
       await expect(clearingHouseTest.connect(user1).updateProfit(user1AccountNo, amount)).to.be.revertedWith(
-        'Paused()',
+        'Pausable: paused',
       );
       await clearingHouseTest.paused();
     });
@@ -454,27 +454,27 @@ describe('Clearing House Library', () => {
     it('Token Position', async () => {
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
-      ).to.be.revertedWith('Paused()');
+      ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('Range Position', async () => {
       await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
-      ).to.be.revertedWith('Paused()');
+      ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('Token Liquidation', async () => {
       await expect(
         clearingHouseTest.connect(user2).liquidateTokenPosition(user2AccountNo, user1AccountNo, truncatedAddress, 5000),
-      ).to.be.revertedWith('Paused()');
+      ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('Range Liquidation', async () => {
       await expect(clearingHouseTest.connect(user2).liquidateLiquidityPositions(user1AccountNo)).to.be.revertedWith(
-        'Paused()',
+        'Pausable: paused',
       );
       await clearingHouseTest.paused();
     });
@@ -482,12 +482,12 @@ describe('Clearing House Library', () => {
     it('Remove Limit Order', async () => {
       await expect(
         clearingHouseTest.connect(user2).removeLimitOrder(user1AccountNo, truncatedAddress, -100, 100),
-      ).to.be.revertedWith('Paused()');
+      ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('UnPause', async () => {
-      await clearingHouseTest.setPaused(false);
+      await clearingHouseTest.unpause();
       const curPaused = await clearingHouseTest.paused();
 
       expect(curPaused).to.be.false;

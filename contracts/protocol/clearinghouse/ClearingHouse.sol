@@ -4,15 +4,15 @@ pragma solidity ^0.8.9;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import { PausableUpgradeable } from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from '../../libraries/Account.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
-// import { LiquidityPositionSet } from '../../libraries/LiquidityPositionSet.sol';
-import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
-import { SignedMath } from '../../libraries/SignedMath.sol';
-import { Protocol } from '../../libraries/Protocol.sol';
 import { Calldata } from '../../libraries/Calldata.sol';
+import { Protocol } from '../../libraries/Protocol.sol';
+import { SignedMath } from '../../libraries/SignedMath.sol';
+import { VTokenPositionSet } from '../../libraries/VTokenPositionSet.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
@@ -34,7 +34,7 @@ import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim {
+contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, PausableUpgradeable, OptimisticGasUsedClaim {
     using SafeERC20 for IERC20;
     using Account for Account.Info;
     using AddressHelper for address;
@@ -44,17 +44,11 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    error Paused();
     error NotRageTradeFactory();
     error ZeroAmount();
 
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
-        _;
-    }
-
-    modifier notPaused() {
-        if (paused) revert Paused();
         _;
     }
 
@@ -83,6 +77,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         );
 
         __Governable_init();
+        __Pausable_init_unchained();
     }
 
     function registerPool(Pool calldata poolInfo) external onlyRageTradeFactory {
@@ -129,10 +124,12 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         );
     }
 
-    // TODO move to paused util
-    function setPaused(bool _pause) external onlyGovernanceOrTeamMultisig {
-        paused = _pause;
-        emit PausedUpdated(_pause);
+    function pause() external onlyGovernanceOrTeamMultisig {
+        _pause();
+    }
+
+    function unpause() external onlyGovernanceOrTeamMultisig {
+        _unpause();
     }
 
     /// @inheritdoc IClearingHouseOwnerActions
@@ -151,7 +148,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
      */
 
     /// @inheritdoc IClearingHouseActions
-    function createAccount() public notPaused returns (uint256 newAccountId) {
+    function createAccount() public whenNotPaused returns (uint256 newAccountId) {
         newAccountId = numAccounts;
         numAccounts = newAccountId + 1; // SSTORE
 
@@ -167,7 +164,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountId,
         uint32 collateralId,
         uint256 amount
-    ) public notPaused {
+    ) public whenNotPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
         _addMargin(accountId, account, collateralId, amount);
     }
@@ -183,7 +180,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         Account.Info storage account,
         uint32 collateralId,
         uint256 amount
-    ) internal notPaused {
+    ) internal whenNotPaused {
         Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, true);
 
         collateral.token.safeTransferFrom(msg.sender, address(this), amount);
@@ -204,7 +201,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountId,
         uint32 collateralId,
         uint256 amount
-    ) external notPaused {
+    ) external whenNotPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
         _removeMargin(accountId, account, collateralId, amount, true);
     }
@@ -215,7 +212,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 collateralId,
         uint256 amount,
         bool checkMargin
-    ) internal notPaused {
+    ) internal whenNotPaused {
         Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, false);
 
         account.removeMargin(collateralId, amount, protocol, checkMargin);
@@ -226,7 +223,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     /// @inheritdoc IClearingHouseActions
-    function updateProfit(uint256 accountId, int256 amount) external notPaused {
+    function updateProfit(uint256 accountId, int256 amount) external whenNotPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         _updateProfit(account, amount, true);
@@ -236,7 +233,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         Account.Info storage account,
         int256 amount,
         bool checkMargin
-    ) internal notPaused {
+    ) internal whenNotPaused {
         if (amount == 0) revert ZeroAmount();
 
         account.updateProfit(amount, protocol, checkMargin);
@@ -253,7 +250,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountId,
         uint32 poolId,
         SwapParams memory swapParams
-    ) external notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+    ) external whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
         return _swapToken(account, poolId, swapParams, true);
     }
@@ -263,7 +260,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         SwapParams memory swapParams,
         bool checkMargin
-    ) internal notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         _checkPoolId(poolId);
 
         (vTokenAmountOut, vQuoteAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
@@ -284,7 +281,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint256 accountId,
         uint32 poolId,
         LiquidityChangeParams calldata liquidityChangeParams
-    ) external notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+    ) external whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
@@ -295,7 +292,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         LiquidityChangeParams memory liquidityChangeParams,
         bool checkMargin
-    ) internal notPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         _checkPoolId(poolId);
 
         if (liquidityChangeParams.sqrtPriceCurrent != 0) {
@@ -505,7 +502,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
 
     function _liquidateLiquidityPositions(uint256 accountId, uint256 gasComputationUnitsClaim)
         internal
-        notPaused
+        whenNotPaused
         returns (int256 keeperFee)
     {
         Account.Info storage account = accounts[accountId];
@@ -531,7 +528,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         uint32 poolId,
         uint16 liquidationBps,
         uint256 gasComputationUnitsClaim
-    ) internal notPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
+    ) internal whenNotPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
 
         _checkPoolId(poolId); // TODO refactor this method
@@ -554,7 +551,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         int24 tickLower,
         int24 tickUpper,
         uint256 gasComputationUnitsClaim
-    ) internal notPaused returns (uint256 keeperFee) {
+    ) internal whenNotPaused returns (uint256 keeperFee) {
         Account.Info storage account = accounts[accountId];
 
         _checkPoolId(poolId);

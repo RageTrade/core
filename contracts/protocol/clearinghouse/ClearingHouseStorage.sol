@@ -23,9 +23,6 @@ abstract contract ClearingHouseStorage is Initializable, Governable {
     uint256 public numAccounts;
     mapping(uint256 => Account.Info) accounts;
 
-    // TODO use openzeppelin pauser
-    bool public paused;
-
     address public rageTradeFactoryAddress;
     IInsuranceFund public insuranceFund;
 

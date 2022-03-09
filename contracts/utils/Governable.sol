@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.9;
 
-import { Context } from '@openzeppelin/contracts/utils/Context.sol';
+import { ContextUpgradeable } from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 import { IGovernable } from '../interfaces/IGovernable.sol';
@@ -12,7 +12,7 @@ import { IGovernable } from '../interfaces/IGovernable.sol';
  * `onlyGovernance` and `onlyGovernanceOrTeamMultisig`, which can be applied to your functions
  * to restrict their use to the caller.
  */
-abstract contract Governable is IGovernable, Context, Initializable {
+abstract contract Governable is IGovernable, Initializable, ContextUpgradeable {
     address private _governance;
     address private _teamMultisig;
 
@@ -32,9 +32,9 @@ abstract contract Governable is IGovernable, Context, Initializable {
     /**
      * @dev Useful to proxy contracts for initializing
      */
-    function __Governable_init() internal {
+    function __Governable_init() internal initializer {
+        __Context_init();
         address msgSender = _msgSender();
-
         __Governable_init(msgSender, msgSender);
     }
 
