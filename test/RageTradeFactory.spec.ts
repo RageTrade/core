@@ -65,7 +65,7 @@ describe('RageTradeFactory', () => {
           initialMarginRatio: 1,
           maintainanceMarginRatio: 2,
           twapDuration: 3,
-          supported: false,
+          isAllowedForTrade: false,
           isCrossMargined: false,
           oracle: oracle.address,
         },

@@ -644,7 +644,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
-        supported: false,
+        isAllowedForTrade: false,
         isCrossMargined: false,
         oracle: oracle.address,
       },
@@ -777,7 +777,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
     await clearingHouseTest.updateCollateralSettings(settlementToken.address, {
       oracle: settlementTokenOracle.address,
       twapDuration: 300,
-      supported: true,
+      isAllowedForDeposit: true,
     });
 
     await deployWrappers(rageTradeFactory);
@@ -788,9 +788,16 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
   async function getPoolSettings(vTokenAddress: string) {
     let {
-      settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
+      settings: {
+        initialMarginRatio,
+        maintainanceMarginRatio,
+        twapDuration,
+        isAllowedForTrade,
+        isCrossMargined,
+        oracle,
+      },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
-    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
+    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, isAllowedForTrade, isCrossMargined, oracle };
   }
 
   before(async () => {
@@ -907,22 +914,23 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     it('Add Token 1 Position Support - Pass', async () => {
       const settings = await getPoolSettings(vTokenAddress);
-      settings.supported = true;
+      settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
-      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.true;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
     });
 
     it('Add Token 2 Position Support - Pass', async () => {
       const settings = await getPoolSettings(vToken1Address);
-      settings.supported = true;
+      settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vToken1Address), settings);
-      expect((await clearingHouseTest.getPoolInfo(truncate(vToken1Address))).settings.supported).to.be.true;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vToken1Address))).settings.isAllowedForTrade).to.be.true;
     });
 
     it('AddVQuote Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(settlementToken.address, true);
-      expect((await clearingHouseTest.getCollateralInfo(truncate(settlementToken.address))).settings.supported).to.be
-        .true;
+      expect(
+        (await clearingHouseTest.getCollateralInfo(truncate(settlementToken.address))).settings.isAllowedForDeposit,
+      ).to.be.true;
     });
   });
 

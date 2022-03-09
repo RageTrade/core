@@ -82,7 +82,7 @@ contract ClearingHouse is
 
         _updateCollateralSettings(
             _defaultCollateralToken,
-            CollateralSettings({ oracle: _defaultCollateralTokenOracle, twapDuration: 60, supported: true })
+            CollateralSettings({ oracle: _defaultCollateralTokenOracle, twapDuration: 60, isAllowedForDeposit: true })
         );
 
         __Governable_init();
@@ -497,13 +497,13 @@ contract ClearingHouse is
         collateral = protocol.collaterals[collateralId];
         if (collateral.token.isZero()) revert CollateralDoesNotExist(collateralId);
         // do not check if it is a withdraw operation, so that users can withdraw even if collateral is banned
-        if (!isWithdraw && !collateral.settings.supported) revert CollateralNotAllowedForUse(collateralId);
+        if (!isWithdraw && !collateral.settings.isAllowedForDeposit) revert CollateralNotAllowedForUse(collateralId);
     }
 
     function _checkPoolId(uint32 poolId) internal view {
         Pool storage pool = protocol.pools[poolId];
         if (address(pool.vToken).isZero()) revert PoolDoesNotExist(poolId); // TODO remove address cast
-        if (!pool.settings.supported) revert PoolNotAllowedForTrade(poolId);
+        if (!pool.settings.isAllowedForTrade) revert PoolNotAllowedForTrade(poolId);
     }
 
     function _liquidateLiquidityPositions(uint256 accountId, uint256 gasComputationUnitsClaim)
