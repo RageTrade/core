@@ -79,7 +79,7 @@ library VTokenPositionSet {
             //Value of token position for current vToken
             accountMarketValue += position.marketValue(poolId, protocol);
 
-            uint160 sqrtPriceX96 = protocol.getVirtualTwapSqrtPriceX96For(poolId);
+            uint160 sqrtPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
             //Value of all active range position for the current vToken
             accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
         }
@@ -108,7 +108,7 @@ library VTokenPositionSet {
         Protocol.Info storage protocol
     ) internal view returns (uint256 notionalAmountClosed) {
         notionalAmountClosed = vTokenAmount.absUint().mulDiv(
-            protocol.getVirtualTwapPriceX128For(poolId),
+            protocol.getVirtualTwapPriceX128(poolId),
             FixedPoint128.Q128
         );
     }
@@ -126,7 +126,7 @@ library VTokenPositionSet {
         Protocol.Info storage protocol
     ) internal view returns (uint256 notionalAmountClosed) {
         notionalAmountClosed =
-            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128For(poolId), FixedPoint128.Q128) +
+            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
             vQuoteAmount.absUint();
     }
 
@@ -145,8 +145,8 @@ library VTokenPositionSet {
     ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
         VTokenPosition.Info storage position = set.positions[poolId];
 
-        uint256 price = protocol.getVirtualTwapPriceX128For(poolId);
-        uint16 marginRatio = protocol.getMarginRatioFor(poolId, isInitialMargin);
+        uint256 price = protocol.getVirtualTwapPriceX128(poolId);
+        uint16 marginRatio = protocol.getMarginRatio(poolId, isInitialMargin);
 
         int256 tokenPosition = position.balance;
         int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, protocol).toInt256();
@@ -320,7 +320,7 @@ library VTokenPositionSet {
         IClearingHouseStructures.SwapParams memory swapParams,
         Protocol.Info storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        return set.swapToken(accountId, poolId, swapParams, protocol.vPoolWrapperFor(poolId), protocol);
+        return set.swapToken(accountId, poolId, swapParams, protocol.vPoolWrapper(poolId), protocol);
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount
@@ -344,7 +344,7 @@ library VTokenPositionSet {
                 poolId,
                 /// @dev 0 means no price limit and false means amount mentioned is token amount
                 IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
-                protocol.vPoolWrapperFor(poolId),
+                protocol.vPoolWrapper(poolId),
                 protocol
             );
     }
@@ -541,7 +541,7 @@ library VTokenPositionSet {
         VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false, protocol);
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
-        int24 currentTick = protocol.getVirtualCurrentTickFor(poolId);
+        int24 currentTick = protocol.getVirtualCurrentTick(poolId);
 
         vTokenPosition.liquidityPositions.removeLimitOrder(
             accountId,

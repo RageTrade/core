@@ -131,7 +131,7 @@ contract ClearingHouseTest is ClearingHouse {
             address(vToken).truncate()
         ];
 
-        IVPoolWrapper wrapper = protocol.vPoolWrapperFor(address(vToken).truncate());
+        IVPoolWrapper wrapper = protocol.vPoolWrapper(address(vToken).truncate());
 
         fundingPayment = vTokenPosition.unrealizedFundingPayment(wrapper);
     }
@@ -150,7 +150,7 @@ contract ClearingHouseTest is ClearingHouse {
         ];
 
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = protocol
-            .vPoolWrapperFor(vToken.truncate())
+            .vPoolWrapper(vToken.truncate())
             .getExtrapolatedValuesInside(liquidityPosition.tickLower, liquidityPosition.tickUpper);
 
         fundingPayment = liquidityPosition.unrealizedFundingPayment(

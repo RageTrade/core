@@ -38,19 +38,19 @@ library Protocol {
         uint256[100] _emptySlots;
     }
 
-    function vTokenFor(Protocol.Info storage protocol, uint32 poolId) internal view returns (IVToken) {
+    function vToken(Protocol.Info storage protocol, uint32 poolId) internal view returns (IVToken) {
         return protocol.pools[poolId].vToken;
     }
 
-    function vPoolFor(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
+    function vPool(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
         return protocol.pools[poolId].vPool;
     }
 
-    function vPoolWrapperFor(Protocol.Info storage protocol, uint32 poolId) internal view returns (IVPoolWrapper) {
+    function vPoolWrapper(Protocol.Info storage protocol, uint32 poolId) internal view returns (IVPoolWrapper) {
         return protocol.pools[poolId].vPoolWrapper;
     }
 
-    function getVirtualTwapSqrtPriceX96For(Protocol.Info storage protocol, uint32 poolId)
+    function getVirtualTwapSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
         returns (uint160 sqrtPriceX96)
@@ -58,7 +58,7 @@ library Protocol {
         return protocol.pools[poolId].vPool.twapSqrtPrice(protocol.pools[poolId].settings.twapDuration);
     }
 
-    function getVirtualCurrentSqrtPriceX96For(Protocol.Info storage protocol, uint32 poolId)
+    function getVirtualCurrentSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
         returns (uint160 sqrtPriceX96)
@@ -66,43 +66,39 @@ library Protocol {
         return protocol.pools[poolId].vPool.sqrtPriceCurrent();
     }
 
-    function getVirtualCurrentTickFor(Protocol.Info storage protocol, uint32 poolId)
-        internal
-        view
-        returns (int24 tick)
-    {
+    function getVirtualCurrentTick(Protocol.Info storage protocol, uint32 poolId) internal view returns (int24 tick) {
         return protocol.pools[poolId].vPool.tickCurrent();
     }
 
-    function getVirtualTwapTickFor(Protocol.Info storage protocol, uint32 poolId) internal view returns (int24 tick) {
+    function getVirtualTwapTick(Protocol.Info storage protocol, uint32 poolId) internal view returns (int24 tick) {
         return protocol.pools[poolId].vPool.twapTick(protocol.pools[poolId].settings.twapDuration);
     }
 
-    function getVirtualTwapPriceX128For(Protocol.Info storage protocol, uint32 poolId)
+    function getVirtualTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
         returns (uint256 priceX128)
     {
-        return protocol.getVirtualTwapSqrtPriceX96For(poolId).toPriceX128();
+        return protocol.getVirtualTwapSqrtPriceX96(poolId).toPriceX128();
     }
 
-    function getVirtualCurrentPriceX128For(Protocol.Info storage protocol, uint32 poolId)
+    function getVirtualCurrentPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
         returns (uint256 priceX128)
     {
-        return protocol.getVirtualCurrentSqrtPriceX96For(poolId).toPriceX128();
+        return protocol.getVirtualCurrentSqrtPriceX96(poolId).toPriceX128();
     }
 
-    function getRealTwapSqrtPriceX96For(Protocol.Info storage protocol, uint32 poolId)
+    function getRealTwapSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
         returns (uint160 sqrtPriceX96)
     {
-        return protocol.getRealTwapPriceX128For(poolId).toSqrtPriceX96();
+        return protocol.getRealTwapPriceX128(poolId).toSqrtPriceX96();
     }
 
-    function getRealTwapPriceX128For(Protocol.Info storage protocol, uint32 poolId)
+    function getRealTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
         returns (uint256 priceX128)
@@ -110,7 +106,7 @@ library Protocol {
         return protocol.pools[poolId].settings.oracle.getTwapPriceX128(protocol.pools[poolId].settings.twapDuration);
     }
 
-    function getMarginRatioFor(
+    function getMarginRatio(
         Protocol.Info storage protocol,
         uint32 poolId,
         bool isInitialMargin

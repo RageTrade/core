@@ -41,7 +41,7 @@ library LiquidityPositionSet {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256 marketValue_) {
-        marketValue_ = set.marketValue(sqrtPriceCurrent, protocol.vPoolWrapperFor(poolId));
+        marketValue_ = set.marketValue(sqrtPriceCurrent, protocol.vPoolWrapper(poolId));
     }
 
     /// @notice Get the total market value of all active liquidity positions in the set.

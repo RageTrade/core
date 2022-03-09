@@ -79,7 +79,7 @@ library VTokenPosition {
         uint256 priceX128,
         Protocol.Info storage protocol
     ) internal view returns (int256 value) {
-        return marketValue(position, priceX128, protocol.vPoolWrapperFor(poolId));
+        return marketValue(position, priceX128, protocol.vPoolWrapper(poolId));
     }
 
     /// @notice returns the market value of the supplied token position
@@ -91,7 +91,7 @@ library VTokenPosition {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256) {
-        uint256 priceX128 = protocol.getVirtualTwapPriceX128For(poolId);
+        uint256 priceX128 = protocol.getVirtualTwapPriceX128(poolId);
         return marketValue(position, poolId, priceX128, protocol);
     }
 
@@ -125,7 +125,7 @@ library VTokenPosition {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, protocol.vPoolWrapperFor(poolId));
+        return unrealizedFundingPayment(position, protocol.vPoolWrapper(poolId));
     }
 
     function getNetPosition(
@@ -135,6 +135,6 @@ library VTokenPosition {
     ) internal view returns (int256) {
         return
             position.netTraderPosition +
-            position.liquidityPositions.getNetPosition(protocol.vPoolFor(poolId).sqrtPriceCurrent());
+            position.liquidityPositions.getNetPosition(protocol.vPool(poolId).sqrtPriceCurrent());
     }
 }

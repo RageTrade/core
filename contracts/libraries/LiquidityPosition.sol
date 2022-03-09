@@ -102,7 +102,7 @@ library LiquidityPosition {
         int256 vTokenPrincipal;
         int256 basePrincipal;
 
-        IVPoolWrapper wrapper = protocol.vPoolWrapperFor(poolId);
+        IVPoolWrapper wrapper = protocol.vPoolWrapper(poolId);
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside;
 
         if (liquidityDelta > 0) {
@@ -143,7 +143,7 @@ library LiquidityPosition {
             -basePrincipal
         );
 
-        uint160 sqrtPriceCurrent = protocol.vPoolFor(poolId).sqrtPriceCurrent();
+        uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
         int256 tokenAmountCurrent;
         {
             (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
@@ -250,7 +250,7 @@ library LiquidityPosition {
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX96;
         {
-            uint160 sqrtPriceTwapX96 = protocol.getVirtualTwapSqrtPriceX96For(poolId);
+            uint160 sqrtPriceTwapX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
             uint160 sqrtPriceForExecutionPriceX96 = sqrtPriceTwapX96 <= sqrtPriceUpperX96
                 ? sqrtPriceTwapX96
                 : sqrtPriceUpperX96;
@@ -285,7 +285,7 @@ library LiquidityPosition {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256 marketValue_) {
-        return position.marketValue(valuationSqrtPriceX96, protocol.vPoolWrapperFor(poolId));
+        return position.marketValue(valuationSqrtPriceX96, protocol.vPoolWrapper(poolId));
     }
 
     function tokenAmountsInRange(
