@@ -27,7 +27,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
-        return protocol.pools[poolId].vToken.isZero() && poolId != address(protocol.vQuote).truncate(); // TODO now we don't need condition 2?
+        return protocol.pools[poolId].vToken.isZero();
     }
 
     /**
