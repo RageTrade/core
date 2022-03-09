@@ -20,7 +20,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     struct CollateralSettings {
         IOracle oracle;
         uint32 twapDuration;
-        bool supported;
+        bool isAllowedForDeposit;
     }
 
     struct Pool {
@@ -34,7 +34,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         uint16 initialMarginRatio;
         uint16 maintainanceMarginRatio;
         uint32 twapDuration;
-        bool supported;
+        bool isAllowedForTrade;
         bool isCrossMargined;
         IOracle oracle;
     }

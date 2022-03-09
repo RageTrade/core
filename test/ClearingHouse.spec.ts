@@ -142,7 +142,7 @@ describe('Clearing House Library', () => {
         initialMarginRatio,
         maintainanceMarginRatio,
         twapDuration,
-        supported: false,
+        isAllowedForTrade: false,
         isCrossMargined: false,
         oracle: oracle.address,
       },
@@ -263,13 +263,13 @@ describe('Clearing House Library', () => {
     await clearingHouseTest.updateCollateralSettings(settlementToken.address, {
       oracle: settlementTokenOracle.address,
       twapDuration: 300,
-      supported: false,
+      isAllowedForDeposit: false,
     });
 
     await clearingHouseTest.updateCollateralSettings(settlementToken1.address, {
       oracle: settlementToken1Oracle.address,
       twapDuration: 300,
-      supported: false,
+      isAllowedForDeposit: false,
     });
   });
 
@@ -353,29 +353,31 @@ describe('Clearing House Library', () => {
 
   describe('#TokenSupport', () => {
     before(async () => {
-      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.false;
-      expect((await clearingHouseTest.getCollateralInfo(truncate(realToken.address))).settings.supported).to.be.false;
-      expect((await clearingHouseTest.getPoolInfo(truncate(vQuoteAddress))).settings.supported).to.be.false;
-      expect((await clearingHouseTest.getPoolInfo(truncate(settlementToken.address))).settings.supported).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.false;
+      expect((await clearingHouseTest.getCollateralInfo(truncate(realToken.address))).settings.isAllowedForDeposit).to
+        .be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vQuoteAddress))).settings.isAllowedForTrade).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(settlementToken.address))).settings.isAllowedForTrade).to.be
+        .false;
       // expect(await clearingHouseTest.supportedVTokens(vQuoteAddress)).to.be.false;
       // expect(await clearingHouseTest.supportedDeposits(settlementToken.address)).to.be.false;
     });
     it('Add Token Position Support - Fail - Unauthorized', async () => {
       const settings = await getPoolSettings(vTokenAddress);
-      settings.supported = true;
+      settings.isAllowedForTrade = true;
       await expect(
         clearingHouseTest.connect(user1).updatePoolSettings(truncate(vTokenAddress), settings),
       ).to.be.revertedWith('Unauthorised()');
     });
     it('Add Token Position Support - Pass', async () => {
       const settings = await getPoolSettings(vTokenAddress);
-      settings.supported = true;
+      settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
-      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.supported).to.be.true;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
     });
     it('Add Token Deposit Support - Fail - Unauthorized', async () => {
       const { settings } = await getCollateralSettings(realToken.address);
-      settings.supported = true;
+      settings.isAllowedForDeposit = true;
       await expect(
         clearingHouseTest.connect(user1).updateCollateralSettings(realToken.address, settings),
       ).to.be.revertedWith('Unauthorised()');
@@ -387,9 +389,9 @@ describe('Clearing House Library', () => {
     // });
     it('AddVQuote Deposit Support  - Pass', async () => {
       const { settings } = await getCollateralSettings(settlementToken.address);
-      settings.supported = true;
+      settings.isAllowedForDeposit = true;
       await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken.address, settings);
-      expect((await getCollateralSettings(settlementToken.address)).settings.supported).to.be.true;
+      expect((await getCollateralSettings(settlementToken.address)).settings.isAllowedForDeposit).to.be.true;
     });
   });
 
@@ -553,7 +555,7 @@ describe('Clearing House Library', () => {
     it('Pass - Withdrawal after removal of token support', async () => {
       //Add settlementToken1 support
       const { settings } = await getCollateralSettings(settlementToken1.address);
-      settings.supported = true;
+      settings.isAllowedForDeposit = true;
       await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken1.address, settings);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken1.address);
 
@@ -563,7 +565,7 @@ describe('Clearing House Library', () => {
       expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
 
       //Remove settlementToken1 support
-      settings.supported = false;
+      settings.isAllowedForDeposit = false;
       await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken1.address, settings);
 
       await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
@@ -931,16 +933,23 @@ describe('Clearing House Library', () => {
 
   async function getPoolSettings(vTokenAddress: string) {
     let {
-      settings: { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle },
+      settings: {
+        initialMarginRatio,
+        maintainanceMarginRatio,
+        twapDuration,
+        isAllowedForTrade,
+        isCrossMargined,
+        oracle,
+      },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
-    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, supported, isCrossMargined, oracle };
+    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, isAllowedForTrade, isCrossMargined, oracle };
   }
 
   async function getCollateralSettings(vTokenAddress: string) {
     let {
       token,
-      settings: { oracle, twapDuration, supported },
+      settings: { oracle, twapDuration, isAllowedForDeposit },
     } = await clearingHouseTest.getCollateralInfo(truncate(vTokenAddress));
-    return { token, settings: { oracle, twapDuration, supported } };
+    return { token, settings: { oracle, twapDuration, isAllowedForDeposit } };
   }
 });

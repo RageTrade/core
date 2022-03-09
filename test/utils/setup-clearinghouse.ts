@@ -204,7 +204,7 @@ export async function initializePool({
       initialMarginRatio,
       maintainanceMarginRatio,
       twapDuration,
-      supported: false,
+      isAllowedForTrade: false,
       isCrossMargined: false,
       oracle: oracle.address,
     },
