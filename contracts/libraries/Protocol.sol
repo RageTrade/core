@@ -55,7 +55,8 @@ library Protocol {
         view
         returns (uint160 sqrtPriceX96)
     {
-        return protocol.pools[poolId].vPool.twapSqrtPrice(protocol.pools[poolId].settings.twapDuration);
+        IClearingHouseStructures.Pool storage pool = protocol.pools[poolId];
+        return pool.vPool.twapSqrtPrice(pool.settings.twapDuration);
     }
 
     function getVirtualCurrentSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
@@ -71,7 +72,8 @@ library Protocol {
     }
 
     function getVirtualTwapTick(Protocol.Info storage protocol, uint32 poolId) internal view returns (int24 tick) {
-        return protocol.pools[poolId].vPool.twapTick(protocol.pools[poolId].settings.twapDuration);
+        IClearingHouseStructures.Pool storage pool = protocol.pools[poolId];
+        return pool.vPool.twapTick(pool.settings.twapDuration);
     }
 
     function getVirtualTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
@@ -103,7 +105,8 @@ library Protocol {
         view
         returns (uint256 priceX128)
     {
-        return protocol.pools[poolId].settings.oracle.getTwapPriceX128(protocol.pools[poolId].settings.twapDuration);
+        IClearingHouseStructures.Pool storage pool = protocol.pools[poolId];
+        return pool.settings.oracle.getTwapPriceX128(pool.settings.twapDuration);
     }
 
     function getMarginRatio(
