@@ -270,14 +270,13 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Protocol.Info storage protocol
     ) internal {
-        // TODO change name _VTokenPosition to position
-        VTokenPosition.Info storage _VTokenPosition = set.positions[poolId];
+        VTokenPosition.Info storage position = set.positions[poolId];
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
 
-        int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
+        int256 fundingPayment = position.unrealizedFundingPayment(wrapper);
         set.vQuoteBalance += fundingPayment;
 
-        _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
+        position.sumAX128Ckpt = extrapolatedSumAX128;
 
         emit Account.FundingPaymentRealized(accountId, poolId, 0, 0, fundingPayment);
     }

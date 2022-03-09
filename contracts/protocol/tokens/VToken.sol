@@ -32,7 +32,6 @@ contract VToken is ERC20, IVToken {
         }
     }
 
-    // TODO bring uniswap vPool address in the logic
     function _beforeTokenTransfer(
         address from,
         address to,
@@ -42,7 +41,6 @@ contract VToken is ERC20, IVToken {
         // - vPoolWrapper mints tokens at uniswap pool address
         // - uniswap v3 pool transfers tokens to vPoolWrapper
         // - vPoolWrapper burns all tokens it has, at its own address
-        // TODO if(condition1() && condition2()) both are evaluated? depends on optimisations
         if (!(from == address(0) || to == address(0) || from == vPoolWrapper || to == vPoolWrapper)) {
             revert Unauthorised();
         }

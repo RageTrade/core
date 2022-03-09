@@ -525,7 +525,7 @@ contract ClearingHouse is
         emit Account.LiquidityPositionsLiquidated(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
-    // TODO move this to Account library
+    // TODO move this to Account library. is it possible?
     // TODO see order of the arguments, in account lib targetAccount is first and vice versa is here
     function _liquidateTokenPosition(
         Account.Info storage liquidatorAccount,
@@ -536,7 +536,7 @@ contract ClearingHouse is
     ) internal whenNotPaused returns (BalanceAdjustments memory liquidatorBalanceAdjustments) {
         if (liquidationBps > 10000) revert InvalidTokenLiquidationParameters();
 
-        _checkPoolId(poolId); // TODO refactor this method
+        _checkPoolId(poolId);
         int256 insuranceFundFee;
         (insuranceFundFee, liquidatorBalanceAdjustments) = targetAccount.liquidateTokenPosition(
             liquidatorAccount,
@@ -582,7 +582,6 @@ contract ClearingHouse is
         if (collateralToken.isZero()) revert InvalidCollateralAddress(address(0));
 
         // doesn't allow owner to change the cToken address when updating settings, once it's truncated previously
-        // TODO remove so many address() castings
         if (
             !protocol.collaterals[collateralId].token.isZero() &&
             !protocol.collaterals[collateralId].token.eq(collateralToken)
