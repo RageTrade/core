@@ -36,7 +36,6 @@ library VTokenPositionSet {
     using VTokenPosition for VTokenPosition.Info;
     using VTokenPositionSet for VTokenPosition.Set;
 
-    // TODO include VTokenPositionSet in the name of these errors
     error VPS_IncorrectUpdate();
     error VPS_DeactivationFailed(uint32 poolId);
     error VPS_TokenInactive(uint32 poolId);
