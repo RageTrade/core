@@ -401,7 +401,14 @@ library Account {
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
         Protocol.Info storage protocol,
         bool checkMargin
-    ) external returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+    )
+        external
+        returns (
+            int256 vTokenAmountOut,
+            int256 vQuoteAmountOut,
+            uint256 notionalValueAbs
+        )
+    {
         // mint/burn tokens + fee + funding payment
         (vTokenAmountOut, vQuoteAmountOut) = account.tokenPositions.liquidityChange(
             account.id,
@@ -412,6 +419,10 @@ library Account {
 
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
+
+        notionalValueAbs = uint256(
+            VTokenPositionSet.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut, protocol)
+        );
     }
 
     /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
