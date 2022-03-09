@@ -190,7 +190,7 @@ contract ClearingHouse is
         uint32 collateralId,
         uint256 amount
     ) internal whenNotPaused {
-        Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, true);
+        Collateral storage collateral = _checkCollateralIdAndGetInfo({ collateralId: collateralId, isWithdraw: false });
 
         collateral.token.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -222,7 +222,7 @@ contract ClearingHouse is
         uint256 amount,
         bool checkMargin
     ) internal whenNotPaused {
-        Collateral storage collateral = _checkCollateralIdAndGetInfo(collateralId, false);
+        Collateral storage collateral = _checkCollateralIdAndGetInfo({ collateralId: collateralId, isWithdraw: true });
 
         account.removeMargin(collateralId, amount, protocol, checkMargin);
 
@@ -489,20 +489,21 @@ contract ClearingHouse is
         }
     }
 
-    function _checkCollateralIdAndGetInfo(uint32 collateralId, bool checkSupported)
+    function _checkCollateralIdAndGetInfo(uint32 collateralId, bool isWithdraw)
         internal
         view
         returns (Collateral storage collateral)
     {
         collateral = protocol.collaterals[collateralId];
-        if (collateral.token.isZero()) revert UninitializedToken(collateralId); // TODO change to UninitializedCollateral
-        if (checkSupported && !collateral.settings.supported) revert UnsupportedCToken(address(collateral.token)); // TODO change this to collateralId
+        if (collateral.token.isZero()) revert CollateralDoesNotExist(collateralId);
+        // do not check if it is a withdraw operation, so that users can withdraw even if collateral is banned
+        if (!isWithdraw && !collateral.settings.supported) revert CollateralNotAllowedForUse(collateralId);
     }
 
     function _checkPoolId(uint32 poolId) internal view {
-        IVToken vToken = protocol.pools[poolId].vToken; // TODO remove this line
-        if (address(vToken).isZero()) revert UninitializedToken(poolId); // TODO change to UninitializedVToken
-        if (!protocol.pools[poolId].settings.supported) revert UnsupportedVToken(vToken); // TODO change this to UnsupportedPool
+        Pool storage pool = protocol.pools[poolId];
+        if (address(pool.vToken).isZero()) revert PoolDoesNotExist(poolId); // TODO remove address cast
+        if (!pool.settings.supported) revert PoolNotAllowedForTrade(poolId);
     }
 
     function _liquidateLiquidityPositions(uint256 accountId, uint256 gasComputationUnitsClaim)

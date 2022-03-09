@@ -13,13 +13,21 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
     /// @param senderAddress address of msg sender
     error AccessDenied(address senderAddress);
 
-    /// @notice error to denote usage of unsupported token
-    /// @param vToken address of token
-    error UnsupportedVToken(IVToken vToken);
+    /// @notice error to denote usage of uninitialized token
+    /// @param collateralId address of token
+    error CollateralDoesNotExist(uint32 collateralId);
 
-    /// @notice error to denote usage of unsupported token
-    /// @param cTokenAddress address of token
-    error UnsupportedCToken(address cTokenAddress);
+    /// @notice error to denote usage of unsupported collateral token
+    /// @param collateralId address of token
+    error CollateralNotAllowedForUse(uint32 collateralId);
+
+    /// @notice error to denote usage of uninitialized pool
+    /// @param poolId unitialized truncated address supplied
+    error PoolDoesNotExist(uint32 poolId);
+
+    /// @notice error to denote usage of unsupported pool
+    /// @param poolId address of token
+    error PoolNotAllowedForTrade(uint32 poolId);
 
     /// @notice error to denote low notional value of txn
     /// @param notionalValue notional value of txn
@@ -40,10 +48,6 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
     /// @notice this is errored when the enum (uint8) value is out of bounds
     /// @param multicallOperationType is the value that is out of bounds
     error InvalidMulticallOperationType(MulticallOperationType multicallOperationType);
-
-    /// @notice error to denote usage of unitialized token
-    /// @param poolId unitialized truncated address supplied
-    error UninitializedToken(uint32 poolId);
 
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
