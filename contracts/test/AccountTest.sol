@@ -78,9 +78,7 @@ contract AccountTest {
         VTokenPosition.Info storage tokenPosition;
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
-        tokenPosition = set.positions[address(protocol.vQuote).truncate()];
-        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(-tokenPosition.balance, 0, 0);
-        set.update(accountId, balanceAdjustments, address(protocol.vQuote).truncate(), protocol);
+        set.vQuoteBalance = 0;
 
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
@@ -241,6 +239,10 @@ contract AccountTest {
     {
         VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[truncate(vToken)];
         return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Ckpt);
+    }
+
+    function getAccountQuoteBalance(uint256 accountId) external view returns (int256 balance) {
+        return accounts[accountId].tokenPositions.vQuoteBalance;
     }
 
     function getAccountLiquidityPositionNum(uint256 accountId, address vToken) external view returns (uint8 num) {

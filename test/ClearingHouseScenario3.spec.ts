@@ -140,6 +140,11 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     expect(vTokenPosition.balance).to.eq(vTokenBalance);
   }
 
+  async function checkVQuoteBalance(accountNo: BigNumberish, vQuoteBalance: BigNumberish) {
+    const vQuoteBalance_ = await clearingHouseTest.getAccountQuoteBalance(accountNo);
+    expect(vQuoteBalance_).to.eq(vQuoteBalance);
+  }
+
   async function checkTokenBalanceApproxiate(
     accountNo: BigNumberish,
     vTokenAddress: string,
@@ -351,7 +356,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
 
     await checkVirtualTick(tokenPool, expectedEndTick);
     await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkSwapEvents(
       swapTxn,
       userAccountNo,
@@ -447,7 +452,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     checkApproximateTokenBalance
       ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 9)
       : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
     if (liquidityPositionNum !== -1) {
       await checkLiquidityPositionDetails(
@@ -562,7 +567,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
     checkApproximateTokenBalance
       ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 9)
       : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
   }
 
@@ -1385,7 +1390,7 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPositionApproximate(user1AccountNo, vTokenAddress, netTokenPosition, 8);
       // await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
-      await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
+      await checkVQuoteBalance(user1AccountNo, expectedBaseBalance);
       await checkSettlementTokenBalance(keeper.address, expectedKeeperFee);
       await checkSettlementTokenBalance(
         insuranceFund.address,
@@ -1446,8 +1451,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       await checkTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatocTokenPosition, 8);
       await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
 
-      await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
-      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatosettlementTokenBalance);
+      await checkVQuoteBalance(user1AccountNo, expectedBaseBalance);
+      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementTokenBalance);
 
       await checkSettlementTokenBalance(
         insuranceFund.address,
@@ -1505,8 +1510,8 @@ describe('Clearing House Scenario 3 (Underwater Liquidation)', () => {
       await checkTokenBalance(keeperAccountNo, vToken1Address, liquidatocToken1Position);
       await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
 
-      await checkTokenBalance(user1AccountNo, vQuoteAddress, expectedBaseBalance);
-      await checkTokenBalance(keeperAccountNo, vQuoteAddress, liquidatosettlementTokenBalance);
+      await checkVQuoteBalance(user1AccountNo, expectedBaseBalance);
+      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementTokenBalance);
 
       await checkSettlementTokenBalance(
         insuranceFund.address,

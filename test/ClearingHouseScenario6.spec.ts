@@ -121,6 +121,11 @@ describe('Clearing House Scenario 6', () => {
     expect(vTokenPosition.balance).to.eq(vTokenBalance);
   }
 
+  async function checkVQuoteBalance(accountNo: BigNumberish, vQuoteBalance: BigNumberish) {
+    const vQuoteBalance_ = await clearingHouseTest.getAccountQuoteBalance(accountNo);
+    expect(vQuoteBalance_).to.eq(vQuoteBalance);
+  }
+
   async function checkTokenBalanceApproxiate(
     accountNo: BigNumberish,
     vTokenAddress: string,
@@ -321,7 +326,7 @@ describe('Clearing House Scenario 6', () => {
     );
     await checkVirtualTick(expectedEndTick);
     await checkTokenBalance(user2AccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(user2AccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(user2AccountNo, expectedEndBaseBalance);
     await checkSwapEvents(
       swapTxn,
       userAccountNo,
@@ -403,7 +408,7 @@ describe('Clearing House Scenario 6', () => {
     checkApproximateTokenBalance
       ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 8)
       : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkTokenBalance(userAccountNo, baseAddress, expectedEndBaseBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
     if (liquidityPositionNum !== -1) {
       await checkLiquidityPositionDetails(

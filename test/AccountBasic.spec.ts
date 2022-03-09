@@ -51,6 +51,11 @@ describe('Account Library Test Basic', () => {
     expect(vTokenPosition.balance).to.eq(vTokenBalance);
   }
 
+  async function checkVQuoteBalance(vQuoteBalance: BigNumberish) {
+    const vQuoteBalance_ = await test.getAccountQuoteBalance(0);
+    expect(vQuoteBalance_).to.eq(vQuoteBalance);
+  }
+
   async function checkDepositBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
     const balance = await test.getAccountDepositBalance(0, vTokenAddress);
     expect(balance).to.eq(vTokenBalance);
@@ -214,13 +219,13 @@ describe('Account Library Test Basic', () => {
     it('Swap Token (Token Amount)', async () => {
       await test.swapTokenAmount(0, vTokenAddress, '10');
       await checkTokenBalance(vTokenAddress, '10');
-      await checkTokenBalance(vQuote.address, -40000);
+      await checkVQuoteBalance(-40000);
     });
 
     it('Swap Token (Token Notional)', async () => {
       await test.swapTokenNotional(0, vTokenAddress, '40000');
       await checkTokenBalance(vTokenAddress, '20');
-      await checkTokenBalance(vQuoteAddress, -80000);
+      await checkVQuoteBalance(-80000);
     });
 
     it('Liqudity Change', async () => {
@@ -238,7 +243,7 @@ describe('Account Library Test Basic', () => {
       };
       await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
       await checkTokenBalance(vTokenAddress, '-1');
-      await checkTokenBalance(vQuoteAddress, -4000);
+      await checkVQuoteBalance(-4000);
       await checkLiquidityPositionNum(vTokenAddress, 1);
       await checkLiquidityPositionDetails(vTokenAddress, 0, -100, 100, 0, 1);
     });
@@ -260,7 +265,7 @@ describe('Account Library Test Basic', () => {
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
         await checkTokenBalance(vTokenAddress, '-1');
-        await checkTokenBalance(vQuoteAddress, -4000);
+        await checkVQuoteBalance(-4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
         await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 0, 1);
       });
@@ -304,7 +309,7 @@ describe('Account Library Test Basic', () => {
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
         await checkTokenBalance(vTokenAddress, '-1');
-        await checkTokenBalance(vQuoteAddress, -4000);
+        await checkVQuoteBalance(-4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
         await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 1, 1);
       });
@@ -330,7 +335,7 @@ describe('Account Library Test Basic', () => {
 
         test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0);
         await checkTokenBalance(vTokenAddress, 0);
-        await checkTokenBalance(vQuoteAddress, 0);
+        await checkVQuoteBalance(0);
         await checkLiquidityPositionNum(vTokenAddress, 0);
       });
     });
@@ -349,7 +354,7 @@ describe('Account Library Test Basic', () => {
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
         await checkTokenBalance(vTokenAddress, '-1');
-        await checkTokenBalance(vQuoteAddress, -4000);
+        await checkVQuoteBalance(-4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
         await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 2, 1);
       });
@@ -375,7 +380,7 @@ describe('Account Library Test Basic', () => {
 
         test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0);
         await checkTokenBalance(vTokenAddress, 0);
-        await checkTokenBalance(vQuoteAddress, 0);
+        await checkVQuoteBalance(0);
         await checkLiquidityPositionNum(vTokenAddress, 0);
       });
     });

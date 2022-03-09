@@ -205,7 +205,7 @@ library Account {
         Protocol.Info storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
-        account.tokenPositions.update(account.id, balanceAdjustments, address(protocol.vQuote).truncate(), protocol);
+        account.tokenPositions.vQuoteBalance += balanceAdjustments.vQuoteIncrease;
     }
 
     /// @notice increases deposit balance of 'vToken' by 'amount'

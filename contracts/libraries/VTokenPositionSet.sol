@@ -85,7 +85,7 @@ library VTokenPositionSet {
         }
 
         //Value of the base token balance
-        accountMarketValue += set.positions[address(protocol.vQuote).truncate()].balance; // TODO ensure vToken truncated cannot be vQuote truncated ever
+        accountMarketValue += set.vQuoteBalance;
     }
 
     /// @notice returns the max of two int256 numbers
@@ -226,17 +226,17 @@ library VTokenPositionSet {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal {
-        // TODO is vQuote.truncate() is necessary? can it be passed from args?
-        if (poolId != address(protocol.vQuote).truncate()) {
-            set.realizeFundingPayment(accountId, poolId, protocol);
-            set.active.include(poolId);
-        }
+        // TODO remove this assert
+        assert(poolId != address(protocol.vQuote).truncate());
+
+        set.realizeFundingPayment(accountId, poolId, protocol);
+        set.active.include(poolId);
+
         VTokenPosition.Info storage _VTokenPosition = set.positions[poolId];
         _VTokenPosition.balance += balanceAdjustments.vTokenIncrease;
         _VTokenPosition.netTraderPosition += balanceAdjustments.traderPositionIncrease;
 
-        VTokenPosition.Info storage _VQuotePosition = set.positions[address(protocol.vQuote).truncate()]; // TODO take vQuoteTruncate from above
-        _VQuotePosition.balance += balanceAdjustments.vQuoteIncrease;
+        set.vQuoteBalance += balanceAdjustments.vQuoteIncrease;
 
         if (_VTokenPosition.balance == 0 && _VTokenPosition.liquidityPositions.active[0] == 0) {
             set.deactivate(poolId);
@@ -274,9 +274,8 @@ library VTokenPositionSet {
         VTokenPosition.Info storage _VTokenPosition = set.positions[poolId];
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
 
-        VTokenPosition.Info storage _VQuotePosition = set.positions[address(protocol.vQuote).truncate()]; // TODO take vQuoteTruncate from above
         int256 fundingPayment = _VTokenPosition.unrealizedFundingPayment(wrapper);
-        _VQuotePosition.balance += fundingPayment;
+        set.vQuoteBalance += fundingPayment;
 
         _VTokenPosition.sumAX128Ckpt = extrapolatedSumAX128;
 
@@ -296,13 +295,13 @@ library VTokenPositionSet {
         bool createNew,
         Protocol.Info storage protocol
     ) internal returns (VTokenPosition.Info storage position) {
-        // TODO is vQuote.truncate() is necessary? can it be passed from args?
-        if (poolId != address(protocol.vQuote).truncate()) {
-            if (createNew) {
-                set.activate(poolId);
-            } else if (!set.active.exists(poolId)) {
-                revert VPS_TokenInactive(poolId);
-            }
+        // TODO remove this assert
+        assert(poolId != address(protocol.vQuote).truncate());
+
+        if (createNew) {
+            set.activate(poolId);
+        } else if (!set.active.exists(poolId)) {
+            revert VPS_TokenInactive(poolId);
         }
 
         position = set.positions[poolId];
@@ -563,7 +562,7 @@ library VTokenPositionSet {
         view
         returns (int256 vQuoteBalance, IClearingHouseStructures.VTokenPositionView[] memory vTokenPositions)
     {
-        vQuoteBalance = set.positions[address(protocol.vQuote).truncate()].balance; // TODO can be optimized?
+        vQuoteBalance = set.vQuoteBalance;
 
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
         vTokenPositions = new IClearingHouseStructures.VTokenPositionView[](numberOfTokenPositions);
