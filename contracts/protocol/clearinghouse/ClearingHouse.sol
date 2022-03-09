@@ -3,6 +3,7 @@
 pragma solidity ^0.8.9;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import { PausableUpgradeable } from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
@@ -27,6 +28,7 @@ import { IClearingHouseEnums } from '../../interfaces/clearinghouse/IClearingHou
 import { IClearingHouseOwnerActions } from '../../interfaces/clearinghouse/IClearingHouseOwnerActions.sol';
 import { IClearingHouseSystemActions } from '../../interfaces/clearinghouse/IClearingHouseSystemActions.sol';
 
+import { Governable } from '../../utils/Governable.sol';
 import { Multicall } from '../../utils/Multicall.sol';
 import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
 
@@ -34,7 +36,15 @@ import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, PausableUpgradeable, OptimisticGasUsedClaim {
+contract ClearingHouse is
+    IClearingHouse,
+    Multicall,
+    OptimisticGasUsedClaim,
+    ClearingHouseView, // contains storage
+    Initializable, // contains storage
+    PausableUpgradeable, // contains storage
+    Governable // contains storage
+{
     using SafeERC20 for IERC20;
     using Account for Account.Info;
     using AddressHelper for address;

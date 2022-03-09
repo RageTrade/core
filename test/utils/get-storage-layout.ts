@@ -1,7 +1,7 @@
 import hre from 'hardhat';
 import fs from 'fs';
 
-interface StorageEntry {
+export interface StorageEntry {
   astId: number;
   contract: string;
   label: string;
@@ -10,7 +10,7 @@ interface StorageEntry {
   type: string;
 }
 
-interface StorageType {
+export interface StorageType {
   base?: string;
   encoding: string;
   label: string;
@@ -45,4 +45,10 @@ export function getEntryFromStorage(storage: StorageEntry[], label: string) {
     throw new Error(`${label} not found in storage`);
   }
   return entry;
+}
+
+export function printStorage(storage: StorageEntry[]) {
+  storage.forEach(s => {
+    console.log(`${s.label} \t ${s.slot} ${s.offset} \t ${s.type}`);
+  });
 }
