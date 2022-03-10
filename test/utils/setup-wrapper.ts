@@ -31,8 +31,8 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   // await vPoolWrapper.setOracle(oracle.address);
   hre.tracer.nameTags[vPoolWrapper.address] = 'vPoolWrapper';
 
-  vBase.setVariable('isAuth', { [vPoolWrapper.address]: true });
-  vToken.setVariable('vPoolWrapper', vPoolWrapper.address);
+  await vBase.setVariable('isAuth', { [vPoolWrapper.address]: true });
+  await vToken.setVariable('vPoolWrapper', vPoolWrapper.address);
 
   return { vPoolWrapper, vPool, vBase, vToken, oracle };
 

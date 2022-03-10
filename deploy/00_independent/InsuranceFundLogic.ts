@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-    await hre.tenderly.verify({
+    await hre.tenderly.push({
       name: 'InsuranceFund',
       address: deployment.address,
     });

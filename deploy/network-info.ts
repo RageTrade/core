@@ -6,6 +6,7 @@ export interface NetworkInfo {
   UNISWAP_V3_FACTORY_ADDRESS: string;
   UNISWAP_V3_DEFAULT_FEE_TIER: number;
   UNISWAP_V3_POOL_BYTE_CODE_HASH: string;
+  ETH_USD_ORACLE?: string | undefined;
 }
 
 export const UNISWAP_V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
@@ -32,6 +33,15 @@ export const arbitrumTestnetInfo: NetworkInfo = {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  ETH_USD_ORACLE: '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8',
+};
+
+export const optimisticKovanInfo: NetworkInfo = {
+  clearingHouseContractName: 'ClearingHouseEthereum',
+  UNISWAP_V3_FACTORY_ADDRESS,
+  UNISWAP_V3_DEFAULT_FEE_TIER,
+  UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  ETH_USD_ORACLE: '0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261',
 };
 
 export const rinkebyInfo: NetworkInfo = {
@@ -39,6 +49,7 @@ export const rinkebyInfo: NetworkInfo = {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
+  ETH_USD_ORACLE: '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e',
 };
 
 export function getNetworkInfo(chainId?: number): NetworkInfo {

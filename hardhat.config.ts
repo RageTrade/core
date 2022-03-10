@@ -8,7 +8,7 @@ import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-etherscan';
-import '@tenderly/hardhat-tenderly';
+import '@protodev-rage/hardhat-tenderly';
 import { ethers } from 'ethers';
 
 config();
@@ -77,32 +77,6 @@ export default {
             enabled: true,
             runs: 200,
           },
-          metadata: {
-            // do not include the metadata hash, since this is machine dependent
-            // and we want all generated code to be deterministic
-            // https://docs.soliditylang.org/en/v0.8.10/metadata.html
-            bytecodeHash: 'none',
-          },
-          outputSelection: {
-            '*': {
-              '*': ['storageLayout'],
-            },
-          },
-        },
-      },
-      {
-        version: '0.7.6',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-          metadata: {
-            // do not include the metadata hash, since this is machine dependent
-            // and we want all generated code to be deterministic
-            // https://docs.soliditylang.org/en/v0.7.6/metadata.html
-            bytecodeHash: 'none',
-          },
           outputSelection: {
             '*': {
               '*': ['storageLayout'],
@@ -140,5 +114,9 @@ export default {
     deployer: {
       default: 0,
     },
+  },
+  tenderly: {
+    project: process.env.TENDERLY_PROJECT,
+    username: process.env.TENDERLY_USERNAME
   },
 };

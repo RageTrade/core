@@ -3,8 +3,8 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumberish, ethers } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import hre from 'hardhat';
-import { ClearingHouse, ERC20, VBase, RageTradeFactory, RealTokenMock } from '../../typechain-types';
-import { InitializePoolParamsStruct } from '../../typechain-types/RageTradeFactory';
+import { ClearingHouse, ERC20, VBase, RageTradeFactory, RealTokenMock, RealBaseMock } from '../../typechain-types';
+import { IClearingHouseStructures } from '../../typechain-types/RageTradeFactory';
 import { getCreateAddressFor } from './create-addresses';
 import { priceToSqrtPriceX96 } from './price-tick';
 import { randomAddress } from './random';
@@ -61,11 +61,11 @@ export async function setupClearingHouse({
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   // real base
-  let rBase: ERC20;
+  let rBase: RealBaseMock;
   if (rBaseAddress) {
-    rBase = await hre.ethers.getContractAt('ERC20', rBaseAddress);
+    rBase = await hre.ethers.getContractAt('RealBaseMock', rBaseAddress);
   } else {
-    const _rBase = await (await hre.ethers.getContractFactory('RealTokenMock')).deploy();
+    const _rBase = await (await hre.ethers.getContractFactory('RealBaseMock')).deploy();
     const d = await _rBase.decimals();
     await _rBase.mint(signer.address, parseUnits('100000', d));
     rBase = _rBase;
