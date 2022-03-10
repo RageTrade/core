@@ -33,7 +33,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-
     await hre.tenderly.push({
       name: 'RageTradeFactory',
       address: deployment.address,
@@ -50,9 +49,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const clearingHouseAddress = await read('RageTradeFactory', 'clearingHouse');
-  console.log('ClearingHouse : ', clearingHouseAddress)
+  console.log('ClearingHouse : ', clearingHouseAddress);
   await save('ClearingHouse', { abi: ClearingHouse__factory.abi, address: clearingHouseAddress });
-
 
   await hre.tenderly.push({
     name: 'TransparentUpgradeableProxy',
@@ -60,9 +58,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const proxyAdminAddress = await read('RageTradeFactory', 'proxyAdmin');
-  console.log('ProxyAdmin : ', proxyAdminAddress)
+  console.log('ProxyAdmin : ', proxyAdminAddress);
   await save('ProxyAdmin', { abi: ProxyAdmin__factory.abi, address: proxyAdminAddress });
-
 
   await hre.tenderly.push({
     name: 'ProxyAdmin',
@@ -70,9 +67,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const insuranceFundAddress = await read('ClearingHouse', 'insuranceFund');
-  console.log('InsuranceFund : ', insuranceFundAddress)
+  console.log('InsuranceFund : ', insuranceFundAddress);
   await save('InsuranceFund', { abi: InsuranceFund__factory.abi, address: insuranceFundAddress });
-
 
   await hre.tenderly.push({
     name: 'TransparentUpgradeableProxy',

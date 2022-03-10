@@ -16,7 +16,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-    
     await hre.tenderly.push({
       name: 'SwapSimulator',
       address: deployment.address,

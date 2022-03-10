@@ -22,7 +22,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-    
     await hre.tenderly.push({
       name: clearingHouseContractName,
       address: deployment.address,

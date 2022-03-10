@@ -16,11 +16,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   if (deployment.newlyDeployed) {
-    
     await hre.tenderly.push({
       name: 'Account',
       address: deployment.address,
-    })
+    });
   }
 };
 
