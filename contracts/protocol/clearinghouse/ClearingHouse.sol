@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import { ReentrancyGuardUpgradeable } from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 
 import { Account } from '../../libraries/Account.sol';
@@ -34,7 +35,7 @@ import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim {
+contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
     using Account for Account.Info;
     using AddressHelper for address;
@@ -81,6 +82,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
             CollateralSettings({ oracle: _defaultCollateralTokenOracle, twapDuration: 60, supported: true })
         );
 
+        __ReentrancyGuard_init();
         __Governable_init();
     }
 
@@ -225,7 +227,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
     }
 
     /// @inheritdoc IClearingHouseActions
-    function updateProfit(uint256 accountId, int256 amount) external notPaused {
+    function updateProfit(uint256 accountId, int256 amount) external notPaused nonReentrant {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         _updateProfit(account, amount, true);
@@ -353,7 +355,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
      */
 
     function multicallWithSingleMarginCheck(uint256 accountId, MulticallOperation[] calldata operations)
-        external
+        external notPaused nonReentrant
         returns (bytes[] memory results)
     {
         results = new bytes[](operations.length);
