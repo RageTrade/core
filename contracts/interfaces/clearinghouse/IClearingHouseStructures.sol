@@ -50,9 +50,9 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     /// @notice swaps params for specifying the swap params
-    /// @param amount amount of tokens/base to swap
+    /// @param amount amount of tokens/vQuote to swap
     /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
-    /// @param isNotional specifies whether the amount represents token amount (false) or base amount(true)
+    /// @param isNotional specifies whether the amount represents token amount (false) or vQuote amount(true)
     /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
     struct SwapParams {
         int256 amount;
@@ -62,7 +62,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     /// @notice parameters to be used for account balance update
-    /// @param vQuoteIncrease specifies the increase in base balance
+    /// @param vQuoteIncrease specifies the increase in vQuote balance
     /// @param vTokenIncrease specifies the increase in token balance
     /// @param traderPositionIncrease specifies the increase in trader position
     struct BalanceAdjustments {
@@ -84,7 +84,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         uint128 maxRangeLiquidationFees;
     }
 
-    struct DepositTokenView {
+    struct CollateralDepositView {
         IERC20 collateral;
         uint256 balance;
     }
@@ -93,7 +93,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         IVToken vToken;
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
-        int256 sumAX128Ckpt;
+        int256 sumAX128Ckpt; // TODO rename to sumAX128Chkpt
         LiquidityPositionView[] liquidityPositions;
     }
 

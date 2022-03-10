@@ -1,6 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ClearingHouse } from '../typechain-types';
-import { REAL_BASE } from './utils/realConstants';
+import { SETTLEMENT_TOKEN } from './utils/realConstants';
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { constants } from './utils/dummyConstants';

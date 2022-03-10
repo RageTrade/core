@@ -35,13 +35,13 @@ import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  REAL_BASE,
+  SETTLEMENT_TOKEN,
 } from './utils/realConstants';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { config } from 'dotenv';
-import { stealFunds, tokenAmount } from './utils/stealFunds';
+import { stealFunds, parseTokenAmount } from './utils/stealFunds';
 import {
   sqrtPriceX96ToTick,
   priceToSqrtPriceX96WithoutContract,
@@ -151,9 +151,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     expect(tick).to.eq(expectedTick);
   }
 
-  async function checkTokenBalance(accountNo: BigNumberish, vTokenAddress: string, vTokenBalance: BigNumberish) {
+  async function checkVTokenBalance(accountNo: BigNumberish, vTokenAddress: string, vVTokenBalance: BigNumberish) {
     const vTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(accountNo, vTokenAddress);
-    expect(vTokenPosition.balance).to.eq(vTokenBalance);
+    expect(vTokenPosition.balance).to.eq(vVTokenBalance);
   }
 
   async function checkVQuoteBalance(accountNo: BigNumberish, vQuoteBalance: BigNumberish) {
@@ -161,14 +161,14 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     expect(vQuoteBalance_).to.eq(vQuoteBalance);
   }
 
-  async function checkTokenBalanceApproxiate(
+  async function checkVTokenBalanceApproxiate(
     accountNo: BigNumberish,
     vTokenAddress: string,
-    vTokenBalance: BigNumberish,
+    vVTokenBalance: BigNumberish,
     digitsToApproximate: BigNumberish,
   ) {
     const vTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(accountNo, vTokenAddress);
-    expect(vTokenPosition.balance.sub(vTokenBalance).abs()).lt(BigNumber.from(10).pow(digitsToApproximate));
+    expect(vTokenPosition.balance.sub(vVTokenBalance).abs()).lt(BigNumber.from(10).pow(digitsToApproximate));
   }
 
   async function checkTraderPosition(accountNo: BigNumberish, vTokenAddress: string, traderPosition: BigNumberish) {
@@ -185,13 +185,13 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     const vTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(accountNo, vTokenAddress);
     expect(vTokenPosition.netTraderPosition.sub(traderPosition).abs()).lt(BigNumber.from(10).pow(digitsToApproximate));
   }
-  async function checkDepositBalance(accountNo: BigNumberish, vTokenAddress: string, vTokenBalance: BigNumberish) {
+  async function checkDepositBalance(accountNo: BigNumberish, vTokenAddress: string, vVTokenBalance: BigNumberish) {
     const balance = await clearingHouseTest.getAccountDepositBalance(accountNo, vTokenAddress);
-    expect(balance).to.eq(vTokenBalance);
+    expect(balance).to.eq(vVTokenBalance);
   }
 
-  async function checkSettlementTokenBalance(address: string, tokenAmount: BigNumberish) {
-    expect(await settlementToken.balanceOf(address)).to.eq(tokenAmount);
+  async function checkSettlementVTokenBalance(address: string, vTokenAmount: BigNumberish) {
+    expect(await settlementToken.balanceOf(address)).to.eq(vTokenAmount);
   }
 
   async function checkLiquidityPositionNum(accountNo: BigNumberish, vTokenAddress: string, num: BigNumberish) {
@@ -229,11 +229,11 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     user: SignerWithAddress,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    tokenAmount: BigNumberish,
+    vTokenAmount: BigNumberish,
   ) {
-    await settlementToken.connect(user).approve(clearingHouseTest.address, tokenAmount);
+    await settlementToken.connect(user).approve(clearingHouseTest.address, vTokenAmount);
     const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
+    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, vTokenAmount);
   }
 
   async function swapToken(
@@ -260,7 +260,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     expectedUserAccountNo: BigNumberish,
     expectedTokenAddress: string,
     expectedTokenAmountOut: BigNumberish,
-    expectedBaseAmountOut: BigNumberish,
+    expectedVQuoteAmountOut: BigNumberish,
   ) {
     const eventList = txnReceipt.logs
       ?.map(log => {
@@ -279,8 +279,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     const event = eventList[0];
     expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
-    expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
-    expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
+    expect(event.args.vTokenAmountOut).to.eq(expectedTokenAmountOut);
+    expect(event.args.vQuoteAmountOut).to.eq(expectedVQuoteAmountOut);
   }
 
   async function checkFundingPaymentEvent(
@@ -319,7 +319,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     expectedUserAccountNo: BigNumberish,
     expectedTokenAddress: string,
     expectedTokenAmountOut: BigNumberish,
-    expectedBaseAmountOutWithFee: BigNumberish,
+    expectedVQuoteAmountOutWithFee: BigNumberish,
     expectedFundingPayment: BigNumberish,
   ) {
     const swapReceipt = await swapTxn.wait();
@@ -329,7 +329,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       expectedUserAccountNo,
       expectedTokenAddress,
       expectedTokenAmountOut,
-      expectedBaseAmountOutWithFee,
+      expectedVQuoteAmountOutWithFee,
     );
     await checkFundingPaymentEvent(
       swapReceipt,
@@ -346,17 +346,17 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     userAccountNo: BigNumberish,
     tokenPool: IUniswapV3Pool,
     tokenAddress: string,
-    baseAddress: string,
+    vQuoteAddress: string,
     amount: BigNumberish,
     sqrtPriceLimit: BigNumberish,
     isNotional: boolean,
     isPartialAllowed: boolean,
     expectedStartTick: number,
     expectedEndTick: number,
-    expectedEndTokenBalance: BigNumberish,
-    expectedEndBaseBalance: BigNumberish,
+    expectedEndVTokenBalance: BigNumberish,
+    expectedEndVQuoteBalance: BigNumberish,
     expectedTokenAmountOut: BigNumberish,
-    expectedBaseAmountOutWithFee: BigNumberish,
+    expectedVQuoteAmountOutWithFee: BigNumberish,
     expectedFundingPayment: BigNumberish,
   ): Promise<ContractTransaction> {
     await checkVirtualTick(tokenPool, expectedStartTick);
@@ -371,14 +371,14 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     );
 
     await checkVirtualTick(tokenPool, expectedEndTick);
-    await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
+    await checkVTokenBalance(userAccountNo, tokenAddress, expectedEndVTokenBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndVQuoteBalance);
     await checkSwapEvents(
       swapTxn,
       userAccountNo,
       tokenAddress,
       expectedTokenAmountOut,
-      expectedBaseAmountOutWithFee,
+      expectedVQuoteAmountOutWithFee,
       expectedFundingPayment,
     );
     return swapTxn;
@@ -436,7 +436,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     user: SignerWithAddress,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    baseAddress: string,
+    vQuoteAddress: string,
     tickLower: BigNumberish,
     tickUpper: BigNumberish,
     liquidityDelta: BigNumberish,
@@ -444,9 +444,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     limitOrderType: number,
     liquidityPositionNum: BigNumberish,
     expectedEndLiquidityPositionNum: BigNumberish,
-    expectedEndTokenBalance: BigNumberish,
-    expectedEndBaseBalance: BigNumberish,
-    checkApproximateTokenBalance: Boolean,
+    expectedEndVTokenBalance: BigNumberish,
+    expectedEndVQuoteBalance: BigNumberish,
+    checkApproximateVTokenBalance: Boolean,
     expectedSumALast?: BigNumberish,
     expectedSumBLast?: BigNumberish,
     expectedSumFpLast?: BigNumberish,
@@ -462,10 +462,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       closeTokenPosition,
       limitOrderType,
     );
-    checkApproximateTokenBalance
-      ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 9)
-      : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
+    checkApproximateVTokenBalance
+      ? await checkVTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndVTokenBalance, 9)
+      : await checkVTokenBalance(userAccountNo, tokenAddress, expectedEndVTokenBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndVQuoteBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
     if (liquidityPositionNum !== -1) {
       await checkLiquidityPositionDetails(
@@ -568,19 +568,19 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     keeper: SignerWithAddress,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    baseAddress: string,
+    vQuoteAddress: string,
     tickLower: BigNumberish,
     tickUpper: BigNumberish,
     expectedEndLiquidityPositionNum: BigNumberish,
-    expectedEndTokenBalance: BigNumberish,
-    expectedEndBaseBalance: BigNumberish,
-    checkApproximateTokenBalance: Boolean,
+    expectedEndVTokenBalance: BigNumberish,
+    expectedEndVQuoteBalance: BigNumberish,
+    checkApproximateVTokenBalance: Boolean,
   ) {
     await removeLimitOrder(keeper, userAccountNo, tokenAddress, tickLower, tickUpper);
-    checkApproximateTokenBalance
-      ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 9)
-      : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
+    checkApproximateVTokenBalance
+      ? await checkVTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndVTokenBalance, 9)
+      : await checkVTokenBalance(userAccountNo, tokenAddress, expectedEndVTokenBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndVQuoteBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
   }
 
@@ -823,10 +823,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
-    settlementToken = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    settlementToken = await hre.ethers.getContractAt('IERC20', SETTLEMENT_TOKEN);
 
     // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
-    // vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // vQuote = await vQuoteFactory.deploy(SETTLEMENT_TOKEN);
     // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
@@ -850,10 +850,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
       };
-      const fixFee = tokenAmount(10, 6);
-      const removeLimitOrderFee = tokenAmount(10, 6);
-      const minimumOrderNotional = tokenAmount(1, 6).div(100);
-      const minRequiredMargin = tokenAmount(20, 6);
+      const fixFee = parseTokenAmount(10, 6);
+      const removeLimitOrderFee = parseTokenAmount(10, 6);
+      const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
+      const minRequiredMargin = parseTokenAmount(20, 6);
 
       await clearingHouseTest.updateProtocolSettings(
         liquidationParams,
@@ -884,15 +884,15 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
   describe('#Initialize', () => {
     it('Steal Funds', async () => {
-      await stealFunds(REAL_BASE, 6, user0.address, '2000000', whaleFosettlementToken);
-      await stealFunds(REAL_BASE, 6, user1.address, '2000000', whaleFosettlementToken);
-      await stealFunds(REAL_BASE, 6, user2.address, '10000000', whaleFosettlementToken);
-      await stealFunds(REAL_BASE, 6, keeper.address, '1000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user0.address, '2000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user1.address, '2000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user2.address, '10000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, keeper.address, '1000000', whaleFosettlementToken);
 
-      expect(await settlementToken.balanceOf(user0.address)).to.eq(tokenAmount('2000000', 6));
-      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('2000000', 6));
-      expect(await settlementToken.balanceOf(user2.address)).to.eq(tokenAmount('10000000', 6));
-      expect(await settlementToken.balanceOf(keeper.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user0.address)).to.eq(parseTokenAmount('2000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('2000000', 6));
+      expect(await settlementToken.balanceOf(user2.address)).to.eq(parseTokenAmount('10000000', 6));
+      expect(await settlementToken.balanceOf(keeper.address)).to.eq(parseTokenAmount('1000000', 6));
     });
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user0).createAccount();
@@ -955,31 +955,31 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await cleanPositionsAllAccounts(4);
     });
     it('Acct[0] Initial Collateral Deposit = 2M USDC', async () => {
-      await addMargin(user0, user0AccountNo, settlementToken.address, tokenAmount(2n * 10n ** 6n, 6));
-      await checkSettlementTokenBalance(user0.address, tokenAmount(0n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 6n, 6));
-      await checkDepositBalance(user0AccountNo, settlementToken.address, tokenAmount(2n * 10n ** 6n, 6));
+      await addMargin(user0, user0AccountNo, settlementToken.address, parseTokenAmount(2n * 10n ** 6n, 6));
+      await checkSettlementVTokenBalance(user0.address, parseTokenAmount(0n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(2n * 10n ** 6n, 6));
+      await checkDepositBalance(user0AccountNo, settlementToken.address, parseTokenAmount(2n * 10n ** 6n, 6));
     });
 
     it('Acct[1] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user1, user1AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
-      await checkSettlementTokenBalance(user1.address, tokenAmount(2n * 10n ** 6n - 10n ** 5n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 6n + 10n ** 5n, 6));
-      await checkDepositBalance(user1AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user1, user1AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
+      await checkSettlementVTokenBalance(user1.address, parseTokenAmount(2n * 10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(2n * 10n ** 6n + 10n ** 5n, 6));
+      await checkDepositBalance(user1AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
     });
 
     it('Acct[2] Initial Collateral Deposit = 10m USDC', async () => {
-      await addMargin(user2, user2AccountNo, settlementToken.address, tokenAmount(10n ** 7n, 6));
-      await checkSettlementTokenBalance(user2.address, tokenAmount(0n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(12n * 10n ** 6n + 10n ** 5n, 6));
-      await checkDepositBalance(user2AccountNo, settlementToken.address, tokenAmount(10n ** 7n, 6));
+      await addMargin(user2, user2AccountNo, settlementToken.address, parseTokenAmount(10n ** 7n, 6));
+      await checkSettlementVTokenBalance(user2.address, parseTokenAmount(0n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(12n * 10n ** 6n + 10n ** 5n, 6));
+      await checkDepositBalance(user2AccountNo, settlementToken.address, parseTokenAmount(10n ** 7n, 6));
     });
 
     it('Keeper Initial Collateral Deposit = 1m USDC', async () => {
-      await addMargin(keeper, keeperAccountNo, settlementToken.address, tokenAmount(10n ** 6n, 6));
-      await checkSettlementTokenBalance(keeper.address, tokenAmount(0n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(13n * 10n ** 6n + 10n ** 5n, 6));
-      await checkDepositBalance(keeperAccountNo, settlementToken.address, tokenAmount(10n ** 6n, 6));
+      await addMargin(keeper, keeperAccountNo, settlementToken.address, parseTokenAmount(10n ** 6n, 6));
+      await checkSettlementVTokenBalance(keeper.address, parseTokenAmount(0n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(13n * 10n ** 6n + 10n ** 5n, 6));
+      await checkDepositBalance(keeperAccountNo, settlementToken.address, parseTokenAmount(10n ** 6n, 6));
     });
   });
 
@@ -1003,7 +1003,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const liquidityDelta = 750000000000n;
       const limitOrderType = 0;
       const expectedToken1Balance = -5242651268n - 1n;
-      const expectedBaseBalance = -3516652083048n - 3n;
+      const expectedVQuoteBalance = -3516652083048n - 3n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -1023,7 +1023,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         0,
         1,
         expectedToken1Balance,
-        expectedBaseBalance,
+        expectedVQuoteBalance,
         false,
         expectedSumALast,
         expectedSumBLast,
@@ -1044,7 +1044,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const liquidityDelta = 75000000000000000n;
       const limitOrderType = 0;
       const expectedToken2Balance = -244251163280152000000n;
-      const expectedBaseBalance = -3871078425502n - 3n;
+      const expectedVQuoteBalance = -3871078425502n - 3n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -1064,7 +1064,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         0,
         1,
         expectedToken2Balance,
-        expectedBaseBalance,
+        expectedVQuoteBalance,
         true,
         expectedSumALast,
         expectedSumBLast,
@@ -1084,13 +1084,13 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const endTick = 64000;
 
       const swapTokenAmount = '-299685604';
-      const expectedTokenBalance = '-299685604';
+      const expectedVTokenBalance = '-299685604';
 
       //TODO: Check
-      const expectedBaseBalance = 181818159182n;
+      const expectedVQuoteBalance = 181818159182n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 181818159182n;
+      const expectedVQuoteAmountOutWithFee = 181818159182n;
       const expectedFundingPayment = 0n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1105,10 +1105,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
     });
@@ -1127,7 +1127,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const liquidityDelta = 250000000000n;
       const limitOrderType = 0;
       const expectedEndToken1Balance = -501494329n - 1n;
-      const expectedEndBaseBalance = -117235394437n + 1n;
+      const expectedEndVQuoteBalance = -117235394437n + 1n;
 
       await updateRangeOrderAndCheck(
         user1,
@@ -1142,7 +1142,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         0,
         1,
         expectedEndToken1Balance,
-        expectedEndBaseBalance,
+        expectedEndVQuoteBalance,
         false,
       );
     });
@@ -1160,13 +1160,13 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const endTick = -194430;
 
       const swapTokenAmount = '-4055086555447580000';
-      const expectedTokenBalance = '-4055086555447580000';
+      const expectedVTokenBalance = '-4055086555447580000';
 
       //TODO: Check
-      const expectedBaseBalance = -102607084819n + 1n;
+      const expectedVQuoteBalance = -102607084819n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 14628309618n;
+      const expectedVQuoteAmountOutWithFee = 14628309618n;
       const expectedFundingPayment = 0n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1181,10 +1181,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
     });
@@ -1203,7 +1203,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const liquidityDelta = 25000000000000000n;
       const limitOrderType = 0;
       const expectedEndToken2Balance = -25559097903887700000n;
-      const expectedEndBaseBalance = -192086890207n;
+      const expectedEndVQuoteBalance = -192086890207n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -1223,7 +1223,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         0,
         1,
         expectedEndToken2Balance,
-        expectedEndBaseBalance,
+        expectedEndVQuoteBalance,
         true,
         expectedSumALast,
         expectedSumBLast,
@@ -1246,12 +1246,12 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const swapToken1Amount = '807234903';
       const expectedToken1Balance = '807234903';
-      const expectedBaseBalance = -496228907427n;
+      const expectedVQuoteBalance = -496228907427n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
-      const expectedBaseAmountOutWithFee = -496228907427n;
+      const expectedVQuoteAmountOutWithFee = -496228907427n;
       const expectedFundingPayment = 0n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1267,9 +1267,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         startTick,
         endTick,
         expectedToken1Balance,
-        expectedBaseBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1293,12 +1293,12 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const swapToken2Amount = '86016045393757900000';
       const expectedToken2Balance = '86016045393757900000';
-      const expectedBaseBalance = -823329583575n - 1n;
+      const expectedVQuoteBalance = -823329583575n - 1n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken2Amount;
-      const expectedBaseAmountOutWithFee = -327100676148n - 1n;
+      const expectedVQuoteAmountOutWithFee = -327100676148n - 1n;
       const expectedFundingPayment = 0n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1314,9 +1314,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         startTick,
         endTick,
         expectedToken2Balance,
-        expectedBaseBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
       // console.log('BTC Funding');
@@ -1340,13 +1340,13 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const swapToken1Amount = '2304178420';
       const expectedToken1Balance = 3111413323n;
       //TODO:Check
-      const expectedBaseBalance = -2388731696396n;
+      const expectedVQuoteBalance = -2388731696396n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
 
-      const expectedBaseAmountOutWithFee = -1565400650601n;
+      const expectedVQuoteAmountOutWithFee = -1565400650601n;
       const expectedFundingPayment = -1462219n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1362,9 +1362,9 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         startTick,
         endTick,
         expectedToken1Balance,
-        expectedBaseBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
       // console.log('BTC Funding');
@@ -1383,12 +1383,12 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
     it('Acct[1] Underwater : Liquidate Ranges @ current tickBTC = 66000, current tickETH = -193370', async () => {
       const expectedToken1Balance = -501494329n - 1n;
-      const expectedTokenBalance = -25559097903887700000n;
+      const expectedVTokenBalance = -25559097903887700000n;
 
-      const netTokenPosition = expectedTokenBalance;
+      const netTokenPosition = expectedVTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = 402070684535n;
+      const expectedVQuoteBalance = 402070684535n;
 
       const expected_MktVal_preRangeLiquidation = 31114231695n;
       const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
@@ -1398,7 +1398,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const MaintenanceMarginFactor = 0n;
       const liquidationFeeFraction = 0n;
-      const fixFee = tokenAmount(10, 6);
+      const fixFee = parseTokenAmount(10, 6);
       const insuranceFundFeeShareBps = 0n;
 
       const expectedTotalNotionalAmountClosed = 0n;
@@ -1414,13 +1414,13 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       await checkLiquidityPositionNum(user1AccountNo, vTokenAddress, 0);
       await checkLiquidityPositionNum(user1AccountNo, vToken1Address, 0);
 
-      await checkTokenBalanceApproxiate(user1AccountNo, vTokenAddress, expectedTokenBalance, 8);
-      await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
+      await checkVTokenBalanceApproxiate(user1AccountNo, vTokenAddress, expectedVTokenBalance, 8);
+      await checkVTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPositionApproximate(user1AccountNo, vTokenAddress, netTokenPosition, 8);
       // await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
-      await checkVQuoteBalance(user1AccountNo, expectedBaseBalance);
-      await checkSettlementTokenBalance(keeper.address, expectedKeeperFee);
-      await checkSettlementTokenBalance(insuranceFund.address, expectedInsuranceFundFee);
+      await checkVQuoteBalance(user1AccountNo, expectedVQuoteBalance);
+      await checkSettlementVTokenBalance(keeper.address, expectedKeeperFee);
+      await checkSettlementVTokenBalance(insuranceFund.address, expectedInsuranceFundFee);
     });
 
     it('Timestamp and Oracle Update - 4000', async () => {
@@ -1432,11 +1432,11 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     });
 
     it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -193370', async () => {
-      const expectedTokenBalance = 0n;
+      const expectedVTokenBalance = 0n;
 
-      const netTokenPosition = expectedTokenBalance;
+      const netTokenPosition = expectedVTokenBalance;
 
-      const expectedBaseBalance = 296658648597n;
+      const expectedVQuoteBalance = 296658648597n;
 
       const tickETH = 193370;
 
@@ -1459,26 +1459,26 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
       const expectedInsuranceFundFee = 1534985416n;
 
-      const liquidatosettlementTokenBalance = 103877346504n;
+      const liquidatosettlementVTokenBalance = 103877346504n;
       const liquidatocTokenPosition = -25559097903887700000n;
       const liquidatorNetTradePosition = -25559097903887700000n;
 
-      const LiquidationAccountBaseBalancePositLiquidation = 0n;
+      const LiquidationAccountVQuoteBalancePositLiquidation = 0n;
 
       // await logPoolPrice(vPool,vToken);
 
       await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vTokenAddress, liquidationBps);
 
-      await checkTokenBalance(user1AccountNo, vTokenAddress, expectedTokenBalance);
+      await checkVTokenBalance(user1AccountNo, vTokenAddress, expectedVTokenBalance);
       await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
 
-      await checkTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatocTokenPosition, 8);
+      await checkVTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatocTokenPosition, 8);
       await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
 
-      await checkVQuoteBalance(user1AccountNo, expectedBaseBalance);
-      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementTokenBalance);
+      await checkVQuoteBalance(user1AccountNo, expectedVQuoteBalance);
+      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementVTokenBalance);
 
-      await checkSettlementTokenBalance(
+      await checkSettlementVTokenBalance(
         insuranceFund.address,
         insuranceFundStartingBalance.add(expectedInsuranceFundFee),
       );
@@ -1497,7 +1497,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedBaseBalance = -82929397118n;
+      const expectedVQuoteBalance = -82929397118n;
 
       const tickBTC = 66000;
 
@@ -1521,24 +1521,24 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       const expectedInsuranceFundFee = 5527866666n;
 
-      const liquidatosettlementTokenBalance = 477939657577n;
+      const liquidatosettlementVTokenBalance = 477939657577n;
       const liquidatocToken1Position = -501494329n - 1n;
       const liquidatorNetTrade1Position = -501494329n - 1n;
 
-      const LiquidationAccountBaseBalancePositLiquidation = 0n;
+      const LiquidationAccountVQuoteBalancePositLiquidation = 0n;
 
       await liquidateTokenPosition(keeper, keeperAccountNo, user1AccountNo, vToken1Address, liquidationBps1);
 
-      await checkTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
+      await checkVTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
 
-      await checkTokenBalance(keeperAccountNo, vToken1Address, liquidatocToken1Position);
+      await checkVTokenBalance(keeperAccountNo, vToken1Address, liquidatocToken1Position);
       await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
 
-      await checkVQuoteBalance(user1AccountNo, expectedBaseBalance);
-      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementTokenBalance);
+      await checkVQuoteBalance(user1AccountNo, expectedVQuoteBalance);
+      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementVTokenBalance);
 
-      await checkSettlementTokenBalance(
+      await checkSettlementVTokenBalance(
         insuranceFund.address,
         insuranceFundStartingBalance.add(expectedInsuranceFundFee),
       );

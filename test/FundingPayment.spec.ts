@@ -65,11 +65,11 @@ describe('FundingPayment', () => {
     });
 
     it(`one long`, async () => {
-      const tokenAmount = 100;
+      const vTokenAmount = 100;
       const liquidity = 10000;
       const blockTimestamp = 1;
       await update({
-        tokenAmount,
+        vTokenAmount,
         liquidity,
         blockTimestamp,
         realPrice,
@@ -78,17 +78,17 @@ describe('FundingPayment', () => {
 
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
       expect(sumAX128).to.eq(realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).div(DAY));
-      expect(sumBX128).to.eq(Q128.mul(tokenAmount).div(liquidity));
+      expect(sumBX128).to.eq(Q128.mul(vTokenAmount).div(liquidity));
       expect(sumFpX128).to.eq(0);
       expect(timestampLast).to.eq(blockTimestamp);
     });
 
     it(`one short`, async () => {
-      const tokenAmount = -100;
+      const vTokenAmount = -100;
       const liquidity = 10000;
       const blockTimestamp = 1;
       await update({
-        tokenAmount,
+        vTokenAmount,
         liquidity,
         blockTimestamp,
         realPrice,
@@ -97,28 +97,28 @@ describe('FundingPayment', () => {
 
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
       expect(sumAX128).to.eq(realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).div(DAY));
-      expect(sumBX128).to.eq(Q128.mul(tokenAmount).div(liquidity));
+      expect(sumBX128).to.eq(Q128.mul(vTokenAmount).div(liquidity));
       expect(sumFpX128).to.eq(0);
       expect(timestampLast).to.eq(blockTimestamp);
     });
 
     it(`two longs`, async () => {
-      const tokenAmount1 = 100;
+      const vTokenAmount1 = 100;
       const liquidity1 = 10000;
       const blockTimestamp1 = 1;
       await update({
-        tokenAmount: tokenAmount1,
+        vTokenAmount: vTokenAmount1,
         liquidity: liquidity1,
         blockTimestamp: blockTimestamp1,
         realPrice,
         virtualPrice,
       });
 
-      const tokenAmount2 = 200;
+      const vTokenAmount2 = 200;
       const liquidity2 = 5000;
       const blockTimestamp2 = 3;
       await update({
-        tokenAmount: tokenAmount2,
+        vTokenAmount: vTokenAmount2,
         liquidity: liquidity2,
         blockTimestamp: blockTimestamp2,
         realPrice,
@@ -133,8 +133,8 @@ describe('FundingPayment', () => {
         .div(DAY);
       const a2 = realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).mul(blockTimestamp1).div(DAY);
 
-      const b1 = Q128.mul(tokenAmount1).div(liquidity1);
-      const b2 = Q128.mul(tokenAmount2).div(liquidity2);
+      const b1 = Q128.mul(vTokenAmount1).div(liquidity1);
+      const b2 = Q128.mul(vTokenAmount2).div(liquidity2);
 
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
       expect(sumAX128).to.eq(a1.add(a2));
@@ -144,22 +144,22 @@ describe('FundingPayment', () => {
     });
 
     it(`two shorts`, async () => {
-      const tokenAmount1 = -100;
+      const vTokenAmount1 = -100;
       const liquidity1 = 10000;
       const blockTimestamp1 = 1;
       await update({
-        tokenAmount: tokenAmount1,
+        vTokenAmount: vTokenAmount1,
         liquidity: liquidity1,
         blockTimestamp: blockTimestamp1,
         realPrice,
         virtualPrice,
       });
 
-      const tokenAmount2 = 200;
+      const vTokenAmount2 = 200;
       const liquidity2 = 5000;
       const blockTimestamp2 = 3;
       await update({
-        tokenAmount: tokenAmount2,
+        vTokenAmount: vTokenAmount2,
         liquidity: liquidity2,
         blockTimestamp: blockTimestamp2,
         realPrice,
@@ -174,8 +174,8 @@ describe('FundingPayment', () => {
         .div(DAY);
       const a2 = realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).mul(blockTimestamp1).div(DAY);
 
-      const b1 = Q128.mul(tokenAmount1).div(liquidity1);
-      const b2 = Q128.mul(tokenAmount2).div(liquidity2);
+      const b1 = Q128.mul(vTokenAmount1).div(liquidity1);
+      const b2 = Q128.mul(vTokenAmount2).div(liquidity2);
 
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
       expect(sumAX128).to.eq(a1.add(a2));
@@ -186,20 +186,20 @@ describe('FundingPayment', () => {
   });
 
   async function update({
-    tokenAmount,
+    vTokenAmount,
     liquidity,
     blockTimestamp,
     realPrice,
     virtualPrice,
   }: {
-    tokenAmount: BigNumberish;
+    vTokenAmount: BigNumberish;
     liquidity: BigNumberish;
     blockTimestamp: BigNumberish;
     realPrice?: BigNumber | number;
     virtualPrice?: BigNumber | number;
   }) {
     await test.update(
-      tokenAmount,
+      vTokenAmount,
       liquidity,
       blockTimestamp,
       BigNumber.isBigNumber(realPrice) ? realPrice : toQ128(realPrice ?? 1.01),

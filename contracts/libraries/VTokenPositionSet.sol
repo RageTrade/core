@@ -84,7 +84,7 @@ library VTokenPositionSet {
             accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
         }
 
-        //Value of the base token balance
+        // Value of the vQuote token balance
         accountMarketValue += set.vQuoteBalance;
     }
 
@@ -101,7 +101,7 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     /// @param vTokenAmount amount of tokens
     /// @param protocol platform constants
-    /// @return notionalAmountClosed for the given token and base amounts
+    /// @return notionalAmountClosed for the given token and vQuote amounts
     function getTokenNotionalValue(
         uint32 poolId,
         int256 vTokenAmount,
@@ -113,12 +113,12 @@ library VTokenPositionSet {
         );
     }
 
-    /// @notice returns notional value of the given base and token amounts
+    /// @notice returns notional value of the given vQuote and token amounts
     /// @param poolId id of the rage trade pool
     /// @param vTokenAmount amount of tokens
     /// @param vQuoteAmount amount of base
     /// @param protocol platform constants
-    /// @return notionalAmountClosed for the given token and base amounts
+    /// @return notionalAmountClosed for the given token and vQuote amounts
     function getNotionalValue(
         uint32 poolId,
         int256 vTokenAmount,
@@ -209,8 +209,8 @@ library VTokenPositionSet {
         set.active.exclude(poolId);
     }
 
-    /// @notice updates token balance, net trader position and base balance
-    /// @dev realizes funding payment to base balance if vToken is not for base
+    /// @notice updates token balance, net trader position and vQuote balance
+    /// @dev realizes funding payment to vQuote balance
     /// @dev activates the token if not already active
     /// @dev deactivates the token if the balance = 0 and there are no range positions active
     /// @dev IMP: ensure that the global states are updated using zeroSwap or directly through some interaction with pool wrapper
@@ -240,7 +240,7 @@ library VTokenPositionSet {
         }
     }
 
-    /// @notice realizes funding payment to base balance
+    /// @notice realizes funding payment to vQuote balance
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param accountId account identifier, used for emitting event
@@ -254,7 +254,7 @@ library VTokenPositionSet {
         set.realizeFundingPayment(accountId, poolId, protocol.pools[poolId].vPoolWrapper, protocol);
     }
 
-    /// @notice realizes funding payment to base balance
+    /// @notice realizes funding payment to vQuote balance
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param accountId account identifier, used for emitting event
@@ -300,13 +300,13 @@ library VTokenPositionSet {
         position = set.positions[poolId];
     }
 
-    /// @notice swaps tokens (Long and Short) with input in token amount / base amount
+    /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param swapParams parameters for swap
     /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
-    /// @return vQuoteAmountOut - base amount coming out of pool
+    /// @return vQuoteAmountOut - vQuote amount coming out of pool
     function swapToken(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -324,7 +324,7 @@ library VTokenPositionSet {
     /// @param vTokenAmount amount of the token
     /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
-    /// @return vQuoteAmountOut - base amount coming out of pool
+    /// @return vQuoteAmountOut - vQuote amount coming out of pool
     function swapTokenAmount(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -343,14 +343,14 @@ library VTokenPositionSet {
             );
     }
 
-    /// @notice swaps tokens (Long and Short) with input in token amount / base amount
+    /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param swapParams parameters for swap
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param protocol platform constants
     /// @return vTokenAmountOut - token amount coming out of pool
-    /// @return vQuoteAmountOut - base amount coming out of pool
+    /// @return vQuoteAmountOut - vQuote amount coming out of pool
     function swapToken(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -400,7 +400,7 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
     /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @return vQuoteAmountOut amount of base tokens that account received (positive) or paid (negative)
+    /// @return vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
     function liquidityChange(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -421,7 +421,7 @@ library VTokenPositionSet {
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in notional) of all the ranges closed
     function liquidateLiquidityPositions(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -439,7 +439,7 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in notional) of all the ranges closed
     function liquidateLiquidityPositions(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -464,7 +464,7 @@ library VTokenPositionSet {
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of net token position coming out (in base) of all the ranges closed
+    /// @return notionalAmountClosed - value of net token position coming out (in notional) of all the ranges closed
     function liquidateLiquidityPositions(
         VTokenPosition.Set storage set,
         uint256 accountId,
@@ -485,7 +485,7 @@ library VTokenPositionSet {
     /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
     /// @param wrapper VPoolWrapper to override the set wrapper
     /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @return vQuoteAmountOut amount of base tokens that account received (positive) or paid (negative)
+    /// @return vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
     function liquidityChange(
         VTokenPosition.Set storage set,
         uint256 accountId,

@@ -82,13 +82,13 @@ contract TickTest {
     }
 
     function registerTrade(
-        int256 tokenAmount,
+        int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
         uint256 realPriceX128,
         uint256 virtualPriceX128
     ) public {
-        fpGlobal.update(tokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
+        fpGlobal.update(vTokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
     }
 
     function cross(int24 tickNext) external {

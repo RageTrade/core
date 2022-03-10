@@ -28,7 +28,7 @@ library FundingPayment {
 
     function update(
         Info storage info,
-        int256 tokenAmount,
+        int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
         uint256 realPriceX128,
@@ -37,7 +37,7 @@ library FundingPayment {
         int256 a = nextAX128(info.timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
         info.sumFpX128 += a.mulDivRoundingDown(info.sumBX128, int256(FixedPoint128.Q128));
         info.sumAX128 += a;
-        info.sumBX128 += tokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
+        info.sumBX128 += vTokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
         info.timestampLast = blockTimestamp;
 
         emit FundingPaymentStateUpdated(info);

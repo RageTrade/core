@@ -16,7 +16,7 @@ import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-contract DepositTokenSetTest is AccountProtocolInfoMock {
+contract CollateralDepositSetTest is AccountProtocolInfoMock {
     using CollateralDeposit for CollateralDeposit.Set;
     using AddressHelper for address;
     using AddressHelper for IERC20;

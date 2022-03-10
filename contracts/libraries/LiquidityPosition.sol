@@ -100,36 +100,36 @@ library LiquidityPosition {
         Protocol.Info storage protocol
     ) internal {
         int256 vTokenPrincipal;
-        int256 basePrincipal;
+        int256 vQuotePrincipal;
 
         IVPoolWrapper wrapper = protocol.vPoolWrapper(poolId);
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside;
 
         if (liquidityDelta > 0) {
             uint256 vTokenPrincipal_;
-            uint256 basePrincipal_;
-            (vTokenPrincipal_, basePrincipal_, wrapperValuesInside) = wrapper.mint(
+            uint256 vQuotePrincipal_;
+            (vTokenPrincipal_, vQuotePrincipal_, wrapperValuesInside) = wrapper.mint(
                 position.tickLower,
                 position.tickUpper,
                 uint128(liquidityDelta)
             );
             vTokenPrincipal = vTokenPrincipal_.toInt256();
-            basePrincipal = basePrincipal_.toInt256();
+            vQuotePrincipal = vQuotePrincipal_.toInt256();
         } else {
             uint256 vTokenPrincipal_;
-            uint256 basePrincipal_;
-            (vTokenPrincipal_, basePrincipal_, wrapperValuesInside) = wrapper.burn(
+            uint256 vQuotePrincipal_;
+            (vTokenPrincipal_, vQuotePrincipal_, wrapperValuesInside) = wrapper.burn(
                 position.tickLower,
                 position.tickUpper,
                 uint128(-liquidityDelta)
             );
             vTokenPrincipal = -vTokenPrincipal_.toInt256();
-            basePrincipal = -basePrincipal_.toInt256();
+            vQuotePrincipal = -vQuotePrincipal_.toInt256();
         }
 
         position.update(accountId, poolId, wrapperValuesInside, balanceAdjustments);
 
-        balanceAdjustments.vQuoteIncrease -= basePrincipal;
+        balanceAdjustments.vQuoteIncrease -= vQuotePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
         emit Account.LiquidityChanged(
@@ -140,14 +140,14 @@ library LiquidityPosition {
             liquidityDelta,
             position.limitOrderType,
             -vTokenPrincipal,
-            -basePrincipal
+            -vQuotePrincipal
         );
 
         uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
-        int256 tokenAmountCurrent;
+        int256 vTokenAmountCurrent;
         {
-            (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
-            balanceAdjustments.traderPositionIncrease += (tokenAmountCurrent - position.vTokenAmountIn);
+            (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
+            balanceAdjustments.traderPositionIncrease += (vTokenAmountCurrent - position.vTokenAmountIn);
         }
 
         if (liquidityDelta > 0) {
@@ -156,7 +156,7 @@ library LiquidityPosition {
             position.liquidity -= uint128(-liquidityDelta);
         }
 
-        position.vTokenAmountIn = tokenAmountCurrent + vTokenPrincipal;
+        position.vTokenAmountIn = vTokenAmountCurrent + vTokenPrincipal;
     }
 
     function update(
@@ -195,9 +195,9 @@ library LiquidityPosition {
         view
         returns (int256 netTokenPosition)
     {
-        int256 tokenAmountCurrent;
-        (tokenAmountCurrent, ) = position.tokenAmountsInRange(sqrtPriceCurrent, false);
-        netTokenPosition = (tokenAmountCurrent - position.vTokenAmountIn);
+        int256 vTokenAmountCurrent;
+        (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
+        netTokenPosition = (vTokenAmountCurrent - position.vTokenAmountIn);
     }
 
     // use funding payment lib
@@ -288,7 +288,7 @@ library LiquidityPosition {
         return position.marketValue(valuationSqrtPriceX96, protocol.vPoolWrapper(poolId));
     }
 
-    function tokenAmountsInRange(
+    function vTokenAmountsInRange(
         Info storage position,
         uint160 sqrtPriceCurrent,
         bool roundUp
@@ -319,7 +319,7 @@ library LiquidityPosition {
         IVPoolWrapper wrapper
     ) internal view returns (int256 marketValue_) {
         {
-            (int256 vTokenAmount, int256 vQuoteAmount) = position.tokenAmountsInRange(valuationSqrtPriceX96, false);
+            (int256 vTokenAmount, int256 vQuoteAmount) = position.vTokenAmountsInRange(valuationSqrtPriceX96, false);
             uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
             marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vQuoteAmount;
         }

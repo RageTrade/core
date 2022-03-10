@@ -5,7 +5,7 @@ import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  REAL_BASE,
+  SETTLEMENT_TOKEN,
 } from './realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor } from './create-addresses';
@@ -27,8 +27,8 @@ export async function testSetup({
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   //SettlementToken
-  const realBase = await smock.fake<ERC20>('ERC20');
-  realBase.decimals.returns(6);
+  const settlementToken = await smock.fake<ERC20>('ERC20');
+  settlementToken.decimals.returns(6);
 
   const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
   const clearingHouseLogic = await (
@@ -51,7 +51,7 @@ export async function testSetup({
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     insuranceFundLogic.address,
-    realBase.address,
+    settlementToken.address,
     nativeOracle.address,
   );
 
@@ -111,7 +111,7 @@ export async function testSetup({
   // const constants = (await clearingHouse.protocolInfo()).constants;
 
   return {
-    realBase,
+    settlementToken,
     vQuote,
     oracle,
     clearingHouse,
@@ -125,12 +125,12 @@ export async function testSetup({
   };
 }
 
-export async function testSetupBase(signer?: SignerWithAddress) {
+export async function testSetupVQuote(signer?: SignerWithAddress) {
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
   //SettlementToken
-  const realBase = await smock.fake<ERC20>('ERC20');
-  realBase.decimals.returns(6);
+  const settlementToken = await smock.fake<ERC20>('ERC20');
+  settlementToken.decimals.returns(6);
 
   //VQuote
   // const vQuote = await smock.fake<VQuote>('VQuote', { address: '0x8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' });
@@ -164,7 +164,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
     clearingHouseLogic.address,
     vPoolWrapperLogic.address,
     insuranceFundLogic.address,
-    realBase.address,
+    settlementToken.address,
     nativeOracle.address,
   );
 
@@ -177,7 +177,7 @@ export async function testSetupBase(signer?: SignerWithAddress) {
   // const constants = (await clearingHouse.protocolInfo()).constants;
 
   return {
-    realBase,
+    settlementToken,
     vQuote,
     clearingHouse,
     rageTradeFactory,

@@ -21,28 +21,28 @@ contract ChainlinkOracle is IOracle {
     using PriceMath for uint256;
 
     AggregatorV3Interface public aggregator;
-    uint8 immutable tokenDecimals;
-    uint8 immutable baseDecimals;
+    uint8 immutable vTokenDecimals;
+    uint8 immutable vQuoteDecimals;
 
     error NotEnoughHistory();
     error IllegalAggregatorAddress(address aggregator);
 
     constructor(
         address _aggregator,
-        uint8 _tokenDecimals,
-        uint8 _baseDecimals
+        uint8 _vTokenDecimals,
+        uint8 _vQuoteDecimals
     ) {
         if (_aggregator.isZero()) revert IllegalAggregatorAddress(address(0));
         aggregator = AggregatorV3Interface(_aggregator);
-        tokenDecimals = _tokenDecimals;
-        baseDecimals = _baseDecimals;
+        vTokenDecimals = _vTokenDecimals;
+        vQuoteDecimals = _vQuoteDecimals;
     }
 
     function getTwapPriceX128(uint32 twapDuration) public view returns (uint256 priceX128) {
         priceX128 = getPrice(twapDuration);
         priceX128 = priceX128.mulDiv(
-            FixedPoint128.Q128 * 10**(baseDecimals),
-            10**(tokenDecimals + aggregator.decimals())
+            FixedPoint128.Q128 * 10**(vQuoteDecimals),
+            10**(vTokenDecimals + aggregator.decimals())
         );
     }
 

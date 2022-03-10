@@ -95,9 +95,6 @@ describe('Market Value and Required Margin', () => {
     VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
     await VTokenPositionSet.init(vTokenAddress);
 
-    // const basePoolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
-    // await VTokenPositionSet.registerPool(vQuote.address, basePoolObj);
-
     const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
     await VTokenPositionSet.registerPool(vTokenPoolObj);
 
@@ -257,9 +254,6 @@ describe('Market Value and Required Margin', () => {
       const myContractFactory = await smock.mock('VTokenPositionSetTest2');
       VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
       await VTokenPositionSet.init(vTokenAddress);
-
-      // const basePoolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
-      // await VTokenPositionSet.registerPool(vQuote.address, basePoolObj);
 
       const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
       await VTokenPositionSet.registerPool(vTokenPoolObj);

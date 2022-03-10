@@ -69,7 +69,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         returns (
             address owner,
             int256 vQuoteBalance,
-            DepositTokenView[] memory tokenDeposits,
+            CollateralDepositView[] memory tokenDeposits,
             VTokenPositionView[] memory tokenPositions
         )
     {

@@ -35,7 +35,7 @@ interface IClearingHouseActions is IClearingHouseStructures {
         uint256 amount
     ) external;
 
-    /// @notice withdraws 'amount' of base token from the profit made
+    /// @notice withdraws 'amount' of settlement token from the profit made
     /// @param accountId account id
     /// @param amount amount of token to withdraw
     function updateProfit(uint256 accountId, int256 amount) external;
@@ -85,7 +85,7 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @param targetAccountId account id
     /// @param poolId truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
-    /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
+    /// @return liquidatorBalanceAdjustments - balance changes in liquidator vQuote and token balance and net token position
     function liquidateTokenPosition(
         uint256 liquidatorAccountId,
         uint256 targetAccountId,
@@ -125,7 +125,7 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @param poolId truncated address of token to withdraw
     /// @param liquidationBps fraction of the token position to be transferred in BPS
     /// @param gasComputationUnitsClaim estimated computation gas units, if more than actual, tx will revert
-    /// @return liquidatorBalanceAdjustments - balance changes in liquidator base and token balance and net token position
+    /// @return liquidatorBalanceAdjustments - balance changes in liquidator vQuote and token balance and net token position
     function liquidateTokenPositionWithGasClaim(
         uint256 liquidatorAccountId,
         uint256 targetAccountId,

@@ -23,13 +23,13 @@ import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  REAL_BASE,
+  SETTLEMENT_TOKEN,
 } from './utils/realConstants';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { config } from 'dotenv';
-import { stealFunds, tokenAmount } from './utils/stealFunds';
+import { stealFunds, parseTokenAmount } from './utils/stealFunds';
 import { priceToSqrtPriceX96, sqrtPriceX96ToTick } from './utils/price-tick';
 
 import { smock } from '@defi-wonderland/smock';
@@ -165,10 +165,10 @@ describe('Clearing House Library', () => {
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
-    settlementToken = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    settlementToken = await hre.ethers.getContractAt('IERC20', SETTLEMENT_TOKEN);
 
     // const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
-    // const vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // const vQuote = await vQuoteFactory.deploy(SETTLEMENT_TOKEN);
     // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
@@ -283,10 +283,10 @@ describe('Clearing House Library', () => {
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
       };
-      const fixFee = tokenAmount(10, 6);
-      const removeLimitOrderFee = tokenAmount(10, 6);
-      const minimumOrderNotional = tokenAmount(1, 6).div(100);
-      const minRequiredMargin = tokenAmount(20, 6);
+      const fixFee = parseTokenAmount(10, 6);
+      const removeLimitOrderFee = parseTokenAmount(10, 6);
+      const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
+      const minRequiredMargin = parseTokenAmount(20, 6);
 
       await clearingHouseTest.updateProtocolSettings(
         liquidationParams,
@@ -314,11 +314,11 @@ describe('Clearing House Library', () => {
 
   describe('#StealFunds', () => {
     it('Steal Funds', async () => {
-      await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user1.address, '1000000', whaleFosettlementToken);
       await stealFunds(settlementToken1.address, 6, user1.address, '1000000', whaleFosettlementToken);
-      await stealFunds(REAL_BASE, 6, user2.address, 10 ** 6, whaleFosettlementToken);
-      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await settlementToken.balanceOf(user2.address)).to.eq(tokenAmount(10 ** 6, 6));
+      await stealFunds(SETTLEMENT_TOKEN, 6, user2.address, 10 ** 6, whaleFosettlementToken);
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user2.address)).to.eq(parseTokenAmount(10 ** 6, 6));
     });
   });
 
@@ -402,10 +402,10 @@ describe('Clearing House Library', () => {
     let liquidityChangeParams: any;
 
     before(async () => {
-      amount = tokenAmount('1000000', 6);
+      amount = parseTokenAmount('1000000', 6);
       truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       swapParams = {
-        amount: tokenAmount('10000', 18),
+        amount: parseTokenAmount('10000', 18),
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
@@ -500,31 +500,31 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       await expect(
-        clearingHouseTest.connect(user2).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user2).addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       await expect(
-        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('CollateralDoesNotExist(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken1.address);
       await expect(
-        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('CollateralNotAllowedForUse(' + +truncate(settlementToken1.address) + ')');
     });
     it('Pass', async () => {
-      await settlementToken.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
+      await settlementToken.connect(user1).approve(clearingHouseTest.address, parseTokenAmount('1000000', 6));
       const truncatedSettlementTokenAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest
         .connect(user1)
-        .addMargin(user1AccountNo, truncatedSettlementTokenAddress, tokenAmount('1000000', 6));
-      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('0', 6));
-      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+        .addMargin(user1AccountNo, truncatedSettlementTokenAddress, parseTokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('0', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('1000000', 6));
       expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
-        tokenAmount('1000000', 6),
+        parseTokenAmount('1000000', 6),
       );
     });
   });
@@ -532,23 +532,25 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await expect(
-        clearingHouseTest.connect(user2).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user2).removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       await expect(
-        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('CollateralDoesNotExist(' + truncatedAddress + ')');
     });
 
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
-      await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('100000', 6));
-      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
-      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
+      await clearingHouseTest
+        .connect(user1)
+        .removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('100000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('100000', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('900000', 6));
       expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
-        tokenAmount('900000', 6),
+        parseTokenAmount('900000', 6),
       );
     });
 
@@ -559,18 +561,22 @@ describe('Clearing House Library', () => {
       await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken1.address, settings);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken1.address);
 
-      await settlementToken1.connect(user1).approve(clearingHouseTest.address, tokenAmount('1000000', 6));
-      await clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
+      await settlementToken1.connect(user1).approve(clearingHouseTest.address, parseTokenAmount('1000000', 6));
+      await clearingHouseTest
+        .connect(user1)
+        .addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6));
       expect(await settlementToken1.balanceOf(user1.address)).to.eq(0);
-      expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('1000000', 6));
 
       //Remove settlementToken1 support
       settings.isAllowedForDeposit = false;
       await clearingHouseTest.connect(admin).updateCollateralSettings(settlementToken1.address, settings);
 
-      await clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, tokenAmount('1000000', 6));
+      await clearingHouseTest
+        .connect(user1)
+        .removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6));
 
-      expect(await settlementToken1.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken1.balanceOf(user1.address)).to.eq(parseTokenAmount('1000000', 6));
       expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(0);
     });
   });
@@ -579,34 +585,34 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await expect(
-        clearingHouseTest.connect(user2).updateProfit(user1AccountNo, tokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user2).updateProfit(user1AccountNo, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
 
     it('Pass - Cover Loss', async () => {
-      await settlementToken.connect(user1).approve(clearingHouseTest.address, tokenAmount('100000', 6));
-      await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, tokenAmount('100000', 6));
+      await settlementToken.connect(user1).approve(clearingHouseTest.address, parseTokenAmount('100000', 6));
+      await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, parseTokenAmount('100000', 6));
       expect(await settlementToken.balanceOf(user1.address)).to.eq(0);
-      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('1000000', 6));
       const accountTokenPosition = await clearingHouseTest.functions.getAccountQuoteBalance(user1AccountNo);
-      expect(accountTokenPosition.balance).to.eq(tokenAmount('100000', 6));
+      expect(accountTokenPosition.balance).to.eq(parseTokenAmount('100000', 6));
     });
 
     it('Pass - Remove Profit', async () => {
-      await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, -tokenAmount('100000', 6));
-      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('100000', 6));
-      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(tokenAmount('900000', 6));
+      await clearingHouseTest.connect(user1).updateProfit(user1AccountNo, -parseTokenAmount('100000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('100000', 6));
+      expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('900000', 6));
       const accountTokenPosition = await clearingHouseTest.functions.getAccountQuoteBalance(user1AccountNo);
       expect(accountTokenPosition.balance).to.eq(0);
     });
   });
   describe('#InitLiquidity', async () => {
     it('#InitLiquidity', async () => {
-      await settlementToken.connect(user2).approve(clearingHouseTest.address, tokenAmount(10 ** 6, 6));
+      await settlementToken.connect(user2).approve(clearingHouseTest.address, parseTokenAmount(10 ** 6, 6));
       const truncatedSettlementTokenAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest
         .connect(user2)
-        .addMargin(user2AccountNo, truncatedSettlementTokenAddress, tokenAmount(10 ** 6, 6));
+        .addMargin(user2AccountNo, truncatedSettlementTokenAddress, parseTokenAmount(10 ** 6, 6));
 
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const { sqrtPriceX96 } = await vPool.slot0();
@@ -635,7 +641,7 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       const swapParams = {
-        amount: tokenAmount('10000', 18),
+        amount: parseTokenAmount('10000', 18),
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
@@ -647,7 +653,7 @@ describe('Clearing House Library', () => {
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       const swapParams = {
-        amount: tokenAmount('10000', 18),
+        amount: parseTokenAmount('10000', 18),
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
@@ -659,7 +665,7 @@ describe('Clearing House Library', () => {
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress1);
       const swapParams = {
-        amount: tokenAmount('10000', 18),
+        amount: parseTokenAmount('10000', 18),
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
@@ -671,7 +677,7 @@ describe('Clearing House Library', () => {
     it('Fail - Low Notional Value', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const swapParams = {
-        amount: tokenAmount('1', 8),
+        amount: parseTokenAmount('1', 8),
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
@@ -681,15 +687,15 @@ describe('Clearing House Library', () => {
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const swapParams = {
-        amount: tokenAmount('1', 18),
+        amount: parseTokenAmount('1', 18),
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
       const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vTokenAddress);
-      expect(accountTokenPosition.balance).to.eq(tokenAmount('1', 18));
-      expect(accountTokenPosition.netTraderPosition).to.eq(tokenAmount('1', 18));
+      expect(accountTokenPosition.balance).to.eq(parseTokenAmount('1', 18));
+      expect(accountTokenPosition.netTraderPosition).to.eq(parseTokenAmount('1', 18));
     });
   });
   describe('#SwapTokenNotional - Without Limit', () => {
@@ -700,7 +706,7 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       const swapParams = {
-        amount: tokenAmount('10000', 6),
+        amount: parseTokenAmount('10000', 6),
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
@@ -713,7 +719,7 @@ describe('Clearing House Library', () => {
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       const swapParams = {
-        amount: tokenAmount('10000', 6),
+        amount: parseTokenAmount('10000', 6),
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
@@ -726,7 +732,7 @@ describe('Clearing House Library', () => {
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress1);
       const swapParams = {
-        amount: tokenAmount('10000', 6),
+        amount: parseTokenAmount('10000', 6),
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
@@ -738,7 +744,7 @@ describe('Clearing House Library', () => {
     it('Fail - Low Notional Value', async () => {
       const curSqrtPrice = await oracle.getTwapSqrtPriceX96(0);
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
-      const amount = tokenAmount('1', 6).div(100).sub(1);
+      const amount = parseTokenAmount('1', 6).div(100).sub(1);
       const swapParams = {
         amount: amount,
         sqrtPriceLimit: 0,
@@ -752,7 +758,7 @@ describe('Clearing House Library', () => {
 
     it('Pass', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
-      const amount = tokenAmount('1', 6).div(10);
+      const amount = parseTokenAmount('1', 6).div(10);
       const swapParams = {
         amount: amount,
         sqrtPriceLimit: 0,

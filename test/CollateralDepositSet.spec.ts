@@ -4,7 +4,7 @@ import hre from 'hardhat';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { getCreateAddressFor } from './utils/create-addresses';
 import {
-  DepositTokenSetTest,
+  CollateralDepositSetTest,
   RageTradeFactory,
   ClearingHouse,
   OracleMock,
@@ -19,13 +19,13 @@ import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  REAL_BASE,
+  SETTLEMENT_TOKEN,
 } from './utils/realConstants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { FakeContract, smock } from '@defi-wonderland/smock';
 
-describe('CTokenDepositSet Library', () => {
-  let test: DepositTokenSetTest;
+describe('Collateral Deposit Set Library', () => {
+  let test: CollateralDepositSetTest;
 
   let vTokenAddress: string;
   let vTokenAddress1: string;
@@ -62,7 +62,7 @@ describe('CTokenDepositSet Library', () => {
 
     signers = await hre.ethers.getSigners();
 
-    const factory = await hre.ethers.getContractFactory('DepositTokenSetTest');
+    const factory = await hre.ethers.getContractFactory('CollateralDepositSetTest');
     test = await factory.deploy(settlementToken.address);
 
     signers = await hre.ethers.getSigners();

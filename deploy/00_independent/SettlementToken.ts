@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
     });
 
-    await execute('RBase', { from: deployer }, 'mint', deployer, hre.ethers.BigNumber.from(10).pow(8));
+    await execute('SettlementToken', { from: deployer }, 'mint', deployer, hre.ethers.BigNumber.from(10).pow(8));
 
     if (deployment.newlyDeployed) {
       await hre.tenderly.push({

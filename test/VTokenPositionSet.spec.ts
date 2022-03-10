@@ -15,7 +15,7 @@ import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  REAL_BASE,
+  SETTLEMENT_TOKEN,
 } from './utils/realConstants';
 import { config } from 'dotenv';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
@@ -46,9 +46,9 @@ describe('VTokenPositionSet Library', () => {
   before(async () => {
     await activateMainnetFork();
 
-    const realBase = await smock.fake<ERC20>('ERC20');
-    realBase.decimals.returns(10);
-    // VQuote = await (await hre.ethers.getContractFactory('VQuote')).deploy(realBase.address);
+    const settlementToken = await smock.fake<ERC20>('ERC20');
+    settlementToken.decimals.returns(10);
+    // VQuote = await (await hre.ethers.getContractFactory('VQuote')).deploy(settlementToken.address);
     const oracleAddress = (await (await hre.ethers.getContractFactory('OracleMock')).deploy()).address;
 
     signers = await hre.ethers.getSigners();
@@ -80,7 +80,7 @@ describe('VTokenPositionSet Library', () => {
       clearingHouseLogic.address,
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
-      REAL_BASE,
+      SETTLEMENT_TOKEN,
       nativeOracle.address,
     );
 
@@ -362,9 +362,6 @@ describe('VTokenPositionSet Library', () => {
   });
 
   async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
-    const basePoolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
-    await vTokenPositionSet.registerPool(basePoolObj);
-
     const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
     await vTokenPositionSet.registerPool(vTokenPoolObj);
 

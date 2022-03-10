@@ -67,7 +67,7 @@ export async function setupClearingHouse({
   uniswapFeeTierDefault = uniswapFeeTierDefault ?? +UNISWAP_V3_DEFAULT_FEE_TIER;
   signer = signer ?? (await hre.ethers.getSigners())[0];
 
-  // real base
+  // deploying settlement token
   let settlementToken: SettlementTokenMock;
   if (settlementTokenAddress) {
     settlementToken = await hre.ethers.getContractAt('SettlementTokenMock', settlementTokenAddress);
@@ -118,7 +118,7 @@ export async function setupClearingHouse({
     nativeOracle.address,
   );
 
-  // virtual base
+  // virtual quote
   const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
   hre.tracer.nameTags[vQuote.address] = 'vQuote';
 
