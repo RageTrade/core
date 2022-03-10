@@ -1,7 +1,9 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
+/// @title Uint32 length 8 array functions
+/// @dev Fits in one storage slot
 library Uint32L8ArrayLib {
     using Uint32L8ArrayLib for uint32[8];
 

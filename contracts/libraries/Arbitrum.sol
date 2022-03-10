@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
@@ -8,6 +8,7 @@ import { ArbAggregator } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbAggre
 import { ArbSys } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbSys.sol';
 import { ArbGasInfo } from '@134dd3v/arbos-precompiles/arbos/builtin/ArbGasInfo.sol';
 
+/// @title Arbitrum helper functions
 library Arbitrum {
     ArbAggregator constant arbAggregator = ArbAggregator(0x000000000000000000000000000000000000006D);
     ArbSys constant arbSys = ArbSys(0x0000000000000000000000000000000000000064);

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.9;
 
@@ -11,7 +11,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
-// extended tick state
+/// @title Extended tick state for VPoolWrapper
 library Tick {
     struct Info {
         int256 sumALastX128;

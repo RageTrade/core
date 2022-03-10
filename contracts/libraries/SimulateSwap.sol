@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.9;
 
@@ -14,6 +14,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { console } from 'hardhat/console.sol';
 
+/// @title Simulate Uniswap V3 Swaps
 library SimulateSwap {
     using SafeCast for uint256;
     using TickBitmapExtended for function(int16) external view returns (uint256);

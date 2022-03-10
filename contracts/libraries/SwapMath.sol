@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
@@ -8,6 +8,7 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 
 import { console } from 'hardhat/console.sol';
 
+/// @title Swap computation functions
 library SwapMath {
     using SignedMath for int256;
 

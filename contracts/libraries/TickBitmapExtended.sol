@@ -1,9 +1,11 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.9;
 
 import { BitMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/BitMath.sol';
 
+/// @title Tick bitmap extended functions
+/// @dev Uses the bitmap from UniswapV3Pool
 library TickBitmapExtended {
     /// @notice Computes the position in the mapping where the initialized bit for a tick lives
     /// @param tick The tick for which to compute the position

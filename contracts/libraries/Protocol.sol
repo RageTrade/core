@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.0;
 
@@ -13,6 +13,8 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { PriceMath } from './PriceMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 
+/// @title Protocol storage functions
+/// @dev This is used as main storage interface containing protocol info
 library Protocol {
     using PriceMath for uint160;
     using PriceMath for uint256;

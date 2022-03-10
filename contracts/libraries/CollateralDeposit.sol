@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.9;
 
@@ -15,6 +15,7 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 
 import { console } from 'hardhat/console.sol';
 
+/// @title Collateral deposit set functions
 library CollateralDeposit {
     using AddressHelper for address;
     using SafeCast for uint256;

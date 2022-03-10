@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 pragma solidity >=0.8.0;
 
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
@@ -6,6 +7,7 @@ import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeC
 
 import { SignedMath } from './SignedMath.sol';
 
+/// @title Signed full math functions
 library SignedFullMath {
     using SafeCast for uint256;
     using SignedMath for int256;

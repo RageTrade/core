@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.9;
 
@@ -9,6 +9,7 @@ import { PriceMath } from './PriceMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
+/// @title UniswapV3Pool helper functions
 library UniswapV3PoolHelper {
     using PriceMath for uint160;
     using UniswapV3PoolHelper for IUniswapV3Pool;

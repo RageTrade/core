@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 pragma solidity ^0.8.9;
 
@@ -8,6 +8,7 @@ import { SignedFullMath } from './SignedFullMath.sol';
 
 import { console } from 'hardhat/console.sol';
 
+/// @title Funding payment functions
 /// @notice Funding Payment Logic used to distribute the FP bill paid by traders among the LPs in the liquidity range
 library FundingPayment {
     using FullMath for uint256;

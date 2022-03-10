@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.9;
 
@@ -13,6 +13,7 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 
+/// @title Liquidity position set functions
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPosition.Set;
