@@ -98,7 +98,7 @@ contract AccountTest {
 
     function cleanDeposits(uint256 accountId) external {
         accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
-        CollateralDeposit.Set storage set = accounts[accountId].tokenDeposits;
+        CollateralDeposit.Set storage set = accounts[accountId].collateralDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
@@ -224,7 +224,7 @@ contract AccountTest {
     }
 
     function getAccountDepositBalance(uint256 accountId, address vToken) external view returns (uint256) {
-        return accounts[accountId].tokenDeposits.deposits[vToken.truncate()];
+        return accounts[accountId].collateralDeposits.deposits[vToken.truncate()];
     }
 
     function getAccountTokenDetails(uint256 accountId, address vToken)

@@ -41,12 +41,12 @@ library Account {
     /// @notice account info for user
     /// @param owner specifies the account owner
     /// @param tokenPositions is set of all open token positions
-    /// @param tokenDeposits is set of all deposits
+    /// @param collateralDeposits is set of all deposits
     struct Info {
         uint96 id;
         address owner;
         VTokenPosition.Set tokenPositions;
-        CollateralDeposit.Set tokenDeposits;
+        CollateralDeposit.Set collateralDeposits;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
@@ -218,7 +218,7 @@ library Account {
         uint256 amount
     ) external {
         // vQuote should be an immutable constant
-        account.tokenDeposits.increaseBalance(collateralId, amount);
+        account.collateralDeposits.increaseBalance(collateralId, amount);
     }
 
     /// @notice reduces deposit balance of 'vToken' by 'amount'
@@ -233,7 +233,7 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account.tokenDeposits.decreaseBalance(collateralId, amount);
+        account.collateralDeposits.decreaseBalance(collateralId, amount);
 
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
@@ -317,7 +317,7 @@ library Account {
         returns (int256 accountMarketValue)
     {
         accountMarketValue = account._getAccountPositionProfits(protocol);
-        accountMarketValue += account.tokenDeposits.getAllDepositAccountMarketValue(protocol);
+        accountMarketValue += account.collateralDeposits.getAllDepositAccountMarketValue(protocol);
         return (accountMarketValue);
     }
 
@@ -688,12 +688,12 @@ library Account {
         returns (
             address owner,
             int256 vQuoteBalance,
-            IClearingHouseStructures.CollateralDepositView[] memory tokenDeposits,
+            IClearingHouseStructures.CollateralDepositView[] memory collateralDeposits,
             IClearingHouseStructures.VTokenPositionView[] memory tokenPositions
         )
     {
         owner = account.owner;
-        tokenDeposits = account.tokenDeposits.getInfo(protocol);
+        collateralDeposits = account.collateralDeposits.getInfo(protocol);
         (vQuoteBalance, tokenPositions) = account.tokenPositions.getInfo(protocol);
     }
 
