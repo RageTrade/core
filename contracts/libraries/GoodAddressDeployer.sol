@@ -1,9 +1,10 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
 import { Create2 } from '@openzeppelin/contracts/utils/Create2.sol';
 
+/// @title Deploys a new contract at a desirable address
 library GoodAddressDeployer {
     /// @notice Deploys contract at an address such that the function isAddressGood(address) returns true
     /// @dev Use of CREATE2 is not to recompute address in future, but just to have the address good

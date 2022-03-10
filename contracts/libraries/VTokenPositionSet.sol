@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.9;
 
@@ -23,6 +23,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { console } from 'hardhat/console.sol';
 
+/// @title VToken position set functions
 library VTokenPositionSet {
     using AddressHelper for address;
     using FullMath for uint256;

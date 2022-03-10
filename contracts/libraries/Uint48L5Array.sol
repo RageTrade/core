@@ -1,7 +1,9 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
+/// @title Uint48 length 5 array functions
+/// @dev Fits in one storage slot
 library Uint48L5ArrayLib {
     using Uint48L5ArrayLib for uint48[5];
 

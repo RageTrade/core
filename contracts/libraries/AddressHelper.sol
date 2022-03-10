@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
@@ -6,8 +6,11 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 
+/// @title Address helper functions
 library AddressHelper {
     /// @notice Convert address to uint32, using the least significant 32 bits
+    /// @param addr Address to convert
+    /// @return truncated last 4 bytes of the address
     function truncate(address addr) internal pure returns (uint32 truncated) {
         assembly {
             truncated := and(addr, 0xffffffff)

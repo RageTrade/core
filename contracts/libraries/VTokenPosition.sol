@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.9;
 
@@ -18,6 +18,7 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { console } from 'hardhat/console.sol';
 
+/// @title VToken position functions
 library VTokenPosition {
     using FullMath for uint256;
     using SignedFullMath for int256;
