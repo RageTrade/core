@@ -93,7 +93,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         IVToken vToken;
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
-        int256 sumAX128Ckpt; // TODO rename to sumAX128Chkpt
+        int256 sumAX128Chkpt;
         LiquidityPositionView[] liquidityPositions;
     }
 

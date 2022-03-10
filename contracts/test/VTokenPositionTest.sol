@@ -28,7 +28,7 @@ contract VTokenPositionTest {
         VTokenPosition.Info storage dummy = dummys[num++];
         dummy.balance = _balance;
         dummy.netTraderPosition = _netTraderPosition;
-        dummy.sumAX128Ckpt = _sumAChkpt;
+        dummy.sumAX128Chkpt = _sumAChkpt;
     }
 
     function marketValue(uint256 price) external view returns (int256 value) {

@@ -48,7 +48,7 @@ library VTokenPosition {
     struct Info {
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition;
-        int256 sumAX128Ckpt; // later look into cint64
+        int256 sumAX128Chkpt;
         // this is moved from accounts to here because of the in margin available check
         // the loop needs to be done over liquidity positions of same token only
         LiquidityPosition.Set liquidityPositions;
@@ -110,7 +110,7 @@ library VTokenPosition {
         int256 extrapolatedSumAX128 = wrapper.getExtrapolatedSumAX128();
         int256 unrealizedFpBill = -FundingPayment.bill(
             extrapolatedSumAX128,
-            position.sumAX128Ckpt,
+            position.sumAX128Chkpt,
             position.netTraderPosition
         );
         return unrealizedFpBill;
