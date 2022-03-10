@@ -71,7 +71,7 @@ contract ClearingHouseTest is ClearingHouse {
     function cleanDeposits(uint256 accountId) external {
         accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
 
-        CollateralDeposit.Set storage set = accounts[accountId].tokenDeposits;
+        CollateralDeposit.Set storage set = accounts[accountId].collateralDeposits;
         uint256 deposit;
 
         for (uint8 i = 0; i < set.active.length; i++) {
@@ -95,7 +95,7 @@ contract ClearingHouseTest is ClearingHouse {
     // }
 
     function getAccountDepositBalance(uint256 accountId, IVToken vToken) external view returns (uint256 balance) {
-        balance = accounts[accountId].tokenDeposits.deposits[vToken.truncate()];
+        balance = accounts[accountId].collateralDeposits.deposits[vToken.truncate()];
     }
 
     function getAccountOpenTokenPosition(uint256 accountId, IVToken vToken)

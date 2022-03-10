@@ -79,14 +79,14 @@ library CollateralDeposit {
     function getInfo(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
         internal
         view
-        returns (IClearingHouseStructures.CollateralDepositView[] memory depositTokens)
+        returns (IClearingHouseStructures.CollateralDepositView[] memory collateralDeposits)
     {
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
-        depositTokens = new IClearingHouseStructures.CollateralDepositView[](numberOfTokenPositions);
+        collateralDeposits = new IClearingHouseStructures.CollateralDepositView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            depositTokens[i].collateral = protocol.collaterals[set.active[i]].token;
-            depositTokens[i].balance = set.deposits[set.active[i]];
+            collateralDeposits[i].collateral = protocol.collaterals[set.active[i]].token;
+            collateralDeposits[i].balance = set.deposits[set.active[i]];
         }
     }
 }

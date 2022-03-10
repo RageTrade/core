@@ -40,7 +40,7 @@ interface IClearingHouseView is IClearingHouseStructures {
         returns (
             address owner,
             int256 vQuoteBalance,
-            CollateralDepositView[] memory tokenDeposits,
+            CollateralDepositView[] memory collateralDeposits,
             VTokenPositionView[] memory tokenPositions
         );
 
