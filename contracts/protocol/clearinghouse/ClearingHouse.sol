@@ -35,7 +35,13 @@ import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
 
-contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, OptimisticGasUsedClaim, ReentrancyGuardUpgradeable {
+contract ClearingHouse is
+    IClearingHouse,
+    ClearingHouseView,
+    Multicall,
+    OptimisticGasUsedClaim,
+    ReentrancyGuardUpgradeable
+{
     using SafeERC20 for IERC20;
     using Account for Account.Info;
     using AddressHelper for address;
@@ -355,7 +361,9 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
      */
 
     function multicallWithSingleMarginCheck(uint256 accountId, MulticallOperation[] calldata operations)
-        external notPaused nonReentrant
+        external
+        notPaused
+        nonReentrant
         returns (bytes[] memory results)
     {
         results = new bytes[](operations.length);
