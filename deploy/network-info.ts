@@ -36,8 +36,6 @@ export const arbitrumTestnetInfo: NetworkInfo = {
   ETH_USD_ORACLE: '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8',
 };
 
-<<<<<<< HEAD
-=======
 export const optimisticKovanInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouseEthereum',
   UNISWAP_V3_FACTORY_ADDRESS,
@@ -46,7 +44,6 @@ export const optimisticKovanInfo: NetworkInfo = {
   ETH_USD_ORACLE: '0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261',
 };
 
->>>>>>> 769fdf7 (chore: use oracle mock for hh network and chainlink oracle for testnets)
 export const rinkebyInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouseEthereum',
   UNISWAP_V3_FACTORY_ADDRESS,

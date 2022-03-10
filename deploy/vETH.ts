@@ -23,13 +23,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   try {
     await get('ETH-vToken');
     alreadyDeployed = true;
-<<<<<<< HEAD
-  } catch (e) { console.log('ERR:', e) }
-=======
   } catch (e) {
     console.log((e as Error).message);
   }
->>>>>>> 769fdf7 (chore: use oracle mock for hh network and chainlink oracle for testnets)
 
   if (!alreadyDeployed) {
     const { deployer } = await getNamedAccounts();
