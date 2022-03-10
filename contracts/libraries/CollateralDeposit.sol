@@ -49,7 +49,7 @@ library CollateralDeposit {
         uint32 collateralId,
         uint256 amount
     ) internal {
-        if(info.deposits[collateralId] < amount) revert InsufficientCollateralBalance();
+        if (info.deposits[collateralId] < amount) revert InsufficientCollateralBalance();
         info.deposits[collateralId] -= amount;
 
         if (info.deposits[collateralId] == 0) {

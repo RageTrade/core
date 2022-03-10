@@ -97,7 +97,7 @@ library SimulateSwap {
         uint24 v3PoolFee,
         function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
-        if(amountSpecified == 0) revert ZeroAmount();
+        if (amountSpecified == 0) revert ZeroAmount();
 
         SwapCache memory cache;
         (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();

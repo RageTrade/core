@@ -237,7 +237,7 @@ contract ClearingHouse is IClearingHouse, ClearingHouseView, Multicall, Optimist
         int256 amount,
         bool checkMargin
     ) internal notPaused {
-        if(amount == 0) revert ZeroAmount();
+        if (amount == 0) revert ZeroAmount();
 
         account.updateProfit(amount, protocol, checkMargin);
         if (amount > 0) {

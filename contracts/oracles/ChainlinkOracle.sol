@@ -27,7 +27,7 @@ contract ChainlinkOracle is IOracle {
         uint8 _tokenDecimals,
         uint8 _baseDecimals
     ) {
-        if(_aggregator == address(0)) revert ZeroAddress();
+        if (_aggregator == address(0)) revert ZeroAddress();
         aggregator = AggregatorV3Interface(_aggregator);
         tokenDecimals = _tokenDecimals;
         baseDecimals = _baseDecimals;
