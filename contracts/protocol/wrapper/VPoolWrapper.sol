@@ -222,7 +222,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         checkTicks(tickLower, tickUpper)
         returns (
             uint256 vTokenPrincipal,
-            uint256 basePrincipal,
+            uint256 vQuotePrincipal,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
@@ -238,7 +238,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         });
 
         vTokenPrincipal = _amount0;
-        basePrincipal = _amount1;
+        vQuotePrincipal = _amount1;
     }
 
     function burn(
@@ -251,7 +251,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         checkTicks(tickLower, tickUpper)
         returns (
             uint256 vTokenPrincipal,
-            uint256 basePrincipal,
+            uint256 vQuotePrincipal,
             WrapperValuesInside memory wrapperValuesInside
         )
     {
@@ -265,7 +265,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         });
 
         vTokenPrincipal = _amount0;
-        basePrincipal = _amount1;
+        vQuotePrincipal = _amount1;
         _collect(tickLower, tickUpper);
     }
 
@@ -387,12 +387,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // here, vQuoteAmount == swap amount
         (uint256 liquidityFees, ) = SwapMath.calculateFees(
             vQuoteAmount.toInt256(),
-            SwapMath.AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT,
+            SwapMath.AmountTypeEnum.ZERO_FEE_VQUOTE_AMOUNT,
             liquidityFeePips,
             protocolFeePips
         );
 
-        // base amount with fees
+        // vQuote amount with fees
         // vQuoteAmount = _includeFees(
         //     vQuoteAmount,
         //     liquidityFees + protocolFees,

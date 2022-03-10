@@ -20,10 +20,10 @@ contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     error Unauthorised();
 
     /// @notice Initializer for Insurance Fund
-    /// @param _settlementToken real base token
+    /// @param _settlementToken settlement token
     /// @param _clearingHouse address of clearing house (proxy) contract
-    /// @param name "Rage Trade iBase"
-    /// @param symbol "iBase"
+    /// @param name "Rage Trade iSettlementToken"
+    /// @param symbol "iSettlementToken"
     function __initialize_InsuranceFund(
         IERC20 _settlementToken,
         IClearingHouse _clearingHouse,
@@ -36,22 +36,22 @@ contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     }
 
     function deposit(uint256 amount) external {
-        uint256 totalBase = settlementToken.balanceOf(address(this));
+        uint256 totalBalance = settlementToken.balanceOf(address(this));
         uint256 totalShares = totalSupply();
         uint256 toMint;
-        if (totalShares == 0 || totalBase == 0) {
+        if (totalShares == 0 || totalBalance == 0) {
             toMint = amount;
         } else {
-            toMint = (amount * totalShares) / totalBase;
+            toMint = (amount * totalShares) / totalBalance;
         }
         settlementToken.safeTransferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, toMint);
     }
 
     function withdraw(uint256 shares) external {
-        uint256 totalBase = settlementToken.balanceOf(address(this));
+        uint256 totalBalance = settlementToken.balanceOf(address(this));
         uint256 totalShares = totalSupply();
-        uint256 toWithdraw = (shares * totalBase) / totalShares;
+        uint256 toWithdraw = (shares * totalBalance) / totalShares;
         _burn(msg.sender, shares);
         settlementToken.safeTransfer(msg.sender, toWithdraw);
     }

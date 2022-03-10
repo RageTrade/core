@@ -33,7 +33,7 @@ library SwapMath {
                 // here, amountSpecified == swap amount + fee
                 (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
                     swapValues.amountSpecified,
-                    AmountTypeEnum.VBASE_AMOUNT_PLUS_FEES,
+                    AmountTypeEnum.VQUOTE_AMOUNT_PLUS_FEES,
                     liquidityFeePips,
                     protocolFeePips
                 );
@@ -56,7 +56,7 @@ library SwapMath {
                 // here, amountSpecified + fee == swap amount
                 (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
                     swapValues.amountSpecified,
-                    AmountTypeEnum.VBASE_AMOUNT_MINUS_FEES,
+                    AmountTypeEnum.VQUOTE_AMOUNT_MINUS_FEES,
                     liquidityFeePips,
                     protocolFeePips
                 );
@@ -89,7 +89,7 @@ library SwapMath {
                 // here, vQuoteIn == swap amount
                 (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
                     swapValues.vQuoteIn,
-                    AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT,
+                    AmountTypeEnum.ZERO_FEE_VQUOTE_AMOUNT,
                     liquidityFeePips,
                     protocolFeePips
                 );
@@ -118,7 +118,7 @@ library SwapMath {
                 // here, vQuoteIn == swap amount
                 (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
                     swapValues.vQuoteIn,
-                    AmountTypeEnum.ZERO_FEE_VBASE_AMOUNT,
+                    AmountTypeEnum.ZERO_FEE_VQUOTE_AMOUNT,
                     liquidityFeePips,
                     protocolFeePips
                 );
@@ -151,9 +151,9 @@ library SwapMath {
     }
 
     enum AmountTypeEnum {
-        ZERO_FEE_VBASE_AMOUNT,
-        VBASE_AMOUNT_MINUS_FEES,
-        VBASE_AMOUNT_PLUS_FEES
+        ZERO_FEE_VQUOTE_AMOUNT,
+        VQUOTE_AMOUNT_MINUS_FEES,
+        VQUOTE_AMOUNT_PLUS_FEES
     }
 
     function calculateFees(
@@ -163,11 +163,11 @@ library SwapMath {
         uint24 protocolFeePips
     ) internal pure returns (uint256 liquidityFees, uint256 protocolFees) {
         uint256 amountAbs = uint256(amount.abs());
-        if (amountTypeEnum == AmountTypeEnum.VBASE_AMOUNT_MINUS_FEES) {
+        if (amountTypeEnum == AmountTypeEnum.VQUOTE_AMOUNT_MINUS_FEES) {
             // when amount is already subtracted by fees, we need to scale it up, so that
             // on calculating and subtracting fees on the scaled up value, we should get same amount
             amountAbs = (amountAbs * 1e6) / uint256(1e6 - liquidityFeePips - protocolFeePips);
-        } else if (amountTypeEnum == AmountTypeEnum.VBASE_AMOUNT_PLUS_FEES) {
+        } else if (amountTypeEnum == AmountTypeEnum.VQUOTE_AMOUNT_PLUS_FEES) {
             // when amount is already added with fees, we need to scale it down, so that
             // on calculating and adding fees on the scaled down value, we should get same amount
             amountAbs = (amountAbs * 1e6) / uint256(1e6 + liquidityFeePips + protocolFeePips);

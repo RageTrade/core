@@ -165,7 +165,7 @@ describe('LiquidityPosition Library', () => {
   const oneSqrtPrice = BigNumber.from(1).shl(96);
 
   interface TestCase {
-    baseAmount: BigNumberish;
+    vQuoteAmount: BigNumberish;
     vTokenAmount: BigNumberish;
     tickLower: number;
     tickUpper: number;
@@ -174,63 +174,63 @@ describe('LiquidityPosition Library', () => {
 
   const testCases: Array<TestCase> = [
     {
-      baseAmount: 100,
+      vQuoteAmount: 100,
       vTokenAmount: 100,
       tickLower: -1,
       tickUpper: 1,
       currentTick: 0,
     },
     {
-      baseAmount: 100,
+      vQuoteAmount: 100,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: 99,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: 100,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: 101,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: -100,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: -99,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: -101,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
       currentTick: 9001,
     },
     {
-      baseAmount: 200,
+      vQuoteAmount: 200,
       vTokenAmount: 100,
       tickLower: -100,
       tickUpper: 100,
@@ -238,16 +238,16 @@ describe('LiquidityPosition Library', () => {
     },
   ];
 
-  describe('#baseValue', () => {
+  describe('#marketValue', () => {
     it('zero', async () => {
       await test.initialize(-1, 1);
       expect(await test.marketValue(oneSqrtPrice)).to.eq(0);
     });
 
-    testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
-      it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount}`, async () => {
-        const { liquidity, baseActual, vTokenActual, sqrtPriceCurrent } = calculateLiquidityValues({
-          baseAmount,
+    testCases.forEach(({ tickLower, tickUpper, currentTick, vQuoteAmount, vTokenAmount }) => {
+      it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${vQuoteAmount} ${vTokenAmount}`, async () => {
+        const { liquidity, vQuoteActual, vTokenActual, sqrtPriceCurrent } = calculateLiquidityValues({
+          vQuoteAmount,
           vTokenAmount,
           tickLower,
           tickUpper,
@@ -267,7 +267,7 @@ describe('LiquidityPosition Library', () => {
         const priceX128 = sqrtPriceCurrent.mul(sqrtPriceCurrent).div(ethers.constants.One.shl(64));
 
         expect(await test.marketValue(sqrtPriceCurrent)).to.eq(
-          baseActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
+          vQuoteActual.add(vTokenActual.mul(priceX128).div(ethers.constants.One.shl(128))),
         );
       });
     });
@@ -279,10 +279,10 @@ describe('LiquidityPosition Library', () => {
       expect(await test.maxNetPosition()).to.eq(0);
     });
 
-    testCases.forEach(({ tickLower, tickUpper, currentTick, baseAmount, vTokenAmount }) => {
-      it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${baseAmount} ${vTokenAmount}`, async () => {
+    testCases.forEach(({ tickLower, tickUpper, currentTick, vQuoteAmount, vTokenAmount }) => {
+      it(`ticks ${tickLower} ${tickUpper} | current ${currentTick} | amounts ${vQuoteAmount} ${vTokenAmount}`, async () => {
         const { liquidity, maxNetPosition } = calculateLiquidityValues({
-          baseAmount,
+          vQuoteAmount,
           vTokenAmount,
           tickLower,
           tickUpper,
@@ -333,7 +333,7 @@ describe('LiquidityPosition Library', () => {
   }
 
   function calculateLiquidityValues({
-    baseAmount,
+    vQuoteAmount,
     vTokenAmount,
     tickLower,
     tickUpper,
@@ -345,7 +345,7 @@ describe('LiquidityPosition Library', () => {
     const sqrtPriceLower = TickMath.getSqrtRatioAtTick(tickLower);
     const sqrtPriceUpper = TickMath.getSqrtRatioAtTick(tickUpper);
     const amount0 = vTokenAmount;
-    const amount1 = baseAmount;
+    const amount1 = vQuoteAmount;
 
     const liquidity = maxLiquidityForAmounts_(
       sqrtPriceCurrent,
@@ -363,16 +363,16 @@ describe('LiquidityPosition Library', () => {
     }
 
     let vTokenActual: JSBI;
-    let baseActual: JSBI;
+    let vQuoteActual: JSBI;
     let maxNetPosition: JSBI;
 
-    baseActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
+    vQuoteActual = SqrtPriceMath.getAmount1Delta(sqrtPriceLower, sqrtPriceMiddle, liquidity, roundUp);
     vTokenActual = SqrtPriceMath.getAmount0Delta(sqrtPriceMiddle, sqrtPriceUpper, liquidity, roundUp);
     maxNetPosition = SqrtPriceMath.getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidity, roundUp);
 
     return {
       liquidity: BigNumber.from(liquidity.toString()),
-      baseActual: BigNumber.from(baseActual.toString()),
+      vQuoteActual: BigNumber.from(vQuoteActual.toString()),
       vTokenActual: BigNumber.from(vTokenActual.toString()),
       sqrtPriceCurrent: BigNumber.from(sqrtPriceCurrent.toString()),
       maxNetPosition: BigNumber.from(maxNetPosition.toString()),

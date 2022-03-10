@@ -120,7 +120,7 @@ describe('Tick', () => {
   describe('#cross', () => {
     it('first cross', async () => {
       await registerTrade({
-        tokenAmount: 100,
+        vTokenAmount: 100,
         liquidity: 10000,
         blockTimestamp: 1,
       });
@@ -135,7 +135,7 @@ describe('Tick', () => {
 
     it('second cross', async () => {
       await registerTrade({
-        tokenAmount: 100,
+        vTokenAmount: 100,
         liquidity: 10000,
         blockTimestamp: 1,
       });
@@ -144,7 +144,7 @@ describe('Tick', () => {
       await test.cross(1);
 
       await registerTrade({
-        tokenAmount: 200,
+        vTokenAmount: 200,
         liquidity: 5000,
         blockTimestamp: 3,
       });
@@ -259,20 +259,20 @@ describe('Tick', () => {
   }
 
   async function registerTrade({
-    tokenAmount,
+    vTokenAmount,
     liquidity,
     blockTimestamp,
     realPrice,
     virtualPrice,
   }: {
-    tokenAmount: BigNumberish;
+    vTokenAmount: BigNumberish;
     liquidity: BigNumberish;
     blockTimestamp: BigNumberish;
     realPrice?: number;
     virtualPrice?: number;
   }) {
     await test.registerTrade(
-      tokenAmount,
+      vTokenAmount,
       liquidity,
       blockTimestamp,
       toQ128(realPrice ?? 1.01),

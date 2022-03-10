@@ -68,7 +68,7 @@ library Account {
     /// @param poolId shows the poolId for which range is active
     error InvalidLiquidationActiveRangePresent(uint32 poolId);
 
-    /// @notice denotes withdrawal of profit in base token
+    /// @notice denotes withdrawal of profit in settlement token
     /// @param accountId serial number of the account
     /// @param amount amount of profit withdrawn
     event ProfitUpdated(uint256 indexed accountId, int256 amount);
@@ -76,13 +76,13 @@ library Account {
     /// @notice denotes token position change
     /// @param accountId serial number of the account
     /// @param poolId truncated address of vtoken whose position was taken
-    /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
+    /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
+    /// @param vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
     event TokenPositionChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
-        int256 tokenAmountOut,
-        int256 baseAmountOut
+        int256 vTokenAmountOut,
+        int256 vQuoteAmountOut
     );
 
     /// @notice denotes token position change due to liquidity add/remove
@@ -90,13 +90,13 @@ library Account {
     /// @param poolId address of token whose position was taken
     /// @param tickLower lower tick of the range updated
     /// @param tickUpper upper tick of the range updated
-    /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
+    /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
     event TokenPositionChangedDueToLiquidityChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
-        int256 tokenAmountOut
+        int256 vTokenAmountOut
     );
 
     /// @notice denotes liquidity add/remove
@@ -106,8 +106,8 @@ library Account {
     /// @param tickUpper upper tick of the range updated
     /// @param liquidityDelta change in liquidity value
     /// @param limitOrderType the type of range position
-    /// @param tokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @param baseAmountOut amount of base tokens that account received (positive) or paid (negative)
+    /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
+    /// @param vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
     event LiquidityChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
@@ -115,8 +115,8 @@ library Account {
         int24 tickUpper,
         int128 liquidityDelta,
         IClearingHouseEnums.LimitOrderType limitOrderType,
-        int256 tokenAmountOut,
-        int256 baseAmountOut
+        int256 vTokenAmountOut,
+        int256 vQuoteAmountOut
     );
 
     /// @notice denotes funding payment for a range / token position
@@ -195,11 +195,11 @@ library Account {
         return !account.owner.isZero();
     }
 
-    /// @notice updates the base balance for 'account' by 'amount'
+    /// @notice updates the vQuote balance for 'account' by 'amount'
     /// @param account pointer to 'account' struct
     /// @param amount amount of balance to update
     /// @param protocol platform constants
-    function _updateBaseBalance(
+    function _updateVQuoteBalance(
         Account.Info storage account,
         int256 amount,
         Protocol.Info storage protocol
@@ -217,7 +217,7 @@ library Account {
         uint32 collateralId,
         uint256 amount
     ) external {
-        // vBASE should be an immutable constant
+        // vQuote should be an immutable constant
         account.tokenDeposits.increaseBalance(collateralId, amount);
     }
 
@@ -238,9 +238,9 @@ library Account {
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
 
-    /// @notice updates 'amount' of profit generated in base token
+    /// @notice updates 'amount' of profit generated in settlement token
     /// @param account account to remove profit from
-    /// @param amount amount of profit(base token) to add/remove
+    /// @param amount amount of profit(settlement token) to add/remove
     /// @param protocol set of all constants and token addresses
     function updateProfit(
         Account.Info storage account,
@@ -248,7 +248,7 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account._updateBaseBalance(amount, protocol);
+        account._updateVQuoteBalance(amount, protocol);
 
         if (checkMargin && amount < 0) {
             account._checkIfProfitAvailable(protocol);
@@ -351,7 +351,7 @@ library Account {
             revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
     }
 
-    /// @notice checks if profit is available to withdraw base token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
+    /// @notice checks if profit is available to withdraw settlement token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
     /// @param account account to check
     /// @param protocol set of all constants and token addresses
     function checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) external view {
@@ -365,7 +365,7 @@ library Account {
 
     /// @notice swaps 'vToken' of token amount equal to 'swapParams.amount'
     /// @notice if vTokenAmount>0 then the swap is a long or close short and if vTokenAmount<0 then swap is a short or close long
-    /// @notice isNotional specifies whether the amount represents token amount (false) or base amount(true)
+    /// @notice isNotional specifies whether the amount represents token amount (false) or vQuote amount(true)
     /// @notice isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
     /// @notice sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
     /// @param account account to swap tokens for
@@ -484,7 +484,7 @@ library Account {
             protocol.liquidationParams
         );
 
-        account._updateBaseBalance(-(keeperFee + insuranceFundFee), protocol);
+        account._updateVQuoteBalance(-(keeperFee + insuranceFundFee), protocol);
     }
 
     /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
@@ -645,7 +645,7 @@ library Account {
 
             if (accountMarketValueFinal < 0) {
                 insuranceFundFee = accountMarketValueFinal;
-                targetAccount._updateBaseBalance(-accountMarketValueFinal, protocol);
+                targetAccount._updateVQuoteBalance(-accountMarketValueFinal, protocol);
             }
         }
 
@@ -679,7 +679,7 @@ library Account {
     ) external {
         account.tokenPositions.removeLimitOrder(account.id, poolId, tickLower, tickUpper, protocol);
 
-        account._updateBaseBalance(-int256(limitOrderFeeAndFixFee), protocol);
+        account._updateVQuoteBalance(-int256(limitOrderFeeAndFixFee), protocol);
     }
 
     function getInfo(Account.Info storage account, Protocol.Info storage protocol)
@@ -688,7 +688,7 @@ library Account {
         returns (
             address owner,
             int256 vQuoteBalance,
-            IClearingHouseStructures.DepositTokenView[] memory tokenDeposits,
+            IClearingHouseStructures.CollateralDepositView[] memory tokenDeposits,
             IClearingHouseStructures.VTokenPositionView[] memory tokenPositions
         )
     {

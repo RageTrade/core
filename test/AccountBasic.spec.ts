@@ -15,11 +15,11 @@ import {
 import { MockContract, FakeContract } from '@defi-wonderland/smock';
 import { smock } from '@defi-wonderland/smock';
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { testSetupBase, testSetupToken } from './utils/setup-general';
+import { testSetupVQuote, testSetupToken } from './utils/setup-general';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-import { tokenAmount } from './utils/stealFunds';
+import { parseTokenAmount } from './utils/stealFunds';
 import { truncate } from './utils/vToken';
 
 describe('Account Library Test Basic', () => {
@@ -32,7 +32,7 @@ describe('Account Library Test Basic', () => {
   let rageTradeFactory: RageTradeFactory;
 
   let test: AccountTest;
-  let realBase: FakeContract<ERC20>;
+  let settlementToken: FakeContract<ERC20>;
   let vQuote: VQuote;
   let oracle: OracleMock;
   let settlementTokenOracle: OracleMock;
@@ -46,9 +46,9 @@ describe('Account Library Test Basic', () => {
 
   let signers: SignerWithAddress[];
 
-  async function checkTokenBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
+  async function checkVTokenBalance(vTokenAddress: string, vVTokenBalance: BigNumberish) {
     const vTokenPosition = await test.getAccountTokenDetails(0, vTokenAddress);
-    expect(vTokenPosition.balance).to.eq(vTokenBalance);
+    expect(vTokenPosition.balance).to.eq(vVTokenBalance);
   }
 
   async function checkVQuoteBalance(vQuoteBalance: BigNumberish) {
@@ -56,9 +56,9 @@ describe('Account Library Test Basic', () => {
     expect(vQuoteBalance_).to.eq(vQuoteBalance);
   }
 
-  async function checkDepositBalance(vTokenAddress: string, vTokenBalance: BigNumberish) {
+  async function checkDepositBalance(vTokenAddress: string, vVTokenBalance: BigNumberish) {
     const balance = await test.getAccountDepositBalance(0, vTokenAddress);
-    expect(balance).to.eq(vTokenBalance);
+    expect(balance).to.eq(vVTokenBalance);
   }
 
   async function checkLiquidityPositionNum(vTokenAddress: string, num: BigNumberish) {
@@ -94,7 +94,13 @@ describe('Account Library Test Basic', () => {
     let vPoolAddress;
     let vPoolWrapperAddress;
 
-    ({ realBase, vQuote, clearingHouse, rageTradeFactory, oracle: settlementTokenOracle } = await testSetupBase());
+    ({
+      settlementToken,
+      vQuote,
+      clearingHouse,
+      rageTradeFactory,
+      oracle: settlementTokenOracle,
+    } = await testSetupVQuote());
 
     ({
       oracle: oracle,
@@ -172,10 +178,10 @@ describe('Account Library Test Basic', () => {
       insuranceFundFeeShareBps: 5000,
       maxRangeLiquidationFees: 100000000,
     };
-    const fixFee = tokenAmount(10, 6);
-    const removeLimitOrderFee = tokenAmount(10, 6);
-    const minimumOrderNotional = tokenAmount(1, 6).div(100);
-    const minRequiredMargin = tokenAmount(20, 6);
+    const fixFee = parseTokenAmount(10, 6);
+    const removeLimitOrderFee = parseTokenAmount(10, 6);
+    const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
+    const minRequiredMargin = parseTokenAmount(20, 6);
 
     await test.setAccountStorage(
       liquidationParams,
@@ -183,7 +189,7 @@ describe('Account Library Test Basic', () => {
       minimumOrderNotional,
       minRequiredMargin,
       fixFee,
-      realBase.address,
+      settlementToken.address,
     );
 
     const poolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
@@ -198,19 +204,19 @@ describe('Account Library Test Basic', () => {
   describe('#Initialize', () => {
     it('Init', async () => {
       test.initToken(vTokenAddress);
-      test.initCollateral(realBase.address, settlementTokenOracle.address, 300);
+      test.initCollateral(settlementToken.address, settlementTokenOracle.address, 300);
     });
   });
 
   describe('#Margin', () => {
     it('Add Margin', async () => {
-      await test.addMargin(0, realBase.address, '10000000000');
-      await checkDepositBalance(realBase.address, '10000000000');
+      await test.addMargin(0, settlementToken.address, '10000000000');
+      await checkDepositBalance(settlementToken.address, '10000000000');
     });
 
     it('Remove Margin', async () => {
-      await test.removeMargin(0, realBase.address, '50');
-      await checkDepositBalance(realBase.address, '9999999950');
+      await test.removeMargin(0, settlementToken.address, '50');
+      await checkDepositBalance(settlementToken.address, '9999999950');
     });
   });
 
@@ -218,19 +224,19 @@ describe('Account Library Test Basic', () => {
     before(async () => {});
     it('Swap Token (Token Amount)', async () => {
       await test.swapTokenAmount(0, vTokenAddress, '10');
-      await checkTokenBalance(vTokenAddress, '10');
+      await checkVTokenBalance(vTokenAddress, '10');
       await checkVQuoteBalance(-40000);
     });
 
     it('Swap Token (Token Notional)', async () => {
       await test.swapTokenNotional(0, vTokenAddress, '40000');
-      await checkTokenBalance(vTokenAddress, '20');
+      await checkVTokenBalance(vTokenAddress, '20');
       await checkVQuoteBalance(-80000);
     });
 
     it('Liqudity Change', async () => {
       await test.cleanPositions(0);
-      await checkTokenBalance(vTokenAddress, '0');
+      await checkVTokenBalance(vTokenAddress, '0');
 
       const liquidityChangeParams = {
         tickLower: -100,
@@ -242,7 +248,7 @@ describe('Account Library Test Basic', () => {
         limitOrderType: 0,
       };
       await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-      await checkTokenBalance(vTokenAddress, '-1');
+      await checkVTokenBalance(vTokenAddress, '-1');
       await checkVQuoteBalance(-4000);
       await checkLiquidityPositionNum(vTokenAddress, 1);
       await checkLiquidityPositionDetails(vTokenAddress, 0, -100, 100, 0, 1);
@@ -264,7 +270,7 @@ describe('Account Library Test Basic', () => {
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-        await checkTokenBalance(vTokenAddress, '-1');
+        await checkVTokenBalance(vTokenAddress, '-1');
         await checkVQuoteBalance(-4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
         await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 0, 1);
@@ -308,7 +314,7 @@ describe('Account Library Test Basic', () => {
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-        await checkTokenBalance(vTokenAddress, '-1');
+        await checkVTokenBalance(vTokenAddress, '-1');
         await checkVQuoteBalance(-4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
         await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 1, 1);
@@ -334,7 +340,7 @@ describe('Account Library Test Basic', () => {
         vPoolFake.slot0.returns([0, 193500, 0, 0, 0, 0, false]);
 
         test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0);
-        await checkTokenBalance(vTokenAddress, 0);
+        await checkVTokenBalance(vTokenAddress, 0);
         await checkVQuoteBalance(0);
         await checkLiquidityPositionNum(vTokenAddress, 0);
       });
@@ -353,7 +359,7 @@ describe('Account Library Test Basic', () => {
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
-        await checkTokenBalance(vTokenAddress, '-1');
+        await checkVTokenBalance(vTokenAddress, '-1');
         await checkVQuoteBalance(-4000);
         await checkLiquidityPositionNum(vTokenAddress, 1);
         await checkLiquidityPositionDetails(vTokenAddress, 0, 194000, 195000, 2, 1);
@@ -379,7 +385,7 @@ describe('Account Library Test Basic', () => {
         vPoolFake.slot0.returns([0, 195500, 0, 0, 0, 0, false]);
 
         test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0);
-        await checkTokenBalance(vTokenAddress, 0);
+        await checkVTokenBalance(vTokenAddress, 0);
         await checkVQuoteBalance(0);
         await checkLiquidityPositionNum(vTokenAddress, 0);
       });
@@ -388,8 +394,8 @@ describe('Account Library Test Basic', () => {
 
   describe('#Liquidation', () => {
     const liquidationParams = {
-      fixFee: tokenAmount(10, 6),
-      minRequiredMargin: tokenAmount(20, 6),
+      fixFee: parseTokenAmount(10, 6),
+      minRequiredMargin: parseTokenAmount(20, 6),
       liquidationFeeFraction: 150,
       tokenLiquidationPriceDeltaBps: 300,
       insuranceFundFeeShareBps: 5000,

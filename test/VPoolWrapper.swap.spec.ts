@@ -50,19 +50,19 @@ describe('VPoolWrapper.swap', () => {
   });
 
   const SWAP = {
-    VTOKEN_FOR_VBASE: true,
-    VBASE_FOR_VTOKEN: false,
+    VTOKEN_FOR_VQUOTE: true,
+    VQUOTE_FOR_VTOKEN: false,
   };
 
   const AMOUNT_TYPE_ENUM = {
-    ZERO_FEE_VBASE_AMOUNT: 0,
-    VBASE_AMOUNT_MINUS_FEES: 1,
-    VBASE_AMOUNT_PLUS_FEES: 2,
+    ZERO_FEE_VQUOTE_AMOUNT: 0,
+    VQUOTE_AMOUNT_MINUS_FEES: 1,
+    VQUOTE_AMOUNT_PLUS_FEES: 2,
   };
 
   describe('exactIn 1 ETH', () => {
     const amountSpecified = parseEther('1');
-    const swapDirection = SWAP.VTOKEN_FOR_VBASE;
+    const swapDirection = SWAP.VTOKEN_FOR_VQUOTE;
 
     let vTokenIn: BigNumber;
     let vQuoteIn: BigNumber;
@@ -77,8 +77,8 @@ describe('VPoolWrapper.swap', () => {
     let fees: BigNumber;
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
-      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
-      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vQuoteIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
+      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified, 0);
+      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vQuoteIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VQUOTE_AMOUNT));
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vQuote amounts should be off by protocol + liquidity fees
@@ -97,7 +97,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vTokenMintEvent, vQuoteBurnEvent } = await extractEvents(
-        vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified, 0),
       );
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
@@ -114,7 +114,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);
@@ -137,7 +137,7 @@ describe('VPoolWrapper.swap', () => {
     let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0);
 
       // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
       expect(vQuoteIn).to.eq(parseUsdc('2000'));
@@ -146,9 +146,9 @@ describe('VPoolWrapper.swap', () => {
     let fees: BigNumber;
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
-      ({ fees, liquidityFees } = await calculateFees(amountSpecified, AMOUNT_TYPE_ENUM.VBASE_AMOUNT_PLUS_FEES));
+      ({ fees, liquidityFees } = await calculateFees(amountSpecified, AMOUNT_TYPE_ENUM.VQUOTE_AMOUNT_PLUS_FEES));
       const amountSpecifiedWithoutFee = amountSpecified.mul(1e6).div(1e6 + liquidityFee + protocolFee);
-      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecifiedWithoutFee, 0);
+      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VQUOTE_FOR_VTOKEN, amountSpecifiedWithoutFee, 0);
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vQuote amounts should be off by protocol + liquidity fees
@@ -168,7 +168,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vQuoteMintEvent, vTokenBurnEvent } = await extractEvents(
-        vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0),
       );
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
@@ -187,7 +187,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);
@@ -209,7 +209,7 @@ describe('VPoolWrapper.swap', () => {
     let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0);
 
       // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
       assert(vTokenIn.isNegative());
@@ -219,8 +219,8 @@ describe('VPoolWrapper.swap', () => {
     let fees: BigNumber;
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
-      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
-      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vQuoteIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VBASE_AMOUNT));
+      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0);
+      ({ fees, liquidityFees } = await calculateFees(zeroFeeSim.vQuoteIn, AMOUNT_TYPE_ENUM.ZERO_FEE_VQUOTE_AMOUNT));
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vQuote amounts should be off by protocol + liquidity fees
@@ -239,7 +239,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vTokenBurnEvent, vQuoteMintEvent } = await extractEvents(
-        vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0),
       );
       if (!vTokenBurnEvent) {
         throw new Error('vTokenBurnEvent not emitted');
@@ -255,7 +255,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swap(SWAP.VBASE_FOR_VTOKEN, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VQUOTE_FOR_VTOKEN, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);
@@ -277,7 +277,7 @@ describe('VPoolWrapper.swap', () => {
     let vQuoteIn: BigNumber;
 
     it('amountSpecified', async () => {
-      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
+      [vTokenIn, vQuoteIn] = await vPoolWrapper.callStatic.swap(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified, 0);
       assert(vQuoteIn.isNegative());
       expect(vQuoteIn.mul(-1)).to.eq(parseUsdc('2000'));
     });
@@ -285,9 +285,9 @@ describe('VPoolWrapper.swap', () => {
     let fees: BigNumber;
     let liquidityFees: BigNumber;
     it('swapped amount', async () => {
-      ({ fees, liquidityFees } = await calculateFees(amountSpecified, AMOUNT_TYPE_ENUM.VBASE_AMOUNT_MINUS_FEES));
+      ({ fees, liquidityFees } = await calculateFees(amountSpecified, AMOUNT_TYPE_ENUM.VQUOTE_AMOUNT_MINUS_FEES));
 
-      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VBASE, amountSpecified.sub(fees), 0); // amountSpecified < 0
+      const zeroFeeSim = await simulator.callStatic.simulateSwap3(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified.sub(fees), 0); // amountSpecified < 0
 
       // comparing swap with a zero fee swap, vToken amounts should be same and
       // and vQuote amounts should be off by protocol + liquidity fees
@@ -306,7 +306,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('mint and burn', async () => {
       const { vQuoteBurnEvent, vTokenMintEvent } = await extractEvents(
-        vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0),
+        vPoolWrapper.swap(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified, 0),
       );
       if (!vTokenMintEvent) {
         throw new Error('vTokenMintEvent not emitted');
@@ -320,7 +320,7 @@ describe('VPoolWrapper.swap', () => {
 
     it('fee', async () => {
       const feeGlobal_before = await vPoolWrapper.sumFeeGlobalX128();
-      await vPoolWrapper.swap(SWAP.VTOKEN_FOR_VBASE, amountSpecified, 0);
+      await vPoolWrapper.swap(SWAP.VTOKEN_FOR_VQUOTE, amountSpecified, 0);
       const feeGlobal_after = await vPoolWrapper.sumFeeGlobalX128();
 
       const feePerLiquidityX128 = feeGlobal_after.sub(feeGlobal_before);

@@ -30,13 +30,13 @@ import {
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  REAL_BASE,
+  SETTLEMENT_TOKEN,
 } from './utils/realConstants';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { config } from 'dotenv';
-import { stealFunds, tokenAmount } from './utils/stealFunds';
+import { stealFunds, parseTokenAmount } from './utils/stealFunds';
 import {
   sqrtPriceX96ToTick,
   priceToSqrtPriceX96WithoutContract,
@@ -113,9 +113,9 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     expect(tick).to.eq(expectedTick);
   }
 
-  async function checkTokenBalance(accountNo: BigNumberish, vTokenAddress: string, vTokenBalance: BigNumberish) {
+  async function checkVTokenBalance(accountNo: BigNumberish, vTokenAddress: string, vVTokenBalance: BigNumberish) {
     const vTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(accountNo, vTokenAddress);
-    expect(vTokenPosition.balance).to.eq(vTokenBalance);
+    expect(vTokenPosition.balance).to.eq(vVTokenBalance);
   }
 
   async function checkVQuoteBalance(accountNo: BigNumberish, vQuoteBalance: BigNumberish) {
@@ -123,14 +123,14 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     expect(vQuoteBalance_).to.eq(vQuoteBalance);
   }
 
-  async function checkTokenBalanceApproxiate(
+  async function checkVTokenBalanceApproxiate(
     accountNo: BigNumberish,
     vTokenAddress: string,
-    vTokenBalance: BigNumberish,
+    vVTokenBalance: BigNumberish,
     digitsToApproximate: BigNumberish,
   ) {
     const vTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(accountNo, vTokenAddress);
-    expect(vTokenPosition.balance.sub(vTokenBalance).abs()).lt(BigNumber.from(10).pow(digitsToApproximate));
+    expect(vTokenPosition.balance.sub(vVTokenBalance).abs()).lt(BigNumber.from(10).pow(digitsToApproximate));
   }
 
   async function checkTraderPosition(accountNo: BigNumberish, vTokenAddress: string, traderPosition: BigNumberish) {
@@ -138,13 +138,13 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     expect(vTokenPosition.netTraderPosition).to.eq(traderPosition);
   }
 
-  async function checkDepositBalance(accountNo: BigNumberish, vTokenAddress: string, vTokenBalance: BigNumberish) {
+  async function checkDepositBalance(accountNo: BigNumberish, vTokenAddress: string, vVTokenBalance: BigNumberish) {
     const balance = await clearingHouseTest.getAccountDepositBalance(accountNo, vTokenAddress);
-    expect(balance).to.eq(vTokenBalance);
+    expect(balance).to.eq(vVTokenBalance);
   }
 
-  async function checkSettlementTokenBalance(address: string, tokenAmount: BigNumberish) {
-    expect(await settlementToken.balanceOf(address)).to.eq(tokenAmount);
+  async function checkSettlementVTokenBalance(address: string, vTokenAmount: BigNumberish) {
+    expect(await settlementToken.balanceOf(address)).to.eq(vTokenAmount);
   }
 
   async function checkLiquidityPositionNum(accountNo: BigNumberish, vTokenAddress: string, num: BigNumberish) {
@@ -182,11 +182,11 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     user: SignerWithAddress,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    tokenAmount: BigNumberish,
+    vTokenAmount: BigNumberish,
   ) {
-    await settlementToken.connect(user).approve(clearingHouseTest.address, tokenAmount);
+    await settlementToken.connect(user).approve(clearingHouseTest.address, vTokenAmount);
     const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, tokenAmount);
+    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, vTokenAmount);
   }
 
   async function swapToken(
@@ -213,7 +213,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     expectedUserAccountNo: BigNumberish,
     expectedTokenAddress: string,
     expectedTokenAmountOut: BigNumberish,
-    expectedBaseAmountOut: BigNumberish,
+    expectedVQuoteAmountOut: BigNumberish,
   ) {
     const eventList = txnReceipt.logs
       ?.map(log => {
@@ -232,8 +232,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     const event = eventList[0];
     expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
-    expect(event.args.tokenAmountOut).to.eq(expectedTokenAmountOut);
-    expect(event.args.baseAmountOut).to.eq(expectedBaseAmountOut);
+    expect(event.args.vTokenAmountOut).to.eq(expectedTokenAmountOut);
+    expect(event.args.vQuoteAmountOut).to.eq(expectedVQuoteAmountOut);
   }
 
   async function checkFundingPaymentEvent(
@@ -272,7 +272,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     expectedUserAccountNo: BigNumberish,
     expectedTokenAddress: string,
     expectedTokenAmountOut: BigNumberish,
-    expectedBaseAmountOutWithFee: BigNumberish,
+    expectedVQuoteAmountOutWithFee: BigNumberish,
     expectedFundingPayment: BigNumberish,
   ) {
     const swapReceipt = await swapTxn.wait();
@@ -282,7 +282,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       expectedUserAccountNo,
       expectedTokenAddress,
       expectedTokenAmountOut,
-      expectedBaseAmountOutWithFee,
+      expectedVQuoteAmountOutWithFee,
     );
     await checkFundingPaymentEvent(
       swapReceipt,
@@ -298,17 +298,17 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     user: SignerWithAddress,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    baseAddress: string,
+    vQuoteAddress: string,
     amount: BigNumberish,
     sqrtPriceLimit: BigNumberish,
     isNotional: boolean,
     isPartialAllowed: boolean,
     expectedStartTick: number,
     expectedEndTick: number,
-    expectedEndTokenBalance: BigNumberish,
-    expectedEndBaseBalance: BigNumberish,
+    expectedEndVTokenBalance: BigNumberish,
+    expectedEndVQuoteBalance: BigNumberish,
     expectedTokenAmountOut: BigNumberish,
-    expectedBaseAmountOutWithFee: BigNumberish,
+    expectedVQuoteAmountOutWithFee: BigNumberish,
     expectedFundingPayment: BigNumberish,
   ): Promise<ContractTransaction> {
     await checkVirtualTick(expectedStartTick);
@@ -322,14 +322,14 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       isPartialAllowed,
     );
     await checkVirtualTick(expectedEndTick);
-    await checkTokenBalance(user2AccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkVQuoteBalance(user2AccountNo, expectedEndBaseBalance);
+    await checkVTokenBalance(user2AccountNo, tokenAddress, expectedEndVTokenBalance);
+    await checkVQuoteBalance(user2AccountNo, expectedEndVQuoteBalance);
     await checkSwapEvents(
       swapTxn,
       userAccountNo,
       tokenAddress,
       expectedTokenAmountOut,
-      expectedBaseAmountOutWithFee,
+      expectedVQuoteAmountOutWithFee,
       expectedFundingPayment,
     );
     return swapTxn;
@@ -376,7 +376,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     user: SignerWithAddress,
     userAccountNo: BigNumberish,
     tokenAddress: string,
-    baseAddress: string,
+    vQuoteAddress: string,
     tickLower: BigNumberish,
     tickUpper: BigNumberish,
     liquidityDelta: BigNumberish,
@@ -384,9 +384,9 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     limitOrderType: number,
     liquidityPositionNum: BigNumberish,
     expectedEndLiquidityPositionNum: BigNumberish,
-    expectedEndTokenBalance: BigNumberish,
-    expectedEndBaseBalance: BigNumberish,
-    checkApproximateTokenBalance: Boolean,
+    expectedEndVTokenBalance: BigNumberish,
+    expectedEndVQuoteBalance: BigNumberish,
+    checkApproximateVTokenBalance: Boolean,
     expectedSumALast?: BigNumberish,
     expectedSumBLast?: BigNumberish,
     expectedSumFpLast?: BigNumberish,
@@ -402,10 +402,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       closeTokenPosition,
       limitOrderType,
     );
-    checkApproximateTokenBalance
-      ? await checkTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndTokenBalance, 8)
-      : await checkTokenBalance(userAccountNo, tokenAddress, expectedEndTokenBalance);
-    await checkVQuoteBalance(userAccountNo, expectedEndBaseBalance);
+    checkApproximateVTokenBalance
+      ? await checkVTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndVTokenBalance, 8)
+      : await checkVTokenBalance(userAccountNo, tokenAddress, expectedEndVTokenBalance);
+    await checkVQuoteBalance(userAccountNo, expectedEndVQuoteBalance);
     await checkLiquidityPositionNum(userAccountNo, tokenAddress, expectedEndLiquidityPositionNum);
     if (liquidityPositionNum !== -1) {
       await checkLiquidityPositionDetails(
@@ -545,12 +545,12 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
   before(async () => {
     await activateMainnetFork();
 
-    settlementToken = await hre.ethers.getContractAt('IERC20', REAL_BASE);
+    settlementToken = await hre.ethers.getContractAt('IERC20', SETTLEMENT_TOKEN);
 
     dummyTokenAddress = ethers.utils.hexZeroPad(BigNumber.from(148392483294).toHexString(), 20);
 
     const vQuoteFactory = await hre.ethers.getContractFactory('VQuote');
-    // vQuote = await vQuoteFactory.deploy(REAL_BASE);
+    // vQuote = await vQuoteFactory.deploy(SETTLEMENT_TOKEN);
     // vQuoteAddress = vQuote.address;
 
     signers = await hre.ethers.getSigners();
@@ -687,10 +687,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
       };
-      const fixFee = tokenAmount(10, 6);
-      const removeLimitOrderFee = tokenAmount(10, 6);
-      const minimumOrderNotional = tokenAmount(1, 6).div(100);
-      const minRequiredMargin = tokenAmount(20, 6);
+      const fixFee = parseTokenAmount(10, 6);
+      const removeLimitOrderFee = parseTokenAmount(10, 6);
+      const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
+      const minRequiredMargin = parseTokenAmount(20, 6);
 
       await clearingHouseTest.updateProtocolSettings(
         liquidationParams,
@@ -720,13 +720,13 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
 
   describe('#Initialize', () => {
     it('Steal Funds', async () => {
-      await stealFunds(REAL_BASE, 6, user0.address, '1000000', whaleFosettlementToken);
-      await stealFunds(REAL_BASE, 6, user1.address, '1000000', whaleFosettlementToken);
-      await stealFunds(REAL_BASE, 6, user2.address, '1000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user0.address, '1000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user1.address, '1000000', whaleFosettlementToken);
+      await stealFunds(SETTLEMENT_TOKEN, 6, user2.address, '1000000', whaleFosettlementToken);
 
-      expect(await settlementToken.balanceOf(user0.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await settlementToken.balanceOf(user1.address)).to.eq(tokenAmount('1000000', 6));
-      expect(await settlementToken.balanceOf(user2.address)).to.eq(tokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user0.address)).to.eq(parseTokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('1000000', 6));
+      expect(await settlementToken.balanceOf(user2.address)).to.eq(parseTokenAmount('1000000', 6));
     });
     it('Create Account - 1', async () => {
       await clearingHouseTest.connect(user0).createAccount();
@@ -775,18 +775,18 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
     });
     it('Acct[0] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user0, user0AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
-      await checkSettlementTokenBalance(user0.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(10n ** 5n, 6));
-      await checkDepositBalance(user0AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user0, user0AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
+      await checkSettlementVTokenBalance(user0.address, parseTokenAmount(10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(10n ** 5n, 6));
+      await checkDepositBalance(user0AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
     });
     it('Acct[0] Adds Liq b/w ticks (-200820 to -199360) @ tickCurrent = -199590', async () => {
       const tickLower = -200820;
       const tickUpper = -199360;
       const liquidityDelta = 75407230733517400n;
       const limitOrderType = 0;
-      const expectedTokenBalance = -18595999999997900000n;
-      const expectedBaseBalance = '-208523902880';
+      const expectedVTokenBalance = -18595999999997900000n;
+      const expectedVQuoteBalance = '-208523902880';
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -805,8 +805,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         limitOrderType,
         0,
         1,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         true,
         expectedSumALast,
         expectedSumBLast,
@@ -824,23 +824,23 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
     });
     it('Acct[2] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user2, user2AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
-      await checkSettlementTokenBalance(user2.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(2n * 10n ** 5n, 6));
-      await checkDepositBalance(user2AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user2, user2AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
+      await checkSettlementVTokenBalance(user2.address, parseTokenAmount(10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(2n * 10n ** 5n, 6));
+      await checkDepositBalance(user2AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
     });
     it('Acct[2] Short ETH : Price Changes (StartTick = -199590, EndTick = -199700)', async () => {
       const startTick = -199590;
       const endTick = -199700;
 
       const swapTokenAmount = '-8969616182683600000';
-      const expectedTokenBalance = '-8969616182683600000';
+      const expectedVTokenBalance = '-8969616182683600000';
 
       //TODO: Check
-      const expectedBaseBalance = 19146228583n - 1n;
+      const expectedVQuoteBalance = 19146228583n - 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 19146228583n - 1n;
+      const expectedVQuoteAmountOutWithFee = 19146228583n - 1n;
       const expectedFundingPayment = 0n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -854,18 +854,18 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
     });
     it('Acct[1] Initial Collateral Deposit = 100K USDC', async () => {
-      await addMargin(user1, user1AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
-      await checkSettlementTokenBalance(user1.address, tokenAmount(10n ** 6n - 10n ** 5n, 6));
-      await checkSettlementTokenBalance(clearingHouseTest.address, tokenAmount(3n * 10n ** 5n, 6));
-      await checkDepositBalance(user1AccountNo, settlementToken.address, tokenAmount(10n ** 5n, 6));
+      await addMargin(user1, user1AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
+      await checkSettlementVTokenBalance(user1.address, parseTokenAmount(10n ** 6n - 10n ** 5n, 6));
+      await checkSettlementVTokenBalance(clearingHouseTest.address, parseTokenAmount(3n * 10n ** 5n, 6));
+      await checkDepositBalance(user1AccountNo, settlementToken.address, parseTokenAmount(10n ** 5n, 6));
     });
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;
@@ -880,8 +880,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const tickUpper = -199820;
       const liquidityDelta = 22538439850760800n;
       const limitOrderType = 0;
-      const expectedEndTokenBalance = 0;
-      const expectedEndBaseBalance = -25000000000n;
+      const expectedEndVTokenBalance = 0;
+      const expectedEndVQuoteBalance = -25000000000n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -910,8 +910,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         limitOrderType,
         0,
         1,
-        expectedEndTokenBalance,
-        expectedEndBaseBalance,
+        expectedEndVTokenBalance,
+        expectedEndVQuoteBalance,
         false,
         expectedSumALast,
         expectedSumBLast,
@@ -948,8 +948,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -199820;
 
       const swapTokenAmount = '-9841461389446900000';
-      const expectedTokenBalance = '-18811077572130500000';
-      const expectedBaseBalance = 39913423321n - 1n;
+      const expectedVTokenBalance = '-18811077572130500000';
+      const expectedVQuoteBalance = 39913423321n - 1n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
       const expectedSumB = 2494598646462n;
@@ -963,7 +963,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 20767051316n;
+      const expectedVQuoteAmountOutWithFee = 20767051316n;
       const expectedFundingPayment = 143421n + 1n;
 
       const expectedAccount1UnrealizedFunding = 0n;
@@ -980,10 +980,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1012,10 +1012,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -200050;
 
       const swapTokenAmount = '-24716106801005000000';
-      const expectedTokenBalance = '-43527184373135500000';
+      const expectedVTokenBalance = '-43527184373135500000';
 
       //TODO: Check
-      const expectedBaseBalance = 91163779610n - 1n;
+      const expectedVQuoteBalance = 91163779610n - 1n;
 
       const expectedSumB = 5018049315957n + 1n;
       const expectedSumA = 3195846n;
@@ -1023,7 +1023,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFee = 10541355n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 51250196260n;
+      const expectedVQuoteAmountOutWithFee = 51250196260n;
       const expectedFundingPayment = 160028n + 1n;
 
       const expectedTickSumB = 1305108448316n + 3n;
@@ -1045,10 +1045,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1077,9 +1077,9 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -199820;
 
       const swapTokenAmount = '24716106801005000000';
-      const expectedTokenBalance = '-18811077572130500000';
+      const expectedVTokenBalance = '-18811077572130500000';
 
-      const expectedBaseBalance = 39759963661n - 3n;
+      const expectedVQuoteBalance = 39759963661n - 3n;
 
       const expectedSumB = 2494598646462n;
       const expectedSumA = 4027221n;
@@ -1092,7 +1092,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedTickSumFee = 13023604n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = -51404177823n - 2n;
+      const expectedVQuoteAmountOutWithFee = -51404177823n - 2n;
       const expectedFundingPayment = 361873n + 1n;
 
       const expectedAccount1UnrealizedFunding = -47285n + 1n;
@@ -1109,10 +1109,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1142,9 +1142,9 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -199540 - 1;
 
       const swapTokenAmount = '22871896768962800000';
-      const expectedTokenBalance = '4060819196832300000';
+      const expectedVTokenBalance = '4060819196832300000';
 
-      const expectedBaseBalance = -9037007285n - 4n;
+      const expectedVQuoteBalance = -9037007285n - 4n;
 
       const expectedSumB = -538518542231n;
       const expectedSumA = 4999470n;
@@ -1152,7 +1152,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFee = 22243187n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = -48797153836n - 1n;
+      const expectedVQuoteAmountOutWithFee = -48797153836n - 1n;
       const expectedFundingPayment = 182889n + 1n;
 
       const expectedTickSumB = 1189490198145n;
@@ -1174,10 +1174,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1206,9 +1206,9 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -199820;
 
       const swapTokenAmount = '-22871896768962800000';
-      const expectedTokenBalance = '-18811077572130500000';
+      const expectedVTokenBalance = '-18811077572130500000';
 
-      const expectedBaseBalance = 39613949988n - 4n;
+      const expectedVQuoteBalance = 39613949988n - 4n;
 
       const expectedSumB = 2494598646462n;
       const expectedSumA = 5599294n;
@@ -1221,7 +1221,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedTickSumFee = 13023604n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 48650981631n - 1n;
+      const expectedVQuoteAmountOutWithFee = 48650981631n - 1n;
       const expectedFundingPayment = -24358n + 1n;
 
       const expectedAccount1UnrealizedFunding = -47285n + 1n;
@@ -1238,10 +1238,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1271,9 +1271,9 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
 
       const swapTokenAmount = '-24716106801005000000';
       //TODO: Correction in finquant test cases
-      const expectedTokenBalance = '-43527184373135500000';
+      const expectedVTokenBalance = '-43527184373135500000';
 
-      const expectedBaseBalance = 90864172645n - 4n;
+      const expectedVQuoteBalance = 90864172645n - 4n;
 
       const expectedSumB = 5018049315957n + 1n;
       const expectedSumA = 5739622n;
@@ -1281,7 +1281,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFee = 33945018n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 51250196260n;
+      const expectedVQuoteAmountOutWithFee = 51250196260n;
       const expectedFundingPayment = 26396n + 1n;
 
       const expectedTickSumB = 1305108448316n + 3n;
@@ -1303,10 +1303,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1335,8 +1335,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -200310;
 
       const swapTokenAmount = '-28284342105582900000';
-      const expectedTokenBalance = '-71811526478718400000';
-      const expectedBaseBalance = 148094287097n - 4n;
+      const expectedVTokenBalance = '-71811526478718400000';
+      const expectedVQuoteBalance = 148094287097n - 4n;
 
       const expectedSumB = 7905807594282n + 1n;
       const expectedSumA = 6570998n;
@@ -1349,7 +1349,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 57229752578n;
+      const expectedVQuoteAmountOutWithFee = 57229752578n;
       const expectedFundingPayment = 361873n + 1n;
 
       const expectedAccount1UnrealizedFunding = -94570n + 2n;
@@ -1366,10 +1366,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1398,8 +1398,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const tickUpper = -199820;
       const liquidityDelta = -22538439850760800n;
       const limitOrderType = 0;
-      const expectedEndTokenBalance = 12196020739034000000n;
-      const expectedEndBaseBalance = -24951543167n + 1n;
+      const expectedEndVTokenBalance = 12196020739034000000n;
+      const expectedEndVQuoteBalance = -24951543167n + 1n;
 
       // const expectedSumALast = 6570998n;
       // const expectedSumBLast = -115618250170n;
@@ -1429,8 +1429,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         limitOrderType,
         -1,
         0,
-        expectedEndTokenBalance,
-        expectedEndBaseBalance,
+        expectedEndVTokenBalance,
+        expectedEndVQuoteBalance,
         true,
       );
     });
@@ -1449,8 +1449,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -200460;
 
       const swapTokenAmount = '-12692319513534700000';
-      const expectedTokenBalance = '-84503845992253100000';
-      const expectedBaseBalance = 173255240934n - 4n;
+      const expectedVTokenBalance = '-84503845992253100000';
+      const expectedVQuoteBalance = 173255240934n - 4n;
 
       const expectedSumB = 9588977681563n;
       const expectedSumA = 7612477n;
@@ -1463,7 +1463,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedTickSumFee = 0n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 25160205935n;
+      const expectedVQuoteAmountOutWithFee = 25160205935n;
       const expectedFundingPayment = 747901n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1477,10 +1477,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1502,8 +1502,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -200610;
 
       const swapTokenAmount = '-12787864980350100000';
-      const expectedTokenBalance = '-97291710972603200000';
-      const expectedBaseBalance = 198227557862n - 4n;
+      const expectedVTokenBalance = '-97291710972603200000';
+      const expectedVQuoteBalance = 198227557862n - 4n;
 
       const expectedSumB = 11284818366330n;
       const expectedSumA = 7727632n;
@@ -1511,7 +1511,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFee = 46455018n + 2n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 24972219619n;
+      const expectedVQuoteAmountOutWithFee = 24972219619n;
       const expectedFundingPayment = 97308n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1525,10 +1525,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1549,8 +1549,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -200750;
 
       const swapTokenAmount = '-12022178314034100000';
-      const expectedTokenBalance = '-109313889286637300000';
-      const expectedBaseBalance = 221367579949n - 4n;
+      const expectedVTokenBalance = '-109313889286637300000';
+      const expectedVQuoteBalance = 221367579949n - 4n;
 
       const expectedSumB = 12879118832888n + 1n;
       const expectedSumA = 8738332n;
@@ -1558,7 +1558,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFee = 49528172n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 23139038760n;
+      const expectedVQuoteAmountOutWithFee = 23139038760n;
       const expectedFundingPayment = 983326n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1572,10 +1572,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 
@@ -1596,8 +1596,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const endTick = -200800;
 
       const swapTokenAmount = '-4314069685093700000';
-      const expectedTokenBalance = '-113627958971731000000';
-      const expectedBaseBalance = 229592833231n - 4n;
+      const expectedVTokenBalance = '-113627958971731000000';
+      const expectedVQuoteBalance = 229592833231n - 4n;
 
       const expectedSumB = 13451221752347n + 1n;
       const expectedSumA = 9181288n;
@@ -1605,7 +1605,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFee = 50620524n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedBaseAmountOutWithFee = 8224769071n;
+      const expectedVQuoteAmountOutWithFee = 8224769071n;
       const expectedFundingPayment = 484210n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1619,10 +1619,10 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         false,
         startTick,
         endTick,
-        expectedTokenBalance,
-        expectedBaseBalance,
+        expectedVTokenBalance,
+        expectedVQuoteBalance,
         expectedTokenAmountOut,
-        expectedBaseAmountOutWithFee,
+        expectedVQuoteAmountOutWithFee,
         expectedFundingPayment,
       );
 

@@ -38,7 +38,6 @@ library CollateralDeposit {
         uint32 collateralId,
         uint256 amount
     ) internal {
-        // consider vbase as always active because it is base (actives are needed for margin check)
         info.active.include(collateralId);
 
         info.deposits[collateralId] += amount;
@@ -80,10 +79,10 @@ library CollateralDeposit {
     function getInfo(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
         internal
         view
-        returns (IClearingHouseStructures.DepositTokenView[] memory depositTokens)
+        returns (IClearingHouseStructures.CollateralDepositView[] memory depositTokens)
     {
         uint256 numberOfTokenPositions = set.active.numberOfNonZeroElements();
-        depositTokens = new IClearingHouseStructures.DepositTokenView[](numberOfTokenPositions);
+        depositTokens = new IClearingHouseStructures.CollateralDepositView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
             depositTokens[i].collateral = protocol.collaterals[set.active[i]].token;

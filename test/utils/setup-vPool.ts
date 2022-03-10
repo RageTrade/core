@@ -45,7 +45,7 @@ export async function setupVPool({
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
   if (!vQuote) {
-    // setting up virtual base
+    // setting up virtual quote
     const VQuote__factory = await smock.mock<VQuote__factory>('VQuote', signer); // await hre.ethers.getContractFactory('VQuote');
     vQuote = await VQuote__factory.deploy(vQuoteDecimals);
     hre.tracer.nameTags[vQuote.address] = 'vQuote';

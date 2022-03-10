@@ -10,13 +10,13 @@ contract FundingPaymentTest {
     FundingPayment.Info public fpGlobal;
 
     function update(
-        int256 tokenAmount,
+        int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
         uint256 realPriceX128,
         uint256 virtualPriceX128
     ) public {
-        return fpGlobal.update(tokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
+        return fpGlobal.update(vTokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
     }
 
     function nextAX128(

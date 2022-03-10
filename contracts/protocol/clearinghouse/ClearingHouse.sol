@@ -596,7 +596,7 @@ contract ClearingHouse is
 
     /// @notice Gets fix fee
     /// @dev Allowed to be overriden for specific chain implementations
-    /// @return fixFee amount of fixFee in base
+    /// @return fixFee amount of fixFee in notional units
     function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
         return 0;
     }

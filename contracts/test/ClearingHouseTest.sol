@@ -70,6 +70,7 @@ contract ClearingHouseTest is ClearingHouse {
 
     function cleanDeposits(uint256 accountId) external {
         accounts[accountId].tokenPositions.liquidateLiquidityPositions(accountId, protocol);
+
         CollateralDeposit.Set storage set = accounts[accountId].tokenDeposits;
         uint256 deposit;
 

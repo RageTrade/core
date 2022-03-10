@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         getNetworkInfo(hre.network.config.chainId).ETH_USD_ORACLE,
         '18', // native currency decimals
-        '6', // base decimals
+        '6', // settlement token decimals
       ],
       from: deployer,
       log: true,
