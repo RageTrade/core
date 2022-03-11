@@ -483,7 +483,7 @@ contract ClearingHouse is
             protocol
         );
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
-        protocol.cBase.safeTransfer(msg.sender, uint256(keeperFee));
+        protocol.settlementToken.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
     }
 

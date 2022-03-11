@@ -389,7 +389,7 @@ library Account {
         {
             uint160 sqrtPriceLimit;
             {
-                uint160 sqrtTwapPrice = protocol.getVirtualTwapSqrtPriceX96For(poolId);
+                uint160 sqrtTwapPrice = protocol.getVirtualTwapSqrtPriceX96(poolId);
                 if (tokensToTrade > 0) {
                     sqrtPriceLimit = uint256(sqrtTwapPrice)
                         .mulDiv(protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
@@ -426,7 +426,7 @@ library Account {
 
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee), protocol);
 
-        emit TokenPositionLiquidated(account.id, 0, poolId, 0, 0, 0, insuranceFundFee);
+        emit TokenPositionLiquidated(account.id, 0, poolId, 0, 0, 0, 0, insuranceFundFee);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)

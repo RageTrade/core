@@ -499,30 +499,30 @@ describe('Account Library Test Realistic', () => {
   });
 
   describe('#Token Liquidation', () => {
-    describe('#Token Position Liquidation Helpers', () => {
-      it('Liquidation at 4000 ', async () => {
-        await changeVPoolPriceToNearestTick(4000);
-        //Slightly different (don't use priceToPriceX128)
-        const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(4000, vQuote, vToken));
-        const tokensToTrade = parseTokenAmount(-1, 18);
-        const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
-          await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
-        expect(liquidationPriceX128).to.eq(priceX128.sub(priceX128.mul(300).div(10000)));
-        expect(liquidatorPriceX128).to.eq(priceX128.sub(priceX128.mul(150).div(10000)));
-        expect(insuranceFundFee).to.eq(
-          tokensToTrade
-            .mul(-1)
-            .mul(liquidatorPriceX128.sub(liquidationPriceX128))
-            .div(1n << 128n),
-        );
-      });
-      it('Liquidation at 3500 ', async () => {
-        await changeVPoolPriceToNearestTick(3500);
-        const tokensToTrade = parseTokenAmount(1, 18);
-        //Slightly different (don't use priceToPriceX128)
-        const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(3500, vQuote, vToken));
-        const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
-          await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
+    // describe('#Token Position Liquidation Helpers', () => {
+    //   it('Liquidation at 4000 ', async () => {
+    //     await changeVPoolPriceToNearestTick(4000);
+    //     //Slightly different (don't use priceToPriceX128)
+    //     const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(4000, vQuote, vToken));
+    //     const tokensToTrade = parseTokenAmount(-1, 18);
+    //     const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
+    //       await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
+    //     expect(liquidationPriceX128).to.eq(priceX128.sub(priceX128.mul(300).div(10000)));
+    //     expect(liquidatorPriceX128).to.eq(priceX128.sub(priceX128.mul(150).div(10000)));
+    //     expect(insuranceFundFee).to.eq(
+    //       tokensToTrade
+    //         .mul(-1)
+    //         .mul(liquidatorPriceX128.sub(liquidationPriceX128))
+    //         .div(1n << 128n),
+    //     );
+    //   });
+    //   it('Liquidation at 3500 ', async () => {
+    //     await changeVPoolPriceToNearestTick(3500);
+    //     const tokensToTrade = parseTokenAmount(1, 18);
+    //     //Slightly different (don't use priceToPriceX128)
+    //     const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(3500, vQuote, vToken));
+    //     const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
+    //       await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
 
     //     expect(liquidationPriceX128).to.eq(priceX128.add(priceX128.mul(300).div(10000)));
     //     expect(liquidatorPriceX128).to.eq(priceX128.add(priceX128.mul(150).div(10000)));
