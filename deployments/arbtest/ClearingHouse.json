@@ -1,5 +1,5 @@
 {
-  "address": "0x5739C2023Ba0f06C9c38fd4e0CDB596Bb4F6a104",
+  "address": "0x549603efbd63a41f122Ae53A1dfEfDAFF9DB4CEa",
   "abi": [
     {
       "inputs": [
@@ -31,6 +31,28 @@
     {
       "inputs": [
         {
+          "internalType": "uint32",
+          "name": "collateralId",
+          "type": "uint32"
+        }
+      ],
+      "name": "CollateralDoesNotExist",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "collateralId",
+          "type": "uint32"
+        }
+      ],
+      "name": "CollateralNotAllowedForUse",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "gasUsedClaim",
           "type": "uint256"
@@ -53,17 +75,6 @@
         }
       ],
       "name": "IllegalSqrtPrice",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint32",
-          "name": "period",
-          "type": "uint32"
-        }
-      ],
-      "name": "IllegalTwapDuration",
       "type": "error"
     },
     {
@@ -137,18 +148,14 @@
       "type": "error"
     },
     {
-      "inputs": [],
-      "name": "Paused",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "SlippageBeyondTolerance",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "Unauthorised",
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
+        }
+      ],
+      "name": "PoolDoesNotExist",
       "type": "error"
     },
     {
@@ -159,34 +166,38 @@
           "type": "uint32"
         }
       ],
-      "name": "UninitializedToken",
+      "name": "PoolNotAllowedForTrade",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "SlippageBeyondTolerance",
       "type": "error"
     },
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "cTokenAddress",
-          "type": "address"
+          "internalType": "uint32",
+          "name": "period",
+          "type": "uint32"
         }
       ],
-      "name": "UnsupportedCToken",
+      "name": "UV3PH_IllegalTwapDuration",
       "type": "error"
     },
     {
-      "inputs": [
-        {
-          "internalType": "contract IVToken",
-          "name": "vToken",
-          "type": "address"
-        }
-      ],
-      "name": "UnsupportedVToken",
+      "inputs": [],
+      "name": "Unauthorised",
       "type": "error"
     },
     {
       "inputs": [],
       "name": "ZeroAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ZeroAmount",
       "type": "error"
     },
     {
@@ -231,7 +242,7 @@
             },
             {
               "internalType": "bool",
-              "name": "supported",
+              "name": "isAllowedForDeposit",
               "type": "bool"
             }
           ],
@@ -318,6 +329,19 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "Paused",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "bool",
           "name": "paused",
           "type": "bool"
@@ -354,7 +378,7 @@
             },
             {
               "internalType": "bool",
-              "name": "supported",
+              "name": "isAllowedForTrade",
               "type": "bool"
             },
             {
@@ -450,6 +474,19 @@
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "Unpaused",
+      "type": "event"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
@@ -472,8 +509,8 @@
           "type": "address"
         },
         {
-          "internalType": "contract IVBase",
-          "name": "_vBase",
+          "internalType": "contract IVQuote",
+          "name": "_vQuote",
           "type": "address"
         },
         {
@@ -602,14 +639,14 @@
         },
         {
           "internalType": "int256",
-          "name": "vBaseBalance",
+          "name": "vQuoteBalance",
           "type": "int256"
         },
         {
           "components": [
             {
-              "internalType": "address",
-              "name": "cTokenAddress",
+              "internalType": "contract IERC20",
+              "name": "collateral",
               "type": "address"
             },
             {
@@ -618,15 +655,15 @@
               "type": "uint256"
             }
           ],
-          "internalType": "struct IClearingHouseStructures.DepositTokenView[]",
-          "name": "tokenDeposits",
+          "internalType": "struct IClearingHouseStructures.CollateralDepositView[]",
+          "name": "collateralDeposits",
           "type": "tuple[]"
         },
         {
           "components": [
             {
-              "internalType": "address",
-              "name": "vTokenAddress",
+              "internalType": "contract IVToken",
+              "name": "vToken",
               "type": "address"
             },
             {
@@ -641,7 +678,7 @@
             },
             {
               "internalType": "int256",
-              "name": "sumAX128Ckpt",
+              "name": "sumAX128Chkpt",
               "type": "int256"
             },
             {
@@ -784,7 +821,7 @@
                 },
                 {
                   "internalType": "bool",
-                  "name": "supported",
+                  "name": "isAllowedForDeposit",
                   "type": "bool"
                 }
               ],
@@ -871,7 +908,7 @@
                 },
                 {
                   "internalType": "bool",
-                  "name": "supported",
+                  "name": "isAllowedForTrade",
                   "type": "bool"
                 },
                 {
@@ -1033,7 +1070,7 @@
           "components": [
             {
               "internalType": "int256",
-              "name": "vBaseIncrease",
+              "name": "vQuoteIncrease",
               "type": "int256"
             },
             {
@@ -1089,7 +1126,7 @@
           "components": [
             {
               "internalType": "int256",
-              "name": "vBaseIncrease",
+              "name": "vQuoteIncrease",
               "type": "int256"
             },
             {
@@ -1194,6 +1231,13 @@
     },
     {
       "inputs": [],
+      "name": "pause",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "paused",
       "outputs": [
         {
@@ -1210,8 +1254,8 @@
       "name": "protocolInfo",
       "outputs": [
         {
-          "internalType": "contract IVBase",
-          "name": "vBase",
+          "internalType": "contract IVQuote",
+          "name": "vQuote",
           "type": "address"
         },
         {
@@ -1311,7 +1355,7 @@
                 },
                 {
                   "internalType": "bool",
-                  "name": "supported",
+                  "name": "isAllowedForTrade",
                   "type": "bool"
                 },
                 {
@@ -1433,19 +1477,6 @@
     {
       "inputs": [
         {
-          "internalType": "bool",
-          "name": "_pause",
-          "type": "bool"
-        }
-      ],
-      "name": "setPaused",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
           "name": "accountId",
           "type": "uint256"
@@ -1492,7 +1523,7 @@
         },
         {
           "internalType": "int256",
-          "name": "vBaseAmountOut",
+          "name": "vQuoteAmountOut",
           "type": "int256"
         }
       ],
@@ -1539,6 +1570,13 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "unpause",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "contract IERC20",
@@ -1559,7 +1597,7 @@
             },
             {
               "internalType": "bool",
-              "name": "supported",
+              "name": "isAllowedForDeposit",
               "type": "bool"
             }
           ],
@@ -1599,7 +1637,7 @@
             },
             {
               "internalType": "bool",
-              "name": "supported",
+              "name": "isAllowedForTrade",
               "type": "bool"
             },
             {
@@ -1755,7 +1793,7 @@
         },
         {
           "internalType": "int256",
-          "name": "vBaseAmountOut",
+          "name": "vQuoteAmountOut",
           "type": "int256"
         }
       ],
@@ -1775,5 +1813,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "numDeployments": 1
 }

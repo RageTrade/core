@@ -1,5 +1,5 @@
 {
-  "address": "0x38e7498f54c80aBc25Ad854eD30a94f2ad0DA14d",
+  "address": "0xbd31048d7a2f9c0afdeB604Df286d294A00F2692",
   "abi": [
     {
       "inputs": [],
@@ -60,7 +60,7 @@
       "inputs": [
         {
           "internalType": "contract IERC20",
-          "name": "_rBase",
+          "name": "_settlementToken",
           "type": "address"
         },
         {
@@ -266,7 +266,7 @@
     },
     {
       "inputs": [],
-      "name": "rBase",
+      "name": "settlementToken",
       "outputs": [
         {
           "internalType": "contract IERC20",
@@ -307,7 +307,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "to",
           "type": "address"
         },
         {
@@ -331,12 +331,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "sender",
+          "name": "from",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "to",
           "type": "address"
         },
         {
@@ -369,5 +369,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "numDeployments": 1
 }
