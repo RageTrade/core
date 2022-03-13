@@ -125,7 +125,7 @@ describe('VTokenPositionSet Library', () => {
         address: vPoolAddress,
       },
     );
-    await VPoolWrapper.connect(chSigner).mint(-10, 10, 10000000000000);
+    await VPoolWrapper.connect(chSigner).mint(-10, 10, 10000000000000, { gasPrice: 0 });
 
     await rageTradeFactory.initializePool({
       deployVTokenParams: {
@@ -153,7 +153,7 @@ describe('VTokenPositionSet Library', () => {
     // console.log('VPoolFactoryAddress1', VPoolFactory.address);
     // console.log('Vwrapper1', events1[0].args[2]);
     VPoolWrapper = await hre.ethers.getContractAt('VPoolWrapper', events1[0].args[2]);
-    await VPoolWrapper.connect(chSigner).mint(-10, 10, 10000000000000);
+    await VPoolWrapper.connect(chSigner).mint(-10, 10, 10000000000000, { gasPrice: 0 });
 
     const factory = await hre.ethers.getContractFactory('VTokenPositionSetTest');
     VTokenPositionSet = await factory.deploy();
