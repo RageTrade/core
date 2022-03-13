@@ -44,6 +44,7 @@ export default {
       allowUnlimitedContractSize: true, // TODO: remove this
       forking: {
         url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+        blockNumber: 13075000,
       },
     },
     localhost: {
@@ -117,6 +118,6 @@ export default {
   },
   tenderly: {
     project: process.env.TENDERLY_PROJECT,
-    username: process.env.TENDERLY_USERNAME
+    username: process.env.TENDERLY_USERNAME,
   },
 };
