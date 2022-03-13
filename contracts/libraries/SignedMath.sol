@@ -15,7 +15,7 @@ library SignedMath {
     }
 
     function sign(int256 value) internal pure returns (int256) {
-        return value > 0 ? ONE : -ONE;
+        return value >= 0 ? ONE : -ONE;
     }
 
     /// @notice Converts a signed integer into an unsigned integer and inverts positive bool if negative
