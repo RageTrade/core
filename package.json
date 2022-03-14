@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "coverage": "hardhat coverage",
+    "coverage": "hardhat coverage --testfiles \"test/registry/*.ts\"",
     "deploy": "hardhat deploy",
     "deploy:goerli": "hardhat deploy --network goerli",
     "deploy:rinkeby": "hardhat deploy --network rinkeby",

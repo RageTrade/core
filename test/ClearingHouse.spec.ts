@@ -635,6 +635,9 @@ describe('Clearing House Library', () => {
       };
 
       await clearingHouseTest.connect(user2).updateRangeOrder(user2AccountNo, truncatedAddress, liquidityChangeParams);
+
+      const netPosition = await clearingHouseTest.getNetTokenPosition(user2AccountNo, truncatedAddress);
+      expect(netPosition).to.eq(-1); // there is a delta of 1 wei due to rounding up and down
     });
   });
   describe('#SwapTokenAmout - Without Limit', () => {

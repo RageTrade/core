@@ -40,10 +40,6 @@ library Protocol {
         uint256[100] _emptySlots;
     }
 
-    function vToken(Protocol.Info storage protocol, uint32 poolId) internal view returns (IVToken) {
-        return protocol.pools[poolId].vToken;
-    }
-
     function vPool(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
         return protocol.pools[poolId].vPool;
     }
@@ -73,11 +69,6 @@ library Protocol {
         return protocol.pools[poolId].vPool.tickCurrent();
     }
 
-    function getVirtualTwapTick(Protocol.Info storage protocol, uint32 poolId) internal view returns (int24 tick) {
-        IClearingHouseStructures.Pool storage pool = protocol.pools[poolId];
-        return pool.vPool.twapTick(pool.settings.twapDuration);
-    }
-
     function getVirtualTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -92,14 +83,6 @@ library Protocol {
         returns (uint256 priceX128)
     {
         return protocol.getVirtualCurrentSqrtPriceX96(poolId).toPriceX128();
-    }
-
-    function getRealTwapSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
-        internal
-        view
-        returns (uint160 sqrtPriceX96)
-    {
-        return protocol.getRealTwapPriceX128(poolId).toSqrtPriceX96();
     }
 
     function getRealTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)

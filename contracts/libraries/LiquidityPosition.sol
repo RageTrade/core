@@ -280,15 +280,6 @@ library LiquidityPosition {
         return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
     }
 
-    function marketValue(
-        Info storage position,
-        uint160 valuationSqrtPriceX96,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    ) internal view returns (int256 marketValue_) {
-        return position.marketValue(valuationSqrtPriceX96, protocol.vPoolWrapper(poolId));
-    }
-
     function vTokenAmountsInRange(
         Info storage position,
         uint160 sqrtPriceCurrent,

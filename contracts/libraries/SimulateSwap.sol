@@ -75,15 +75,6 @@ library SimulateSwap {
         IUniswapV3Pool v3Pool,
         bool zeroForOne,
         int256 amountSpecified,
-        uint160 sqrtPriceLimitX96
-    ) internal returns (int256 amount0, int256 amount1) {
-        return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, emptyFunction);
-    }
-
-    function simulateSwap(
-        IUniswapV3Pool v3Pool,
-        bool zeroForOne,
-        int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
         function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
@@ -175,9 +166,7 @@ library SimulateSwap {
                 );
             }
 
-            if (onSwapStep != emptyFunction) {
-                onSwapStep(zeroForOne, cache, state, step);
-            }
+            onSwapStep(zeroForOne, cache, state, step);
 
             // shift tick if we reached the next price
             if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
@@ -202,11 +191,4 @@ library SimulateSwap {
                 ? (amountSpecified - state.amountSpecifiedRemaining, state.amountCalculated)
                 : (state.amountCalculated, amountSpecified - state.amountSpecifiedRemaining);
     }
-
-    function emptyFunction(
-        bool zeroForOne,
-        SimulateSwap.SwapCache memory,
-        SimulateSwap.SwapState memory,
-        SimulateSwap.StepComputations memory
-    ) internal view {}
 }

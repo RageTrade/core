@@ -87,5 +87,15 @@ describe('Uint32L8Set Library', () => {
       await array.exclude(2);
       expect(await array.length()).to.eq(2);
     });
+
+    it('zero element', async () => {
+      await expect(array.exclude(0)).to.be.revertedWith('U32L8_IllegalElement(0)');
+    });
+  });
+
+  describe('#numberOfNonZeroElements', () => {
+    it('works', async () => {
+      expect(await array.numberOfNonZeroElements()).to.eq(0);
+    });
   });
 });

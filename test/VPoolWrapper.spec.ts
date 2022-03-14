@@ -526,6 +526,18 @@ describe('PoolWrapper', () => {
     });
   });
 
+  describe('#admin', () => {
+    it('setLiquidityFee', async () => {
+      await vPoolWrapper.setLiquidityFee(123);
+      expect(await vPoolWrapper.liquidityFeePips()).to.eq(123);
+    });
+
+    it('setProtocolFee', async () => {
+      await vPoolWrapper.setProtocolFee(124);
+      expect(await vPoolWrapper.protocolFeePips()).to.eq(124);
+    });
+  });
+
   async function liquidityChange(priceLower: number, priceUpper: number, liquidityDelta: BigNumberish) {
     const tickSpacing = await vPool.tickSpacing();
     let tickLower = await priceToTick(priceLower, vQuote, vToken);
