@@ -3,7 +3,6 @@
 pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
-import { LiquidityMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
 
 import { FundingPayment } from './FundingPayment.sol';
 
@@ -86,7 +85,9 @@ library Tick {
         Tick.Info storage info = self[tick];
 
         (uint128 liquidityGrossBefore, , , , , , , ) = vPool.ticks(tick);
-        uint128 liquidityGrossAfter = LiquidityMath.addDelta(liquidityGrossBefore, liquidityDelta);
+        uint128 liquidityGrossAfter = liquidityDelta < 0
+            ? liquidityGrossBefore - uint128(-liquidityDelta)
+            : liquidityGrossBefore + uint128(liquidityDelta);
 
         flipped = (liquidityGrossAfter == 0) != (liquidityGrossBefore == 0);
 

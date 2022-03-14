@@ -4,7 +4,6 @@ pragma solidity ^0.8.9;
 
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
-import { LiquidityMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/LiquidityMath.sol';
 import { SwapMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/SwapMath.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
@@ -176,7 +175,9 @@ library SimulateSwap {
                     // if we're moving leftward, we interpret liquidityNet as the opposite sign
                     // safe because liquidityNet cannot be type(int128).min
                     if (zeroForOne) liquidityNet = -liquidityNet;
-                    state.liquidity = LiquidityMath.addDelta(state.liquidity, liquidityNet);
+                    state.liquidity = liquidityNet < 0
+                        ? state.liquidity - uint128(-liquidityNet)
+                        : state.liquidity + uint128(liquidityNet);
                 }
 
                 state.tick = zeroForOne ? step.tickNext - 1 : step.tickNext;

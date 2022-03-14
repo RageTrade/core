@@ -59,8 +59,7 @@
     "@chainlink/contracts": "^0.4.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
-    "@uniswap/v3-core": "^1.0.1",
-    "@uniswap/v3-core-0.8-support": "https://github.com/134dd3v/v3-core.git#3c9f09e618c6ba68fd524aeb608bbb80bd6b7dd1",
+    "@uniswap/v3-core-0.8-support": "https://github.com/uniswap/v3-core.git#36bc9101b91e2b8b5690f59e0911a85deb2d2480",
     "@uniswap/v3-periphery": "^1.4.0",
     "ethers": "^5.5.4"
   },
