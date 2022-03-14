@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.9;
 
@@ -9,7 +9,6 @@ import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/i
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
-// import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
 
 import { IVPoolWrapper } from '../../interfaces/IVPoolWrapper.sol';
