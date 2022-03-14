@@ -526,6 +526,10 @@ describe('Clearing House Library', () => {
       expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
         parseTokenAmount('1000000', 6),
       );
+
+      const accountInfo = await clearingHouseTest.getAccountInfo(user1AccountNo);
+      expect(accountInfo.collateralDeposits[0].collateral.toLowerCase()).to.eq(settlementToken.address);
+      expect(accountInfo.collateralDeposits[0].balance).to.eq(parseTokenAmount('1000000', 6));
     });
   });
   describe('#Withdraw', () => {
