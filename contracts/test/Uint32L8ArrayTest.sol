@@ -49,4 +49,8 @@ contract Uint32L8ArrayTest {
     function exists(uint32 element) public view returns (bool) {
         return array.exists(element);
     }
+
+    function numberOfNonZeroElements() public view returns (uint256) {
+        return array.numberOfNonZeroElements();
+    }
 }

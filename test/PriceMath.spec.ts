@@ -78,6 +78,12 @@ describe('Price Math', () => {
       );
     });
 
+    it(`2**256-1 reverts`, async () => {
+      await expect(test.toSqrtPriceX96((1n << 256n) - 1n)).revertedWith(
+        'SolutionOutOfBounds(115792089237316195423570985008687907853269984665640564039457584007913129639935, 4295128739, 1461446703485210103287273052203988822378723970341)',
+      );
+    });
+
     it('fuzz perfect square', async () => {
       for (let i = 0; i++ < 100; ) {
         const sqrtPriceX96 = BigNumber.from(randomBytes(20)).mod(TickMath.MAX_SQRT_RATIO.toString());

@@ -37,12 +37,10 @@ library PriceMath {
         sqrtPriceX96 = Bisection.findSolution(
             _toPriceX128,
             priceX128,
+            /// @dev sqrtPriceX96 is always bounded by MIN_SQRT_RATIO and MAX_SQRT_RATIO.
+            ///     If solution falls outside of these bounds, findSolution method reverts
             TickMath.MIN_SQRT_RATIO,
             TickMath.MAX_SQRT_RATIO - 1
         );
-
-        if (sqrtPriceX96 < TickMath.MIN_SQRT_RATIO || sqrtPriceX96 >= TickMath.MAX_SQRT_RATIO) {
-            revert IllegalSqrtPrice(sqrtPriceX96);
-        }
     }
 }

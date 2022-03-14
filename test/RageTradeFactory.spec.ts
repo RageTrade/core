@@ -1,7 +1,7 @@
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { ClearingHouse, ERC20, RageTradeFactory, VQuote } from '../typechain-types';
 
@@ -118,6 +118,14 @@ describe('RageTradeFactory', () => {
       // await rageTradeFactory.setVPoolWrapperLogicAddress(newVPoolWrapperLogic.address);
       await proxyAdmin.upgrade(_vPoolWrapper.address, newVPoolWrapperLogic.address);
       expect(await _vPoolWrapper.blockTimestamp()).to.eq(0);
+
+      // updating address in rage trade factory
+      await rageTradeFactory.setVPoolWrapperLogicAddress(newVPoolWrapperLogic.address);
+      expect(await rageTradeFactory.vPoolWrapperLogicAddress()).to.eq(newVPoolWrapperLogic.address);
+
+      await expect(rageTradeFactory.setVPoolWrapperLogicAddress(ethers.constants.AddressZero)).to.be.revertedWith(
+        'IllegalAddress("0x0000000000000000000000000000000000000000")',
+      );
     });
   });
 });

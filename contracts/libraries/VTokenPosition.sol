@@ -117,18 +117,6 @@ library VTokenPosition {
         return unrealizedFpBill;
     }
 
-    /// @notice returns the unrealized funding payment for the position
-    /// @param position token position
-    /// @param poolId id of the rage trade pool
-    /// @param protocol platform constants
-    function unrealizedFundingPayment(
-        VTokenPosition.Info storage position,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    ) internal view returns (int256) {
-        return unrealizedFundingPayment(position, protocol.vPoolWrapper(poolId));
-    }
-
     function getNetPosition(
         VTokenPosition.Info storage position,
         uint32 poolId,

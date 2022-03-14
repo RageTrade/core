@@ -49,4 +49,8 @@ contract Uint48L5ArrayTest {
     function exists(uint48 element) public view returns (bool) {
         return array.exists(element);
     }
+
+    function numberOfNonZeroElements() public view returns (uint256) {
+        return array.numberOfNonZeroElements();
+    }
 }
