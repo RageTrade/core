@@ -30,7 +30,7 @@ import { UniswapV3PoolHelper } from '../../libraries/UniswapV3PoolHelper.sol';
 
 import { Extsload } from '../../utils/Extsload.sol';
 
-import { UNISWAP_V3_DEFAULT_TICKSPACING } from '../../utils/constants.sol';
+import { UNISWAP_V3_DEFAULT_TICKSPACING, UNISWAP_V3_DEFAULT_FEE_TIER } from '../../utils/constants.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -52,14 +52,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     IVQuote public vQuote;
     IUniswapV3Pool public vPool;
 
-    uint24 public uniswapFeePips; // fee collected by Uniswap
-    uint24 public liquidityFeePips; // fee paid to liquidity providers, in 1e6
-    uint24 public protocolFeePips; // fee paid to DAO treasury
+    // fee paid to liquidity providers, in 1e6
+    uint24 public liquidityFeePips;
+    // fee paid to DAO treasury
+    uint24 public protocolFeePips;
 
     uint256 public accruedProtocolFee;
 
     FundingPayment.Info public fpGlobal;
-    uint256 public sumFeeGlobalX128; // extendedFeeGrowthGlobalX128;
+    uint256 public sumFeeGlobalX128;
 
     mapping(int24 => TickExtended.Info) public ticksExtended;
 
@@ -112,7 +113,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
         liquidityFeePips = params.liquidityFeePips;
         protocolFeePips = params.protocolFeePips;
-        uniswapFeePips = params.UNISWAP_V3_DEFAULT_FEE_TIER;
 
         // initializes the funding payment state
         fpGlobal.update(0, 1, _blockTimestamp(), 1, 1);
@@ -170,18 +170,24 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         SwapMath.beforeSwap(
             exactIn,
             swapVTokenForVQuote,
-            uniswapFeePips,
+            UNISWAP_V3_DEFAULT_FEE_TIER,
             liquidityFeePips,
             protocolFeePips,
             swapValues
         );
 
         {
+            SimulateSwap.Cache memory cache;
+            cache.tickSpacing = UNISWAP_V3_DEFAULT_TICKSPACING;
+            cache.fee = UNISWAP_V3_DEFAULT_FEE_TIER;
+            (cache.realPriceX128, cache.virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
+
             // simulate swap and update our tick states
             (int256 vTokenIn_simulated, int256 vQuoteIn_simulated) = vPool.simulateSwap(
                 swapVTokenForVQuote,
                 swapValues.amountSpecified,
                 sqrtPriceLimitX96,
+                cache,
                 _onSwapStep
             );
 
@@ -198,7 +204,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             assert(vTokenIn_simulated == swapValues.vTokenIn && vQuoteIn_simulated == swapValues.vQuoteIn);
         }
 
-        SwapMath.afterSwap(exactIn, swapVTokenForVQuote, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);
+        SwapMath.afterSwap(
+            exactIn,
+            swapVTokenForVQuote,
+            UNISWAP_V3_DEFAULT_FEE_TIER,
+            liquidityFeePips,
+            protocolFeePips,
+            swapValues
+        );
 
         // record the protocol fee, for withdrawal in future
         accruedProtocolFee += swapValues.protocolFees;
@@ -374,7 +387,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function _onSwapStep(
         bool swapVTokenForVQuote,
-        SimulateSwap.Cache memory,
+        SimulateSwap.Cache memory cache,
         SimulateSwap.State memory state,
         SimulateSwap.Step memory step
     ) internal {
@@ -399,13 +412,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // );
 
         if (state.liquidity > 0 && vTokenAmount > 0) {
-            (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
             fpGlobal.update(
                 swapVTokenForVQuote ? vTokenAmount.toInt256() : -vTokenAmount.toInt256(), // when trader goes long, LP goes short
                 state.liquidity,
                 _blockTimestamp(),
-                realPriceX128,
-                virtualPriceX128
+                cache.realPriceX128,
+                cache.virtualPriceX128
             );
 
             sumFeeGlobalX128 += liquidityFees.mulDiv(FixedPoint128.Q128, state.liquidity);

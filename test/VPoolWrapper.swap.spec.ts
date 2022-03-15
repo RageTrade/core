@@ -26,7 +26,6 @@ describe('VPoolWrapper.swap', () => {
     ({ vPoolWrapper, vPool, vQuote, vToken } = await setupWrapper({
       rPriceInitial: 2000,
       vPriceInitial: 2000,
-      uniswapFee,
       liquidityFee,
       protocolFee,
       vQuoteDecimals: 6,
@@ -35,7 +34,6 @@ describe('VPoolWrapper.swap', () => {
 
     simulator = await (await hre.ethers.getContractFactory('SimulateSwapTest')).deploy(vPool.address);
 
-    expect(await vPoolWrapper.uniswapFeePips()).to.eq(uniswapFee);
     expect(await vPoolWrapper.liquidityFeePips()).to.eq(liquidityFee);
     expect(await vPoolWrapper.protocolFeePips()).to.eq(protocolFee);
 

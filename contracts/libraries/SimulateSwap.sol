@@ -33,6 +33,9 @@ library SimulateSwap {
         int24 tickSpacing;
         // the lp fee share of the pool
         uint24 fee;
+        // extra values for cache, that may be useful for _onSwapStep
+        uint256 realPriceX128;
+        uint256 virtualPriceX128;
     }
 
     // the top level state of the swap, the results of which are recorded in storage at the end
@@ -77,30 +80,35 @@ library SimulateSwap {
         uint160 sqrtPriceLimitX96,
         function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
-        return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, v3Pool.fee(), onSwapStep);
+        SimulateSwap.Cache memory cache;
+        return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, cache, onSwapStep);
     }
 
     /// @notice Simulates a swap over an Uniswap V3 Pool, allowing to handle tick crosses.
     /// @param zeroForOne direction of swap, true means swap zero for one
     /// @param amountSpecified amount to swap in/out
     /// @param sqrtPriceLimitX96 the maximum price to swap to, if this price is reached, then the swap is stopped partially
-    /// @param v3PoolFee the fee tier of the pool
+    /// @param cache swap cache
     /// @param onSwapStep function to call for each step of the swap, passing in the swap state and the step computations
     function simulateSwap(
         IUniswapV3Pool v3Pool,
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
-        uint24 v3PoolFee,
+        SimulateSwap.Cache memory cache,
         function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
         if (amountSpecified == 0) revert ZeroAmount();
 
-        SimulateSwap.Cache memory cache;
+        // populate initial values for swap cache
         (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();
         cache.liquidityStart = v3Pool.liquidity();
-        cache.tickSpacing = v3Pool.tickSpacing();
-        cache.fee = v3PoolFee;
+
+        // tickSpacing of 0 is invalid
+        if (cache.tickSpacing == 0) {
+            cache.fee = v3Pool.fee();
+            cache.tickSpacing = v3Pool.tickSpacing();
+        }
 
         require(
             zeroForOne

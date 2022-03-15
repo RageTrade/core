@@ -28,7 +28,6 @@ export async function setupWrapper(setupArgs: SetupArgs) {
     vPool: vPool.address,
     liquidityFeePips: setupArgs.liquidityFee ?? 1000,
     protocolFeePips: setupArgs.protocolFee ?? 500,
-    UNISWAP_V3_DEFAULT_FEE_TIER: 500,
   });
   // await vPoolWrapper.setOracle(oracle.address);
   hre.tracer.nameTags[vPoolWrapper.address] = 'vPoolWrapper';
