@@ -407,23 +407,6 @@ library VTokenPositionSet {
         return tokenPosition.getNetPosition(poolId, protocol);
     }
 
-    /// @notice returns notional value of the given vQuote and token amounts
-    /// @param poolId id of the rage trade pool
-    /// @param vTokenAmount amount of tokens
-    /// @param vQuoteAmount amount of base
-    /// @param protocol platform constants
-    /// @return notionalAmountClosed for the given token and vQuote amounts
-    function getNotionalValue(
-        uint32 poolId,
-        int256 vTokenAmount,
-        int256 vQuoteAmount,
-        Protocol.Info storage protocol
-    ) internal view returns (uint256 notionalAmountClosed) {
-        notionalAmountClosed =
-            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
-            vQuoteAmount.absUint();
-    }
-
     /// @notice returns the long and short side risk for range positions of a particular token
     /// @param set VTokenPositionSet
     /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)

@@ -308,9 +308,7 @@ library Account {
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
 
-        notionalValueAbs = uint256(
-            VTokenPositionSet.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut, protocol)
-        );
+        notionalValueAbs = protocol.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut);
     }
 
     /// @notice liquidates all range positions in case the account is under water
@@ -630,7 +628,7 @@ library Account {
         returns (int256 accountMarketValue)
     {
         accountMarketValue = account._getAccountPositionProfits(protocol);
-        accountMarketValue += account.collateralDeposits.getAllDepositAccountMarketValue(protocol);
+        accountMarketValue += account.collateralDeposits.marketValue(protocol);
         return (accountMarketValue);
     }
 
