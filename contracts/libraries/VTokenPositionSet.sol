@@ -51,14 +51,9 @@ library VTokenPositionSet {
     /// @notice returns true if range position is active for 'vToken'
     /// @param set VTokenPositionSet
     /// @param poolId poolId of the vToken
-    /// @param protocol platform constants
     /// @return isRangeActive
-    function isTokenRangeActive(
-        VTokenPosition.Set storage set,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    ) internal returns (bool isRangeActive) {
-        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false, protocol);
+    function isTokenRangeActive(VTokenPosition.Set storage set, uint32 poolId) internal returns (bool isRangeActive) {
+        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false);
         isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();
     }
 
@@ -252,7 +247,7 @@ library VTokenPositionSet {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal {
-        set.realizeFundingPayment(accountId, poolId, protocol.pools[poolId].vPoolWrapper, protocol);
+        set.realizeFundingPayment(accountId, poolId, protocol.pools[poolId].vPoolWrapper);
     }
 
     /// @notice realizes funding payment to vQuote balance
@@ -260,13 +255,11 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     /// @param accountId account identifier, used for emitting event
     /// @param wrapper VPoolWrapper to override the set wrapper
-    /// @param protocol platform constants
     function realizeFundingPayment(
         VTokenPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
-        IVPoolWrapper wrapper,
-        Protocol.Info storage protocol
+        IVPoolWrapper wrapper
     ) internal {
         VTokenPosition.Info storage position = set.positions[poolId];
         int256 extrapolatedSumAX128 = wrapper.getSumAX128();
@@ -284,13 +277,11 @@ library VTokenPositionSet {
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param createNew if 'vToken' is inactive then activates (true) else reverts with TokenInactive(false)
-    /// @param protocol platform constants
     /// @return position - VTokenPosition corresponding to 'vToken'
     function getTokenPosition(
         VTokenPosition.Set storage set,
         uint32 poolId,
-        bool createNew,
-        Protocol.Info storage protocol
+        bool createNew
     ) internal returns (VTokenPosition.Info storage position) {
         if (createNew) {
             set.activate(poolId);
@@ -378,47 +369,6 @@ library VTokenPositionSet {
         emit Account.TokenPositionChanged(accountId, poolId, vTokenAmountOut, vQuoteAmountOut);
     }
 
-    /// @notice function to remove an eligible limit order
-    /// @dev checks whether the current price is on the correct side of the range based on the type of limit order (None, Low, High)
-    /// @param set VTokenPositionSet
-    /// @param poolId id of the rage trade pool
-    /// @param tickLower lower tick index for the range
-    /// @param tickUpper upper tick index for the range
-    /// @param protocol platform constants
-    function removeLimitOrder(
-        VTokenPosition.Set storage set,
-        uint256 accountId,
-        uint32 poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        Protocol.Info storage protocol
-    ) internal {
-        set.removeLimitOrder(accountId, poolId, tickLower, tickUpper, protocol.pools[poolId].vPoolWrapper, protocol);
-    }
-
-    /// @notice function for liquidity add/remove
-    /// @param set VTokenPositionSet
-    /// @param poolId id of the rage trade pool
-    /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
-    /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @return vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
-    function liquidityChange(
-        VTokenPosition.Set storage set,
-        uint256 accountId,
-        uint32 poolId,
-        IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
-        Protocol.Info storage protocol
-    ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        return
-            set.liquidityChange(
-                accountId,
-                poolId,
-                liquidityChangeParams,
-                protocol.pools[poolId].vPoolWrapper,
-                protocol
-            );
-    }
-
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
     /// @param protocol platform constants
@@ -449,7 +399,7 @@ library VTokenPositionSet {
     ) internal returns (uint256 notionalAmountClosed) {
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
-        set.getTokenPosition(poolId, false, protocol).liquidityPositions.closeAllLiquidityPositions(
+        set.getTokenPosition(poolId, false).liquidityPositions.closeAllLiquidityPositions(
             accountId,
             poolId,
             balanceAdjustments,
@@ -462,29 +412,10 @@ library VTokenPositionSet {
         return getTokenNotionalValue(poolId, balanceAdjustments.traderPositionIncrease, protocol);
     }
 
-    /// @notice function to liquidate all liquidity positions
-    /// @param set VTokenPositionSet
-    /// @param protocol platform constants
-    /// @return notionalAmountClosed - value of net token position coming out (in notional) of all the ranges closed
-    function liquidateLiquidityPositions(
-        VTokenPosition.Set storage set,
-        uint256 accountId,
-        IVPoolWrapper wrapper,
-        Protocol.Info storage protocol
-    ) internal returns (uint256 notionalAmountClosed) {
-        for (uint8 i = 0; i < set.active.length; i++) {
-            uint32 truncated = set.active[i];
-            if (truncated == 0) break;
-
-            notionalAmountClosed += set.liquidateLiquidityPositions(accountId, set.active[i], protocol);
-        }
-    }
-
     /// @notice function for liquidity add/remove
     /// @param set VTokenPositionSet
     /// @param poolId id of the rage trade pool
     /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
-    /// @param wrapper VPoolWrapper to override the set wrapper
     /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @return vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
     function liquidityChange(
@@ -492,10 +423,9 @@ library VTokenPositionSet {
         uint256 accountId,
         uint32 poolId,
         IClearingHouseStructures.LiquidityChangeParams memory liquidityChangeParams,
-        IVPoolWrapper wrapper,
         Protocol.Info storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, true, protocol);
+        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, true);
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
 
@@ -522,7 +452,6 @@ library VTokenPositionSet {
     /// @param poolId id of the rage trade pool
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
-    /// @param wrapper VPoolWrapper to override the set wrapper
     /// @param protocol platform constants
     function removeLimitOrder(
         VTokenPosition.Set storage set,
@@ -530,10 +459,9 @@ library VTokenPositionSet {
         uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
-        IVPoolWrapper wrapper,
         Protocol.Info storage protocol
     ) internal {
-        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false, protocol);
+        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false);
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments;
         int24 currentTick = protocol.getVirtualCurrentTick(poolId);

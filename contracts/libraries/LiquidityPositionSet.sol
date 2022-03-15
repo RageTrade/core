@@ -120,6 +120,7 @@ library LiquidityPositionSet {
         _exclude(set.active, position.tickLower, position.tickUpper);
     }
 
+    // TODO refactor this
     function _include(
         uint48[5] storage array,
         int24 val1,

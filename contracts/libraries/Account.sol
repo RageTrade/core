@@ -200,12 +200,10 @@ library Account {
     /// @notice updates the vQuote balance for 'account' by 'amount'
     /// @param account pointer to 'account' struct
     /// @param amount amount of balance to update
-    /// @param protocol platform constants
-    function _updateVQuoteBalance(
-        Account.Info storage account,
-        int256 amount,
-        Protocol.Info storage protocol
-    ) internal returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments) {
+    function _updateVQuoteBalance(Account.Info storage account, int256 amount)
+        internal
+        returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments)
+    {
         balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
         account.tokenPositions.vQuoteBalance += balanceAdjustments.vQuoteIncrease;
     }
@@ -250,7 +248,7 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account._updateVQuoteBalance(amount, protocol);
+        account._updateVQuoteBalance(amount);
 
         if (checkMargin && amount < 0) {
             account._checkIfProfitAvailable(protocol);
@@ -486,7 +484,7 @@ library Account {
             protocol.liquidationParams
         );
 
-        account._updateVQuoteBalance(-(keeperFee + insuranceFundFee), protocol);
+        account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
     }
 
     /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
@@ -598,7 +596,7 @@ library Account {
             IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments
         )
     {
-        if (targetAccount.tokenPositions.isTokenRangeActive(poolId, protocol))
+        if (targetAccount.tokenPositions.isTokenRangeActive(poolId))
             revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
@@ -614,11 +612,7 @@ library Account {
 
         int256 tokensToTrade;
         {
-            VTokenPosition.Info storage vTokenPosition = targetAccount.tokenPositions.getTokenPosition(
-                poolId,
-                false,
-                protocol
-            );
+            VTokenPosition.Info storage vTokenPosition = targetAccount.tokenPositions.getTokenPosition(poolId, false);
             tokensToTrade = -vTokenPosition.balance.mulDiv(liquidationBps, 1e4);
         }
 
@@ -647,7 +641,7 @@ library Account {
 
             if (accountMarketValueFinal < 0) {
                 insuranceFundFee = accountMarketValueFinal;
-                targetAccount._updateVQuoteBalance(-accountMarketValueFinal, protocol);
+                targetAccount._updateVQuoteBalance(-accountMarketValueFinal);
             }
         }
 
@@ -681,7 +675,7 @@ library Account {
     ) external {
         account.tokenPositions.removeLimitOrder(account.id, poolId, tickLower, tickUpper, protocol);
 
-        account._updateVQuoteBalance(-int256(limitOrderFeeAndFixFee), protocol);
+        account._updateVQuoteBalance(-int256(limitOrderFeeAndFixFee));
     }
 
     function getInfo(Account.Info storage account, Protocol.Info storage protocol)
