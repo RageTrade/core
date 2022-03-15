@@ -30,10 +30,10 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     IUniswapV3Pool vPool;
 
     struct SwapStep {
-        SimulateSwap.SwapState state;
-        SimulateSwap.StepComputations step;
+        SimulateSwap.State state;
+        SimulateSwap.Step step;
     }
-    SimulateSwap.SwapCache _cache;
+    SimulateSwap.Cache _cache;
     SwapStep[] _steps;
 
     FundingPayment.Info public fpGlobal;
@@ -70,7 +70,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         returns (
             int256 amount0,
             int256 amount1,
-            SimulateSwap.SwapCache memory cache,
+            SimulateSwap.Cache memory cache,
             SwapStep[] memory steps
         )
     {
@@ -98,9 +98,9 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
 
     function _onSwapSwap(
         bool,
-        SimulateSwap.SwapCache memory cache,
-        SimulateSwap.SwapState memory state,
-        SimulateSwap.StepComputations memory step
+        SimulateSwap.Cache memory cache,
+        SimulateSwap.State memory state,
+        SimulateSwap.Step memory step
     ) internal {
         // for reading
         _cache = cache;

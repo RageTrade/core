@@ -374,9 +374,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     function _onSwapStep(
         bool swapVTokenForVQuote,
-        SimulateSwap.SwapCache memory,
-        SimulateSwap.SwapState memory state,
-        SimulateSwap.StepComputations memory step
+        SimulateSwap.Cache memory,
+        SimulateSwap.State memory state,
+        SimulateSwap.Step memory step
     ) internal {
         // these vQuote and vToken amounts are zero fee swap amounts (fee collected by uniswaop is ignored and burned later)
         (uint256 vTokenAmount, uint256 vQuoteAmount) = swapVTokenForVQuote
