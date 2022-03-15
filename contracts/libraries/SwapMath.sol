@@ -12,7 +12,14 @@ import { console } from 'hardhat/console.sol';
 library SwapMath {
     using SignedMath for int256;
 
-    /// @dev This method mutates the data pointed by swapValues
+    /// @notice Executed before swap call to uniswap, to inflate the swap values
+    /// @param exactIn Whether user specified in amount or out amount
+    /// @param swapVTokenForVQuote swap direction
+    /// @param uniswapFeePips fee ratio that will be collected by uniswap
+    /// @param liquidityFeePips fee ratio to be applied in rage trade for paying to liquidity providers
+    /// @param protocolFeePips fee ratio to be applied in rage trade for protocol treasury
+    /// @param swapValues pointer to the swap values
+    /// @dev this method mutates the data pointed by swapValues
     function beforeSwap(
         bool exactIn,
         bool swapVTokenForVQuote,
@@ -70,6 +77,13 @@ library SwapMath {
         }
     }
 
+    /// @notice Executed after swap call to uniswap, to deinflate the swap values
+    /// @param exactIn Whether user specified in amount or out amount
+    /// @param swapVTokenForVQuote swap direction
+    /// @param uniswapFeePips fee that will be collected by uniswap
+    /// @param liquidityFeePips fee ratio to be applied in rage trade for paying to liquidity providers
+    /// @param protocolFeePips fee ratio to be applied in rage trade for protocol treasury
+    /// @param swapValues pointer to the swap values
     /// @dev This method mutates the data pointed by swapValues
     function afterSwap(
         bool exactIn,
@@ -142,11 +156,19 @@ library SwapMath {
         }
     }
 
+    /// @notice Inflates the amount such that when uniswap collects the fee, it will get the same amount
+    /// @param amount user specified amount
+    /// @param uniswapFeePips fee that will be collected by uniswap
+    /// @return inflated amount, on which applying uniswap fee gives the user specifed amount
     function inflate(int256 amount, uint24 uniswapFeePips) internal pure returns (int256 inflated) {
         int256 fees = (amount * int256(uint256(uniswapFeePips))) / int24(1e6 - uniswapFeePips) + 1; // round up
         inflated = amount + fees;
     }
 
+    /// @notice Undoes the inflation of the amount
+    /// @param inflated amount from uniswap after the swap call
+    /// @param uniswapFeePips fee that will be collected by uniswap
+    /// @return amount that is deinflated, which can be given to user
     function deinflate(int256 inflated, uint24 uniswapFeePips) internal pure returns (int256 amount) {
         amount = (inflated * int24(1e6 - uniswapFeePips)) / 1e6;
     }
@@ -157,6 +179,13 @@ library SwapMath {
         VQUOTE_AMOUNT_PLUS_FEES
     }
 
+    /// @notice Calculates the fees to be collected by rage trade protocol
+    /// @param amount should be in vQuote denomination, since fees to be collected only in vQuote
+    /// @param amountTypeEnum type of amount
+    /// @param liquidityFeePips fee ratio to be applied in rage trade for paying to liquidity providers
+    /// @param protocolFeePips fee ratio to be applied in rage trade for protocol treasury
+    /// @return liquidityFees calculated fees in vQuote, to be given to liquidity providers
+    /// @return protocolFees calculated fees in vQuote, to be given to protocol treasury
     function calculateFees(
         int256 amount,
         AmountTypeEnum amountTypeEnum,
@@ -183,6 +212,10 @@ library SwapMath {
         SUBTRACT_FEE
     }
 
+    /// @notice Applies the fees in the amount, based on sign of the amount
+    /// @param amount amount to which fees are to be applied
+    /// @param includeFeeEnum procedure to apply the fee
+    /// @return amountAfterFees amount after applying fees
     function includeFees(
         int256 amount,
         uint256 fees,

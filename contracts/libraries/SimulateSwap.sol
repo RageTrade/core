@@ -80,6 +80,12 @@ library SimulateSwap {
         return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, v3Pool.fee(), onSwapStep);
     }
 
+    /// @notice Simulates a swap over an Uniswap V3 Pool, allowing to handle tick crosses.
+    /// @param zeroForOne direction of swap, true means swap zero for one
+    /// @param amountSpecified amount to swap in/out
+    /// @param sqrtPriceLimitX96 the maximum price to swap to, if this price is reached, then the swap is stopped partially
+    /// @param v3PoolFee the fee tier of the pool
+    /// @param onSwapStep function to call for each step of the swap, passing in the swap state and the step computations
     function simulateSwap(
         IUniswapV3Pool v3Pool,
         bool zeroForOne,

@@ -10,6 +10,10 @@ library Uint48L5ArrayLib {
     error U48L5_IllegalElement(uint48 element);
     error U48L5_NoSpaceLeftToInsert(uint48 element);
 
+    /// @notice Inserts an element in the array
+    /// @dev Replaces a zero value in the array with element
+    /// @param array Array to modify
+    /// @param element Element to insert
     function include(uint48[5] storage array, uint48 element) internal {
         if (element == 0) {
             revert U48L5_IllegalElement(0);
@@ -31,6 +35,10 @@ library Uint48L5ArrayLib {
         array[emptyIndex] = element;
     }
 
+    /// @notice Excludes the element from the array
+    /// @dev If element exists, it swaps with last element and makes last element zero
+    /// @param array Array to modify
+    /// @param element Element to remove
     function exclude(uint48[5] storage array, uint48 element) internal {
         if (element == 0) {
             revert U48L5_IllegalElement(0);
@@ -41,16 +49,21 @@ library Uint48L5ArrayLib {
 
         for (; i < 5; i++) {
             if (array[i] == element) {
+                // element index in the array
                 elementIndex = i;
             }
             if (array[i] == 0) {
-                i = i > 0 ? i - 1 : 0; // last non-zero element
+                // last non-zero element
+                i = i > 0 ? i - 1 : 0;
                 break;
             }
         }
 
+        // TODO fix bug here
+
         if (elementIndex != 5) {
             if (i == elementIndex) {
+                // if element is last element, simply make it zero
                 array[elementIndex] = 0;
             } else {
                 // move last to element's place and empty lastIndex slot
@@ -59,6 +72,10 @@ library Uint48L5ArrayLib {
         }
     }
 
+    /// @notice Returns the index of the element in the array
+    /// @param array Array to perform search on
+    /// @param element Element to search
+    /// @return uint8(-1) or 255 if element is not found
     function indexOf(uint48[5] storage array, uint48 element) internal view returns (uint8) {
         for (uint8 i; i < 5; i++) {
             if (array[i] == element) {
@@ -68,10 +85,17 @@ library Uint48L5ArrayLib {
         return 255;
     }
 
+    /// @notice Checks whether the element exists in the array
+    /// @param array Array to perform search on
+    /// @param element Element to search
+    /// @return True if element is found, false otherwise
     function exists(uint48[5] storage array, uint48 element) internal view returns (bool) {
         return array.indexOf(element) != 255;
     }
 
+    /// @notice Returns length of array (number of non-zero elements)
+    /// @param array Array to perform search on
+    /// @return Length of array
     function numberOfNonZeroElements(uint48[5] storage array) internal view returns (uint256) {
         for (uint8 i; i < 5; i++) {
             if (array[i] == 0) {

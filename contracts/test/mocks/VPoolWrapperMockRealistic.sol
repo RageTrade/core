@@ -19,7 +19,6 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
-import { Tick } from '../../libraries/Tick.sol';
 import { PriceMath } from '../../libraries/PriceMath.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 import { SignedFullMath } from '../../libraries/SignedFullMath.sol';

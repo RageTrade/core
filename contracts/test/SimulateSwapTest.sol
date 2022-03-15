@@ -13,7 +13,7 @@ import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/i
 
 import { FundingPayment } from '../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
-import { Tick } from '../libraries/Tick.sol';
+import { TickExtended } from '../libraries/TickExtended.sol';
 
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
@@ -25,7 +25,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     using FundingPayment for FundingPayment.Info;
     using SafeERC20 for IERC20;
     using SimulateSwap for IUniswapV3Pool;
-    using Tick for mapping(int24 => Tick.Info);
+    using TickExtended for mapping(int24 => TickExtended.Info);
 
     IUniswapV3Pool vPool;
 
@@ -38,7 +38,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
 
     FundingPayment.Info public fpGlobal;
     uint256 public extendedFeeGrowthOutsideX128;
-    mapping(int24 => Tick.Info) public ticksExtended;
+    mapping(int24 => TickExtended.Info) public ticksExtended;
 
     constructor(IUniswapV3Pool vPool_) {
         vPool = vPool_;
