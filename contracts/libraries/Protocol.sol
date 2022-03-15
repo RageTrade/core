@@ -116,20 +116,33 @@ library Protocol {
         return protocol.pools[poolId].settings.isCrossMargined;
     }
 
-    /// @notice Gives notional value of the given vQuote and token amounts
+    /// @notice Gives notional value of the given vToken and vQuote amounts
     /// @param protocol platform constants
     /// @param poolId id of the rage trade pool
     /// @param vTokenAmount amount of tokens
     /// @param vQuoteAmount amount of base
-    /// @return notionalAmountClosed for the given token and vQuote amounts
+    /// @return notionalValue for the given token and vQuote amounts
     function getNotionalValue(
         Protocol.Info storage protocol,
         uint32 poolId,
         int256 vTokenAmount,
         int256 vQuoteAmount
-    ) internal view returns (uint256 notionalAmountClosed) {
-        notionalAmountClosed =
+    ) internal view returns (uint256 notionalValue) {
+        return
             vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
             vQuoteAmount.absUint();
+    }
+
+    /// @notice Gives notional value of the given token amount
+    /// @param protocol platform constants
+    /// @param poolId id of the rage trade pool
+    /// @param vTokenAmount amount of tokens
+    /// @return notionalValue for the given token and vQuote amounts
+    function getNotionalValue(
+        Protocol.Info storage protocol,
+        uint32 poolId,
+        int256 vTokenAmount
+    ) internal view returns (uint256 notionalValue) {
+        return protocol.getNotionalValue(poolId, vTokenAmount, 0);
     }
 }
