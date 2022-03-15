@@ -5,18 +5,18 @@ pragma solidity ^0.8.9;
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { FundingPayment } from '../libraries/FundingPayment.sol';
-import { Tick } from '../libraries/Tick.sol';
+import { TickExtended } from '../libraries/TickExtended.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { UniswapV3PoolMock } from './mocks/UniswapV3PoolMock.sol';
 
-contract TickTest {
+contract TickExtendedTest {
     using FundingPayment for FundingPayment.Info;
-    using Tick for mapping(int24 => Tick.Info);
-    using Tick for IUniswapV3Pool;
+    using TickExtended for mapping(int24 => TickExtended.Info);
+    using TickExtended for IUniswapV3Pool;
 
-    mapping(int24 => Tick.Info) public ticksExtended;
+    mapping(int24 => TickExtended.Info) public ticksExtended;
 
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128;
@@ -27,7 +27,7 @@ contract TickTest {
         vPool = IUniswapV3Pool(address(new UniswapV3PoolMock()));
     }
 
-    function setTick(int24 tickIndex, Tick.Info memory tick) external {
+    function setTick(int24 tickIndex, TickExtended.Info memory tick) external {
         ticksExtended[tickIndex] = tick;
     }
 

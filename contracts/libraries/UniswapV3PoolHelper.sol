@@ -15,10 +15,16 @@ library UniswapV3PoolHelper {
     error UV3PH_IllegalTwapDuration(uint32 period);
     error UV3PH_OracleConsultFailed();
 
+    /// @notice Get the pool's current tick
+    /// @param v3Pool The uniswap v3 pool contract
+    /// @return tick the current tick
     function tickCurrent(IUniswapV3Pool v3Pool) internal view returns (int24 tick) {
         (, tick, , , , , ) = v3Pool.slot0();
     }
 
+    /// @notice Get the pool's current sqrt price
+    /// @param v3Pool The uniswap v3 pool contract
+    /// @return sqrtPriceX96 the current sqrt price
     function sqrtPriceCurrent(IUniswapV3Pool v3Pool) internal view returns (uint160 sqrtPriceX96) {
         int24 tick;
         (sqrtPriceX96, tick, , , , , ) = v3Pool.slot0();
@@ -30,12 +36,20 @@ library UniswapV3PoolHelper {
         }
     }
 
-    function twapSqrtPrice(IUniswapV3Pool pool, uint32 twapDuration) internal view returns (uint160 sqrtPriceX96) {
-        int24 _twapTick = pool.twapTick(twapDuration);
+    /// @notice Get twap price for uniswap v3 pool
+    /// @param v3Pool The uniswap v3 pool contract
+    /// @param twapDuration The twap period
+    /// @return sqrtPriceX96 the twap price
+    function twapSqrtPrice(IUniswapV3Pool v3Pool, uint32 twapDuration) internal view returns (uint160 sqrtPriceX96) {
+        int24 _twapTick = v3Pool.twapTick(twapDuration);
         sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_twapTick);
     }
 
-    function twapTick(IUniswapV3Pool pool, uint32 twapDuration) internal view returns (int24 _twapTick) {
+    /// @notice Get twap tick for uniswap v3 pool
+    /// @param v3Pool The uniswap v3 pool contract
+    /// @param twapDuration The twap period
+    /// @return _twapTick the twap tick
+    function twapTick(IUniswapV3Pool v3Pool, uint32 twapDuration) internal view returns (int24 _twapTick) {
         if (twapDuration == 0) {
             revert UV3PH_IllegalTwapDuration(0);
         }
@@ -45,7 +59,7 @@ library UniswapV3PoolHelper {
         secondAgos[1] = 0;
 
         // this call will fail if period is bigger than MaxObservationPeriod
-        try pool.observe(secondAgos) returns (int56[] memory tickCumulatives, uint160[] memory) {
+        try v3Pool.observe(secondAgos) returns (int56[] memory tickCumulatives, uint160[] memory) {
             int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
             int24 timeWeightedAverageTick = int24(tickCumulativesDelta / int56(uint56(twapDuration)));
 
@@ -55,7 +69,8 @@ library UniswapV3PoolHelper {
             }
             return timeWeightedAverageTick;
         } catch {
-            (, _twapTick, , , , , ) = pool.slot0();
+            // if for some reason v3Pool.observe fails, fallback to the current tick
+            (, _twapTick, , , , , ) = v3Pool.slot0();
         }
     }
 }

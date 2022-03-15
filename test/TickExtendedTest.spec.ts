@@ -1,16 +1,14 @@
 import hre from 'hardhat';
-import { TickTest, UniswapV3PoolMock } from '../typechain-types';
+import { TickExtendedTest, UniswapV3PoolMock } from '../typechain-types';
 import { BigNumber, BigNumberish, ethers } from 'ethers';
 import { expect } from 'chai';
 import { Q128, toQ128 } from './utils/fixed-point';
-import { constants } from './utils/dummyConstants';
-import { FundingPayment } from '../typechain-types/TickTest';
 
-describe('Tick', () => {
-  let test: TickTest;
+describe('TickExtended', () => {
+  let test: TickExtendedTest;
   let vPool: UniswapV3PoolMock;
   beforeEach(async () => {
-    test = await (await hre.ethers.getContractFactory('TickTest')).deploy();
+    test = await (await hre.ethers.getContractFactory('TickExtendedTest')).deploy();
     vPool = await hre.ethers.getContractAt('UniswapV3PoolMock', await test.vPool());
   });
 

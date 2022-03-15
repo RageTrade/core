@@ -81,8 +81,4 @@ library SignedFullMath {
             }
         }
     }
-
-    // function xor(bool a, bool b) private pure returns (bool) {
-    //     return (a ? 1 : 0) ^ (b ? 1 : 0) > 0;
-    // }
 }

@@ -20,7 +20,7 @@ import { IClearingHouseStructures } from '../../interfaces/clearinghouse/ICleari
 
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
-import { Tick } from '../../libraries/Tick.sol';
+import { TickExtended } from '../../libraries/TickExtended.sol';
 import { PriceMath } from '../../libraries/PriceMath.sol';
 import { SafeCast } from '../../libraries/SafeCast.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
@@ -43,8 +43,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using SafeCast for uint256;
     using SafeCast for uint128;
     using SimulateSwap for IUniswapV3Pool;
-    using Tick for IUniswapV3Pool;
-    using Tick for mapping(int24 => Tick.Info);
+    using TickExtended for IUniswapV3Pool;
+    using TickExtended for mapping(int24 => TickExtended.Info);
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
     IClearingHouse public clearingHouse;
@@ -61,7 +61,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128; // extendedFeeGrowthGlobalX128;
 
-    mapping(int24 => Tick.Info) public ticksExtended;
+    mapping(int24 => TickExtended.Info) public ticksExtended;
 
     error NotClearingHouse();
     error NotGovernance();

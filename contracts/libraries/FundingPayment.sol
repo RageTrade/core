@@ -17,7 +17,7 @@ library FundingPayment {
     struct Info {
         // FR * P * dt
         int256 sumAX128;
-        // trade token amount / liqidity
+        // trade token amount / liquidity
         int256 sumBX128;
         // sum(a * sumB)
         int256 sumFpX128;
@@ -27,8 +27,15 @@ library FundingPayment {
 
     event FundingPaymentStateUpdated(FundingPayment.Info fundingPayment);
 
+    /// @notice Used to update the state of the funding payment whenever a trade takes place
+    /// @param info pointer to the funding payment state
+    /// @param vTokenAmount trade token amount
+    /// @param liquidity active liquidity in the range during the trade (step)
+    /// @param blockTimestamp timestamp of current block
+    /// @param realPriceX128 spot price
+    /// @param virtualPriceX128 perpetual's price
     function update(
-        Info storage info,
+        FundingPayment.Info storage info,
         int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
@@ -44,7 +51,8 @@ library FundingPayment {
         emit FundingPaymentStateUpdated(info);
     }
 
-    /// @notice Positive A value means at this duration, longs pay shorts. Negative means shorts pay longs.
+    /// @notice Used to get the rate of funding payment for the duration between last trade and this trade
+    /// @dev Positive A value means at this duration, longs pay shorts. Negative means shorts pay longs.
     /// @param timestampLast start timestamp of duration
     /// @param blockTimestamp end timestamp of duration
     /// @param realPriceX128 spot price of token, used to calculate funding rate
