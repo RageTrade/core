@@ -12,6 +12,16 @@ import { IVPoolWrapper } from '../IVPoolWrapper.sol';
 import { IClearingHouseEnums } from './IClearingHouseEnums.sol';
 
 interface IClearingHouseStructures is IClearingHouseEnums {
+    /// @notice parameters to be used for account balance update
+    /// @param vQuoteIncrease specifies the increase in vQuote balance
+    /// @param vTokenIncrease specifies the increase in token balance
+    /// @param traderPositionIncrease specifies the increase in trader position
+    struct BalanceAdjustments {
+        int256 vQuoteIncrease;
+        int256 vTokenIncrease;
+        int256 traderPositionIncrease;
+    }
+
     struct Collateral {
         IERC20 token;
         CollateralSettings settings; // mutable by governance
@@ -23,20 +33,9 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         bool isAllowedForDeposit;
     }
 
-    struct Pool {
-        IVToken vToken;
-        IUniswapV3Pool vPool;
-        IVPoolWrapper vPoolWrapper;
-        PoolSettings settings; // mutable by governance
-    }
-
-    struct PoolSettings {
-        uint16 initialMarginRatio;
-        uint16 maintainanceMarginRatio;
-        uint32 twapDuration;
-        bool isAllowedForTrade;
-        bool isCrossMargined;
-        IOracle oracle;
+    struct CollateralDepositView {
+        IERC20 collateral;
+        uint256 balance;
     }
 
     struct LiquidityChangeParams {
@@ -47,54 +46,6 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         uint16 slippageToleranceBps;
         bool closeTokenPosition;
         LimitOrderType limitOrderType;
-    }
-
-    /// @notice swaps params for specifying the swap params
-    /// @param amount amount of tokens/vQuote to swap
-    /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
-    /// @param isNotional specifies whether the amount represents token amount (false) or vQuote amount(true)
-    /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
-    struct SwapParams {
-        int256 amount;
-        uint160 sqrtPriceLimit;
-        bool isNotional;
-        bool isPartialAllowed;
-    }
-
-    /// @notice parameters to be used for account balance update
-    /// @param vQuoteIncrease specifies the increase in vQuote balance
-    /// @param vTokenIncrease specifies the increase in token balance
-    /// @param traderPositionIncrease specifies the increase in trader position
-    struct BalanceAdjustments {
-        int256 vQuoteIncrease;
-        int256 vTokenIncrease;
-        int256 traderPositionIncrease;
-    }
-
-    /// @notice parameters to be used for liquidation
-    /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
-    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
-    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
-    /// @param maxRangeLiquidationFees specifies the the maximum range liquidation fees (in settlement token amount decimals)
-
-    struct LiquidationParams {
-        uint16 liquidationFeeFraction;
-        uint16 tokenLiquidationPriceDeltaBps;
-        uint16 insuranceFundFeeShareBps;
-        uint128 maxRangeLiquidationFees;
-    }
-
-    struct CollateralDepositView {
-        IERC20 collateral;
-        uint256 balance;
-    }
-
-    struct VTokenPositionView {
-        IVToken vToken;
-        int256 balance; // vTokenLong - vTokenShort
-        int256 netTraderPosition;
-        int256 sumAX128Chkpt;
-        LiquidityPositionView[] liquidityPositions;
     }
 
     struct LiquidityPositionView {
@@ -113,9 +64,49 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         uint256 sumFeeInsideLastX128;
     }
 
+    /// @notice parameters to be used for liquidation
+    /// @param liquidationFeeFraction specifies the percentage of notional value liquidated to be charged as liquidation fees (scaled by 1e5)
+    /// @param tokenLiquidationPriceDeltaBps specifies the price delta from current perp price at which the liquidator should get the position (scaled by 1e4)
+    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
+    /// @param maxRangeLiquidationFees specifies the the maximum range liquidation fees (in settlement token amount decimals)
+    struct LiquidationParams {
+        uint16 liquidationFeeFraction;
+        uint16 tokenLiquidationPriceDeltaBps;
+        uint16 insuranceFundFeeShareBps;
+        uint128 maxRangeLiquidationFees;
+    }
+
     struct MulticallOperation {
         MulticallOperationType operationType;
         bytes data;
+    }
+
+    struct Pool {
+        IVToken vToken;
+        IUniswapV3Pool vPool;
+        IVPoolWrapper vPoolWrapper;
+        PoolSettings settings; // mutable by governance
+    }
+
+    struct PoolSettings {
+        uint16 initialMarginRatio;
+        uint16 maintainanceMarginRatio;
+        uint32 twapDuration;
+        bool isAllowedForTrade;
+        bool isCrossMargined;
+        IOracle oracle;
+    }
+
+    /// @notice swaps params for specifying the swap params
+    /// @param amount amount of tokens/vQuote to swap
+    /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
+    /// @param isNotional specifies whether the amount represents token amount (false) or vQuote amount(true)
+    /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
+    struct SwapParams {
+        int256 amount;
+        uint160 sqrtPriceLimit;
+        bool isNotional;
+        bool isPartialAllowed;
     }
 
     struct SwapValues {
@@ -124,5 +115,13 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         int256 vQuoteIn;
         uint256 liquidityFees;
         uint256 protocolFees;
+    }
+
+    struct VTokenPositionView {
+        IVToken vToken;
+        int256 balance; // vTokenLong - vTokenShort
+        int256 netTraderPosition;
+        int256 sumAX128Chkpt;
+        LiquidityPositionView[] liquidityPositions;
     }
 }

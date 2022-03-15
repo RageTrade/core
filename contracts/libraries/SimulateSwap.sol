@@ -20,7 +20,7 @@ library SimulateSwap {
 
     error ZeroAmount();
 
-    struct SwapCache {
+    struct Cache {
         // price at the beginning of the swap
         uint160 sqrtPriceX96Start;
         // tick at the beginning of the swap
@@ -36,7 +36,7 @@ library SimulateSwap {
     }
 
     // the top level state of the swap, the results of which are recorded in storage at the end
-    struct SwapState {
+    struct State {
         // the amount remaining to be swapped in/out of the input/output asset
         int256 amountSpecifiedRemaining;
         // the amount already swapped out/in of the output/input asset
@@ -53,7 +53,7 @@ library SimulateSwap {
         uint128 liquidity;
     }
 
-    struct StepComputations {
+    struct Step {
         // the price at the beginning of the step
         uint160 sqrtPriceStartX96;
         // the next tick to swap to from the current tick in the swap direction
@@ -75,7 +75,7 @@ library SimulateSwap {
         bool zeroForOne,
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
-        function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
+        function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
         return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, v3Pool.fee(), onSwapStep);
     }
@@ -92,11 +92,11 @@ library SimulateSwap {
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
         uint24 v3PoolFee,
-        function(bool, SwapCache memory, SwapState memory, StepComputations memory) onSwapStep
+        function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
     ) internal returns (int256 amount0, int256 amount1) {
         if (amountSpecified == 0) revert ZeroAmount();
 
-        SwapCache memory cache;
+        SimulateSwap.Cache memory cache;
         (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();
         cache.liquidityStart = v3Pool.liquidity();
         cache.tickSpacing = v3Pool.tickSpacing();
@@ -111,7 +111,7 @@ library SimulateSwap {
 
         bool exactInput = amountSpecified > 0;
 
-        SwapState memory state = SwapState({
+        SimulateSwap.State memory state = SimulateSwap.State({
             amountSpecifiedRemaining: amountSpecified,
             amountCalculated: 0,
             sqrtPriceX96: cache.sqrtPriceX96Start,
@@ -123,7 +123,7 @@ library SimulateSwap {
 
         // continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
         while (state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96) {
-            StepComputations memory step;
+            SimulateSwap.Step memory step;
 
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 

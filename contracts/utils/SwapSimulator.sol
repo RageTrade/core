@@ -17,10 +17,14 @@ import { UniswapV3PoolHelper } from '../libraries/UniswapV3PoolHelper.sol';
 contract SwapSimulator {
     using SimulateSwap for IUniswapV3Pool;
 
-    struct SwapStep {
-        SimulateSwap.SwapState state;
-        SimulateSwap.StepComputations step;
+    struct SwapStepAndState {
+        SimulateSwap.Step step;
+        SimulateSwap.State state;
     }
+
+    SimulateSwap.Cache _cache;
+    SwapStepAndState[] _steps;
+    uint160 _sqrtPriceX96End;
 
     function simulateSwap(
         IClearingHouse clearingHouse,
@@ -29,77 +33,49 @@ contract SwapSimulator {
         uint160 sqrtPriceLimitX96,
         bool isNotional
     )
-        external
+        public
         returns (
             IClearingHouseStructures.SwapValues memory swapValues,
             uint160 sqrtPriceX96End,
-            SimulateSwap.SwapCache memory cache,
-            SwapStep[] memory steps
+            SimulateSwap.Cache memory cache,
+            SwapStepAndState[] memory steps
         )
     {
-        // case isNotional true
-        // amountSpecified is positive
+        IClearingHouseStructures.Pool memory poolInfo = clearingHouse.getPoolInfo(poolId);
+
         swapValues = _simulateSwap(
-            clearingHouse,
-            poolId,
+            poolInfo.vPool,
+            poolInfo.vPoolWrapper.liquidityFeePips(),
+            poolInfo.vPoolWrapper.protocolFeePips(),
             amount < 0,
             isNotional ? amount : -amount,
             sqrtPriceLimitX96,
             _onSwapStep
         );
-
+        sqrtPriceX96End = _sqrtPriceX96End;
         cache = _cache;
         steps = _steps;
-        sqrtPriceX96End = _sqrtPriceX96End;
-        delete _cache;
-        delete _steps;
-        delete _sqrtPriceX96End;
-    }
-
-    SimulateSwap.SwapCache _cache;
-    SwapStep[] _steps;
-    uint160 _sqrtPriceX96End;
-
-    function _onSwapStep(
-        bool,
-        SimulateSwap.SwapCache memory cache,
-        SimulateSwap.SwapState memory state,
-        SimulateSwap.StepComputations memory step
-    ) internal {
-        // for reading
-        _cache = cache;
-        _steps.push(SwapStep({ state: state, step: step }));
-        _sqrtPriceX96End = state.sqrtPriceX96;
     }
 
     function _simulateSwap(
-        IClearingHouse clearingHouse,
-        uint32 poolId,
+        IUniswapV3Pool vPool,
+        uint24 liquidityFeePips,
+        uint24 protocolFeePips,
         bool swapVTokenForVQuote, // zeroForOne
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
-        function(
-            bool,
-            SimulateSwap.SwapCache memory,
-            SimulateSwap.SwapState memory,
-            SimulateSwap.StepComputations memory
-        ) onSwapStep
+        function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
     ) internal returns (IClearingHouseStructures.SwapValues memory swapValues) {
-        swapValues.amountSpecified = amountSpecified;
-
-        IClearingHouseStructures.Pool memory pool = clearingHouse.getPoolInfo(poolId);
-
-        bool exactIn = amountSpecified >= 0;
+        delete _cache;
+        delete _steps;
 
         if (sqrtPriceLimitX96 == 0) {
             sqrtPriceLimitX96 = swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
         }
 
-        (uint24 uniswapFeePips, uint24 liquidityFeePips, uint24 protocolFeePips) = (
-            pool.vPool.fee(),
-            pool.vPoolWrapper.liquidityFeePips(),
-            pool.vPoolWrapper.protocolFeePips()
-        );
+        swapValues.amountSpecified = amountSpecified;
+        bool exactIn = amountSpecified >= 0;
+        uint24 uniswapFeePips = vPool.fee();
 
         SwapMath.beforeSwap(
             exactIn,
@@ -110,16 +86,26 @@ contract SwapSimulator {
             swapValues
         );
 
-        {
-            // simulate swap and update our tick states
-            (swapValues.vTokenIn, swapValues.vQuoteIn) = pool.vPool.simulateSwap(
-                swapVTokenForVQuote,
-                amountSpecified,
-                sqrtPriceLimitX96,
-                onSwapStep
-            );
-        }
+        // simulate swap and update our tick states
+        (swapValues.vTokenIn, swapValues.vQuoteIn) = vPool.simulateSwap(
+            swapVTokenForVQuote,
+            amountSpecified,
+            sqrtPriceLimitX96,
+            onSwapStep
+        );
 
         SwapMath.afterSwap(exactIn, swapVTokenForVQuote, uniswapFeePips, liquidityFeePips, protocolFeePips, swapValues);
+    }
+
+    function _onSwapStep(
+        bool,
+        SimulateSwap.Cache memory cache,
+        SimulateSwap.State memory state,
+        SimulateSwap.Step memory step
+    ) internal {
+        // for reading
+        _cache = cache;
+        _steps.push(SwapStepAndState({ state: state, step: step }));
+        _sqrtPriceX96End = state.sqrtPriceX96;
     }
 }

@@ -69,7 +69,7 @@ library LiquidityPosition {
      */
 
     function initialize(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         int24 tickLower,
         int24 tickUpper
     ) internal {
@@ -82,7 +82,7 @@ library LiquidityPosition {
     }
 
     function liquidityChange(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         uint256 accountId,
         uint32 poolId,
         int128 liquidityDelta,
@@ -150,7 +150,7 @@ library LiquidityPosition {
     }
 
     function update(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         uint256 accountId,
         uint32 poolId,
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside,
@@ -184,7 +184,7 @@ library LiquidityPosition {
      *  Internal view methods
      */
 
-    function checkValidLimitOrderRemoval(Info storage info, int24 currentTick) internal view {
+    function checkValidLimitOrderRemoval(LiquidityPosition.Info storage info, int24 currentTick) internal view {
         if (
             !((currentTick >= info.tickUpper &&
                 info.limitOrderType == IClearingHouseEnums.LimitOrderType.UPPER_LIMIT) ||
@@ -195,12 +195,12 @@ library LiquidityPosition {
         }
     }
 
-    function isInitialized(Info storage info) internal view returns (bool) {
+    function isInitialized(LiquidityPosition.Info storage info) internal view returns (bool) {
         return info.tickLower != 0 || info.tickUpper != 0;
     }
 
     function longSideRisk(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (uint256) {
@@ -238,7 +238,7 @@ library LiquidityPosition {
     }
 
     function marketValue(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         uint160 valuationSqrtPriceX96,
         IVPoolWrapper wrapper
     ) internal view returns (int256 marketValue_) {
@@ -259,7 +259,7 @@ library LiquidityPosition {
         );
     }
 
-    function maxNetPosition(Info storage position) internal view returns (uint256) {
+    function maxNetPosition(LiquidityPosition.Info storage position) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -273,7 +273,7 @@ library LiquidityPosition {
                 uint256(-1 * position.vTokenAmountIn);
     }
 
-    function netPosition(Info storage position, uint160 sqrtPriceCurrent)
+    function netPosition(LiquidityPosition.Info storage position, uint160 sqrtPriceCurrent)
         internal
         view
         returns (int256 netTokenPosition)
@@ -284,7 +284,7 @@ library LiquidityPosition {
     }
 
     function vTokenAmountsInRange(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         uint160 sqrtPriceCurrent,
         bool roundUp
     ) internal view returns (int256 vTokenAmount, int256 vQuoteAmount) {
@@ -309,7 +309,7 @@ library LiquidityPosition {
     }
 
     function unrealizedFundingPayment(
-        Info storage position,
+        LiquidityPosition.Info storage position,
         int256 sumAX128,
         int256 sumFpInsideX128
     ) internal view returns (int256 vQuoteIncrease) {
@@ -323,7 +323,7 @@ library LiquidityPosition {
         );
     }
 
-    function unrealizedFees(Info storage position, uint256 sumFeeInsideX128)
+    function unrealizedFees(LiquidityPosition.Info storage position, uint256 sumFeeInsideX128)
         internal
         view
         returns (uint256 vQuoteIncrease)
