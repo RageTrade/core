@@ -5,12 +5,16 @@ pragma solidity ^0.8.0;
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { PriceMath } from './PriceMath.sol';
+import { SignedMath } from './SignedMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 
 /// @title Protocol storage functions
@@ -18,6 +22,8 @@ import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 library Protocol {
     using PriceMath for uint160;
     using PriceMath for uint256;
+    using SignedMath for int256;
+    using FullMath for uint256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
     using Protocol for Protocol.Info;
@@ -108,5 +114,22 @@ library Protocol {
 
     function isPoolCrossMargined(Protocol.Info storage protocol, uint32 poolId) internal view returns (bool) {
         return protocol.pools[poolId].settings.isCrossMargined;
+    }
+
+    /// @notice Gives notional value of the given vQuote and token amounts
+    /// @param protocol platform constants
+    /// @param poolId id of the rage trade pool
+    /// @param vTokenAmount amount of tokens
+    /// @param vQuoteAmount amount of base
+    /// @return notionalAmountClosed for the given token and vQuote amounts
+    function getNotionalValue(
+        Protocol.Info storage protocol,
+        uint32 poolId,
+        int256 vTokenAmount,
+        int256 vQuoteAmount
+    ) internal view returns (uint256 notionalAmountClosed) {
+        notionalAmountClosed =
+            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
+            vQuoteAmount.absUint();
     }
 }

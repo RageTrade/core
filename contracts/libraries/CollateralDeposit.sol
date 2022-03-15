@@ -25,39 +25,54 @@ library CollateralDeposit {
     error InsufficientCollateralBalance();
 
     struct Set {
-        // fixed length array of truncate(tokenAddress)
-        // open positions in 8 different pairs at same time.
-        // single per pool because it's fungible, allows for having
-        uint32[8] active;
-        mapping(uint32 => uint256) deposits;
+        // Fixed length array of collateralId = collateralAddress.truncate()
+        // Supports upto 8 different collaterals in an account.
+        // Collision is possible, i.e. collateralAddress1.truncate() == collateralAddress2.truncate()
+        // However the possibility is 1/2**32, which is negligible.
+        // There are checks that prevent use of a different collateralAddress for a given collateralId.
+        // If there is a geniune collision, a wrapper for the ERC20 token can deployed such that
+        // there are no collisions with wrapper and the wrapped ERC20 can be used as collateral.
+        uint32[8] active; // array of collateralIds
+        mapping(uint32 => uint256) deposits; // collateralId => deposit amount
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
-    // add overrides that accept vToken or truncated
+    /// @notice Increase the deposit amount of a given collateralId
+    /// @param set CollateralDepositSet of the account
+    /// @param collateralId The collateralId of the collateral to increase the deposit amount of
+    /// @param amount The amount to increase the deposit amount of the collateral by
     function increaseBalance(
-        CollateralDeposit.Set storage info,
+        CollateralDeposit.Set storage set,
         uint32 collateralId,
         uint256 amount
     ) internal {
-        info.active.include(collateralId);
+        set.active.include(collateralId);
 
-        info.deposits[collateralId] += amount;
+        set.deposits[collateralId] += amount;
     }
 
+    /// @notice Decrease the deposit amount of a given collateralId
+    /// @param set CollateralDepositSet of the account
+    /// @param collateralId The collateralId of the collateral to decrease the deposit amount of
+    /// @param amount The amount to decrease the deposit amount of the collateral by
     function decreaseBalance(
-        CollateralDeposit.Set storage info,
+        CollateralDeposit.Set storage set,
         uint32 collateralId,
         uint256 amount
     ) internal {
-        if (info.deposits[collateralId] < amount) revert InsufficientCollateralBalance();
-        info.deposits[collateralId] -= amount;
+        if (set.deposits[collateralId] < amount) revert InsufficientCollateralBalance();
+        set.deposits[collateralId] -= amount;
 
-        if (info.deposits[collateralId] == 0) {
-            info.active.exclude(collateralId);
+        if (set.deposits[collateralId] == 0) {
+            set.active.exclude(collateralId);
         }
     }
 
-    function getAllDepositAccountMarketValue(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
+    /// @notice Get the market value of all the collateral deposits in settlementToken denomination
+    /// @param set CollateralDepositSet of the account
+    /// @param protocol Global protocol state
+    /// @return The market value of all the collateral deposits in settlementToken denomination
+    function marketValue(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
         internal
         view
         returns (int256)
@@ -77,6 +92,10 @@ library CollateralDeposit {
         return accountMarketValue;
     }
 
+    /// @notice Get information about all the collateral deposits
+    /// @param set CollateralDepositSet of the account
+    /// @param protocol Global protocol state
+    /// @return collateralDeposits Information about all the collateral deposits
     function getInfo(CollateralDeposit.Set storage set, Protocol.Info storage protocol)
         internal
         view

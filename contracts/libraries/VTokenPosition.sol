@@ -33,15 +33,12 @@ library VTokenPosition {
         SHORT
     }
 
-    /// @notice stores info for VTokenPositionSet
-    /// @param active list of all active token truncated addresses
-    /// @param positions mapping from truncated token addresses to VTokenPosition struct for that address
     struct Set {
-        // fixed length array of truncate(tokenAddress)
-        // open positions in 8 different pairs at same time.
-        // single per pool because it's fungible, allows for having
-        uint32[8] active;
-        mapping(uint32 => VTokenPosition.Info) positions;
+        // Fixed length array of poolId = vTokenAddress.truncate()
+        // Open positions in 8 different pairs at same time.
+        // Collision between poolId is not possible.
+        uint32[8] active; // array of poolIds
+        mapping(uint32 => VTokenPosition.Info) positions; // poolId => Position
         int256 vQuoteBalance;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
@@ -56,9 +53,9 @@ library VTokenPosition {
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
-    /// @notice returns the market value of the supplied token position
+    /// @notice Gives the market value of the supplied token position
     /// @param position token position
-    /// @param priceX128 price in fixed point 128
+    /// @param priceX128 price in Q128
     /// @param wrapper pool wrapper corresponding to position
     function marketValue(
         VTokenPosition.Info storage position,
@@ -71,7 +68,7 @@ library VTokenPosition {
 
     /// @notice returns the market value of the supplied token position
     /// @param position token position
-    /// @param priceX128 price in fixed point 128
+    /// @param priceX128 price in Q128
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     function marketValue(

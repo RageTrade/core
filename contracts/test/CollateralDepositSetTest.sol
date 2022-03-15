@@ -65,7 +65,7 @@ contract CollateralDepositSetTest is AccountProtocolInfoMock {
     }
 
     function getAllDepositAccountMarketValue() external view returns (int256 depositValue) {
-        return depositTokenSet.getAllDepositAccountMarketValue(protocol);
+        return depositTokenSet.marketValue(protocol);
     }
 
     function getBalance(address realTokenAddress) external view returns (uint256 balance) {
