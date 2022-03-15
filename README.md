@@ -21,7 +21,7 @@ This repository contains the core smart contracts for the Rage Trade Protocol.
 
 ## Licensing
 
-The primary license for Rage Trade Core is the MIT License, see LICENSE. However, our dependencies have various licenses and hence the files that import them inherits the maximum restrictive license of it's dependencies, specified by the SPDX identifier in the file.
+The primary license for Rage Trade Core is the MIT License, see [LICENSE](./LICENSE). However, our dependencies have various licenses and hence the files that import them inherits the maximum restrictive license of it's dependencies, specified by the SPDX identifier in the file.
 
 > TODO: find opportunities to get rid of GPL or BUSL imports.
 
