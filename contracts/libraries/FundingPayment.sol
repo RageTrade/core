@@ -25,7 +25,11 @@ library FundingPayment {
         uint48 timestampLast;
     }
 
-    event FundingPaymentStateUpdated(FundingPayment.Info fundingPayment);
+    event FundingPaymentStateUpdated(
+        FundingPayment.Info fundingPayment,
+        uint256 realPriceX128,
+        uint256 virtualPriceX128
+    );
 
     /// @notice Used to update the state of the funding payment whenever a trade takes place
     /// @param info pointer to the funding payment state
@@ -48,7 +52,7 @@ library FundingPayment {
         info.sumBX128 += vTokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
         info.timestampLast = blockTimestamp;
 
-        emit FundingPaymentStateUpdated(info);
+        emit FundingPaymentStateUpdated(info, realPriceX128, virtualPriceX128);
     }
 
     /// @notice Used to get the rate of funding payment for the duration between last trade and this trade
