@@ -13,6 +13,8 @@ export async function setupWrapper(setupArgs: SetupArgs) {
     address: signer.address,
   });
 
+  await clearingHouse.governance.returns(signer.address);
+
   await setTwapSqrtPricesForSetDuration({
     realPriceX128: toQ128(setupArgs.rPriceInitial ?? 1),
     virtualPriceX128: toQ128(setupArgs.vPriceInitial ?? 1),
