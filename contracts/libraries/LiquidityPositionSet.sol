@@ -18,6 +18,8 @@ library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;
     using LiquidityPositionSet for LiquidityPosition.Set;
     using Protocol for Protocol.Info;
+    using Uint48Lib for int24;
+    using Uint48Lib for uint48;
     using Uint48L5ArrayLib for uint48[5];
 
     error LPS_IllegalTicks(int24 tickLower, int24 tickUpper);
@@ -33,7 +35,7 @@ library LiquidityPositionSet {
         int24 tickLower,
         int24 tickUpper
     ) internal view returns (bool) {
-        return _exists(set.active, tickLower, tickUpper);
+        return set.active.exists(tickLower.concat(tickUpper));
     }
 
     function marketValue(
@@ -104,7 +106,8 @@ library LiquidityPositionSet {
             revert LPS_IllegalTicks(tickLower, tickUpper);
         }
 
-        uint48 positionId = _include(set.active, tickLower, tickUpper);
+        uint48 positionId;
+        set.active.include(positionId = tickLower.concat(tickUpper));
         position = set.positions[positionId];
 
         if (!position.isInitialized()) {
@@ -117,32 +120,7 @@ library LiquidityPositionSet {
             revert LPS_DeactivationFailed(position.tickLower, position.tickUpper, position.liquidity);
         }
 
-        _exclude(set.active, position.tickLower, position.tickUpper);
-    }
-
-    // TODO refactor this
-    function _include(
-        uint48[5] storage array,
-        int24 val1,
-        int24 val2
-    ) private returns (uint48 index) {
-        array.include(index = Uint48Lib.concat(val1, val2));
-    }
-
-    function _exclude(
-        uint48[5] storage array,
-        int24 val1,
-        int24 val2
-    ) private returns (uint48 index) {
-        array.exclude(index = Uint48Lib.concat(val1, val2));
-    }
-
-    function _exists(
-        uint48[5] storage array,
-        int24 val1,
-        int24 val2
-    ) private view returns (bool) {
-        return array.exists(Uint48Lib.concat(val1, val2));
+        set.active.exclude(position.tickLower.concat(position.tickUpper));
     }
 
     function liquidityChange(
