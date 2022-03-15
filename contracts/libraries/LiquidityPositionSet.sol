@@ -26,76 +26,9 @@ library LiquidityPositionSet {
     error LPS_DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
     error LPS_InactiveRange();
 
-    function isEmpty(LiquidityPosition.Set storage set) internal view returns (bool) {
-        return set.active[0] == 0;
-    }
-
-    function isPositionActive(
-        LiquidityPosition.Set storage set,
-        int24 tickLower,
-        int24 tickUpper
-    ) internal view returns (bool) {
-        return set.active.exists(tickLower.concat(tickUpper));
-    }
-
-    function marketValue(
-        LiquidityPosition.Set storage set,
-        uint160 sqrtPriceCurrent,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    ) internal view returns (int256 marketValue_) {
-        marketValue_ = set.marketValue(sqrtPriceCurrent, protocol.vPoolWrapper(poolId));
-    }
-
-    /// @notice Get the total market value of all active liquidity positions in the set.
-    /// @param set: Collection of active liquidity positions
-    /// @param sqrtPriceCurrent: Current price of the virtual asset
-    /// @param wrapper: address of the wrapper contract, passed once to avoid multiple sloads for wrapper
-    function marketValue(
-        LiquidityPosition.Set storage set,
-        uint160 sqrtPriceCurrent,
-        IVPoolWrapper wrapper
-    ) internal view returns (int256 marketValue_) {
-        for (uint256 i = 0; i < set.active.length; i++) {
-            uint48 id = set.active[i];
-            if (id == 0) break;
-            marketValue_ += set.positions[id].marketValue(sqrtPriceCurrent, wrapper);
-        }
-    }
-
-    function maxNetPosition(LiquidityPosition.Set storage set) internal view returns (uint256 risk) {
-        for (uint256 i = 0; i < set.active.length; i++) {
-            uint48 id = set.active[i];
-            risk += set.positions[id].maxNetPosition();
-        }
-    }
-
-    function longSideRisk(
-        LiquidityPosition.Set storage set,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    ) internal view returns (uint256 risk) {
-        for (uint256 i = 0; i < set.active.length; i++) {
-            uint48 id = set.active[i];
-            risk += set.positions[id].longSideRisk(poolId, protocol);
-        }
-    }
-
-    function getLiquidityPosition(
-        LiquidityPosition.Set storage set,
-        int24 tickLower,
-        int24 tickUpper
-    ) internal view returns (LiquidityPosition.Info storage position) {
-        if (tickLower > tickUpper) {
-            revert LPS_IllegalTicks(tickLower, tickUpper);
-        }
-
-        uint48 positionId = Uint48Lib.concat(tickLower, tickUpper);
-        position = set.positions[positionId];
-
-        if (!position.isInitialized()) revert LPS_InactiveRange();
-        return position;
-    }
+    /**
+     *  Internal methods
+     */
 
     function activate(
         LiquidityPosition.Set storage set,
@@ -220,6 +153,26 @@ library LiquidityPositionSet {
         }
     }
 
+    /**
+     *  Internal view methods
+     */
+
+    function getLiquidityPosition(
+        LiquidityPosition.Set storage set,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (LiquidityPosition.Info storage position) {
+        if (tickLower > tickUpper) {
+            revert LPS_IllegalTicks(tickLower, tickUpper);
+        }
+
+        uint48 positionId = Uint48Lib.concat(tickLower, tickUpper);
+        position = set.positions[positionId];
+
+        if (!position.isInitialized()) revert LPS_InactiveRange();
+        return position;
+    }
+
     function getInfo(LiquidityPosition.Set storage set)
         internal
         view
@@ -250,6 +203,61 @@ library LiquidityPositionSet {
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
             netPosition += set.positions[set.active[i]].netPosition(sqrtPriceCurrent);
+        }
+    }
+
+    function isEmpty(LiquidityPosition.Set storage set) internal view returns (bool) {
+        return set.active.isEmpty();
+    }
+
+    function isPositionActive(
+        LiquidityPosition.Set storage set,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (bool) {
+        return set.active.exists(tickLower.concat(tickUpper));
+    }
+
+    function longSideRisk(
+        LiquidityPosition.Set storage set,
+        uint32 poolId,
+        Protocol.Info storage protocol
+    ) internal view returns (uint256 risk) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            risk += set.positions[id].longSideRisk(poolId, protocol);
+        }
+    }
+
+    function marketValue(
+        LiquidityPosition.Set storage set,
+        uint160 sqrtPriceCurrent,
+        uint32 poolId,
+        Protocol.Info storage protocol
+    ) internal view returns (int256 marketValue_) {
+        marketValue_ = set.marketValue(sqrtPriceCurrent, protocol.vPoolWrapper(poolId));
+    }
+
+    /// @notice Get the total market value of all active liquidity positions in the set.
+    /// @param set: Collection of active liquidity positions
+    /// @param sqrtPriceCurrent: Current price of the virtual asset
+    /// @param wrapper: address of the wrapper contract, passed once to avoid multiple sloads for wrapper
+    function marketValue(
+        LiquidityPosition.Set storage set,
+        uint160 sqrtPriceCurrent,
+        IVPoolWrapper wrapper
+    ) internal view returns (int256 marketValue_) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            if (id == 0) break;
+            marketValue_ += set.positions[id].marketValue(sqrtPriceCurrent, wrapper);
+        }
+    }
+
+    function maxNetPosition(LiquidityPosition.Set storage set) internal view returns (uint256 risk) {
+        for (uint256 i = 0; i < set.active.length; i++) {
+            uint48 id = set.active[i];
+            risk += set.positions[id].maxNetPosition();
         }
     }
 }

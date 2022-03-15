@@ -41,150 +41,9 @@ library VTokenPositionSet {
     error VPS_DeactivationFailed(uint32 poolId);
     error VPS_TokenInactive(uint32 poolId);
 
-    /// @notice returns true if the set does not have any token position active
-    /// @param set VTokenPositionSet
-    /// @return _isEmpty
-    function isEmpty(VTokenPosition.Set storage set) internal view returns (bool _isEmpty) {
-        _isEmpty = set.active[0] == 0;
-    }
-
-    /// @notice returns true if range position is active for 'vToken'
-    /// @param set VTokenPositionSet
-    /// @param poolId poolId of the vToken
-    /// @return isRangeActive
-    function isTokenRangeActive(VTokenPosition.Set storage set, uint32 poolId) internal returns (bool isRangeActive) {
-        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false);
-        isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();
-    }
-
-    /// @notice returns account market value of active positions
-    /// @param set VTokenPositionSet
-    /// @param protocol platform constants
-    /// @return accountMarketValue
-    function getAccountMarketValue(VTokenPosition.Set storage set, Protocol.Info storage protocol)
-        internal
-        view
-        returns (int256 accountMarketValue)
-    {
-        for (uint8 i = 0; i < set.active.length; i++) {
-            uint32 poolId = set.active[i];
-            if (poolId == 0) break;
-            // IVToken vToken = protocol[poolId].vToken;
-            VTokenPosition.Info storage position = set.positions[poolId];
-
-            //Value of token position for current vToken
-            accountMarketValue += position.marketValue(poolId, protocol);
-
-            uint160 sqrtPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
-            //Value of all active range position for the current vToken
-            accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
-        }
-
-        // Value of the vQuote token balance
-        accountMarketValue += set.vQuoteBalance;
-    }
-
-    /// @notice returns the max of two int256 numbers
-    /// @param a first number
-    /// @param b second number
-    /// @return c  = max of a and b
-    function max(int256 a, int256 b) internal pure returns (int256 c) {
-        if (a > b) c = a;
-        else c = b;
-    }
-
-    /// @notice returns notional value of the given token amount
-    /// @param poolId id of the rage trade pool
-    /// @param vTokenAmount amount of tokens
-    /// @param protocol platform constants
-    /// @return notionalAmountClosed for the given token and vQuote amounts
-    function getTokenNotionalValue(
-        uint32 poolId,
-        int256 vTokenAmount,
-        Protocol.Info storage protocol
-    ) internal view returns (uint256 notionalAmountClosed) {
-        notionalAmountClosed = vTokenAmount.absUint().mulDiv(
-            protocol.getVirtualTwapPriceX128(poolId),
-            FixedPoint128.Q128
-        );
-    }
-
-    /// @notice returns notional value of the given vQuote and token amounts
-    /// @param poolId id of the rage trade pool
-    /// @param vTokenAmount amount of tokens
-    /// @param vQuoteAmount amount of base
-    /// @param protocol platform constants
-    /// @return notionalAmountClosed for the given token and vQuote amounts
-    function getNotionalValue(
-        uint32 poolId,
-        int256 vTokenAmount,
-        int256 vQuoteAmount,
-        Protocol.Info storage protocol
-    ) internal view returns (uint256 notionalAmountClosed) {
-        notionalAmountClosed =
-            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
-            vQuoteAmount.absUint();
-    }
-
-    /// @notice returns the long and short side risk for range positions of a particular token
-    /// @param set VTokenPositionSet
-    /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)
-    /// @param poolId id of the rage trade pool
-    /// @param protocol platform constants
-    /// @return longSideRisk - risk if the token price goes down
-    /// @return shortSideRisk - risk if the token price goes up
-    function getLongShortSideRisk(
-        VTokenPosition.Set storage set,
-        bool isInitialMargin,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
-        VTokenPosition.Info storage position = set.positions[poolId];
-
-        uint256 price = protocol.getVirtualTwapPriceX128(poolId);
-        uint16 marginRatio = protocol.getMarginRatio(poolId, isInitialMargin);
-
-        int256 tokenPosition = position.balance;
-        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, protocol).toInt256();
-
-        longSideRisk = max(position.netTraderPosition.mulDiv(price, FixedPoint128.Q128) + longSideRiskRanges, 0).mulDiv(
-                marginRatio,
-                1e5
-            );
-
-        shortSideRisk = max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e5);
-        return (longSideRisk, shortSideRisk);
-    }
-
-    /// @notice returns the long and short side risk for range positions of a particular token
-    /// @param set VTokenPositionSet
-    /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)
-    /// @param protocol platform constants
-    /// @return requiredMargin - required margin value based on the current active positions
-    function getRequiredMargin(
-        VTokenPosition.Set storage set,
-        bool isInitialMargin,
-        Protocol.Info storage protocol
-    ) internal view returns (int256 requiredMargin) {
-        int256 longSideRiskTotal;
-        int256 shortSideRiskTotal;
-        int256 longSideRisk;
-        int256 shortSideRisk;
-        for (uint8 i = 0; i < set.active.length; i++) {
-            if (set.active[i] == 0) break;
-            uint32 poolId = set.active[i];
-            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, poolId, protocol);
-
-            if (protocol.isPoolCrossMargined(poolId)) {
-                longSideRiskTotal += longSideRisk;
-                shortSideRiskTotal += shortSideRisk;
-            } else {
-                requiredMargin += max(longSideRisk, shortSideRisk);
-            }
-        }
-
-        requiredMargin += max(longSideRiskTotal, shortSideRiskTotal);
-    }
+    /**
+     *  Internal methods
+     */
 
     /// @notice activates token with address 'vToken' if not already active
     /// @param set VTokenPositionSet
@@ -270,26 +129,6 @@ library VTokenPositionSet {
         position.sumAX128Chkpt = extrapolatedSumAX128;
 
         emit Account.FundingPaymentRealized(accountId, poolId, 0, 0, fundingPayment);
-    }
-
-    /// @notice get or create token position
-    /// @dev activates inactive vToken if isCreateNew is true else reverts
-    /// @param set VTokenPositionSet
-    /// @param poolId id of the rage trade pool
-    /// @param createNew if 'vToken' is inactive then activates (true) else reverts with TokenInactive(false)
-    /// @return position - VTokenPosition corresponding to 'vToken'
-    function getTokenPosition(
-        VTokenPosition.Set storage set,
-        uint32 poolId,
-        bool createNew
-    ) internal returns (VTokenPosition.Info storage position) {
-        if (createNew) {
-            set.activate(poolId);
-        } else if (!set.active.exists(poolId)) {
-            revert VPS_TokenInactive(poolId);
-        }
-
-        position = set.positions[poolId];
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount
@@ -479,6 +318,37 @@ library VTokenPositionSet {
         set.update(accountId, balanceAdjustments, poolId, protocol);
     }
 
+    /**
+     *  Internal view methods
+     */
+
+    /// @notice returns account market value of active positions
+    /// @param set VTokenPositionSet
+    /// @param protocol platform constants
+    /// @return accountMarketValue
+    function getAccountMarketValue(VTokenPosition.Set storage set, Protocol.Info storage protocol)
+        internal
+        view
+        returns (int256 accountMarketValue)
+    {
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 poolId = set.active[i];
+            if (poolId == 0) break;
+            // IVToken vToken = protocol[poolId].vToken;
+            VTokenPosition.Info storage position = set.positions[poolId];
+
+            //Value of token position for current vToken
+            accountMarketValue += position.marketValue(poolId, protocol);
+
+            uint160 sqrtPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
+            //Value of all active range position for the current vToken
+            accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
+        }
+
+        // Value of the vQuote token balance
+        accountMarketValue += set.vQuoteBalance;
+    }
+
     function getInfo(VTokenPosition.Set storage set, Protocol.Info storage protocol)
         internal
         view
@@ -498,6 +368,35 @@ library VTokenPositionSet {
         }
     }
 
+    /// @notice returns the long and short side risk for range positions of a particular token
+    /// @param set VTokenPositionSet
+    /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)
+    /// @param poolId id of the rage trade pool
+    /// @param protocol platform constants
+    /// @return longSideRisk - risk if the token price goes down
+    /// @return shortSideRisk - risk if the token price goes up
+    function getLongShortSideRisk(
+        VTokenPosition.Set storage set,
+        bool isInitialMargin,
+        uint32 poolId,
+        Protocol.Info storage protocol
+    ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
+        VTokenPosition.Info storage position = set.positions[poolId];
+
+        uint256 price = protocol.getVirtualTwapPriceX128(poolId);
+        uint16 marginRatio = protocol.getMarginRatio(poolId, isInitialMargin);
+
+        int256 tokenPosition = position.balance;
+        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, protocol).toInt256();
+
+        longSideRisk = SignedMath
+            .max(position.netTraderPosition.mulDiv(price, FixedPoint128.Q128) + longSideRiskRanges, 0)
+            .mulDiv(marginRatio, 1e5);
+
+        shortSideRisk = SignedMath.max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e5);
+        return (longSideRisk, shortSideRisk);
+    }
+
     function getNetPosition(
         VTokenPosition.Set storage set,
         uint32 poolId,
@@ -506,5 +405,104 @@ library VTokenPositionSet {
         if (!set.active.exists(poolId)) return 0;
         VTokenPosition.Info storage tokenPosition = set.positions[poolId];
         return tokenPosition.getNetPosition(poolId, protocol);
+    }
+
+    /// @notice returns notional value of the given vQuote and token amounts
+    /// @param poolId id of the rage trade pool
+    /// @param vTokenAmount amount of tokens
+    /// @param vQuoteAmount amount of base
+    /// @param protocol platform constants
+    /// @return notionalAmountClosed for the given token and vQuote amounts
+    function getNotionalValue(
+        uint32 poolId,
+        int256 vTokenAmount,
+        int256 vQuoteAmount,
+        Protocol.Info storage protocol
+    ) internal view returns (uint256 notionalAmountClosed) {
+        notionalAmountClosed =
+            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
+            vQuoteAmount.absUint();
+    }
+
+    /// @notice returns the long and short side risk for range positions of a particular token
+    /// @param set VTokenPositionSet
+    /// @param isInitialMargin specifies to use initial margin factor (true) or maintainance margin factor (false)
+    /// @param protocol platform constants
+    /// @return requiredMargin - required margin value based on the current active positions
+    function getRequiredMargin(
+        VTokenPosition.Set storage set,
+        bool isInitialMargin,
+        Protocol.Info storage protocol
+    ) internal view returns (int256 requiredMargin) {
+        int256 longSideRiskTotal;
+        int256 shortSideRiskTotal;
+        int256 longSideRisk;
+        int256 shortSideRisk;
+        for (uint8 i = 0; i < set.active.length; i++) {
+            if (set.active[i] == 0) break;
+            uint32 poolId = set.active[i];
+            (longSideRisk, shortSideRisk) = set.getLongShortSideRisk(isInitialMargin, poolId, protocol);
+
+            if (protocol.isPoolCrossMargined(poolId)) {
+                longSideRiskTotal += longSideRisk;
+                shortSideRiskTotal += shortSideRisk;
+            } else {
+                requiredMargin += SignedMath.max(longSideRisk, shortSideRisk);
+            }
+        }
+
+        requiredMargin += SignedMath.max(longSideRiskTotal, shortSideRiskTotal);
+    }
+
+    /// @notice returns notional value of the given token amount
+    /// @param poolId id of the rage trade pool
+    /// @param vTokenAmount amount of tokens
+    /// @param protocol platform constants
+    /// @return notionalAmountClosed for the given token and vQuote amounts
+    function getTokenNotionalValue(
+        uint32 poolId,
+        int256 vTokenAmount,
+        Protocol.Info storage protocol
+    ) internal view returns (uint256 notionalAmountClosed) {
+        notionalAmountClosed = vTokenAmount.absUint().mulDiv(
+            protocol.getVirtualTwapPriceX128(poolId),
+            FixedPoint128.Q128
+        );
+    }
+
+    /// @notice get or create token position
+    /// @dev activates inactive vToken if isCreateNew is true else reverts
+    /// @param set VTokenPositionSet
+    /// @param poolId id of the rage trade pool
+    /// @param createNew if 'vToken' is inactive then activates (true) else reverts with TokenInactive(false)
+    /// @return position - VTokenPosition corresponding to 'vToken'
+    function getTokenPosition(
+        VTokenPosition.Set storage set,
+        uint32 poolId,
+        bool createNew
+    ) internal returns (VTokenPosition.Info storage position) {
+        if (createNew) {
+            set.activate(poolId);
+        } else if (!set.active.exists(poolId)) {
+            revert VPS_TokenInactive(poolId);
+        }
+
+        position = set.positions[poolId];
+    }
+
+    /// @notice returns true if the set does not have any token position active
+    /// @param set VTokenPositionSet
+    /// @return True if there are no active positions
+    function isEmpty(VTokenPosition.Set storage set) internal view returns (bool) {
+        return set.active.isEmpty();
+    }
+
+    /// @notice returns true if range position is active for 'vToken'
+    /// @param set VTokenPositionSet
+    /// @param poolId poolId of the vToken
+    /// @return isRangeActive
+    function isTokenRangeActive(VTokenPosition.Set storage set, uint32 poolId) internal returns (bool isRangeActive) {
+        VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false);
+        isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();
     }
 }

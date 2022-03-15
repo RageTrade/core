@@ -80,4 +80,11 @@ library Uint48L5ArrayLib {
         }
         return 5;
     }
+
+    /// @notice Checks whether the array is empty or not
+    /// @param array Array to perform search on
+    /// @return True if the set does not have any token position active
+    function isEmpty(uint48[5] storage array) internal view returns (bool) {
+        return array[0] == 0;
+    }
 }

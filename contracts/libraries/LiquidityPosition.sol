@@ -64,20 +64,9 @@ library LiquidityPosition {
     error LP_AlreadyInitialized();
     error LP_IneligibleLimitOrderRemoval();
 
-    function isInitialized(Info storage info) internal view returns (bool) {
-        return info.tickLower != 0 || info.tickUpper != 0;
-    }
-
-    function checkValidLimitOrderRemoval(Info storage info, int24 currentTick) internal view {
-        if (
-            !((currentTick >= info.tickUpper &&
-                info.limitOrderType == IClearingHouseEnums.LimitOrderType.UPPER_LIMIT) ||
-                (currentTick <= info.tickLower &&
-                    info.limitOrderType == IClearingHouseEnums.LimitOrderType.LOWER_LIMIT))
-        ) {
-            revert LP_IneligibleLimitOrderRemoval();
-        }
-    }
+    /**
+     *  Internal methods
+     */
 
     function initialize(
         Info storage position,
@@ -191,55 +180,23 @@ library LiquidityPosition {
         position.sumFeeInsideLastX128 = wrapperValuesInside.sumFeeInsideX128;
     }
 
-    function netPosition(Info storage position, uint160 sqrtPriceCurrent)
-        internal
-        view
-        returns (int256 netTokenPosition)
-    {
-        int256 vTokenAmountCurrent;
-        (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
-        netTokenPosition = (vTokenAmountCurrent - position.vTokenAmountIn);
+    /**
+     *  Internal view methods
+     */
+
+    function checkValidLimitOrderRemoval(Info storage info, int24 currentTick) internal view {
+        if (
+            !((currentTick >= info.tickUpper &&
+                info.limitOrderType == IClearingHouseEnums.LimitOrderType.UPPER_LIMIT) ||
+                (currentTick <= info.tickLower &&
+                    info.limitOrderType == IClearingHouseEnums.LimitOrderType.LOWER_LIMIT))
+        ) {
+            revert LP_IneligibleLimitOrderRemoval();
+        }
     }
 
-    // use funding payment lib
-    function unrealizedFundingPayment(
-        Info storage position,
-        int256 sumAX128,
-        int256 sumFpInsideX128
-    ) internal view returns (int256 vQuoteIncrease) {
-        vQuoteIncrease = -FundingPayment.bill(
-            sumAX128,
-            sumFpInsideX128,
-            position.sumALastX128,
-            position.sumBInsideLastX128,
-            position.sumFpInsideLastX128,
-            position.liquidity
-        );
-    }
-
-    function unrealizedFees(Info storage position, uint256 sumFeeInsideX128)
-        internal
-        view
-        returns (uint256 vQuoteIncrease)
-    {
-        vQuoteIncrease = (sumFeeInsideX128 - position.sumFeeInsideLastX128).mulDiv(
-            position.liquidity,
-            FixedPoint128.Q128
-        );
-    }
-
-    function maxNetPosition(Info storage position) internal view returns (uint256) {
-        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
-        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
-
-        if (position.vTokenAmountIn >= 0)
-            return
-                SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true) -
-                uint256(position.vTokenAmountIn);
-        else
-            return
-                SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true) +
-                uint256(-1 * position.vTokenAmountIn);
+    function isInitialized(Info storage info) internal view returns (bool) {
+        return info.tickLower != 0 || info.tickUpper != 0;
     }
 
     function longSideRisk(
@@ -280,6 +237,52 @@ library LiquidityPosition {
         return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
     }
 
+    function marketValue(
+        Info storage position,
+        uint160 valuationSqrtPriceX96,
+        IVPoolWrapper wrapper
+    ) internal view returns (int256 marketValue_) {
+        {
+            (int256 vTokenAmount, int256 vQuoteAmount) = position.vTokenAmountsInRange(valuationSqrtPriceX96, false);
+            uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
+            marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vQuoteAmount;
+        }
+        // adding fees
+        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getExtrapolatedValuesInside(
+            position.tickLower,
+            position.tickUpper
+        );
+        marketValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
+        marketValue_ += position.unrealizedFundingPayment(
+            wrapperValuesInside.sumAX128,
+            wrapperValuesInside.sumFpInsideX128
+        );
+    }
+
+    function maxNetPosition(Info storage position) internal view returns (uint256) {
+        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
+        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
+
+        if (position.vTokenAmountIn >= 0)
+            return
+                SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true) -
+                uint256(position.vTokenAmountIn);
+        else
+            return
+                SqrtPriceMath.getAmount0Delta(sqrtPriceLowerX96, sqrtPriceUpperX96, position.liquidity, true) +
+                uint256(-1 * position.vTokenAmountIn);
+    }
+
+    function netPosition(Info storage position, uint160 sqrtPriceCurrent)
+        internal
+        view
+        returns (int256 netTokenPosition)
+    {
+        int256 vTokenAmountCurrent;
+        (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
+        netTokenPosition = (vTokenAmountCurrent - position.vTokenAmountIn);
+    }
+
     function vTokenAmountsInRange(
         Info storage position,
         uint160 sqrtPriceCurrent,
@@ -305,25 +308,29 @@ library LiquidityPosition {
             .toInt256();
     }
 
-    function marketValue(
+    function unrealizedFundingPayment(
         Info storage position,
-        uint160 valuationSqrtPriceX96,
-        IVPoolWrapper wrapper
-    ) internal view returns (int256 marketValue_) {
-        {
-            (int256 vTokenAmount, int256 vQuoteAmount) = position.vTokenAmountsInRange(valuationSqrtPriceX96, false);
-            uint256 priceX128 = valuationSqrtPriceX96.toPriceX128();
-            marketValue_ = vTokenAmount.mulDiv(priceX128, FixedPoint128.Q128) + vQuoteAmount;
-        }
-        // adding fees
-        IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside = wrapper.getExtrapolatedValuesInside(
-            position.tickLower,
-            position.tickUpper
+        int256 sumAX128,
+        int256 sumFpInsideX128
+    ) internal view returns (int256 vQuoteIncrease) {
+        vQuoteIncrease = -FundingPayment.bill(
+            sumAX128,
+            sumFpInsideX128,
+            position.sumALastX128,
+            position.sumBInsideLastX128,
+            position.sumFpInsideLastX128,
+            position.liquidity
         );
-        marketValue_ += position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
-        marketValue_ += position.unrealizedFundingPayment(
-            wrapperValuesInside.sumAX128,
-            wrapperValuesInside.sumFpInsideX128
+    }
+
+    function unrealizedFees(Info storage position, uint256 sumFeeInsideX128)
+        internal
+        view
+        returns (uint256 vQuoteIncrease)
+    {
+        vQuoteIncrease = (sumFeeInsideX128 - position.sumFeeInsideLastX128).mulDiv(
+            position.liquidity,
+            FixedPoint128.Q128
         );
     }
 }
