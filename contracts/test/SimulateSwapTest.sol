@@ -86,12 +86,15 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
     ) public returns (int256 vTokenIn, int256 vQuoteIn) {
         // case isNotional true
         // amountSpecified is positive
+        SimulateSwap.Cache memory cache;
+        cache.fee = fee;
+        cache.tickSpacing = vPool.tickSpacing();
         return
             vPool.simulateSwap(
                 swapVTokenForVQuote,
                 amountSpecified,
                 swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
-                fee,
+                cache,
                 _onSwapSwap
             );
     }

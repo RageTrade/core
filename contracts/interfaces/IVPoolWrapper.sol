@@ -35,7 +35,6 @@ interface IVPoolWrapper {
         IUniswapV3Pool vPool;
         uint24 liquidityFeePips;
         uint24 protocolFeePips;
-        uint24 UNISWAP_V3_DEFAULT_FEE_TIER;
     }
 
     function __initialize_VPoolWrapper(InitializeVPoolWrapperParams memory params) external;
@@ -89,8 +88,6 @@ interface IVPoolWrapper {
     function getExtrapolatedSumAX128() external view returns (int256);
 
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
-
-    function uniswapFeePips() external view returns (uint24);
 
     function liquidityFeePips() external view returns (uint24);
 

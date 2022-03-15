@@ -127,8 +127,7 @@ contract RageTradeFactory is
                 vQuote,
                 vPool,
                 initializePoolParams.liquidityFeePips,
-                initializePoolParams.protocolFeePips,
-                UNISWAP_V3_DEFAULT_FEE_TIER
+                initializePoolParams.protocolFeePips
             )
         );
 
