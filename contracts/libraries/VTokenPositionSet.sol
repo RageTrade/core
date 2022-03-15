@@ -247,8 +247,8 @@ library VTokenPositionSet {
 
         set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        //Returns notional value of token position closed
-        return getTokenNotionalValue(poolId, balanceAdjustments.traderPositionIncrease, protocol);
+        // returns notional value of token position closed
+        return protocol.getNotionalValue(poolId, balanceAdjustments.traderPositionIncrease);
     }
 
     /// @notice function for liquidity add/remove
@@ -435,22 +435,6 @@ library VTokenPositionSet {
         }
 
         requiredMargin += SignedMath.max(longSideRiskTotal, shortSideRiskTotal);
-    }
-
-    /// @notice returns notional value of the given token amount
-    /// @param poolId id of the rage trade pool
-    /// @param vTokenAmount amount of tokens
-    /// @param protocol platform constants
-    /// @return notionalAmountClosed for the given token and vQuote amounts
-    function getTokenNotionalValue(
-        uint32 poolId,
-        int256 vTokenAmount,
-        Protocol.Info storage protocol
-    ) internal view returns (uint256 notionalAmountClosed) {
-        notionalAmountClosed = vTokenAmount.absUint().mulDiv(
-            protocol.getVirtualTwapPriceX128(poolId),
-            FixedPoint128.Q128
-        );
     }
 
     /// @notice get or create token position
