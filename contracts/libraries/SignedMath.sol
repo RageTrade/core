@@ -32,4 +32,13 @@ library SignedMath {
     function extractSign(int256 a) internal pure returns (uint256 _a, bool) {
         return extractSign(a, true);
     }
+
+    /// @notice returns the max of two int256 numbers
+    /// @param a first number
+    /// @param b second number
+    /// @return c  = max of a and b
+    function max(int256 a, int256 b) internal pure returns (int256 c) {
+        if (a > b) c = a;
+        else c = b;
+    }
 }

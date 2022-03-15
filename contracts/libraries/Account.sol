@@ -52,6 +52,10 @@ library Account {
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
+    /**
+     *  Errors
+     */
+
     /// @notice error to denote that there is not enough margin for the transaction to go through
     /// @param accountMarketValue shows the account market value after the transaction is executed
     /// @param totalRequiredMargin shows the total required margin after the transaction is executed
@@ -74,6 +78,10 @@ library Account {
     /// @param accountId serial number of the account
     /// @param amount amount of profit withdrawn
     event ProfitUpdated(uint256 indexed accountId, int256 amount);
+
+    /**
+     *  Events
+     */
 
     /// @notice denotes token position change
     /// @param accountId serial number of the account
@@ -191,22 +199,9 @@ library Account {
         int256 insuranceFundFee
     );
 
-    /// @notice checks if 'account' is initialized
-    /// @param account pointer to 'account' struct
-    function _isInitialized(Account.Info storage account) internal view returns (bool) {
-        return !account.owner.isZero();
-    }
-
-    /// @notice updates the vQuote balance for 'account' by 'amount'
-    /// @param account pointer to 'account' struct
-    /// @param amount amount of balance to update
-    function _updateVQuoteBalance(Account.Info storage account, int256 amount)
-        internal
-        returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments)
-    {
-        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
-        account.tokenPositions.vQuoteBalance += balanceAdjustments.vQuoteIncrease;
-    }
+    /**
+     *  External methods
+     */
 
     /// @notice increases deposit balance of 'vToken' by 'amount'
     /// @param account account to deposit balance into
@@ -254,113 +249,6 @@ library Account {
             account._checkIfProfitAvailable(protocol);
             account._checkIfMarginAvailable(true, protocol);
         }
-    }
-
-    /// @notice returns market value and required margin for the account based on current market conditions
-    /// @dev (In case requiredMargin < minRequiredMargin then requiredMargin = minRequiredMargin)
-    /// @param account account to check
-    /// @param isInitialMargin true to use initial margin factor and false to use maintainance margin factor for calcualtion of required margin
-    /// @param protocol set of all constants and token addresses
-    /// @return accountMarketValue total market value of all the positions (token ) and deposits
-    /// @return totalRequiredMargin total margin required to keep the account above selected margin requirement (intial/maintainance)
-    function getAccountValueAndRequiredMargin(
-        Account.Info storage account,
-        bool isInitialMargin,
-        Protocol.Info storage protocol
-    ) external view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
-        return account._getAccountValueAndRequiredMargin(isInitialMargin, protocol);
-    }
-
-    function _getAccountValueAndRequiredMargin(
-        Account.Info storage account,
-        bool isInitialMargin,
-        Protocol.Info storage protocol
-    ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
-        accountMarketValue = account._getAccountValue(protocol);
-
-        totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, protocol);
-        if (!account.tokenPositions.isEmpty()) {
-            totalRequiredMargin = totalRequiredMargin < int256(protocol.minRequiredMargin)
-                ? int256(protocol.minRequiredMargin)
-                : totalRequiredMargin;
-        }
-        return (accountMarketValue, totalRequiredMargin);
-    }
-
-    /// @notice returns market value for the account positions based on current market conditions
-    /// @param account account to check
-    /// @param protocol set of all constants and token addresses
-    /// @return accountPositionProfits total market value of all the positions (token ) and deposits
-    function getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
-        external
-        view
-        returns (int256 accountPositionProfits)
-    {
-        return account._getAccountPositionProfits(protocol);
-    }
-
-    function _getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
-        internal
-        view
-        returns (int256 accountPositionProfits)
-    {
-        accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol);
-    }
-
-    /// @notice returns market value for the account based on current market conditions
-    /// @param account account to check
-    /// @param protocol set of all constants and token addresses
-    /// @return accountMarketValue total market value of all the positions (token ) and deposits
-    function _getAccountValue(Account.Info storage account, Protocol.Info storage protocol)
-        internal
-        view
-        returns (int256 accountMarketValue)
-    {
-        accountMarketValue = account._getAccountPositionProfits(protocol);
-        accountMarketValue += account.collateralDeposits.getAllDepositAccountMarketValue(protocol);
-        return (accountMarketValue);
-    }
-
-    /// @notice checks if market value > required margin else revert with InvalidTransactionNotEnoughMargin
-    /// @param account account to check
-    /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
-    /// @param protocol set of all constants and token addresses
-    function checkIfMarginAvailable(
-        Account.Info storage account,
-        bool isInitialMargin,
-        Protocol.Info storage protocol
-    ) external view {
-        (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
-            isInitialMargin,
-            protocol
-        );
-        if (accountMarketValue < totalRequiredMargin)
-            revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
-    }
-
-    function _checkIfMarginAvailable(
-        Account.Info storage account,
-        bool isInitialMargin,
-        Protocol.Info storage protocol
-    ) internal view {
-        (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
-            isInitialMargin,
-            protocol
-        );
-        if (accountMarketValue < totalRequiredMargin)
-            revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
-    }
-
-    /// @notice checks if profit is available to withdraw settlement token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
-    /// @param account account to check
-    /// @param protocol set of all constants and token addresses
-    function checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) external view {
-        _checkIfProfitAvailable(account, protocol);
-    }
-
-    function _checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) internal view {
-        int256 totalPositionValue = account._getAccountPositionProfits(protocol);
-        if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
     /// @notice swaps 'vToken' of token amount equal to 'swapParams.amount'
@@ -425,37 +313,6 @@ library Account {
         );
     }
 
-    /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
-    /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)+fixFee
-    /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee + fixFee
-    /// @param accountMarketValue market value of account
-    /// @param notionalAmountClosed notional value of position closed
-    /// @param fixFee additional fixfee to be paid to the keeper
-    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
-    /// @return keeperFee map of vTokens allowed on the platform
-    /// @return insuranceFundFee poolwrapper for token
-    function _computeLiquidationFees(
-        int256 accountMarketValue,
-        uint256 notionalAmountClosed,
-        uint256 fixFee,
-        IClearingHouseStructures.LiquidationParams memory liquidationParams
-    ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
-        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
-
-        liquidationFee = liquidationParams.maxRangeLiquidationFees < liquidationFee
-            ? liquidationParams.maxRangeLiquidationFees
-            : liquidationFee;
-        int256 liquidationFeeInt = liquidationFee.toInt256();
-
-        int256 fixFeeInt = int256(fixFee);
-        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
-        if (accountMarketValue - fixFeeInt - liquidationFeeInt < 0) {
-            insuranceFundFee = accountMarketValue - keeperFee;
-        } else {
-            insuranceFundFee = liquidationFeeInt - keeperFee + fixFeeInt;
-        }
-    }
-
     /// @notice liquidates all range positions in case the account is under water
     /// @notice charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
@@ -485,96 +342,6 @@ library Account {
         );
 
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
-    }
-
-    /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
-    /// @param tokensToTrade amount of tokens to trade for liquidation
-    /// @param poolId id of the pool to liquidate
-    /// @param protocol set of all constants and token addresses
-    function _getLiquidationPriceX128AndFee(
-        int256 tokensToTrade,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    )
-        internal
-        view
-        returns (
-            uint256 liquidationPriceX128,
-            uint256 liquidatorPriceX128,
-            int256 insuranceFundFee
-        )
-    {
-        uint16 maintainanceMarginFactor = protocol.getMarginRatio(poolId, false);
-        uint256 priceX128 = protocol.getVirtualCurrentPriceX128(poolId);
-        uint256 priceDeltaX128 = priceX128.mulDiv(protocol.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
-            maintainanceMarginFactor,
-            1e5
-        );
-        if (tokensToTrade < 0) {
-            liquidationPriceX128 = priceX128 - priceDeltaX128;
-            liquidatorPriceX128 =
-                priceX128 -
-                priceDeltaX128.mulDiv(1e4 - protocol.liquidationParams.insuranceFundFeeShareBps, 1e4);
-            insuranceFundFee = -tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
-        } else {
-            liquidationPriceX128 = priceX128 + priceDeltaX128;
-            liquidatorPriceX128 =
-                priceX128 +
-                priceDeltaX128.mulDiv(1e4 - protocol.liquidationParams.insuranceFundFeeShareBps, 1e4);
-            insuranceFundFee = tokensToTrade.mulDiv(liquidationPriceX128 - liquidatorPriceX128, FixedPoint128.Q128);
-        }
-    }
-
-    /// @notice exchanges token position between account (at liquidationPrice) and liquidator account (at liquidator price)
-    /// @notice also charges fixFee from the account and pays to liquidator
-    /// @param targetAccount is account being liquidated
-    /// @param liquidatorAccount is account of liquidator
-    /// @param poolId id of the rage trade pool
-    /// @param tokensToTrade number of tokens to trade
-    /// @param liquidationPriceX128 price at which tokens should be traded out
-    /// @param liquidatorPriceX128 discounted price at which tokens should be given to liquidator
-    /// @param fixFee is the fee to be given to liquidator to compensate for gas price
-    /// @param protocol platform constants
-    function _updateLiquidationAccounts(
-        Account.Info storage targetAccount,
-        Account.Info storage liquidatorAccount,
-        uint32 poolId,
-        int256 tokensToTrade,
-        uint256 liquidationPriceX128,
-        uint256 liquidatorPriceX128,
-        int256 fixFee,
-        Protocol.Info storage protocol
-    ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        protocol.vPoolWrapper(poolId).updateGlobalFundingState();
-
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
-            .BalanceAdjustments({
-                vQuoteIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
-                vTokenIncrease: tokensToTrade,
-                traderPositionIncrease: tokensToTrade
-            });
-
-        targetAccount.tokenPositions.update(targetAccount.id, balanceAdjustments, poolId, protocol);
-        emit TokenPositionChanged(
-            targetAccount.id,
-            poolId,
-            balanceAdjustments.vTokenIncrease,
-            balanceAdjustments.vQuoteIncrease
-        );
-
-        liquidatorBalanceAdjustments = IClearingHouseStructures.BalanceAdjustments({
-            vQuoteIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
-            vTokenIncrease: -tokensToTrade,
-            traderPositionIncrease: -tokensToTrade
-        });
-
-        liquidatorAccount.tokenPositions.update(liquidatorAccount.id, liquidatorBalanceAdjustments, poolId, protocol);
-        emit TokenPositionChanged(
-            liquidatorAccount.id,
-            poolId,
-            liquidatorBalanceAdjustments.vTokenIncrease,
-            liquidatorBalanceAdjustments.vQuoteIncrease
-        );
     }
 
     /// @notice liquidates all range positions in case the account is under water
@@ -678,6 +445,61 @@ library Account {
         account._updateVQuoteBalance(-int256(limitOrderFeeAndFixFee));
     }
 
+    /**
+     *  External view methods
+     */
+
+    /// @notice returns market value for the account positions based on current market conditions
+    /// @param account account to check
+    /// @param protocol set of all constants and token addresses
+    /// @return accountPositionProfits total market value of all the positions (token ) and deposits
+    function getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
+        external
+        view
+        returns (int256 accountPositionProfits)
+    {
+        return account._getAccountPositionProfits(protocol);
+    }
+
+    /// @notice returns market value and required margin for the account based on current market conditions
+    /// @dev (In case requiredMargin < minRequiredMargin then requiredMargin = minRequiredMargin)
+    /// @param account account to check
+    /// @param isInitialMargin true to use initial margin factor and false to use maintainance margin factor for calcualtion of required margin
+    /// @param protocol set of all constants and token addresses
+    /// @return accountMarketValue total market value of all the positions (token ) and deposits
+    /// @return totalRequiredMargin total margin required to keep the account above selected margin requirement (intial/maintainance)
+    function getAccountValueAndRequiredMargin(
+        Account.Info storage account,
+        bool isInitialMargin,
+        Protocol.Info storage protocol
+    ) external view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
+        return account._getAccountValueAndRequiredMargin(isInitialMargin, protocol);
+    }
+
+    /// @notice checks if market value > required margin else revert with InvalidTransactionNotEnoughMargin
+    /// @param account account to check
+    /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
+    /// @param protocol set of all constants and token addresses
+    function checkIfMarginAvailable(
+        Account.Info storage account,
+        bool isInitialMargin,
+        Protocol.Info storage protocol
+    ) external view {
+        (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
+            isInitialMargin,
+            protocol
+        );
+        if (accountMarketValue < totalRequiredMargin)
+            revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
+    }
+
+    /// @notice checks if profit is available to withdraw settlement token (token value of all positions > 0) else revert with InvalidTransactionNotEnoughProfit
+    /// @param account account to check
+    /// @param protocol set of all constants and token addresses
+    function checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) external view {
+        _checkIfProfitAvailable(account, protocol);
+    }
+
     function getInfo(Account.Info storage account, Protocol.Info storage protocol)
         external
         view
@@ -699,5 +521,211 @@ library Account {
         Protocol.Info storage protocol
     ) external view returns (int256 netPosition) {
         return account.tokenPositions.getNetPosition(poolId, protocol);
+    }
+
+    /**
+     *  Internal methods
+     */
+
+    /// @notice updates the vQuote balance for 'account' by 'amount'
+    /// @param account pointer to 'account' struct
+    /// @param amount amount of balance to update
+    function _updateVQuoteBalance(Account.Info storage account, int256 amount)
+        internal
+        returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments)
+    {
+        balanceAdjustments = IClearingHouseStructures.BalanceAdjustments(amount, 0, 0);
+        account.tokenPositions.vQuoteBalance += balanceAdjustments.vQuoteIncrease;
+    }
+
+    /// @notice exchanges token position between account (at liquidationPrice) and liquidator account (at liquidator price)
+    /// @notice also charges fixFee from the account and pays to liquidator
+    /// @param targetAccount is account being liquidated
+    /// @param liquidatorAccount is account of liquidator
+    /// @param poolId id of the rage trade pool
+    /// @param tokensToTrade number of tokens to trade
+    /// @param liquidationPriceX128 price at which tokens should be traded out
+    /// @param liquidatorPriceX128 discounted price at which tokens should be given to liquidator
+    /// @param fixFee is the fee to be given to liquidator to compensate for gas price
+    /// @param protocol platform constants
+    function _updateLiquidationAccounts(
+        Account.Info storage targetAccount,
+        Account.Info storage liquidatorAccount,
+        uint32 poolId,
+        int256 tokensToTrade,
+        uint256 liquidationPriceX128,
+        uint256 liquidatorPriceX128,
+        int256 fixFee,
+        Protocol.Info storage protocol
+    ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
+        protocol.vPoolWrapper(poolId).updateGlobalFundingState();
+
+        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
+            .BalanceAdjustments({
+                vQuoteIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
+                vTokenIncrease: tokensToTrade,
+                traderPositionIncrease: tokensToTrade
+            });
+
+        targetAccount.tokenPositions.update(targetAccount.id, balanceAdjustments, poolId, protocol);
+        emit TokenPositionChanged(
+            targetAccount.id,
+            poolId,
+            balanceAdjustments.vTokenIncrease,
+            balanceAdjustments.vQuoteIncrease
+        );
+
+        liquidatorBalanceAdjustments = IClearingHouseStructures.BalanceAdjustments({
+            vQuoteIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
+            vTokenIncrease: -tokensToTrade,
+            traderPositionIncrease: -tokensToTrade
+        });
+
+        liquidatorAccount.tokenPositions.update(liquidatorAccount.id, liquidatorBalanceAdjustments, poolId, protocol);
+        emit TokenPositionChanged(
+            liquidatorAccount.id,
+            poolId,
+            liquidatorBalanceAdjustments.vTokenIncrease,
+            liquidatorBalanceAdjustments.vQuoteIncrease
+        );
+    }
+
+    /**
+     *  Internal view methods
+     */
+
+    function _checkIfMarginAvailable(
+        Account.Info storage account,
+        bool isInitialMargin,
+        Protocol.Info storage protocol
+    ) internal view {
+        (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
+            isInitialMargin,
+            protocol
+        );
+        if (accountMarketValue < totalRequiredMargin)
+            revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
+    }
+
+    function _checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) internal view {
+        int256 totalPositionValue = account._getAccountPositionProfits(protocol);
+        if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
+    }
+
+    function _getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
+        internal
+        view
+        returns (int256 accountPositionProfits)
+    {
+        accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol);
+    }
+
+    /// @notice returns market value for the account based on current market conditions
+    /// @param account account to check
+    /// @param protocol set of all constants and token addresses
+    /// @return accountMarketValue total market value of all the positions (token ) and deposits
+    function _getAccountValue(Account.Info storage account, Protocol.Info storage protocol)
+        internal
+        view
+        returns (int256 accountMarketValue)
+    {
+        accountMarketValue = account._getAccountPositionProfits(protocol);
+        accountMarketValue += account.collateralDeposits.getAllDepositAccountMarketValue(protocol);
+        return (accountMarketValue);
+    }
+
+    function _getAccountValueAndRequiredMargin(
+        Account.Info storage account,
+        bool isInitialMargin,
+        Protocol.Info storage protocol
+    ) internal view returns (int256 accountMarketValue, int256 totalRequiredMargin) {
+        accountMarketValue = account._getAccountValue(protocol);
+
+        totalRequiredMargin = account.tokenPositions.getRequiredMargin(isInitialMargin, protocol);
+        if (!account.tokenPositions.isEmpty()) {
+            totalRequiredMargin = totalRequiredMargin < int256(protocol.minRequiredMargin)
+                ? int256(protocol.minRequiredMargin)
+                : totalRequiredMargin;
+        }
+        return (accountMarketValue, totalRequiredMargin);
+    }
+
+    /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
+    /// @param tokensToTrade amount of tokens to trade for liquidation
+    /// @param poolId id of the pool to liquidate
+    /// @param protocol set of all constants and token addresses
+    function _getLiquidationPriceX128AndFee(
+        int256 tokensToTrade,
+        uint32 poolId,
+        Protocol.Info storage protocol
+    )
+        internal
+        view
+        returns (
+            uint256 liquidationPriceX128,
+            uint256 liquidatorPriceX128,
+            int256 insuranceFundFee
+        )
+    {
+        uint16 maintainanceMarginFactor = protocol.getMarginRatio(poolId, false);
+        uint256 priceX128 = protocol.getVirtualCurrentPriceX128(poolId);
+        uint256 priceDeltaX128 = priceX128.mulDiv(protocol.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
+            maintainanceMarginFactor,
+            1e5
+        );
+        if (tokensToTrade < 0) {
+            liquidationPriceX128 = priceX128 - priceDeltaX128;
+            liquidatorPriceX128 =
+                priceX128 -
+                priceDeltaX128.mulDiv(1e4 - protocol.liquidationParams.insuranceFundFeeShareBps, 1e4);
+            insuranceFundFee = -tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
+        } else {
+            liquidationPriceX128 = priceX128 + priceDeltaX128;
+            liquidatorPriceX128 =
+                priceX128 +
+                priceDeltaX128.mulDiv(1e4 - protocol.liquidationParams.insuranceFundFeeShareBps, 1e4);
+            insuranceFundFee = tokensToTrade.mulDiv(liquidationPriceX128 - liquidatorPriceX128, FixedPoint128.Q128);
+        }
+    }
+
+    /// @notice checks if 'account' is initialized
+    /// @param account pointer to 'account' struct
+    function _isInitialized(Account.Info storage account) internal view returns (bool) {
+        return !account.owner.isZero();
+    }
+
+    /**
+     *  Internal pure methods
+     */
+
+    /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
+    /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)+fixFee
+    /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee + fixFee
+    /// @param accountMarketValue market value of account
+    /// @param notionalAmountClosed notional value of position closed
+    /// @param fixFee additional fixfee to be paid to the keeper
+    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
+    /// @return keeperFee map of vTokens allowed on the platform
+    /// @return insuranceFundFee poolwrapper for token
+    function _computeLiquidationFees(
+        int256 accountMarketValue,
+        uint256 notionalAmountClosed,
+        uint256 fixFee,
+        IClearingHouseStructures.LiquidationParams memory liquidationParams
+    ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
+        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
+
+        liquidationFee = liquidationParams.maxRangeLiquidationFees < liquidationFee
+            ? liquidationParams.maxRangeLiquidationFees
+            : liquidationFee;
+        int256 liquidationFeeInt = liquidationFee.toInt256();
+
+        int256 fixFeeInt = int256(fixFee);
+        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
+        if (accountMarketValue - fixFeeInt - liquidationFeeInt < 0) {
+            insuranceFundFee = accountMarketValue - keeperFee;
+        } else {
+            insuranceFundFee = liquidationFeeInt - keeperFee + fixFeeInt;
+        }
     }
 }
