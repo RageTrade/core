@@ -48,7 +48,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
     }
 
     function realizeFundingPaymentToAccount(IVToken vToken) external {
-        dummy.realizeFundingPayment(accountId, vToken.truncate(), wrapper, protocol);
+        dummy.realizeFundingPayment(accountId, vToken.truncate(), wrapper);
     }
 
     function swapTokenAmount(IVToken vToken, int256 vTokenAmount) external {
@@ -90,11 +90,11 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
                 false,
                 IClearingHouseEnums.LimitOrderType.NONE
             );
-        dummy.liquidityChange(accountId, vToken.truncate(), liquidityChangeParams, wrapper, protocol);
+        dummy.liquidityChange(accountId, vToken.truncate(), liquidityChangeParams, protocol);
     }
 
     function liquidateLiquidityPositions(IVToken vToken) external {
-        dummy.liquidateLiquidityPositions(vToken.truncate(), wrapper, protocol);
+        dummy.liquidateLiquidityPositions(vToken.truncate(), protocol);
     }
 
     function getIsActive(address vToken) external view returns (bool) {
