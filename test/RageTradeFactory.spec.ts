@@ -64,6 +64,7 @@ describe('RageTradeFactory', () => {
         poolInitialSettings: {
           initialMarginRatio: 1,
           maintainanceMarginRatio: 2,
+          maxVirtualPriceDeviationRatioBps: 10000,
           twapDuration: 3,
           isAllowedForTrade: false,
           isCrossMargined: false,

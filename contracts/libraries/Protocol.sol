@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
+import { Math } from '@openzeppelin/contracts/utils/math/Math.sol';
+
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
@@ -15,15 +17,17 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { PriceMath } from './PriceMath.sol';
 import { SignedMath } from './SignedMath.sol';
+import { SignedFullMath } from './SignedFullMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 
 /// @title Protocol storage functions
 /// @dev This is used as main storage interface containing protocol info
 library Protocol {
+    using FullMath for uint256;
     using PriceMath for uint160;
     using PriceMath for uint256;
     using SignedMath for int256;
-    using FullMath for uint256;
+    using SignedFullMath for int256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
     using Protocol for Protocol.Info;
@@ -98,6 +102,25 @@ library Protocol {
     {
         IClearingHouseStructures.Pool storage pool = protocol.pools[poolId];
         return pool.settings.oracle.getTwapPriceX128(pool.settings.twapDuration);
+    }
+
+    function getTwapPricesWithDeviationCheck(Protocol.Info storage protocol, uint32 poolId)
+        internal
+        view
+        returns (uint256 realPriceX128, uint256 virtualPriceX128)
+    {
+        realPriceX128 = protocol.getRealTwapPriceX128(poolId);
+        virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
+
+        uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
+        if (
+            // if virtual price is too off from real price then screw that, we'll just use real price
+            (int256(realPriceX128) - int256(virtualPriceX128)).absUint() >
+            Math.max(realPriceX128, virtualPriceX128).mulDiv(maxDeviationBps, 1e4)
+        ) {
+            virtualPriceX128 = realPriceX128;
+        }
+        return (realPriceX128, virtualPriceX128);
     }
 
     function getMarginRatio(

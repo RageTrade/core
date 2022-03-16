@@ -87,6 +87,7 @@ export async function testSetup({
     poolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
+      maxVirtualPriceDeviationRatioBps: 10000,
       twapDuration,
       isAllowedForTrade: false,
       isCrossMargined: false,
@@ -209,6 +210,7 @@ export async function testSetupToken({
     poolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
+      maxVirtualPriceDeviationRatioBps: 10000,
       twapDuration,
       isAllowedForTrade: true,
       isCrossMargined: false,
