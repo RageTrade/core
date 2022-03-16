@@ -306,44 +306,6 @@ library Account {
         notionalValueAbs = protocol.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut);
     }
 
-    /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
-    /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)+fixFee
-    /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee + fixFee
-    /// @param accountMarketValue market value of account
-    /// @param notionalAmountClosed notional value of position closed
-    /// @param fixFee additional fixfee to be paid to the keeper
-    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
-    /// @return keeperFee map of vTokens allowed on the platform
-    /// @return insuranceFundFee poolwrapper for token
-    function _computeLiquidationFees(
-        int256 accountMarketValue,
-        uint256 notionalAmountClosed,
-        uint256 fixFee,
-        bool isRangeLiquidation,
-        IClearingHouseStructures.LiquidationParams memory liquidationParams
-    ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
-        uint16 liquidationFeeFraction;
-        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationFeeFraction, 1e5);
-
-        if (isRangeLiquidation) {
-            liquidationFeeFraction = liquidationParams.rangeLiquidationFeeFraction;
-            if (liquidationParams.maxRangeLiquidationFees < liquidationFee)
-                liquidationFee = liquidationParams.maxRangeLiquidationFees;
-        } else {
-            liquidationFeeFraction = liquidationParams.tokenLiquidationFeeFraction;
-        }
-
-        int256 liquidationFeeInt = liquidationFee.toInt256();
-
-        int256 fixFeeInt = int256(fixFee);
-        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
-        if (accountMarketValue - fixFeeInt - liquidationFeeInt < 0) {
-            insuranceFundFee = accountMarketValue - keeperFee;
-        } else {
-            insuranceFundFee = liquidationFeeInt - keeperFee + fixFeeInt;
-        }
-    }
-
     /// @notice liquidates all range positions in case the account is under water
     /// @notice charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
@@ -387,7 +349,7 @@ library Account {
         Protocol.Info storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         bool isPartialLiquidation;
-        if (account.tokenPositions.isTokenRangeActive(poolId, protocol))
+        if (account.tokenPositions.isTokenRangeActive(poolId))
             revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
@@ -410,11 +372,11 @@ library Account {
         {
             VTokenPosition.Info storage vTokenPosition = account.tokenPositions.getTokenPosition(
                 poolId,
-                false,
-                protocol
+                false
             );
             tokensToTrade = -vTokenPosition.balance;
-            uint256 tokenNotionalValue = VTokenPositionSet.getTokenNotionalValue(poolId, tokensToTrade, protocol);
+            uint256 tokenNotionalValue = tokensToTrade.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId),FixedPoint128.Q128);
+
             if (isPartialLiquidation && tokenNotionalValue > protocol.liquidationParams.minNotionalLiquidatable) {
                 tokensToTrade = tokensToTrade.mulDiv(protocol.liquidationParams.partialLiquidationCloseFactorBps, 1e4);
             }
@@ -453,7 +415,7 @@ library Account {
             );
         }
 
-        account._updateVQuoteBalance(-(keeperFee + insuranceFundFee), protocol);
+        account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
 
         emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee);
     }
@@ -682,44 +644,6 @@ library Account {
         return (accountMarketValue, totalRequiredMargin);
     }
 
-    /// @notice computes the liquidation & liquidator price and insurance fund fee for token liquidation
-    /// @param tokensToTrade amount of tokens to trade for liquidation
-    /// @param poolId id of the pool to liquidate
-    /// @param protocol set of all constants and token addresses
-    function _getLiquidationPriceX128AndFee(
-        int256 tokensToTrade,
-        uint32 poolId,
-        Protocol.Info storage protocol
-    )
-        internal
-        view
-        returns (
-            uint256 liquidationPriceX128,
-            uint256 liquidatorPriceX128,
-            int256 insuranceFundFee
-        )
-    {
-        uint16 maintainanceMarginFactor = protocol.getMarginRatio(poolId, false);
-        uint256 priceX128 = protocol.getVirtualCurrentPriceX128(poolId);
-        uint256 priceDeltaX128 = priceX128.mulDiv(protocol.liquidationParams.tokenLiquidationPriceDeltaBps, 1e4).mulDiv(
-            maintainanceMarginFactor,
-            1e5
-        );
-        if (tokensToTrade < 0) {
-            liquidationPriceX128 = priceX128 - priceDeltaX128;
-            liquidatorPriceX128 =
-                priceX128 -
-                priceDeltaX128.mulDiv(1e4 - protocol.liquidationParams.insuranceFundFeeShareBps, 1e4);
-            insuranceFundFee = -tokensToTrade.mulDiv(liquidatorPriceX128 - liquidationPriceX128, FixedPoint128.Q128);
-        } else {
-            liquidationPriceX128 = priceX128 + priceDeltaX128;
-            liquidatorPriceX128 =
-                priceX128 +
-                priceDeltaX128.mulDiv(1e4 - protocol.liquidationParams.insuranceFundFeeShareBps, 1e4);
-            insuranceFundFee = tokensToTrade.mulDiv(liquidationPriceX128 - liquidatorPriceX128, FixedPoint128.Q128);
-        }
-    }
-
     /// @notice checks if 'account' is initialized
     /// @param account pointer to 'account' struct
     function _isInitialized(Account.Info storage account) internal view returns (bool) {
@@ -736,6 +660,7 @@ library Account {
     /// @param accountMarketValue market value of account
     /// @param notionalAmountClosed notional value of position closed
     /// @param fixFee additional fixfee to be paid to the keeper
+    /// @param isRangeLiquidation - true for range liquidation and false for token liquidation
     /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
     /// @return keeperFee map of vTokens allowed on the platform
     /// @return insuranceFundFee poolwrapper for token
@@ -743,13 +668,20 @@ library Account {
         int256 accountMarketValue,
         uint256 notionalAmountClosed,
         uint256 fixFee,
+        bool isRangeLiquidation,
         IClearingHouseStructures.LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
-        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.liquidationFeeFraction, 1e5);
+        uint16 liquidationFeeFraction;
+        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationFeeFraction, 1e5);
 
-        liquidationFee = liquidationParams.maxRangeLiquidationFees < liquidationFee
-            ? liquidationParams.maxRangeLiquidationFees
-            : liquidationFee;
+        if (isRangeLiquidation) {
+            liquidationFeeFraction = liquidationParams.rangeLiquidationFeeFraction;
+            if (liquidationParams.maxRangeLiquidationFees < liquidationFee)
+                liquidationFee = liquidationParams.maxRangeLiquidationFees;
+        } else {
+            liquidationFeeFraction = liquidationParams.tokenLiquidationFeeFraction;
+        }
+
         int256 liquidationFeeInt = liquidationFee.toInt256();
 
         int256 fixFeeInt = int256(fixFee);
