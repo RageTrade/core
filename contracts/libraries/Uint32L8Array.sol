@@ -7,6 +7,8 @@ pragma solidity ^0.8.9;
 library Uint32L8ArrayLib {
     using Uint32L8ArrayLib for uint32[8];
 
+    uint8 constant LENGTH = 8;
+
     error U32L8_IllegalElement(uint32 element);
     error U32L8_NoSpaceLeftToInsert(uint32 element);
 
@@ -19,19 +21,21 @@ library Uint32L8ArrayLib {
             revert U32L8_IllegalElement(0);
         }
 
-        uint256 emptyIndex = 8; // max index is 7
-        for (uint256 i; i < 8; i++) {
+        uint256 emptyIndex = LENGTH; // LENGTH is an invalid index
+        for (uint256 i; i < LENGTH; i++) {
             if (array[i] == element) {
                 // if element already exists in the array, do nothing
                 return;
             }
-            if (emptyIndex == 8 && array[i] == uint32(0)) {
+            // if we found an empty slot, remember it
+            if (array[i] == uint32(0)) {
                 emptyIndex = i;
                 break;
             }
         }
 
-        if (emptyIndex == 8) {
+        // if empty index is still LENGTH, there is no space left to insert
+        if (emptyIndex == LENGTH) {
             revert U32L8_NoSpaceLeftToInsert(element);
         }
 
@@ -47,10 +51,10 @@ library Uint32L8ArrayLib {
             revert U32L8_IllegalElement(0);
         }
 
-        uint256 elementIndex = 8;
+        uint256 elementIndex = LENGTH; // LENGTH is an invalid index
         uint256 i;
 
-        for (; i < 8; i++) {
+        for (; i < LENGTH; i++) {
             if (array[i] == element) {
                 // element index in the array
                 elementIndex = i;
@@ -62,11 +66,11 @@ library Uint32L8ArrayLib {
             }
         }
 
-        // if array is full, i == 8
-        // hence swapping with element at index 7
-        i = i == 8 ? 7 : i;
+        // if array is full, i == LENGTH
+        // hence swapping with element at last index
+        i = i == LENGTH ? LENGTH - 1 : i;
 
-        if (elementIndex != 8) {
+        if (elementIndex != LENGTH) {
             if (i == elementIndex) {
                 // if element is last element, simply make it zero
                 array[elementIndex] = 0;
@@ -80,14 +84,14 @@ library Uint32L8ArrayLib {
     /// @notice Returns the index of the element in the array
     /// @param array Array to perform search on
     /// @param element Element to search
-    /// @return uint8(-1) or 255 if element is not found
+    /// @return index if exists or LENGTH otherwise
     function indexOf(uint32[8] storage array, uint32 element) internal view returns (uint8) {
-        for (uint8 i; i < 8; i++) {
+        for (uint8 i; i < LENGTH; i++) {
             if (array[i] == element) {
                 return i;
             }
         }
-        return 255;
+        return LENGTH; // LENGTH is an invalid index
     }
 
     /// @notice Checks whether the element exists in the array
@@ -95,19 +99,19 @@ library Uint32L8ArrayLib {
     /// @param element Element to search
     /// @return True if element is found, false otherwise
     function exists(uint32[8] storage array, uint32 element) internal view returns (bool) {
-        return array.indexOf(element) != 255;
+        return array.indexOf(element) != LENGTH; // LENGTH is an invalid index
     }
 
     /// @notice Returns length of array (number of non-zero elements)
     /// @param array Array to perform search on
     /// @return Length of array
     function numberOfNonZeroElements(uint32[8] storage array) internal view returns (uint256) {
-        for (uint8 i; i < 8; i++) {
+        for (uint8 i; i < LENGTH; i++) {
             if (array[i] == 0) {
                 return i;
             }
         }
-        return 8;
+        return LENGTH;
     }
 
     /// @notice Checks whether the array is empty or not
