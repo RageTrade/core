@@ -62,8 +62,8 @@ describe('RageTradeFactory', () => {
           cTokenDecimals: 18,
         },
         poolInitialSettings: {
-          initialMarginRatio: 1,
-          maintainanceMarginRatio: 2,
+          initialMarginRatioBps: 1,
+          maintainanceMarginRatioBps: 2,
           maxVirtualPriceDeviationRatioBps: 10000,
           twapDuration: 3,
           isAllowedForTrade: false,

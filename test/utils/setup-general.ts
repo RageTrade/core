@@ -13,14 +13,14 @@ import { getCreateAddressFor } from './create-addresses';
 
 export async function testSetup({
   signer,
-  initialMarginRatio,
-  maintainanceMarginRatio,
+  initialMarginRatioBps,
+  maintainanceMarginRatioBps,
   twapDuration,
   whitelisted,
 }: {
   signer?: SignerWithAddress;
-  initialMarginRatio: number;
-  maintainanceMarginRatio: number;
+  initialMarginRatioBps: number;
+  maintainanceMarginRatioBps: number;
   twapDuration: number;
   whitelisted: boolean;
 }) {
@@ -85,8 +85,8 @@ export async function testSetup({
       cTokenDecimals: 18,
     },
     poolInitialSettings: {
-      initialMarginRatio,
-      maintainanceMarginRatio,
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
       maxVirtualPriceDeviationRatioBps: 10000,
       twapDuration,
       isAllowedForTrade: false,
@@ -178,16 +178,16 @@ export async function testSetupVQuote(signer?: SignerWithAddress) {
 export async function testSetupToken({
   signer,
   decimals,
-  initialMarginRatio,
-  maintainanceMarginRatio,
+  initialMarginRatioBps,
+  maintainanceMarginRatioBps,
   twapDuration,
   whitelisted,
   rageTradeFactory,
 }: {
   signer?: SignerWithAddress;
   decimals: number;
-  initialMarginRatio: number;
-  maintainanceMarginRatio: number;
+  initialMarginRatioBps: number;
+  maintainanceMarginRatioBps: number;
   twapDuration: number;
   whitelisted: boolean;
   rageTradeFactory: RageTradeFactory;
@@ -208,8 +208,8 @@ export async function testSetupToken({
       cTokenDecimals: 18,
     },
     poolInitialSettings: {
-      initialMarginRatio,
-      maintainanceMarginRatio,
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
       maxVirtualPriceDeviationRatioBps: 10000,
       twapDuration,
       isAllowedForTrade: true,

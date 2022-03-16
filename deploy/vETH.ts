@@ -49,14 +49,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     const deployVTokenParams: VTokenDeployer.DeployVTokenParamsStruct = {
-      vTokenName: 'Virtual ETH (Rage Trade)',
+      vTokenName: 'Virtual Ether (Rage Trade)',
       vTokenSymbol: 'vETH',
       cTokenDecimals: 18,
     };
 
     const poolInitialSettings: IClearingHouseStructures.PoolSettingsStruct = {
-      initialMarginRatio: 20000,
-      maintainanceMarginRatio: 10000,
+      initialMarginRatioBps: 2000,
+      maintainanceMarginRatioBps: 1000,
+      maxVirtualPriceDeviationRatioBps: 1000, // 10%
       twapDuration: 300,
       isAllowedForTrade: true,
       isCrossMargined: true,
@@ -68,7 +69,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       poolInitialSettings,
       liquidityFeePips: 1000,
       protocolFeePips: 500,
-      slotsToInitialize: 10,
+      slotsToInitialize: 100,
     };
 
     const tx = await execute('RageTradeFactory', { from: deployer }, 'initializePool', params);
