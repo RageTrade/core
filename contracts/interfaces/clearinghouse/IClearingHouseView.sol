@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.9;
 
-import { IVToken } from '../IVToken.sol';
 import { IVQuote } from '../IVQuote.sol';
 
 import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
@@ -10,7 +9,7 @@ import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 interface IClearingHouseView is IClearingHouseStructures {
     function isPoolIdAvailable(uint32 truncated) external view returns (bool);
 
-    function getTwapPrices(IVToken vToken) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
+    function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
 
     /**
         Protocol.Info VIEW

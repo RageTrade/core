@@ -18,6 +18,7 @@ import { IVToken } from '../../interfaces/IVToken.sol';
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IClearingHouseStructures } from '../../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
+import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { TickExtended } from '../../libraries/TickExtended.sol';
@@ -35,6 +36,7 @@ import { UNISWAP_V3_DEFAULT_TICKSPACING, UNISWAP_V3_DEFAULT_FEE_TIER } from '../
 import { console } from 'hardhat/console.sol';
 
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback, Initializable, Extsload {
+    using AddressHelper for IVToken;
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
     using SignedMath for int256;
@@ -126,7 +128,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     // for updating global funding payment
     function updateGlobalFundingState() public {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
         fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
 
@@ -180,7 +182,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             SimulateSwap.Cache memory cache;
             cache.tickSpacing = UNISWAP_V3_DEFAULT_TICKSPACING;
             cache.fee = UNISWAP_V3_DEFAULT_FEE_TIER;
-            (cache.realPriceX128, cache.virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
+            (cache.realPriceX128, cache.virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
 
             // simulate swap and update our tick states
             (int256 vTokenIn_simulated, int256 vQuoteIn_simulated) = vPool.simulateSwap(
@@ -316,7 +318,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function getExtrapolatedSumAX128() public view returns (int256) {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken);
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
         return
             FundingPayment.extrapolatedSumAX128(
                 fpGlobal.sumAX128,
