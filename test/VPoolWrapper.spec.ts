@@ -145,7 +145,6 @@ describe('PoolWrapper', () => {
         vPriceInitial: 1,
         vQuoteDecimals: 18,
         vTokenDecimals: 18,
-        uniswapFee,
         liquidityFee,
         protocolFee,
       }));
