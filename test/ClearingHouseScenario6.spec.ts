@@ -489,8 +489,8 @@ describe('Clearing House Scenario 6', () => {
 
   async function initializePool(
     rageTradeFactory: RageTradeFactory,
-    initialMarginRatio: BigNumberish,
-    maintainanceMarginRatio: BigNumberish,
+    initialMarginRatioBps: BigNumberish,
+    maintainanceMarginRatioBps: BigNumberish,
     twapDuration: BigNumberish,
     initialPrice: BigNumberish,
     lpFee: BigNumberish,
@@ -510,8 +510,8 @@ describe('Clearing House Scenario 6', () => {
         cTokenDecimals: 18,
       },
       poolInitialSettings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
         maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration,
         isAllowedForTrade: false,
@@ -535,8 +535,8 @@ describe('Clearing House Scenario 6', () => {
   async function getPoolSettings(vTokenAddress: string) {
     let {
       settings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
         maxVirtualPriceDeviationRatioBps,
         twapDuration,
         isAllowedForTrade,
@@ -545,8 +545,8 @@ describe('Clearing House Scenario 6', () => {
       },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
     return {
-      initialMarginRatio,
-      maintainanceMarginRatio,
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
       maxVirtualPriceDeviationRatioBps,
       twapDuration,
       isAllowedForTrade,
@@ -573,8 +573,8 @@ describe('Clearing House Scenario 6', () => {
     user1 = signers[2];
     user2 = signers[3];
 
-    const initialMargin = 20_000;
-    const maintainanceMargin = 10_000;
+    const initialMargin = 2000;
+    const maintainanceMargin = 1000;
     const timeHorizon = 300;
     const initialPrice = tickToSqrtPriceX96(-199590);
     const lpFee = 1000;

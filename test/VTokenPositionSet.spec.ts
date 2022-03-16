@@ -93,8 +93,8 @@ describe('VTokenPositionSet Library', () => {
         cTokenDecimals: 18,
       },
       poolInitialSettings: {
-        initialMarginRatio: 2,
-        maintainanceMarginRatio: 3,
+        initialMarginRatioBps: 2,
+        maintainanceMarginRatioBps: 3,
         maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration: 2,
         isAllowedForTrade: false,
@@ -129,8 +129,8 @@ describe('VTokenPositionSet Library', () => {
         cTokenDecimals: 18,
       },
       poolInitialSettings: {
-        initialMarginRatio: 2,
-        maintainanceMarginRatio: 3,
+        initialMarginRatioBps: 2,
+        maintainanceMarginRatioBps: 3,
         maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration: 2,
         isAllowedForTrade: true,

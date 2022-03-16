@@ -120,8 +120,8 @@ describe('Clearing House Library', () => {
 
   async function initializePool(
     rageTradeFactory: RageTradeFactory,
-    initialMarginRatio: BigNumberish,
-    maintainanceMarginRatio: BigNumberish,
+    initialMarginRatioBps: BigNumberish,
+    maintainanceMarginRatioBps: BigNumberish,
     twapDuration: BigNumberish,
     initialPrice: BigNumberish,
   ) {
@@ -139,8 +139,8 @@ describe('Clearing House Library', () => {
         cTokenDecimals: 18,
       },
       poolInitialSettings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
         maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration,
         isAllowedForTrade: false,
@@ -223,8 +223,8 @@ describe('Clearing House Library', () => {
 
     let out = await initializePool(
       rageTradeFactory,
-      20_000,
-      10_000,
+      2000,
+      1000,
       1,
       await priceToSqrtPriceX96(4000, 6, 18),
       // .div(60 * 10 ** 6),
@@ -240,8 +240,8 @@ describe('Clearing House Library', () => {
 
     let out1 = await initializePool(
       rageTradeFactory,
-      20_000,
-      10_000,
+      2000,
+      1000,
       1,
       await priceToSqrtPriceX96(4000, 6, 18),
       // .div(60 * 10 ** 6),
@@ -948,8 +948,8 @@ describe('Clearing House Library', () => {
   async function getPoolSettings(vTokenAddress: string) {
     let {
       settings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
         maxVirtualPriceDeviationRatioBps,
         twapDuration,
         isAllowedForTrade,
@@ -958,8 +958,8 @@ describe('Clearing House Library', () => {
       },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
     return {
-      initialMarginRatio,
-      maintainanceMarginRatio,
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
       maxVirtualPriceDeviationRatioBps,
       twapDuration,
       isAllowedForTrade,

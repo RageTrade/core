@@ -384,16 +384,16 @@ library VTokenPositionSet {
         VTokenPosition.Info storage position = set.positions[poolId];
 
         uint256 price = protocol.getVirtualTwapPriceX128(poolId);
-        uint16 marginRatio = protocol.getMarginRatio(poolId, isInitialMargin);
+        uint16 marginRatio = protocol.getMarginRatioBps(poolId, isInitialMargin);
 
         int256 tokenPosition = position.balance;
         int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, protocol).toInt256();
 
         longSideRisk = SignedMath
             .max(position.netTraderPosition.mulDiv(price, FixedPoint128.Q128) + longSideRiskRanges, 0)
-            .mulDiv(marginRatio, 1e5);
+            .mulDiv(marginRatio, 1e4);
 
-        shortSideRisk = SignedMath.max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e5);
+        shortSideRisk = SignedMath.max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e4);
         return (longSideRisk, shortSideRisk);
     }
 

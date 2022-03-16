@@ -123,15 +123,15 @@ library Protocol {
         return (realPriceX128, virtualPriceX128);
     }
 
-    function getMarginRatio(
+    function getMarginRatioBps(
         Protocol.Info storage protocol,
         uint32 poolId,
         bool isInitialMargin
     ) internal view returns (uint16) {
         if (isInitialMargin) {
-            return protocol.pools[poolId].settings.initialMarginRatio;
+            return protocol.pools[poolId].settings.initialMarginRatioBps;
         } else {
-            return protocol.pools[poolId].settings.maintainanceMarginRatio;
+            return protocol.pools[poolId].settings.maintainanceMarginRatioBps;
         }
     }
 

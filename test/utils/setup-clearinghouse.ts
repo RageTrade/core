@@ -43,8 +43,8 @@ interface InitializePoolArgs {
   vTokenDecimals?: number;
 
   // rage trade pool settings
-  initialMarginRatio?: number;
-  maintainanceMarginRatio?: number;
+  initialMarginRatioBps?: number;
+  maintainanceMarginRatioBps?: number;
   twapDuration?: number;
   whitelisted?: boolean;
   // oracle: string;
@@ -153,8 +153,8 @@ export async function initializePool({
   vTokenDecimals,
 
   // rage trade pool settings
-  initialMarginRatio,
-  maintainanceMarginRatio,
+  initialMarginRatioBps,
+  maintainanceMarginRatioBps,
   twapDuration,
   whitelisted,
   // oracle: string;
@@ -170,8 +170,8 @@ export async function initializePool({
   vTokenSymbol = vTokenSymbol ?? 'vTokenSymbol';
   vTokenDecimals = vTokenDecimals ?? 18;
 
-  initialMarginRatio = initialMarginRatio ?? 20000;
-  maintainanceMarginRatio = maintainanceMarginRatio ?? 10000;
+  initialMarginRatioBps = initialMarginRatioBps ?? 2000;
+  maintainanceMarginRatioBps = maintainanceMarginRatioBps ?? 1000;
   twapDuration = twapDuration ?? 60;
   whitelisted = whitelisted ?? false;
 
@@ -195,8 +195,8 @@ export async function initializePool({
       cTokenDecimals: 18,
     },
     poolInitialSettings: {
-      initialMarginRatio,
-      maintainanceMarginRatio,
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
       maxVirtualPriceDeviationRatioBps: 10000,
       twapDuration,
       isAllowedForTrade: false,

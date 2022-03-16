@@ -276,8 +276,8 @@ describe('Account Library Test Realistic', () => {
       vPoolWrapperAddress: vPoolWrapperAddress,
     } = await testSetupToken({
       decimals: 18,
-      initialMarginRatio: 20000,
-      maintainanceMarginRatio: 10000,
+      initialMarginRatioBps: 2000,
+      maintainanceMarginRatioBps: 1000,
       twapDuration: 60,
       whitelisted: true,
       rageTradeFactory,
@@ -290,8 +290,8 @@ describe('Account Library Test Realistic', () => {
       vPoolWrapperAddress: vPoolWrapperAddress1,
     } = await testSetupToken({
       decimals: 18,
-      initialMarginRatio: 20000,
-      maintainanceMarginRatio: 10000,
+      initialMarginRatioBps: 2000,
+      maintainanceMarginRatioBps: 1000,
       twapDuration: 60,
       whitelisted: true,
       rageTradeFactory,

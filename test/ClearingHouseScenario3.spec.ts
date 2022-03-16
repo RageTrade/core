@@ -594,8 +594,8 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
     tokenSymbol: string,
     decimals: BigNumberish,
     rageTradeFactory: RageTradeFactory,
-    initialMarginRatio: BigNumberish,
-    maintainanceMarginRatio: BigNumberish,
+    initialMarginRatioBps: BigNumberish,
+    maintainanceMarginRatioBps: BigNumberish,
     twapDuration: BigNumberish,
     initialPrice: BigNumberish,
     lpFee: BigNumberish,
@@ -619,8 +619,8 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
     //     },
     //     extendedLpFee: lpFee,
     //     protocolFee: protocolFee,
-    //     initialMarginRatio,
-    //     maintainanceMarginRatio,
+    //     initialMarginRatioBps,
+    //     maintainanceMarginRatioBps,
     //     twapDuration,
     //     whitelisted: false,
     //   },
@@ -634,8 +634,8 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
         cTokenDecimals: decimals,
       },
       poolInitialSettings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
         maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration,
         isAllowedForTrade: false,
@@ -658,8 +658,8 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
   }
 
   async function deployWrappers(rageTradeFactory: RageTradeFactory) {
-    const initialMargin = 20_000;
-    const maintainanceMargin = 10_000;
+    const initialMargin = 2000;
+    const maintainanceMargin = 1000;
     const twapDuration = 300;
     const initialPrice = tickToSqrtPriceX96(-194365);
     const initialPrice1 = tickToSqrtPriceX96(64197);
@@ -782,8 +782,8 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
   async function getPoolSettings(vTokenAddress: string) {
     let {
       settings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
         maxVirtualPriceDeviationRatioBps,
         twapDuration,
         isAllowedForTrade,
@@ -792,8 +792,8 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
     return {
-      initialMarginRatio,
-      maintainanceMarginRatio,
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
       maxVirtualPriceDeviationRatioBps,
       twapDuration,
       isAllowedForTrade,
