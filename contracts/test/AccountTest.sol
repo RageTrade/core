@@ -130,7 +130,7 @@ contract AccountTest {
         address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountId].addMargin(realTokenAddress.truncate(), amount);
+        accounts[accountId].updateMargin(realTokenAddress.truncate(), int256(amount), protocol, false);
     }
 
     function removeMargin(
@@ -138,7 +138,7 @@ contract AccountTest {
         address realTokenAddress,
         uint256 amount
     ) external {
-        accounts[accountId].removeMargin(realTokenAddress.truncate(), amount, protocol, true);
+        accounts[accountId].updateMargin(realTokenAddress.truncate(), -int256(amount), protocol, true);
     }
 
     function updateProfit(uint256 accountId, int256 amount) external {

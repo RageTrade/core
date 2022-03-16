@@ -10,8 +10,7 @@ interface IClearingHouseEnums {
     }
 
     enum MulticallOperationType {
-        ADD_MARGIN,
-        REMOVE_MARGIN,
+        UPDATE_MARGIN,
         UPDATE_PROFIT,
         SWAP_TOKEN,
         UPDATE_RANGE_ORDER,

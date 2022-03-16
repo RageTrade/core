@@ -397,7 +397,7 @@ describe('Clearing House Library', () => {
   });
 
   describe('#Pause Check', () => {
-    let amount: BigNumberish;
+    let amount: BigNumber;
     let truncatedAddress: number;
     let swapParams: any;
     let liquidityChangeParams: any;
@@ -434,15 +434,15 @@ describe('Clearing House Library', () => {
     });
 
     it('Deposit', async () => {
-      expect(clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, amount)).to.be.revertedWith(
-        'Pausable: paused',
-      );
+      expect(
+        clearingHouseTest.connect(user1).updateMargin(user1AccountNo, truncatedAddress, amount),
+      ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
 
     it('Withdraw', async () => {
       await expect(
-        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, amount),
+        clearingHouseTest.connect(user1).updateMargin(user1AccountNo, truncatedAddress, amount.mul(-1)),
       ).to.be.revertedWith('Pausable: paused');
       await clearingHouseTest.paused();
     });
@@ -501,19 +501,19 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vQuoteAddress);
       await expect(
-        clearingHouseTest.connect(user2).addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user2).updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       await expect(
-        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user1).updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('CollateralDoesNotExist(' + truncatedAddress + ')');
     });
     it('Fail - Unsupported Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken1.address);
       await expect(
-        clearingHouseTest.connect(user1).addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
+        clearingHouseTest.connect(user1).updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
       ).to.be.revertedWith('CollateralNotAllowedForUse(' + +truncate(settlementToken1.address) + ')');
     });
     it('Pass', async () => {
@@ -521,7 +521,7 @@ describe('Clearing House Library', () => {
       const truncatedSettlementTokenAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest
         .connect(user1)
-        .addMargin(user1AccountNo, truncatedSettlementTokenAddress, parseTokenAmount('1000000', 6));
+        .updateMargin(user1AccountNo, truncatedSettlementTokenAddress, parseTokenAmount('1000000', 6));
       expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('0', 6));
       expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('1000000', 6));
       expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
@@ -537,13 +537,17 @@ describe('Clearing House Library', () => {
     it('Fail - Access Denied', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await expect(
-        clearingHouseTest.connect(user2).removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
+        clearingHouseTest
+          .connect(user2)
+          .updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('-1000000', 6)),
       ).to.be.revertedWith('AccessDenied("' + user2.address + '")');
     });
     it('Fail - Uninitialized Token', async () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(dummyTokenAddress);
       await expect(
-        clearingHouseTest.connect(user1).removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6)),
+        clearingHouseTest
+          .connect(user1)
+          .updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('-1000000', 6)),
       ).to.be.revertedWith('CollateralDoesNotExist(' + truncatedAddress + ')');
     });
 
@@ -551,7 +555,7 @@ describe('Clearing House Library', () => {
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest
         .connect(user1)
-        .removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('100000', 6));
+        .updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('-100000', 6));
       expect(await settlementToken.balanceOf(user1.address)).to.eq(parseTokenAmount('100000', 6));
       expect(await settlementToken.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('900000', 6));
       expect(await clearingHouseTest.getAccountDepositBalance(user1AccountNo, settlementToken.address)).to.eq(
@@ -569,7 +573,7 @@ describe('Clearing House Library', () => {
       await settlementToken1.connect(user1).approve(clearingHouseTest.address, parseTokenAmount('1000000', 6));
       await clearingHouseTest
         .connect(user1)
-        .addMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6));
+        .updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6));
       expect(await settlementToken1.balanceOf(user1.address)).to.eq(0);
       expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(parseTokenAmount('1000000', 6));
 
@@ -579,7 +583,7 @@ describe('Clearing House Library', () => {
 
       await clearingHouseTest
         .connect(user1)
-        .removeMargin(user1AccountNo, truncatedAddress, parseTokenAmount('1000000', 6));
+        .updateMargin(user1AccountNo, truncatedAddress, parseTokenAmount('-1000000', 6));
 
       expect(await settlementToken1.balanceOf(user1.address)).to.eq(parseTokenAmount('1000000', 6));
       expect(await settlementToken1.balanceOf(clearingHouseTest.address)).to.eq(0);
@@ -617,7 +621,7 @@ describe('Clearing House Library', () => {
       const truncatedSettlementTokenAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
       await clearingHouseTest
         .connect(user2)
-        .addMargin(user2AccountNo, truncatedSettlementTokenAddress, parseTokenAmount(10 ** 6, 6));
+        .updateMargin(user2AccountNo, truncatedSettlementTokenAddress, parseTokenAmount(10 ** 6, 6));
 
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vTokenAddress);
       const { sqrtPriceX96 } = await vPool.slot0();
@@ -884,26 +888,26 @@ describe('Clearing House Library', () => {
         {
           operationType: 0,
           data: ethers.utils.defaultAbiCoder.encode(
-            ['uint32', 'uint256'],
+            ['uint32', 'int256'],
             [truncate(settlementToken.address), parseUnits('100', 6)],
           ),
         },
         {
-          operationType: 1,
+          operationType: 0,
           data: ethers.utils.defaultAbiCoder.encode(
-            ['uint32', 'uint256'],
-            [truncate(settlementToken.address), parseUnits('10', 6)],
+            ['uint32', 'int256'],
+            [truncate(settlementToken.address), parseUnits('-10', 6)],
           ),
         },
         // {
-        //   operationType: 2,
+        //   operationType: 1,
         //   data: ethers.utils.defaultAbiCoder.encode(
         //     ['uint256'],
         //     [parseUnits('10', 6)],
         //   ),
         // },
         {
-          operationType: 3,
+          operationType: 2,
           data: ethers.utils.defaultAbiCoder.encode(
             [
               'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed) swapParams)',
@@ -922,7 +926,7 @@ describe('Clearing House Library', () => {
           ),
         },
         {
-          operationType: 3,
+          operationType: 2,
           data: ethers.utils.defaultAbiCoder.encode(
             [
               'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed) swapParams)',

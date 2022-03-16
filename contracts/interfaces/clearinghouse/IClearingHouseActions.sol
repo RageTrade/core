@@ -11,12 +11,12 @@ interface IClearingHouseActions is IClearingHouseStructures {
 
     /// @notice deposits 'amount' of token associated with 'poolId'
     /// @param accountId account id
-    /// @param poolId truncated address of token to deposit
+    /// @param collateralId truncated address of token to deposit
     /// @param amount amount of token to deposit
-    function addMargin(
+    function updateMargin(
         uint256 accountId,
-        uint32 poolId,
-        uint256 amount
+        uint32 collateralId,
+        int256 amount
     ) external;
 
     /// @notice creates a new account and deposits 'amount' of token associated with 'poolId'
@@ -24,16 +24,6 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @param amount amount of token to deposit
     /// @return newAccountId - serial number of the new account created
     function createAccountAndAddMargin(uint32 collateralId, uint256 amount) external returns (uint256 newAccountId);
-
-    /// @notice withdraws 'amount' of token associated with 'poolId'
-    /// @param accountId account id
-    /// @param poolId truncated address of token to withdraw
-    /// @param amount amount of token to withdraw
-    function removeMargin(
-        uint256 accountId,
-        uint32 poolId,
-        uint256 amount
-    ) external;
 
     /// @notice withdraws 'amount' of settlement token from the profit made
     /// @param accountId account id
