@@ -189,7 +189,7 @@ describe('Clearing House Scenario 6', () => {
   ) {
     await settlementToken.connect(user).approve(clearingHouseTest.address, vTokenAmount);
     const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, vTokenAmount);
+    await clearingHouseTest.connect(user).updateMargin(userAccountNo, truncatedVQuoteAddress, vTokenAmount);
   }
 
   async function swapToken(

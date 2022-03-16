@@ -164,13 +164,12 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouseActions
-    function addMargin(
+    function updateMargin(
         uint256 accountId,
         uint32 collateralId,
-        uint256 amount
+        int256 amount
     ) public whenNotPaused {
-        Account.Info storage account = _getAccountAndCheckOwner(accountId);
-        _addMargin(accountId, account, collateralId, amount);
+        _updateMargin(_getAccountAndCheckOwner(accountId), collateralId, amount, amount < 0);
     }
 
     function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.Info storage account) {
@@ -178,52 +177,32 @@ contract ClearingHouse is
         if (msg.sender != account.owner) revert AccessDenied(msg.sender);
     }
 
-    // done
-    function _addMargin(
-        uint256 accountId,
+    function _updateMargin(
         Account.Info storage account,
         uint32 collateralId,
-        uint256 amount
+        int256 amount,
+        bool checkMargin
     ) internal whenNotPaused {
-        Collateral storage collateral = _checkCollateralIdAndGetInfo({ collateralId: collateralId, isWithdraw: false });
+        Collateral storage collateral = _checkCollateralIdAndGetInfo({
+            collateralId: collateralId,
+            isWithdraw: amount < 0
+        });
 
-        collateral.token.safeTransferFrom(msg.sender, address(this), amount);
+        // delegate call to account library to perform state update and emit events
+        account.updateMargin(collateralId, amount, protocol, checkMargin);
 
-        account.addMargin(collateralId, amount);
-
-        emit MarginAdded(accountId, collateralId, amount);
+        // transfer settlement tokens between clearing house and account owner
+        if (amount > 0) {
+            collateral.token.safeTransferFrom(msg.sender, address(this), uint256(amount));
+        } else if (amount < 0) {
+            collateral.token.safeTransfer(msg.sender, uint256(-amount));
+        }
     }
 
     /// @inheritdoc IClearingHouseActions
     function createAccountAndAddMargin(uint32 collateralId, uint256 amount) external returns (uint256 newAccountId) {
         newAccountId = createAccount();
-        addMargin(newAccountId, collateralId, amount);
-    }
-
-    /// @inheritdoc IClearingHouseActions
-    function removeMargin(
-        uint256 accountId,
-        uint32 collateralId,
-        uint256 amount
-    ) external whenNotPaused {
-        Account.Info storage account = _getAccountAndCheckOwner(accountId);
-        _removeMargin(accountId, account, collateralId, amount, true);
-    }
-
-    function _removeMargin(
-        uint256 accountId,
-        Account.Info storage account,
-        uint32 collateralId,
-        uint256 amount,
-        bool checkMargin
-    ) internal whenNotPaused {
-        Collateral storage collateral = _checkCollateralIdAndGetInfo({ collateralId: collateralId, isWithdraw: true });
-
-        account.removeMargin(collateralId, amount, protocol, checkMargin);
-
-        collateral.token.safeTransfer(msg.sender, amount);
-
-        emit MarginRemoved(accountId, collateralId, amount);
+        updateMargin(newAccountId, collateralId, int256(amount));
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -246,7 +225,6 @@ contract ClearingHouse is
         } else {
             protocol.settlementToken.safeTransfer(msg.sender, uint256(-amount));
         }
-        emit Account.ProfitUpdated(account.id, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -350,15 +328,11 @@ contract ClearingHouse is
         bool checkMargin = false;
 
         for (uint256 i = 0; i < operations.length; i++) {
-            if (operations[i].operationType == MulticallOperationType.ADD_MARGIN) {
+            if (operations[i].operationType == MulticallOperationType.UPDATE_MARGIN) {
                 // ADD_MARGIN
-                (uint32 collateralId, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _addMargin(accountId, account, collateralId, amount);
-            } else if (operations[i].operationType == MulticallOperationType.REMOVE_MARGIN) {
-                // REMOVE_MARGIN
-                (uint32 collateralId, uint256 amount) = abi.decode(operations[i].data, (uint32, uint256));
-                _removeMargin(accountId, account, collateralId, amount, false);
-                checkMargin = true;
+                (uint32 collateralId, int256 amount) = abi.decode(operations[i].data, (uint32, int256));
+                checkMargin = checkMargin || amount < 0;
+                _updateMargin(account, collateralId, amount, checkMargin);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));

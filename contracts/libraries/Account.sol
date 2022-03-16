@@ -83,6 +83,12 @@ library Account {
      *  Events
      */
 
+    /// @notice denotes add or remove of margin
+    /// @param accountId serial number of the account
+    /// @param collateralId token in which margin is deposited
+    /// @param amount amount of tokens deposited
+    event MarginUpdated(uint256 indexed accountId, uint32 indexed collateralId, int256 amount);
+
     /// @notice denotes token position change
     /// @param accountId serial number of the account
     /// @param poolId truncated address of vtoken whose position was taken
@@ -198,34 +204,25 @@ library Account {
      *  External methods
      */
 
-    /// @notice increases deposit balance of 'vToken' by 'amount'
+    /// @notice changes deposit balance of 'vToken' by 'amount'
     /// @param account account to deposit balance into
     /// @param collateralId collateral id of the token
-    /// @param amount amount of token to deposit
-    function addMargin(
+    /// @param amount amount of token to deposit or withdraw
+    function updateMargin(
         Account.Info storage account,
         uint32 collateralId,
-        uint256 amount
-    ) external {
-        // vQuote should be an immutable constant
-        account.collateralDeposits.increaseBalance(collateralId, amount);
-    }
-
-    /// @notice reduces deposit balance of 'vToken' by 'amount'
-    /// @param account account to deposit balance into
-    /// @param collateralId collateral id of the token
-    /// @param amount amount of token to remove
-    /// @param protocol set of all constants and token addresses
-    function removeMargin(
-        Account.Info storage account,
-        uint32 collateralId,
-        uint256 amount,
+        int256 amount,
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account.collateralDeposits.decreaseBalance(collateralId, amount);
+        if (amount > 0) {
+            account.collateralDeposits.increaseBalance(collateralId, uint256(amount));
+        } else {
+            account.collateralDeposits.decreaseBalance(collateralId, uint256(-amount));
+            if (checkMargin) account._checkIfMarginAvailable(true, protocol);
+        }
 
-        if (checkMargin) account._checkIfMarginAvailable(true, protocol);
+        emit MarginUpdated(account.id, collateralId, amount);
     }
 
     /// @notice updates 'amount' of profit generated in settlement token
@@ -244,6 +241,8 @@ library Account {
             account._checkIfProfitAvailable(protocol);
             account._checkIfMarginAvailable(true, protocol);
         }
+
+        emit ProfitUpdated(account.id, amount);
     }
 
     /// @notice swaps 'vToken' of token amount equal to 'swapParams.amount'
