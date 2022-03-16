@@ -349,8 +349,7 @@ library Account {
         Protocol.Info storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         bool isPartialLiquidation;
-        if (account.tokenPositions.isTokenRangeActive(poolId))
-            revert InvalidLiquidationActiveRangePresent(poolId);
+        if (account.tokenPositions.isTokenRangeActive(poolId)) revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
             (int256 accountMarketValue, int256 totalRequiredMargin) = account._getAccountValueAndRequiredMargin(
@@ -370,12 +369,12 @@ library Account {
 
         int256 tokensToTrade;
         {
-            VTokenPosition.Info storage vTokenPosition = account.tokenPositions.getTokenPosition(
-                poolId,
-                false
-            );
+            VTokenPosition.Info storage vTokenPosition = account.tokenPositions.getTokenPosition(poolId, false);
             tokensToTrade = -vTokenPosition.balance;
-            uint256 tokenNotionalValue = tokensToTrade.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId),FixedPoint128.Q128);
+            uint256 tokenNotionalValue = tokensToTrade.absUint().mulDiv(
+                protocol.getVirtualTwapPriceX128(poolId),
+                FixedPoint128.Q128
+            );
 
             if (isPartialLiquidation && tokenNotionalValue > protocol.liquidationParams.minNotionalLiquidatable) {
                 tokensToTrade = tokensToTrade.mulDiv(protocol.liquidationParams.partialLiquidationCloseFactorBps, 1e4);
@@ -671,15 +670,14 @@ library Account {
         bool isRangeLiquidation,
         IClearingHouseStructures.LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
-        uint16 liquidationFeeFraction;
-        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationFeeFraction, 1e5);
+        uint256 liquidationFee;
 
         if (isRangeLiquidation) {
-            liquidationFeeFraction = liquidationParams.rangeLiquidationFeeFraction;
+            liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.rangeLiquidationFeeFraction, 1e5);
             if (liquidationParams.maxRangeLiquidationFees < liquidationFee)
                 liquidationFee = liquidationParams.maxRangeLiquidationFees;
         } else {
-            liquidationFeeFraction = liquidationParams.tokenLiquidationFeeFraction;
+            liquidationFee = notionalAmountClosed.mulDiv(liquidationParams.tokenLiquidationFeeFraction, 1e5);
         }
 
         int256 liquidationFeeInt = liquidationFee.toInt256();
