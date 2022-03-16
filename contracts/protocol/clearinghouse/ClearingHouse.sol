@@ -195,9 +195,9 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouseActions
-    function createAccountAndAddMargin(uint32 poolId, uint256 amount) external returns (uint256 newAccountId) {
+    function createAccountAndAddMargin(uint32 collateralId, uint256 amount) external returns (uint256 newAccountId) {
         newAccountId = createAccount();
-        addMargin(newAccountId, poolId, amount);
+        addMargin(newAccountId, collateralId, amount);
     }
 
     /// @inheritdoc IClearingHouseActions
