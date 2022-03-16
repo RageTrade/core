@@ -184,18 +184,13 @@ library Account {
     /// @param accountId serial number of the account
     /// @param liquidatorAccountId  account which performed the liquidation
     /// @param poolId id of the rage trade pool for whose position was liquidated
-    /// @param liquidationBps the fraction of current position which was liquidated in bps
-    /// @param liquidationPriceX128 price at which liquidation was performed
-    /// @param liquidatorPriceX128 discounted price at which tokens were transferred to the liquidator account
+    /// @param keeperFee total liquidaiton fee paid to keeper
     /// @param insuranceFundFee total liquidaiton fee paid to the insurance fund (can be negative in case the account is not enough to cover the fee)
     event TokenPositionLiquidated(
         uint256 indexed accountId,
         uint256 indexed liquidatorAccountId,
         uint32 indexed poolId,
-        uint16 liquidationBps,
-        uint256 liquidationPriceX128,
-        uint256 liquidatorPriceX128,
-        uint256 fixFee,
+        int256 keeperFee,
         int256 insuranceFundFee
     );
 
@@ -311,6 +306,44 @@ library Account {
         notionalValueAbs = protocol.getNotionalValue(poolId, vTokenAmountOut, vQuoteAmountOut);
     }
 
+    /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
+    /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)+fixFee
+    /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee + fixFee
+    /// @param accountMarketValue market value of account
+    /// @param notionalAmountClosed notional value of position closed
+    /// @param fixFee additional fixfee to be paid to the keeper
+    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
+    /// @return keeperFee map of vTokens allowed on the platform
+    /// @return insuranceFundFee poolwrapper for token
+    function _computeLiquidationFees(
+        int256 accountMarketValue,
+        uint256 notionalAmountClosed,
+        uint256 fixFee,
+        bool isRangeLiquidation,
+        IClearingHouseStructures.LiquidationParams memory liquidationParams
+    ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
+        uint16 liquidationFeeFraction;
+        uint256 liquidationFee = notionalAmountClosed.mulDiv(liquidationFeeFraction, 1e5);
+
+        if (isRangeLiquidation) {
+            liquidationFeeFraction = liquidationParams.rangeLiquidationFeeFraction;
+            if (liquidationParams.maxRangeLiquidationFees < liquidationFee)
+                liquidationFee = liquidationParams.maxRangeLiquidationFees;
+        } else {
+            liquidationFeeFraction = liquidationParams.tokenLiquidationFeeFraction;
+        }
+
+        int256 liquidationFeeInt = liquidationFee.toInt256();
+
+        int256 fixFeeInt = int256(fixFee);
+        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
+        if (accountMarketValue - fixFeeInt - liquidationFeeInt < 0) {
+            insuranceFundFee = accountMarketValue - keeperFee;
+        } else {
+            insuranceFundFee = liquidationFeeInt - keeperFee + fixFeeInt;
+        }
+    }
+
     /// @notice liquidates all range positions in case the account is under water
     /// @notice charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
@@ -336,6 +369,7 @@ library Account {
             accountMarketValue,
             notionalAmountClosed,
             fixFee,
+            true,
             protocol.liquidationParams
         );
 
@@ -392,25 +426,19 @@ library Account {
                 uint160 sqrtTwapPrice = protocol.getVirtualTwapSqrtPriceX96(poolId);
                 if (tokensToTrade > 0) {
                     sqrtPriceLimit = uint256(sqrtTwapPrice)
-                        .mulDiv(protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
+                        .mulDiv(1e4 + protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
                         .toUint160();
                 } else {
                     sqrtPriceLimit = uint256(sqrtTwapPrice)
-                        .mulDiv(protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
+                        .mulDiv(1e4 - protocol.liquidationParams.liquidationSlippageSqrtToleranceBps, 1e4)
                         .toUint160();
                 }
             }
 
-            (int256 vTokenAmountSwapped, ) = account.tokenPositions.swapToken(
+            (, int256 vQuoteAmountSwapped) = account.tokenPositions.swapToken(
                 account.id,
                 poolId,
                 IClearingHouseStructures.SwapParams(tokensToTrade, sqrtPriceLimit, false, true),
-                protocol
-            );
-
-            uint256 notionalAmountClosed = VTokenPositionSet.getTokenNotionalValue(
-                poolId,
-                vTokenAmountSwapped,
                 protocol
             );
 
@@ -418,15 +446,16 @@ library Account {
 
             (keeperFee, insuranceFundFee) = _computeLiquidationFees(
                 accountMarketValueFinal,
-                notionalAmountClosed,
+                vQuoteAmountSwapped.absUint(),
                 fixFee,
+                false,
                 protocol.liquidationParams
             );
         }
 
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee), protocol);
 
-        emit TokenPositionLiquidated(account.id, 0, poolId, 0, 0, 0, 0, insuranceFundFee);
+        emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)
