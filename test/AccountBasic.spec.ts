@@ -173,7 +173,8 @@ describe('Account Library Test Basic', () => {
     });
 
     const liquidationParams = {
-      liquidationFeeFraction: 1500,
+      rangeLiquidationFeeFraction: 1500,
+      tokenLiquidationFeeFraction: 3000,
       insuranceFundFeeShareBps: 5000,
       maxRangeLiquidationFees: 100000000,
       closeFactorMMThresholdBps: 7500,
