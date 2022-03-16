@@ -1,5 +1,5 @@
 {
-  "address": "0x66d51a68F846da3EFFF251823D0A64b5f469160F",
+  "address": "0x1305cbcc3f0db914C0a21077Af5750cd12E64441",
   "abi": [
     {
       "inputs": [
@@ -33,6 +33,11 @@
       "type": "error"
     },
     {
+      "inputs": [],
+      "name": "R",
+      "type": "error"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint128",
@@ -52,6 +57,11 @@
         }
       ],
       "name": "SafeCast_Int256Overflow",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "T",
       "type": "error"
     },
     {
@@ -235,11 +245,6 @@
             {
               "internalType": "uint24",
               "name": "protocolFeePips",
-              "type": "uint24"
-            },
-            {
-              "internalType": "uint24",
-              "name": "UNISWAP_V3_DEFAULT_FEE_TIER",
               "type": "uint24"
             }
           ],
@@ -726,19 +731,6 @@
           "internalType": "uint256",
           "name": "sumFeeOutsideX128",
           "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "uniswapFeePips",
-      "outputs": [
-        {
-          "internalType": "uint24",
-          "name": "",
-          "type": "uint24"
         }
       ],
       "stateMutability": "view",
