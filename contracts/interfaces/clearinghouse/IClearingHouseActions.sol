@@ -20,10 +20,10 @@ interface IClearingHouseActions is IClearingHouseStructures {
     ) external;
 
     /// @notice creates a new account and deposits 'amount' of token associated with 'poolId'
-    /// @param poolId truncated address of token to deposit
+    /// @param collateralId truncated address of collateral token to deposit
     /// @param amount amount of token to deposit
     /// @return newAccountId - serial number of the new account created
-    function createAccountAndAddMargin(uint32 poolId, uint256 amount) external returns (uint256 newAccountId);
+    function createAccountAndAddMargin(uint32 collateralId, uint256 amount) external returns (uint256 newAccountId);
 
     /// @notice withdraws 'amount' of token associated with 'poolId'
     /// @param accountId account id
