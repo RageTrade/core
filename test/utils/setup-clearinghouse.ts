@@ -197,6 +197,7 @@ export async function initializePool({
     poolInitialSettings: {
       initialMarginRatio,
       maintainanceMarginRatio,
+      maxVirtualPriceDeviationRatioBps: 10000,
       twapDuration,
       isAllowedForTrade: false,
       isCrossMargined: false,

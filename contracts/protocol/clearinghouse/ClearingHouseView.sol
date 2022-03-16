@@ -22,8 +22,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
 
     /// @notice Gets the real and virtual prices from the respective oracle of the given poolId.
     function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
-        realPriceX128 = protocol.getRealTwapPriceX128(poolId);
-        virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
+        return protocol.getTwapPricesWithDeviationCheck(poolId);
     }
 
     function isPoolIdAvailable(uint32 poolId) external view returns (bool) {

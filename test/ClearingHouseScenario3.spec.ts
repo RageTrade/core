@@ -636,6 +636,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       poolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
+        maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,
@@ -783,13 +784,22 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       settings: {
         initialMarginRatio,
         maintainanceMarginRatio,
+        maxVirtualPriceDeviationRatioBps,
         twapDuration,
         isAllowedForTrade,
         isCrossMargined,
         oracle,
       },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
-    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, isAllowedForTrade, isCrossMargined, oracle };
+    return {
+      initialMarginRatio,
+      maintainanceMarginRatio,
+      maxVirtualPriceDeviationRatioBps,
+      twapDuration,
+      isAllowedForTrade,
+      isCrossMargined,
+      oracle,
+    };
   }
 
   before(async () => {

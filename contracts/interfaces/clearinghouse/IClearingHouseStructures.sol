@@ -97,9 +97,12 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     struct PoolSettings {
+        // TODO make sure admin cannot set invalid values for BPS
+        // TODO Ratios are in Basis Points (1e4)
         uint16 initialMarginRatio;
         uint16 maintainanceMarginRatio;
-        uint32 twapDuration;
+        uint16 maxVirtualPriceDeviationRatioBps;
+        uint32 twapDuration; // seconds
         bool isAllowedForTrade;
         bool isCrossMargined;
         IOracle oracle;

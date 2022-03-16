@@ -631,6 +631,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       poolInitialSettings: {
         initialMarginRatio,
         maintainanceMarginRatio,
+        maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,
@@ -778,13 +779,22 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       settings: {
         initialMarginRatio,
         maintainanceMarginRatio,
+        maxVirtualPriceDeviationRatioBps,
         twapDuration,
         isAllowedForTrade,
         isCrossMargined,
         oracle,
       },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
-    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, isAllowedForTrade, isCrossMargined, oracle };
+    return {
+      initialMarginRatio,
+      maintainanceMarginRatio,
+      maxVirtualPriceDeviationRatioBps,
+      twapDuration,
+      isAllowedForTrade,
+      isCrossMargined,
+      oracle,
+    };
   }
 
   before(async () => {
