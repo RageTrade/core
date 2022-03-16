@@ -63,7 +63,7 @@ const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Scenario 2 (Liquidation)', () => {
+describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage Bound Full Liquidations Only)', () => {
   let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
@@ -833,7 +833,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
   describe('#Init Params', () => {
     it('Set Params', async () => {
       const liquidationParams = {
-        liquidationFeeFraction: 1500,
+        rangeLiquidationFeeFraction: 1500,
+        tokenLiquidationFeeFraction: 3000,
         insuranceFundFeeShareBps: 5000,
         maxRangeLiquidationFees: 100000000,
         closeFactorMMThresholdBps: 7500,
@@ -841,7 +842,7 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
         liquidationSlippageSqrtToleranceBps: 150,
         minNotionalLiquidatable: 100000000,
       };
-      const fixFee = parseTokenAmount(10, 6);
+      const fixFee = parseTokenAmount(0, 6);
       const removeLimitOrderFee = parseTokenAmount(10, 6);
       const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
       const minRequiredMargin = parseTokenAmount(20, 6);
@@ -858,7 +859,8 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
 
       expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
-      expect(protocol.liquidationParams.liquidationFeeFraction).eq(liquidationParams.liquidationFeeFraction);
+      expect(protocol.liquidationParams.rangeLiquidationFeeFraction).eq(liquidationParams.rangeLiquidationFeeFraction);
+      expect(protocol.liquidationParams.tokenLiquidationFeeFraction).eq(liquidationParams.tokenLiquidationFeeFraction);
 
       expect(protocol.liquidationParams.insuranceFundFeeShareBps).eq(liquidationParams.insuranceFundFeeShareBps);
 
@@ -1377,24 +1379,10 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
       const netTokenPosition = expectedVTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedVQuoteBalance = 402070684535n;
+      const expectedVQuoteBalance = 402080684535n;
 
-      const expected_MktVal_preRangeLiquidation = 31114231695n;
-      const expectedReqMaintenanceMargin_preRangeLiquidation = 0n;
-
-      const expected_MktVal_postRangeLiquidation = 0n;
-      const expectedReqMaintenanceMargin_postRangeLiquidation = 0n;
-
-      const MaintenanceMarginFactor = 0n;
-      const liquidationFeeFraction = 0n;
-      const fixFee = parseTokenAmount(10, 6);
-      const insuranceFundFeeShareBps = 0n;
-
-      const expectedTotalNotionalAmountClosed = 0n;
-      const expectedLiquidationFee = 0n;
-      const expectedKeeperFee = 60000000n;
+      const expectedKeeperFee = 50000000n;
       const expectedInsuranceFundFee = 50000000n;
-      const feeDeductedFromLiquidatedAcct = 0n;
 
       // const MktVal_FixFee_KeeperFee = expected_MktVal_preRangeLiquidation - fixFee - expectedKeeperFee;
 
@@ -1421,51 +1409,30 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     });
 
     it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -193370', async () => {
-      const expectedVTokenBalance = 0n;
+      const expectedVTokenBalance = -8100767290935576553n;
 
       const netTokenPosition = expectedVTokenBalance;
 
-      const expectedVQuoteBalance = 296658648597n;
+      const expectedVQuoteBalance = 328899246861n;
 
-      const tickETH = 193370;
-
-      const expected_MktVal_preTokenLiquidation = 0n;
-      const expectedReqMaintenanceMargin_preTokenLiquidation = 0n;
-
-      const expected_MktVal_postTokenLiquidation = 0n;
-      const expectedReqMaintenanceMargin_postTokenLiquidation = 0n;
-
-      const liquidationBps = 10000n;
-      const TokensToTrade = 0n;
-      const TokensToTrade1 = 0n;
-
-      const expectedPriceX128 = 0n;
-      const expectedPriceDeltaX128 = 0n;
-
-      const expectedLiquidationPriceX128 = 4123.86745092869;
-      const expectedLiquidatorPriceX128 = 4063.81112882778;
+      const startPrice = 4003.754807;
+      const endPrice = 4124.355;
 
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
-      const expectedInsuranceFundFee = 1534985416n;
+      const expectedInsuranceFundFee = 1065753403n;
 
-      const liquidatosettlementVTokenBalance = 103877346504n;
-      const liquidatocTokenPosition = -25559097903887700000n;
-      const liquidatorNetTradePosition = -25559097903887700000n;
+      const liquidatorSettlementVTokenBalance = 1115753402n;
 
-      const LiquidationAccountVQuoteBalancePositLiquidation = 0n;
-
-      // await logPoolPrice(vPool,vToken);
+      await logPoolPrice(vPool, vToken);
 
       await liquidateTokenPosition(keeper, user1AccountNo, vTokenAddress);
+      await logPoolPrice(vPool, vToken);
 
       await checkVTokenBalance(user1AccountNo, vTokenAddress, expectedVTokenBalance);
       await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
 
-      await checkVTokenBalanceApproxiate(keeperAccountNo, vTokenAddress, liquidatocTokenPosition, 8);
-      await checkTraderPositionApproximate(keeperAccountNo, vTokenAddress, liquidatorNetTradePosition, 8);
-
       await checkVQuoteBalance(user1AccountNo, expectedVQuoteBalance);
-      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementVTokenBalance);
+      await checkSettlementVTokenBalance(keeper.address, liquidatorSettlementVTokenBalance);
 
       await checkSettlementVTokenBalance(
         insuranceFund.address,
@@ -1482,50 +1449,30 @@ describe('Clearing House Scenario 2 (Liquidation)', () => {
     });
 
     it('Acct[1] Underwater : Liquidate BTC Token Positions @ current tickBTC = 66000', async () => {
-      const expectedToken1Balance = 0n;
+      const expectedToken1Balance = -92623296n - 2n;
 
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedVQuoteBalance = -82929397118n;
+      const expectedVQuoteBalance = 14314332013n;
 
-      const tickBTC = 66000;
-
-      const expected_MktVal_preTokenLiquidation = 0n;
-      const expectedReqMaintenanceMargin_preTokenLiquidation = 0n;
-
-      const expected_MktVal_postTokenLiquidation = 0n;
-      const expectedReqMaintenanceMargin_postTokenLiquidation = 0n;
-
-      const liquidationBps1 = 10000n;
-      const TokensToTrade = 0n;
-      const TokensToTrade1 = 0n;
-
-      const expectedPriceX128 = 0n;
-      const expectedPriceDeltaX128 = 0n;
-
-      const expectedLiquidationPriceX128 = 75689.824397259;
-      const expectedLiquidatorPriceX128 = 74587.5454011824;
+      const startPrice1 = 73485.26641;
+      const endPrice1 = 75706.35858;
 
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
+      const expectedInsuranceFundFee = 4581364760n;
 
-      const expectedInsuranceFundFee = 5527866666n;
+      const liquidatorSettlementVTokenBalance = 5697118162n;
 
-      const liquidatosettlementVTokenBalance = 477939657577n;
-      const liquidatocToken1Position = -501494329n - 1n;
-      const liquidatorNetTrade1Position = -501494329n - 1n;
-
-      const LiquidationAccountVQuoteBalancePositLiquidation = 0n;
+      await logPoolPrice(vPool1, vToken1);
 
       await liquidateTokenPosition(keeper, user1AccountNo, vToken1Address);
+      await logPoolPrice(vPool1, vToken1);
 
       await checkVTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
 
-      await checkVTokenBalance(keeperAccountNo, vToken1Address, liquidatocToken1Position);
-      await checkTraderPosition(keeperAccountNo, vToken1Address, liquidatorNetTrade1Position);
-
       await checkVQuoteBalance(user1AccountNo, expectedVQuoteBalance);
-      await checkVQuoteBalance(keeperAccountNo, liquidatosettlementVTokenBalance);
+      await checkSettlementVTokenBalance(keeper.address, liquidatorSettlementVTokenBalance);
 
       await checkSettlementVTokenBalance(
         insuranceFund.address,
