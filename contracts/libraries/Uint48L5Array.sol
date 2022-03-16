@@ -7,6 +7,8 @@ pragma solidity ^0.8.9;
 library Uint48L5ArrayLib {
     using Uint48L5ArrayLib for uint48[5];
 
+    uint8 constant LENGTH = 5;
+
     error U48L5_IllegalElement(uint48 element);
     error U48L5_NoSpaceLeftToInsert(uint48 element);
 
@@ -18,17 +20,22 @@ library Uint48L5ArrayLib {
         if (element == 0) {
             revert U48L5_IllegalElement(0);
         }
-        uint256 emptyIndex = 5; // max index is 4
-        for (uint256 i; i < 5; i++) {
+
+        uint256 emptyIndex = LENGTH; // LENGTH is an invalid index
+        for (uint256 i; i < LENGTH; i++) {
             if (array[i] == element) {
+                // if element already exists in the array, do nothing
                 return;
             }
-            if (emptyIndex == 5 && array[i] == uint48(0)) {
+            // if we found an empty slot, remember it
+            if (array[i] == uint48(0)) {
                 emptyIndex = i;
+                break;
             }
         }
 
-        if (emptyIndex == 5) {
+        // if empty index is still LENGTH, there is no space left to insert
+        if (emptyIndex == LENGTH) {
             revert U48L5_NoSpaceLeftToInsert(element);
         }
 
@@ -44,10 +51,10 @@ library Uint48L5ArrayLib {
             revert U48L5_IllegalElement(0);
         }
 
-        uint256 elementIndex = 5;
+        uint256 elementIndex = LENGTH; // LENGTH is an invalid index
         uint256 i;
 
-        for (; i < 5; i++) {
+        for (; i < LENGTH; i++) {
             if (array[i] == element) {
                 // element index in the array
                 elementIndex = i;
@@ -59,11 +66,11 @@ library Uint48L5ArrayLib {
             }
         }
 
-        // if array is full, i == 5
-        // hence swapping with element at index 4
-        i = i == 5 ? 4 : i;
+        // if array is full, i == LENGTH
+        // hence swapping with element at last index
+        i = i == LENGTH ? LENGTH - 1 : i;
 
-        if (elementIndex != 5) {
+        if (elementIndex != LENGTH) {
             if (i == elementIndex) {
                 // if element is last element, simply make it zero
                 array[elementIndex] = 0;
@@ -77,14 +84,14 @@ library Uint48L5ArrayLib {
     /// @notice Returns the index of the element in the array
     /// @param array Array to perform search on
     /// @param element Element to search
-    /// @return uint8(-1) or 255 if element is not found
+    /// @return index if exists or LENGTH otherwise
     function indexOf(uint48[5] storage array, uint48 element) internal view returns (uint8) {
-        for (uint8 i; i < 5; i++) {
+        for (uint8 i; i < LENGTH; i++) {
             if (array[i] == element) {
                 return i;
             }
         }
-        return 255;
+        return LENGTH; // LENGTH is an invalid index
     }
 
     /// @notice Checks whether the element exists in the array
@@ -92,19 +99,19 @@ library Uint48L5ArrayLib {
     /// @param element Element to search
     /// @return True if element is found, false otherwise
     function exists(uint48[5] storage array, uint48 element) internal view returns (bool) {
-        return array.indexOf(element) != 255;
+        return array.indexOf(element) != LENGTH; // LENGTH is an invalid index
     }
 
     /// @notice Returns length of array (number of non-zero elements)
     /// @param array Array to perform search on
     /// @return Length of array
     function numberOfNonZeroElements(uint48[5] storage array) internal view returns (uint256) {
-        for (uint8 i; i < 5; i++) {
+        for (uint8 i; i < LENGTH; i++) {
             if (array[i] == 0) {
                 return i;
             }
         }
-        return 5;
+        return LENGTH;
     }
 
     /// @notice Checks whether the array is empty or not
