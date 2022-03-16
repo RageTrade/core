@@ -59,7 +59,9 @@ library Uint48L5ArrayLib {
             }
         }
 
-        // TODO fix bug here
+        // if array is full, i == 5
+        // hence swapping with element at index 4
+        i = i == 5 ? 4 : i;
 
         if (elementIndex != 5) {
             if (i == elementIndex) {

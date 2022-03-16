@@ -91,6 +91,16 @@ describe('Uint48L5Array Library', () => {
     it('zero element', async () => {
       await expect(array.exclude(0)).to.be.revertedWith('U48L5_IllegalElement(0)');
     });
+
+    it('remove element from full array', async () => {
+      await array.include(1);
+      await array.include(2);
+      await array.include(3);
+      await array.include(4);
+      await array.include(7);
+
+      await array.exclude(2);
+    });
   });
 
   describe('#numberOfNonZeroElements', () => {
