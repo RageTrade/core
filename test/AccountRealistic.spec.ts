@@ -50,7 +50,7 @@ describe('Account Library Test Realistic', () => {
   let vQuoteAddress: string;
   let vToken: VToken;
   let minRequiredMargin: BigNumberish;
-  let liquidationFeeFraction: BigNumberish;
+  let rangeLiquidationFeeFraction: BigNumberish;
   let liquidationParams: IClearingHouseStructures.LiquidationParamsStruct;
   let fixFee: BigNumberish;
 
@@ -324,7 +324,8 @@ describe('Account Library Test Realistic', () => {
     await changeVPoolWrapperFakePrice(4000);
 
     liquidationParams = {
-      liquidationFeeFraction: 1500,
+      rangeLiquidationFeeFraction: 1500,
+      tokenLiquidationFeeFraction: 3000,
       insuranceFundFeeShareBps: 5000,
       maxRangeLiquidationFees: 100000000,
       closeFactorMMThresholdBps: 7500,
@@ -498,282 +499,282 @@ describe('Account Library Test Realistic', () => {
     });
   });
 
-  describe('#Token Liquidation', () => {
-    // describe('#Token Position Liquidation Helpers', () => {
-    //   it('Liquidation at 4000 ', async () => {
-    //     await changeVPoolPriceToNearestTick(4000);
-    //     //Slightly different (don't use priceToPriceX128)
-    //     const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(4000, vQuote, vToken));
-    //     const tokensToTrade = parseTokenAmount(-1, 18);
-    //     const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
-    //       await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
-    //     expect(liquidationPriceX128).to.eq(priceX128.sub(priceX128.mul(300).div(10000)));
-    //     expect(liquidatorPriceX128).to.eq(priceX128.sub(priceX128.mul(150).div(10000)));
-    //     expect(insuranceFundFee).to.eq(
-    //       tokensToTrade
-    //         .mul(-1)
-    //         .mul(liquidatorPriceX128.sub(liquidationPriceX128))
-    //         .div(1n << 128n),
-    //     );
-    //   });
-    //   it('Liquidation at 3500 ', async () => {
-    //     await changeVPoolPriceToNearestTick(3500);
-    //     const tokensToTrade = parseTokenAmount(1, 18);
-    //     //Slightly different (don't use priceToPriceX128)
-    //     const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(3500, vQuote, vToken));
-    //     const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
-    //       await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
+  // describe('#Token Liquidation', () => {
+  //   // describe('#Token Position Liquidation Helpers', () => {
+  //   //   it('Liquidation at 4000 ', async () => {
+  //   //     await changeVPoolPriceToNearestTick(4000);
+  //   //     //Slightly different (don't use priceToPriceX128)
+  //   //     const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(4000, vQuote, vToken));
+  //   //     const tokensToTrade = parseTokenAmount(-1, 18);
+  //   //     const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
+  //   //       await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
+  //   //     expect(liquidationPriceX128).to.eq(priceX128.sub(priceX128.mul(300).div(10000)));
+  //   //     expect(liquidatorPriceX128).to.eq(priceX128.sub(priceX128.mul(150).div(10000)));
+  //   //     expect(insuranceFundFee).to.eq(
+  //   //       tokensToTrade
+  //   //         .mul(-1)
+  //   //         .mul(liquidatorPriceX128.sub(liquidationPriceX128))
+  //   //         .div(1n << 128n),
+  //   //     );
+  //   //   });
+  //   //   it('Liquidation at 3500 ', async () => {
+  //   //     await changeVPoolPriceToNearestTick(3500);
+  //   //     const tokensToTrade = parseTokenAmount(1, 18);
+  //   //     //Slightly different (don't use priceToPriceX128)
+  //   //     const priceX128 = sqrtPriceX96ToPriceX128(await priceToSqrtPriceX96(3500, vQuote, vToken));
+  //   //     const { liquidationPriceX128, liquidatorPriceX128, insuranceFundFee } =
+  //   //       await test.getLiquidationPriceX128AndFee(tokensToTrade, vTokenAddress);
 
-    //     expect(liquidationPriceX128).to.eq(priceX128.add(priceX128.mul(300).div(10000)));
-    //     expect(liquidatorPriceX128).to.eq(priceX128.add(priceX128.mul(150).div(10000)));
-    //     expect(insuranceFundFee).to.eq(
-    //       tokensToTrade.mul(liquidationPriceX128.sub(liquidatorPriceX128)).div(1n << 128n),
-    //     );
-    //   });
-    // });
+  //   //     expect(liquidationPriceX128).to.eq(priceX128.add(priceX128.mul(300).div(10000)));
+  //   //     expect(liquidatorPriceX128).to.eq(priceX128.add(priceX128.mul(150).div(10000)));
+  //   //     expect(insuranceFundFee).to.eq(
+  //   //       tokensToTrade.mul(liquidationPriceX128.sub(liquidatorPriceX128)).div(1n << 128n),
+  //   //     );
+  //   //   });
+  //   // });
 
-    describe('#Token Position Liquidation Scenarios', () => {
-      beforeEach(async () => {
-        await changeVPoolPriceToNearestTick(4000);
-        await test.addMargin(0, settlementToken.address, parseTokenAmount(100, 6));
-        await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
+  //   describe('#Token Position Liquidation Scenarios', () => {
+  //     beforeEach(async () => {
+  //       await changeVPoolPriceToNearestTick(4000);
+  //       await test.addMargin(0, settlementToken.address, parseTokenAmount(100, 6));
+  //       await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
 
-        const vQuoteBalance = parseTokenAmount(500, 6);
+  //       const vQuoteBalance = parseTokenAmount(500, 6);
 
-        await test.swapTokenNotional(0, vTokenAddress, vQuoteBalance);
-      });
+  //       await test.swapTokenNotional(0, vTokenAddress, vQuoteBalance);
+  //     });
 
-      afterEach(async () => {
-        await test.cleanDeposits(0);
-        await test.cleanPositions(0);
-        await test.cleanDeposits(1);
-        await test.cleanPositions(1);
-      });
+  //     afterEach(async () => {
+  //       await test.cleanDeposits(0);
+  //       await test.cleanPositions(0);
+  //       await test.cleanDeposits(1);
+  //       await test.cleanPositions(1);
+  //     });
 
-      it('Liquidation - Fail (Account Above Water)', async () => {
-        await changeVPoolPriceToNearestTick(4000);
+  //     it('Liquidation - Fail (Account Above Water)', async () => {
+  //       await changeVPoolPriceToNearestTick(4000);
 
-        let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
-          'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
-        );
-      });
-      it('Liquidation - Fail (Active Range Present)', async () => {
-        await changeVPoolPriceToNearestTick(3500);
+  //       let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
+  //       expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
+  //         'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
+  //       );
+  //     });
+  //     it('Liquidation - Fail (Active Range Present)', async () => {
+  //       await changeVPoolPriceToNearestTick(3500);
 
-        await test.addMargin(0, settlementToken.address, parseTokenAmount(1000000, 6));
-        let tickLower: number;
-        let tickUpper: number;
-        let liquidity: BigNumber;
+  //       await test.addMargin(0, settlementToken.address, parseTokenAmount(1000000, 6));
+  //       let tickLower: number;
+  //       let tickUpper: number;
+  //       let liquidity: BigNumber;
 
-        tickLower = await priceToTick(3500, vQuote, vToken);
-        tickLower -= tickLower % 10;
-        tickUpper = await priceToTick(4500, vQuote, vToken);
-        tickUpper -= tickUpper % 10;
-        liquidity = BigNumber.from(10).pow(10);
+  //       tickLower = await priceToTick(3500, vQuote, vToken);
+  //       tickLower -= tickLower % 10;
+  //       tickUpper = await priceToTick(4500, vQuote, vToken);
+  //       tickUpper -= tickUpper % 10;
+  //       liquidity = BigNumber.from(10).pow(10);
 
-        await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+  //       await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
-        await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
-          'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
-        );
-      });
-      it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
-        await test.removeMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
+  //       await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
+  //         'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
+  //       );
+  //     });
+  //     it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
+  //       await test.removeMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
 
-        await changeVPoolPriceToNearestTick(3500);
+  //       await changeVPoolPriceToNearestTick(3500);
 
-        expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
-      });
-      it('Liquidation Fail (No Token Position)', async () => {
-        await changeVPoolPriceToNearestTick(3500);
+  //       expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
+  //     });
+  //     it('Liquidation Fail (No Token Position)', async () => {
+  //       await changeVPoolPriceToNearestTick(3500);
 
-        await expect(test.liquidateTokenPosition(1, vTokenAddress1)).to.be.revertedWith(
-          'TokenInactive(' + Number(truncate(vTokenAddress1)) + ')',
-        );
-      });
-      it('Liquidation - Success', async () => {
-        await changeVPoolPriceToNearestTick(3500);
+  //       await expect(test.liquidateTokenPosition(1, vTokenAddress1)).to.be.revertedWith(
+  //         'TokenInactive(' + Number(truncate(vTokenAddress1)) + ')',
+  //       );
+  //     });
+  //     it('Liquidation - Success', async () => {
+  //       await changeVPoolPriceToNearestTick(3500);
 
-        const startLiquidatedVTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const startLiquidatedVTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
 
-        await test.liquidateTokenPosition(1, vTokenAddress);
+  //       await test.liquidateTokenPosition(1, vTokenAddress);
 
-        const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
-        const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
-        const liquidatorVQuoteDetails = await test.functions.getAccountQuoteBalance(1);
+  //       const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+  //       const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const liquidatorVQuoteDetails = await test.functions.getAccountQuoteBalance(1);
 
-        const priceX128 = await priceToPriceX128(3500, vQuote, vToken);
-        const liquidationPriceX128 = priceX128.sub(priceX128.mul(300).div(10000));
-        const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
+  //       const priceX128 = await priceToPriceX128(3500, vQuote, vToken);
+  //       const liquidationPriceX128 = priceX128.sub(priceX128.mul(300).div(10000));
+  //       const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
 
-        expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedVTokenDetails.balance);
-        expect(endLiquidatedVQuoteDetails.balance).to.eq(
-          startLiquidatedVQuoteDetails.balance
-            .add(startLiquidatedVTokenDetails.balance.mul(liquidationPriceX128).div(1n << 128n))
-            .sub(fixFee),
-        );
-        expect(liquidatorVQuoteDetails.balance).to.eq(
-          startLiquidatedVTokenDetails.balance
-            .mul(liquidatorPriceX128)
-            .div(1n << 128n)
-            .mul(-1)
-            .add(fixFee),
-        );
-      });
+  //       expect(endLiquidatedTokenDetails.balance).to.eq(0);
+  //       expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedVTokenDetails.balance);
+  //       expect(endLiquidatedVQuoteDetails.balance).to.eq(
+  //         startLiquidatedVQuoteDetails.balance
+  //           .add(startLiquidatedVTokenDetails.balance.mul(liquidationPriceX128).div(1n << 128n))
+  //           .sub(fixFee),
+  //       );
+  //       expect(liquidatorVQuoteDetails.balance).to.eq(
+  //         startLiquidatedVTokenDetails.balance
+  //           .mul(liquidatorPriceX128)
+  //           .div(1n << 128n)
+  //           .mul(-1)
+  //           .add(fixFee),
+  //       );
+  //     });
 
-      it('Liquidation (Account Negative Afterwards)- Success', async () => {
-        await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
-        await changeVPoolPriceToNearestTick(3000);
+  //     it('Liquidation (Account Negative Afterwards)- Success', async () => {
+  //       await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
+  //       await changeVPoolPriceToNearestTick(3000);
 
-        const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
-        const startLiquidatedSettlementTokenDeposits = await test.getAccountDepositBalance(0, settlementToken.address);
+  //       const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const startLiquidatedSettlementTokenDeposits = await test.getAccountDepositBalance(0, settlementToken.address);
 
-        await test.liquidateTokenPosition(1, vTokenAddress);
+  //       await test.liquidateTokenPosition(1, vTokenAddress);
 
-        const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
-        const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
-        const liquidatosettlementTokenDetails = await test.functions.getAccountQuoteBalance(1);
+  //       const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+  //       const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const liquidatosettlementTokenDetails = await test.functions.getAccountQuoteBalance(1);
 
-        const priceX128 = await priceToPriceX128(3000, vQuote, vToken);
-        const liquidationPriceX128 = priceX128.sub(priceX128.mul(300).div(10000));
-        const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
+  //       const priceX128 = await priceToPriceX128(3000, vQuote, vToken);
+  //       const liquidationPriceX128 = priceX128.sub(priceX128.mul(300).div(10000));
+  //       const liquidatorPriceX128 = priceX128.sub(priceX128.mul(150).div(10000));
 
-        expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
-        expect(endLiquidatedVQuoteDetails.balance).to.eq(startLiquidatedSettlementTokenDeposits.mul(-1));
-        expect(liquidatosettlementTokenDetails.balance).to.eq(
-          startLiquidatedTokenDetails.balance
-            .mul(liquidatorPriceX128)
-            .div(1n << 128n)
-            .mul(-1)
-            .add(fixFee),
-        );
-      });
-    });
+  //       expect(endLiquidatedTokenDetails.balance).to.eq(0);
+  //       expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+  //       expect(endLiquidatedVQuoteDetails.balance).to.eq(startLiquidatedSettlementTokenDeposits.mul(-1));
+  //       expect(liquidatosettlementTokenDetails.balance).to.eq(
+  //         startLiquidatedTokenDetails.balance
+  //           .mul(liquidatorPriceX128)
+  //           .div(1n << 128n)
+  //           .mul(-1)
+  //           .add(fixFee),
+  //       );
+  //     });
+  //   });
 
-    describe('#Token Position Liquidation Scenarios (Short Position)', () => {
-      beforeEach(async () => {
-        await changeVPoolPriceToNearestTick(4000);
-        await test.addMargin(0, settlementToken.address, parseTokenAmount(100, 6));
-        await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
+  //   describe('#Token Position Liquidation Scenarios (Short Position)', () => {
+  //     beforeEach(async () => {
+  //       await changeVPoolPriceToNearestTick(4000);
+  //       await test.addMargin(0, settlementToken.address, parseTokenAmount(100, 6));
+  //       await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
 
-        const vQuoteBalance = parseTokenAmount(500, 6).mul(-1);
+  //       const vQuoteBalance = parseTokenAmount(500, 6).mul(-1);
 
-        await test.swapTokenNotional(0, vTokenAddress, vQuoteBalance);
-      });
-      afterEach(async () => {
-        await test.cleanDeposits(0);
-        await test.cleanPositions(0);
-        await test.cleanDeposits(1);
-        await test.cleanPositions(1);
-      });
-      it('Liquidation - Fail (Account Above Water)', async () => {
-        await changeVPoolPriceToNearestTick(4000);
+  //       await test.swapTokenNotional(0, vTokenAddress, vQuoteBalance);
+  //     });
+  //     afterEach(async () => {
+  //       await test.cleanDeposits(0);
+  //       await test.cleanPositions(0);
+  //       await test.cleanDeposits(1);
+  //       await test.cleanPositions(1);
+  //     });
+  //     it('Liquidation - Fail (Account Above Water)', async () => {
+  //       await changeVPoolPriceToNearestTick(4000);
 
-        let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
-        await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
-          'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
-        );
-      });
-      it('Liquidation - Fail (Active Range Present)', async () => {
-        await test.addMargin(0, settlementToken.address, parseTokenAmount(1000000, 6));
+  //       let { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
+  //       await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
+  //         'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
+  //       );
+  //     });
+  //     it('Liquidation - Fail (Active Range Present)', async () => {
+  //       await test.addMargin(0, settlementToken.address, parseTokenAmount(1000000, 6));
 
-        let tickLower: number;
-        let tickUpper: number;
-        let liquidity: BigNumber;
+  //       let tickLower: number;
+  //       let tickUpper: number;
+  //       let liquidity: BigNumber;
 
-        tickLower = await priceToTick(3500, vQuote, vToken);
-        tickLower -= tickLower % 10;
-        tickUpper = await priceToTick(4500, vQuote, vToken);
-        tickUpper -= tickUpper % 10;
-        liquidity = BigNumber.from(10).pow(10);
+  //       tickLower = await priceToTick(3500, vQuote, vToken);
+  //       tickLower -= tickLower % 10;
+  //       tickUpper = await priceToTick(4500, vQuote, vToken);
+  //       tickUpper -= tickUpper % 10;
+  //       liquidity = BigNumber.from(10).pow(10);
 
-        await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
+  //       await liquidityChange(tickLower, tickUpper, liquidity, false, 0);
 
-        await changeVPoolPriceToNearestTick(3500);
+  //       await changeVPoolPriceToNearestTick(3500);
 
-        await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
-          'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
-        );
-      });
-      it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
-        await test.removeMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
+  //       await expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.revertedWith(
+  //         'InvalidLiquidationActiveRangePresent(' + Number(truncate(vTokenAddress)) + ')',
+  //       );
+  //     });
+  //     it('Liquidation - Fail (Liquidator Not Enough Margin)', async () => {
+  //       await test.removeMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
 
-        await changeVPoolPriceToNearestTick(3500);
+  //       await changeVPoolPriceToNearestTick(3500);
 
-        expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
-      });
-      it('Liquidation - Success', async () => {
-        await changeVPoolPriceToNearestTick(4500);
+  //       expect(test.liquidateTokenPosition(1, vTokenAddress)).to.be.reverted;
+  //     });
+  //     it('Liquidation - Success', async () => {
+  //       await changeVPoolPriceToNearestTick(4500);
 
-        const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
 
-        await test.liquidateTokenPosition(1, vTokenAddress);
+  //       await test.liquidateTokenPosition(1, vTokenAddress);
 
-        const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
-        const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
-        const liquidatosettlementTokenDetails = await test.functions.getAccountQuoteBalance(1);
+  //       const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+  //       const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const liquidatosettlementTokenDetails = await test.functions.getAccountQuoteBalance(1);
 
-        const priceX128 = await priceToPriceX128(4500, vQuote, vToken);
-        const liquidationPriceX128 = priceX128.add(priceX128.mul(300).div(10000));
-        const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
+  //       const priceX128 = await priceToPriceX128(4500, vQuote, vToken);
+  //       const liquidationPriceX128 = priceX128.add(priceX128.mul(300).div(10000));
+  //       const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
 
-        expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
-        expect(endLiquidatedVQuoteDetails.balance).to.eq(
-          startLiquidatedVQuoteDetails.balance
-            .add(startLiquidatedTokenDetails.balance.mul(liquidationPriceX128).div(1n << 128n))
-            .sub(fixFee),
-        );
-        expect(liquidatosettlementTokenDetails.balance).to.eq(
-          startLiquidatedTokenDetails.balance
-            .mul(liquidatorPriceX128)
-            .div(1n << 128n)
-            .mul(-1)
-            .add(fixFee),
-        );
-      });
+  //       expect(endLiquidatedTokenDetails.balance).to.eq(0);
+  //       expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+  //       expect(endLiquidatedVQuoteDetails.balance).to.eq(
+  //         startLiquidatedVQuoteDetails.balance
+  //           .add(startLiquidatedTokenDetails.balance.mul(liquidationPriceX128).div(1n << 128n))
+  //           .sub(fixFee),
+  //       );
+  //       expect(liquidatosettlementTokenDetails.balance).to.eq(
+  //         startLiquidatedTokenDetails.balance
+  //           .mul(liquidatorPriceX128)
+  //           .div(1n << 128n)
+  //           .mul(-1)
+  //           .add(fixFee),
+  //       );
+  //     });
 
-      it('Liquidation (Account Negative Afterwards)- Success', async () => {
-        await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
-        await changeVPoolPriceToNearestTick(5000);
+  //     it('Liquidation (Account Negative Afterwards)- Success', async () => {
+  //       await test.addMargin(1, settlementToken.address, parseTokenAmount(1000, 6));
+  //       await changeVPoolPriceToNearestTick(5000);
 
-        const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
-        const startLiquidatedSettlementTokenDeposits = await test.getAccountDepositBalance(0, settlementToken.address);
+  //       const startLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const startLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const startLiquidatedSettlementTokenDeposits = await test.getAccountDepositBalance(0, settlementToken.address);
 
-        await test.liquidateTokenPosition(1, vTokenAddress);
+  //       await test.liquidateTokenPosition(1, vTokenAddress);
 
-        const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
-        const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
-        const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
-        const liquidatosettlementTokenDetails = await test.functions.getAccountQuoteBalance(1);
+  //       const endLiquidatedTokenDetails = await test.getAccountTokenDetails(0, vTokenAddress);
+  //       const liquidatocTokenDetails = await test.getAccountTokenDetails(1, vTokenAddress);
+  //       const endLiquidatedVQuoteDetails = await test.functions.getAccountQuoteBalance(0);
+  //       const liquidatosettlementTokenDetails = await test.functions.getAccountQuoteBalance(1);
 
-        const priceX128 = await priceToPriceX128(5000, vQuote, vToken);
-        const liquidationPriceX128 = priceX128.add(priceX128.mul(300).div(10000));
-        const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
+  //       const priceX128 = await priceToPriceX128(5000, vQuote, vToken);
+  //       const liquidationPriceX128 = priceX128.add(priceX128.mul(300).div(10000));
+  //       const liquidatorPriceX128 = priceX128.add(priceX128.mul(150).div(10000));
 
-        expect(endLiquidatedTokenDetails.balance).to.eq(0);
-        expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
-        expect(endLiquidatedVQuoteDetails.balance).to.eq(startLiquidatedSettlementTokenDeposits.mul(-1));
-        expect(liquidatosettlementTokenDetails.balance).to.eq(
-          startLiquidatedTokenDetails.balance
-            .mul(liquidatorPriceX128)
-            .div(1n << 128n)
-            .mul(-1)
-            .add(fixFee),
-        );
-      });
-    });
-  });
+  //       expect(endLiquidatedTokenDetails.balance).to.eq(0);
+  //       expect(liquidatocTokenDetails.balance).to.eq(startLiquidatedTokenDetails.balance);
+  //       expect(endLiquidatedVQuoteDetails.balance).to.eq(startLiquidatedSettlementTokenDeposits.mul(-1));
+  //       expect(liquidatosettlementTokenDetails.balance).to.eq(
+  //         startLiquidatedTokenDetails.balance
+  //           .mul(liquidatorPriceX128)
+  //           .div(1n << 128n)
+  //           .mul(-1)
+  //           .add(fixFee),
+  //       );
+  //     });
+  //   });
+  // });
 
   describe('Limit Order Removal', () => {
     let tickLower: number;
@@ -914,7 +915,7 @@ describe('Account Library Test Realistic', () => {
 
       const priceCurrentX128 = await priceToNearestPriceX128(price, vQuote, vToken);
       const notionalAmountClosed = vQuoteAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-      let fee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      let fee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
       fee = fee.gt(liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : fee;
@@ -954,7 +955,7 @@ describe('Account Library Test Realistic', () => {
       const priceCurrentX128 = await priceToNearestPriceX128(price, vQuote, vToken);
 
       const notionalAmountClosed = vQuoteAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-      let fee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      let fee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
       fee = fee.gt(liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : fee;
@@ -1026,7 +1027,7 @@ describe('Account Library Test Realistic', () => {
       );
 
       await test.liquidateLiquidityPositions(0);
-      let liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      let liquidationFee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
       liquidationFee = liquidationFee.gt(liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : liquidationFee;
@@ -1064,7 +1065,7 @@ describe('Account Library Test Realistic', () => {
 
       await test.liquidateLiquidityPositions(0);
 
-      let liquidationFee = notionalAmountClosed.mul(liquidationParams.liquidationFeeFraction).div(1e5);
+      let liquidationFee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
       liquidationFee = liquidationFee.gt(liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : liquidationFee;
