@@ -80,12 +80,9 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     function getAccountMarketValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         public
         view
-        returns (int256 accountMarketValue, int256 requiredMargin)
+        returns (int256 marketValue, int256 requiredMargin)
     {
-        (accountMarketValue, requiredMargin) = accounts[accountId].getAccountValueAndRequiredMargin(
-            isInitialMargin,
-            protocol
-        );
+        (marketValue, requiredMargin) = accounts[accountId].getAccountValueAndRequiredMargin(isInitialMargin, protocol);
     }
 
     function getAccountNetProfit(uint256 accountId) public view returns (int256 accountNetProfit) {
