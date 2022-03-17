@@ -12,126 +12,103 @@ import { IVPoolWrapper } from '../IVPoolWrapper.sol';
 import { IClearingHouseEnums } from './IClearingHouseEnums.sol';
 
 interface IClearingHouseStructures is IClearingHouseEnums {
-    /// @notice parameters to be used for account balance update
-    /// @param vQuoteIncrease specifies the increase in vQuote balance
-    /// @param vTokenIncrease specifies the increase in token balance
-    /// @param traderPositionIncrease specifies the increase in trader position
     struct BalanceAdjustments {
-        int256 vQuoteIncrease;
-        int256 vTokenIncrease;
-        int256 traderPositionIncrease;
+        int256 vQuoteIncrease; // specifies the increase in vQuote balance
+        int256 vTokenIncrease; // specifies the increase in token balance
+        int256 traderPositionIncrease; // specifies the increase in trader position
     }
 
     struct Collateral {
-        IERC20 token;
-        CollateralSettings settings; // mutable by governance
+        IERC20 token; // address of the collateral token
+        CollateralSettings settings; // collateral settings, changable by governance later
     }
 
     struct CollateralSettings {
-        IOracle oracle;
-        uint32 twapDuration;
-        bool isAllowedForDeposit;
+        IOracle oracle; // address of oracle which gives price to be used for collateral
+        uint32 twapDuration; // duration of the twap in seconds
+        bool isAllowedForDeposit; // whether the collateral is allowed to be deposited at the moment
     }
 
     struct CollateralDepositView {
-        IERC20 collateral;
-        uint256 balance;
+        IERC20 collateral; // address of the collateral token
+        uint256 balance; // balance of the collateral in the account
     }
 
     struct LiquidityChangeParams {
-        int24 tickLower;
-        int24 tickUpper;
-        int128 liquidityDelta;
-        uint160 sqrtPriceCurrent;
-        uint16 slippageToleranceBps;
-        bool closeTokenPosition;
-        LimitOrderType limitOrderType;
+        int24 tickLower; // tick lower of the range
+        int24 tickUpper; // tick upper of the range
+        int128 liquidityDelta; // positive to add liquidity, negative to remove liquidity
+        uint160 sqrtPriceCurrent; // hint for virtual price, to prevent sandwitch attack
+        uint16 slippageToleranceBps; // slippage tolerance in bps, to prevent sandwitch attack
+        bool closeTokenPosition; // whether to close the token position generated due to the liquidity change
+        LimitOrderType limitOrderType; // limit order type
     }
 
     struct LiquidityPositionView {
-        LimitOrderType limitOrderType;
-        // the tick range of the position;
-        int24 tickLower;
-        int24 tickUpper;
-        // the liquidity of the position
-        uint128 liquidity;
-        int256 vTokenAmountIn;
-        // funding payment checkpoints
-        int256 sumALastX128;
-        int256 sumBInsideLastX128;
-        int256 sumFpInsideLastX128;
-        // fee growth inside
-        uint256 sumFeeInsideLastX128;
+        int24 tickLower; // tick lower of the range
+        int24 tickUpper; // tick upper of the range
+        uint128 liquidity; // liquidity in the range by the account
+        int256 vTokenAmountIn; // amount of token supplied by the account, to calculate net position
+        int256 sumALastX128; // checkpoint of the term A in funding payment math
+        int256 sumBInsideLastX128; // checkpoint of the term B in funding payment math
+        int256 sumFpInsideLastX128; // checkpoint of the term Fp in funding payment math
+        uint256 sumFeeInsideLastX128; // checkpoint of the trading fees
+        LimitOrderType limitOrderType; // limit order type
     }
 
-    /// @notice parameters to be used for liquidation
-    /// @param rangeLiquidationFeeFraction specifies the percentage of net token position removed from the range to be charged as liquidation fees (scaled by 1e5)
-    /// @param tokenLiquidationFeeFraction specifies the percentage of traded amount of vquote to be charged as liquidation fees (scaled by 1e5)
-    /// @param closeFactorMMThresholdBps specifies the MM threshold for partial liquidation (scaled by 1e4)
-    /// @param partialLiquidationCloseFactorBps specifies the the % of position to be liquidated if partial liquidation should occur (scaled by 1e4)
-    /// @param insuranceFundFeeShare specifies the fee share for insurance fund out of the total liquidation fee (scaled by 1e4)
-    /// @param liquidationSlippageSqrtToleranceBps specifies the the maximum sqrt price slippage threshold (can be set to - actual price slippage tolerance / 2) (scaled by 1e4)
-    /// @param maxRangeLiquidationFees specifies the the maximum range liquidation fees (in settlement token amount decimals)
-    /// @param minNotionalLiquidatable specifies the the minimum notional value of position for it to be eligible for partial liquidation (in settlement token amount decimals)
     struct LiquidationParams {
-        uint16 rangeLiquidationFeeFraction;
-        uint16 tokenLiquidationFeeFraction;
-        uint16 closeFactorMMThresholdBps;
-        uint16 partialLiquidationCloseFactorBps;
-        uint16 insuranceFundFeeShareBps;
-        uint16 liquidationSlippageSqrtToleranceBps;
-        uint64 maxRangeLiquidationFees;
-        uint64 minNotionalLiquidatable;
+        uint16 rangeLiquidationFeeFraction; // fraction of net token position rm from the range to be charged as liquidation fees (in 1e5)
+        uint16 tokenLiquidationFeeFraction; // fraction of traded amount of vquote to be charged as liquidation fees (in 1e5)
+        uint16 closeFactorMMThresholdBps; // fraction the MM threshold for partial liquidation (in 1e4)
+        uint16 partialLiquidationCloseFactorBps; // fraction the % of position to be liquidated if partial liquidation should occur (in 1e4)
+        uint16 insuranceFundFeeShareBps; // fraction of the fee share for insurance fund out of the total liquidation fee (in 1e4)
+        uint16 liquidationSlippageSqrtToleranceBps; // fraction of the max sqrt price slippage threshold (in 1e4) (can be set to - actual price slippage tolerance / 2)
+        uint64 maxRangeLiquidationFees; // maximum range liquidation fees (in settlement token amount decimals)
+        uint64 minNotionalLiquidatable; // minimum notional value of position for it to be eligible for partial liquidation (in settlement token amount decimals)
     }
 
     struct MulticallOperation {
-        MulticallOperationType operationType;
-        bytes data;
+        MulticallOperationType operationType; // operation type
+        bytes data; // abi encoded data for the operation
     }
 
     struct Pool {
-        IVToken vToken;
-        IUniswapV3Pool vPool;
-        IVPoolWrapper vPoolWrapper;
-        PoolSettings settings; // mutable by governance
+        IVToken vToken; // address of the vToken, poolId = vToken.truncate()
+        IUniswapV3Pool vPool; // address of the UniswapV3Pool(token0=vToken, token1=vQuote, fee=500)
+        IVPoolWrapper vPoolWrapper; // wrapper address
+        PoolSettings settings; // pool settings, which can be updated by governance later
     }
 
     struct PoolSettings {
-        // Ratios are in Basis Points (1e4)
-        uint16 initialMarginRatioBps;
-        uint16 maintainanceMarginRatioBps;
-        uint16 maxVirtualPriceDeviationRatioBps;
-        uint32 twapDuration; // seconds
-        bool isAllowedForTrade;
-        bool isCrossMargined;
-        IOracle oracle;
+        uint16 initialMarginRatioBps; // margin ratio (1e4) considered for create/update position, removing margin or profit
+        uint16 maintainanceMarginRatioBps; // margin ratio (1e4) considered for liquidations by keeper
+        uint16 maxVirtualPriceDeviationRatioBps; // maximum deviation (1e4) from the current virtual price
+        uint32 twapDuration; // twap duration (seconds) for oracle
+        bool isAllowedForTrade; // whether the pool is allowed to be traded at the moment
+        bool isCrossMargined; // whether cross margined is done for positions of this pool
+        IOracle oracle; // spot price feed twap oracle for this pool
     }
 
-    /// @notice swaps params for specifying the swap params
-    /// @param amount amount of tokens/vQuote to swap
-    /// @param sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
-    /// @param isNotional specifies whether the amount represents token amount (false) or vQuote amount(true)
-    /// @param isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
     struct SwapParams {
-        int256 amount;
-        uint160 sqrtPriceLimit;
-        bool isNotional;
-        bool isPartialAllowed;
+        int256 amount; // amount of tokens/vQuote to swap
+        uint160 sqrtPriceLimit; // threshold sqrt price which should not be crossed
+        bool isNotional; // whether the amount represents vQuote amount
+        bool isPartialAllowed; // whether to end swap (partial) when sqrtPriceLimit is reached, instead of reverting
     }
 
     struct SwapValues {
-        int256 amountSpecified;
-        int256 vTokenIn;
-        int256 vQuoteIn;
-        uint256 liquidityFees;
-        uint256 protocolFees;
+        int256 amountSpecified; // amount of tokens/vQuote which were specified in the swap request
+        int256 vTokenIn; // actual amount of vTokens paid by account to the Pool
+        int256 vQuoteIn; // actual amount of vQuotes paid by account to the Pool
+        uint256 liquidityFees; // actual amount of fees paid by account to the Pool
+        uint256 protocolFees; // actual amount of fees paid by account to the Protocol
     }
 
     struct VTokenPositionView {
-        IVToken vToken;
+        IVToken vToken; // id of the pool of which this token position is for
         int256 balance; // vTokenLong - vTokenShort
-        int256 netTraderPosition;
-        int256 sumAX128Chkpt;
-        LiquidityPositionView[] liquidityPositions;
+        int256 netTraderPosition; // net position due to trades and liquidity change carries
+        int256 sumAX128Chkpt; // checkoint of the term A in funding payment math
+        LiquidityPositionView[] liquidityPositions; // liquidity positions of the account in the pool
     }
 }
