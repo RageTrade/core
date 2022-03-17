@@ -349,7 +349,7 @@ library VTokenPositionSet {
         accountMarketValue += set.vQuoteBalance;
     }
 
-    function getInfo(VTokenPosition.Set storage set, Protocol.Info storage protocol)
+    function getInfo(VTokenPosition.Set storage set)
         internal
         view
         returns (int256 vQuoteBalance, IClearingHouseStructures.VTokenPositionView[] memory vTokenPositions)
@@ -360,7 +360,7 @@ library VTokenPositionSet {
         vTokenPositions = new IClearingHouseStructures.VTokenPositionView[](numberOfTokenPositions);
 
         for (uint256 i = 0; i < numberOfTokenPositions; i++) {
-            vTokenPositions[i].vToken = protocol.pools[set.active[i]].vToken;
+            vTokenPositions[i].poolId = set.active[i];
             vTokenPositions[i].balance = set.positions[set.active[i]].balance;
             vTokenPositions[i].netTraderPosition = set.positions[set.active[i]].netTraderPosition;
             vTokenPositions[i].sumAX128Chkpt = set.positions[set.active[i]].sumAX128Chkpt;
