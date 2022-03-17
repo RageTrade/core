@@ -369,8 +369,10 @@ contract ClearingHouse is
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
                 _updateProfit(account, amount, false);
-                checkProfit = true;
-                checkMargin = true;
+                if (amount < 0) {
+                    checkProfit = true;
+                    checkMargin = true;
+                }
             } else if (operations[i].operationType == MulticallOperationType.SWAP_TOKEN) {
                 // SWAP_TOKEN
                 (uint32 poolId, SwapParams memory sp) = abi.decode(operations[i].data, (uint32, SwapParams));
