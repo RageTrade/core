@@ -51,6 +51,45 @@ describe('ChainlinkPriceFeed Spec', () => {
     });
   });
 
+  describe('Chainlink failure handling', () => {
+    beforeEach(async () => {
+      const latestTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+      currentTime = latestTimestamp;
+      roundData = [];
+
+      // [roundId, answer, startedAt, updatedAt, answeredInRound]
+      currentTime += 0;
+      roundData.push([0, parseTokenAmount('3000', 8), currentTime, currentTime, 0]);
+
+      currentTime += 60;
+      roundData.push([1, parseTokenAmount('3050', 8), currentTime, currentTime, 1]);
+
+      currentTime += 60;
+      roundData.push([2, parseTokenAmount('3100', 8), currentTime, currentTime, 2]);
+
+      aggregator.getRoundData.returns((input: any) => {
+        return roundData[input];
+      });
+
+      aggregator.latestRoundData.returns(roundData[roundData.length - 1]);
+
+      currentTime += 60;
+      await ethers.provider.send('evm_setNextBlockTimestamp', [currentTime]);
+      await ethers.provider.send('evm_mine', []);
+    });
+    it('Aggregator getRoundData reverts', async () => {
+      aggregator.getRoundData.revertsAtCall(0, 'Error');
+      const price = await chainlinkOracle.getTwapPriceX128(180);
+      expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(parseTokenAmount('3100', 6).sub(1));
+    });
+    it('Aggregator getRoundData reverts after 1 call', async () => {
+      //Returns data on first roundData call and reverts on second call
+      aggregator.getRoundData.revertsAtCall(2, 'Error');
+      const price = await chainlinkOracle.getTwapPriceX128(180);
+      expect(price.mul(10n ** 18n).div(1n << 128n)).to.eq(parseTokenAmount('3075', 6).sub(1));
+    });
+  });
+
   describe('Different Timestamps for each round', () => {
     beforeEach(async () => {
       const latestTimestamp = (await ethers.provider.getBlock('latest')).timestamp;

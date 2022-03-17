@@ -14,6 +14,8 @@ import { PriceMath } from '../libraries/PriceMath.sol';
 
 import { IOracle } from '../interfaces/IOracle.sol';
 
+import { console } from 'hardhat/console.sol';
+
 contract ChainlinkOracle is IOracle {
     using AddressHelper for address;
     using FullMath for uint256;
@@ -74,10 +76,12 @@ contract ChainlinkOracle is IOracle {
 
             round = round - 1;
             (, periodPrice, startTS) = _getRoundData(round);
-
+            if (periodPrice == 0) break;
             //If the starting time of a period is lesser than threshold timestamp (now-twapDuration) then period is thresholdTS -> endTS
             if (startTS <= thresholdTS) {
-                twap += periodPrice * (endTS - thresholdTS);
+                periodLength = (endTS - thresholdTS);
+                twap += periodPrice * periodLength;
+                totalTime += periodLength;
                 break;
             }
 
@@ -91,7 +95,7 @@ contract ChainlinkOracle is IOracle {
         }
 
         //Divide the accumulated value by the whole duration
-        return twap == 0 ? latestPrice : twap / twapDuration;
+        return twap == 0 ? latestPrice : twap / totalTime;
     }
 
     function _getLatestRoundData()
@@ -123,12 +127,36 @@ contract ChainlinkOracle is IOracle {
             uint256
         )
     {
-        (uint80 round, int256 latestPrice, , uint256 latestTS, ) = aggregator.getRoundData(_round);
+        (uint80 round, int256 latestPrice, , uint256 latestTS, ) = _getRoundDataWithCheck(_round);
         while (latestPrice < 0 && round > 0) {
             round = round - 1;
             (, latestPrice, , latestTS, ) = aggregator.getRoundData(round);
         }
         if (latestPrice < 0 && round <= 0) revert NotEnoughHistory();
         return (round, uint256(latestPrice), latestTS);
+    }
+
+    function _getRoundDataWithCheck(uint80 _round)
+        private
+        view
+        returns (
+            uint80,
+            int256,
+            uint256,
+            uint256,
+            uint80
+        )
+    {
+        try aggregator.getRoundData(_round) returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) {
+            return (roundId, answer, startedAt, updatedAt, answeredInRound);
+        } catch {
+            return (0, 0, 0, 0, 0);
+        }
     }
 }
