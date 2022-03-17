@@ -333,7 +333,7 @@ describe('Account Library Test Realistic', () => {
       liquidationSlippageSqrtToleranceBps: 150,
       minNotionalLiquidatable: 100000000,
     };
-    fixFee = parseTokenAmount(10, 6);
+    fixFee = parseTokenAmount(0, 6);
     const removeLimitOrderFee = parseTokenAmount(10, 6);
     const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
     const minRequiredMargin = parseTokenAmount(20, 6);
