@@ -2,7 +2,10 @@
 
 pragma solidity ^0.8.9;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
+import { IClearingHouseView } from '../../interfaces/clearinghouse/IClearingHouseView.sol';
 import { IVQuote } from '../../interfaces/IVQuote.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
@@ -20,48 +23,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     using AddressHelper for IVToken;
     using Protocol for Protocol.Info;
 
-    /// @notice Gets the real and virtual prices from the respective oracle of the given poolId.
-    function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
-        return protocol.getTwapPricesWithDeviationCheck(poolId);
-    }
-
-    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
-        return protocol.pools[poolId].vToken.isZero();
-    }
-
-    /**
-        Protocol.Info VIEW
-     */
-    function protocolInfo()
-        public
-        view
-        returns (
-            IVQuote vQuote,
-            LiquidationParams memory liquidationParams,
-            uint256 minRequiredMargin,
-            uint256 removeLimitOrderFee,
-            uint256 minimumOrderNotional
-        )
-    {
-        vQuote = protocol.vQuote;
-        liquidationParams = protocol.liquidationParams;
-        minRequiredMargin = protocol.minRequiredMargin;
-        removeLimitOrderFee = protocol.removeLimitOrderFee;
-        minimumOrderNotional = protocol.minimumOrderNotional;
-    }
-
-    function getPoolInfo(uint32 poolId) public view returns (Pool memory) {
-        return protocol.pools[poolId];
-    }
-
-    function getCollateralInfo(uint32 collateralId) public view returns (Collateral memory) {
-        return protocol.collaterals[collateralId];
-    }
-
-    /**
-        Account.Info VIEW
-     */
-
+    /// @inheritdoc IClearingHouseView
     function getAccountInfo(uint256 accountId)
         public
         view
@@ -75,7 +37,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         return accounts[accountId].getInfo(protocol);
     }
 
-    // isInitialMargin true is initial margin, false is maintainance margin
+    /// @inheritdoc IClearingHouseView
     function getAccountMarketValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         public
         view
@@ -84,11 +46,54 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         (marketValue, requiredMargin) = accounts[accountId].getAccountValueAndRequiredMargin(isInitialMargin, protocol);
     }
 
+    /// @inheritdoc IClearingHouseView
     function getAccountNetProfit(uint256 accountId) public view returns (int256 accountNetProfit) {
         accountNetProfit = accounts[accountId].getAccountPositionProfits(protocol);
     }
 
-    function getNetTokenPosition(uint256 accountId, uint32 poolId) public view returns (int256 netPosition) {
+    /// @inheritdoc IClearingHouseView
+    function getAccountNetTokenPosition(uint256 accountId, uint32 poolId) public view returns (int256 netPosition) {
         return accounts[accountId].getNetPosition(poolId, protocol);
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function getCollateralInfo(uint32 collateralId) public view returns (Collateral memory) {
+        return protocol.collaterals[collateralId];
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function getPoolInfo(uint32 poolId) public view returns (Pool memory) {
+        return protocol.pools[poolId];
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
+        return protocol.getTwapPricesWithDeviationCheck(poolId);
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
+        return protocol.pools[poolId].vToken.isZero();
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function protocolInfo()
+        public
+        view
+        returns (
+            IERC20 settlementToken,
+            IVQuote vQuote,
+            LiquidationParams memory liquidationParams,
+            uint256 minRequiredMargin,
+            uint256 removeLimitOrderFee,
+            uint256 minimumOrderNotional
+        )
+    {
+        settlementToken = protocol.settlementToken;
+        vQuote = protocol.vQuote;
+        liquidationParams = protocol.liquidationParams;
+        minRequiredMargin = protocol.minRequiredMargin;
+        removeLimitOrderFee = protocol.removeLimitOrderFee;
+        minimumOrderNotional = protocol.minimumOrderNotional;
     }
 }
