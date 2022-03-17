@@ -1423,10 +1423,10 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
 
       const liquidatorSettlementVTokenBalance = 1115753402n;
 
-      await logPoolPrice(vPool, vToken);
+      // await logPoolPrice(vPool, vToken);
 
       await liquidateTokenPosition(keeper, user1AccountNo, vTokenAddress);
-      await logPoolPrice(vPool, vToken);
+      // await logPoolPrice(vPool, vToken);
 
       await checkVTokenBalance(user1AccountNo, vTokenAddress, expectedVTokenBalance);
       await checkTraderPosition(user1AccountNo, vTokenAddress, netTokenPosition);
@@ -1463,10 +1463,10 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
 
       const liquidatorSettlementVTokenBalance = 5697118162n;
 
-      await logPoolPrice(vPool1, vToken1);
+      // await logPoolPrice(vPool1, vToken1);
 
       await liquidateTokenPosition(keeper, user1AccountNo, vToken1Address);
-      await logPoolPrice(vPool1, vToken1);
+      // await logPoolPrice(vPool1, vToken1);
 
       await checkVTokenBalance(user1AccountNo, vToken1Address, expectedToken1Balance);
       await checkTraderPosition(user1AccountNo, vToken1Address, netTokenPosition1);
