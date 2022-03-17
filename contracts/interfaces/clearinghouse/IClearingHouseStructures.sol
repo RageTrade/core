@@ -105,7 +105,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
     }
 
     struct VTokenPositionView {
-        IVToken vToken; // id of the pool of which this token position is for
+        uint32 poolId; // id of the pool of which this token position is for
         int256 balance; // vTokenLong - vTokenShort
         int256 netTraderPosition; // net position due to trades and liquidity change carries
         int256 sumAX128Chkpt; // checkoint of the term A in funding payment math

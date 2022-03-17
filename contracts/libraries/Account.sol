@@ -504,7 +504,7 @@ library Account {
     {
         owner = account.owner;
         collateralDeposits = account.collateralDeposits.getInfo(protocol);
-        (vQuoteBalance, tokenPositions) = account.tokenPositions.getInfo(protocol);
+        (vQuoteBalance, tokenPositions) = account.tokenPositions.getInfo();
     }
 
     function getNetPosition(
