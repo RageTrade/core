@@ -172,33 +172,6 @@ contract ClearingHouse is
         _updateMargin(_getAccountAndCheckOwner(accountId), collateralId, amount, amount < 0);
     }
 
-    function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.Info storage account) {
-        account = accounts[accountId];
-        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
-    }
-
-    function _updateMargin(
-        Account.Info storage account,
-        uint32 collateralId,
-        int256 amount,
-        bool checkMargin
-    ) internal whenNotPaused {
-        Collateral storage collateral = _checkCollateralIdAndGetInfo({
-            collateralId: collateralId,
-            isWithdraw: amount < 0
-        });
-
-        // delegate call to account library to perform state update and emit events
-        account.updateMargin(collateralId, amount, protocol, checkMargin);
-
-        // transfer settlement tokens between clearing house and account owner
-        if (amount > 0) {
-            collateral.token.safeTransferFrom(msg.sender, address(this), uint256(amount));
-        } else if (amount < 0) {
-            collateral.token.safeTransfer(msg.sender, uint256(-amount));
-        }
-    }
-
     /// @inheritdoc IClearingHouseActions
     function createAccountAndAddMargin(uint32 collateralId, uint256 amount) external returns (uint256 newAccountId) {
         newAccountId = createAccount();
@@ -212,21 +185,6 @@ contract ClearingHouse is
         _updateProfit(account, amount, true);
     }
 
-    function _updateProfit(
-        Account.Info storage account,
-        int256 amount,
-        bool checkMargin
-    ) internal whenNotPaused {
-        if (amount == 0) revert ZeroAmount();
-
-        account.updateProfit(amount, protocol, checkMargin);
-        if (amount > 0) {
-            protocol.settlementToken.safeTransferFrom(msg.sender, address(this), uint256(amount));
-        } else {
-            protocol.settlementToken.safeTransfer(msg.sender, uint256(-amount));
-        }
-    }
-
     /// @inheritdoc IClearingHouseActions
     function swapToken(
         uint256 accountId,
@@ -235,27 +193,6 @@ contract ClearingHouse is
     ) external whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
         return _swapToken(account, poolId, swapParams, true);
-    }
-
-    function _swapToken(
-        Account.Info storage account,
-        uint32 poolId,
-        SwapParams memory swapParams,
-        bool checkMargin
-    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        _checkPoolId(poolId);
-
-        (vTokenAmountOut, vQuoteAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
-
-        uint256 vQuoteAmountOutAbs = uint256(vQuoteAmountOut.abs());
-        if (vQuoteAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vQuoteAmountOutAbs);
-
-        if (swapParams.sqrtPriceLimit != 0 && !swapParams.isPartialAllowed) {
-            if (
-                !((swapParams.isNotional && vQuoteAmountOut.abs() == swapParams.amount.abs()) ||
-                    (!swapParams.isNotional && vTokenAmountOut.abs() == swapParams.amount.abs()))
-            ) revert SlippageBeyondTolerance();
-        }
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -386,35 +323,62 @@ contract ClearingHouse is
         INTERNAL HELPERS
      */
 
-    function _checkSlippage(
-        uint32 poolId,
-        uint160 sqrtPriceToCheck,
-        uint16 slippageToleranceBps
-    ) internal view {
-        uint160 sqrtPriceCurrent = protocol.getVirtualCurrentSqrtPriceX96(poolId);
-        uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
-            ? sqrtPriceCurrent - sqrtPriceToCheck
-            : sqrtPriceToCheck - sqrtPriceCurrent;
-        if (diff > (slippageToleranceBps * sqrtPriceToCheck) / 1e4) {
-            revert SlippageBeyondTolerance();
+    function _updateMargin(
+        Account.Info storage account,
+        uint32 collateralId,
+        int256 amount,
+        bool checkMargin
+    ) internal whenNotPaused {
+        Collateral storage collateral = _checkCollateralIdAndGetInfo({
+            collateralId: collateralId,
+            isWithdraw: amount < 0
+        });
+
+        // delegate call to account library to perform state update and emit events
+        account.updateMargin(collateralId, amount, protocol, checkMargin);
+
+        // transfer settlement tokens between clearing house and account owner
+        if (amount > 0) {
+            collateral.token.safeTransferFrom(msg.sender, address(this), uint256(amount));
+        } else if (amount < 0) {
+            collateral.token.safeTransfer(msg.sender, uint256(-amount));
         }
     }
 
-    function _checkCollateralIdAndGetInfo(uint32 collateralId, bool isWithdraw)
-        internal
-        view
-        returns (Collateral storage collateral)
-    {
-        collateral = protocol.collaterals[collateralId];
-        if (collateral.token.isZero()) revert CollateralDoesNotExist(collateralId);
-        // do not check if it is a withdraw operation, so that users can withdraw even if collateral is banned
-        if (!isWithdraw && !collateral.settings.isAllowedForDeposit) revert CollateralNotAllowedForUse(collateralId);
+    function _updateProfit(
+        Account.Info storage account,
+        int256 amount,
+        bool checkMargin
+    ) internal whenNotPaused {
+        if (amount == 0) revert ZeroAmount();
+
+        account.updateProfit(amount, protocol, checkMargin);
+        if (amount > 0) {
+            protocol.settlementToken.safeTransferFrom(msg.sender, address(this), uint256(amount));
+        } else {
+            protocol.settlementToken.safeTransfer(msg.sender, uint256(-amount));
+        }
     }
 
-    function _checkPoolId(uint32 poolId) internal view {
-        Pool storage pool = protocol.pools[poolId];
-        if (pool.vToken.isZero()) revert PoolDoesNotExist(poolId);
-        if (!pool.settings.isAllowedForTrade) revert PoolNotAllowedForTrade(poolId);
+    function _swapToken(
+        Account.Info storage account,
+        uint32 poolId,
+        SwapParams memory swapParams,
+        bool checkMargin
+    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+        _checkPoolId(poolId);
+
+        (vTokenAmountOut, vQuoteAmountOut) = account.swapToken(poolId, swapParams, protocol, checkMargin);
+
+        uint256 vQuoteAmountOutAbs = uint256(vQuoteAmountOut.abs());
+        if (vQuoteAmountOutAbs < protocol.minimumOrderNotional) revert LowNotionalValue(vQuoteAmountOutAbs);
+
+        if (swapParams.sqrtPriceLimit != 0 && !swapParams.isPartialAllowed) {
+            if (
+                !((swapParams.isNotional && vQuoteAmountOut.abs() == swapParams.amount.abs()) ||
+                    (!swapParams.isNotional && vTokenAmountOut.abs() == swapParams.amount.abs()))
+            ) revert SlippageBeyondTolerance();
+        }
     }
 
     function _liquidateLiquidityPositions(uint256 accountId) internal whenNotPaused returns (int256 keeperFee) {
@@ -487,5 +451,52 @@ contract ClearingHouse is
         protocol.collaterals[collateralId] = Collateral(collateralToken, collateralSettings);
 
         emit CollateralSettingsUpdated(collateralToken, collateralSettings);
+    }
+
+    /**
+        INTERNAL VIEW METHODS
+     */
+
+    function _getAccountAndCheckOwner(uint256 accountId) internal view returns (Account.Info storage account) {
+        account = accounts[accountId];
+        if (msg.sender != account.owner) revert AccessDenied(msg.sender);
+    }
+
+    function _checkCollateralIdAndGetInfo(uint32 collateralId, bool isWithdraw)
+        internal
+        view
+        returns (Collateral storage collateral)
+    {
+        collateral = protocol.collaterals[collateralId];
+        if (collateral.token.isZero()) revert CollateralDoesNotExist(collateralId);
+        // do not check if it is a withdraw operation, so that users can withdraw even if collateral is banned
+        if (!isWithdraw && !collateral.settings.isAllowedForDeposit) revert CollateralNotAllowedForUse(collateralId);
+    }
+
+    function _checkPoolId(uint32 poolId) internal view {
+        Pool storage pool = protocol.pools[poolId];
+        if (pool.vToken.isZero()) revert PoolDoesNotExist(poolId);
+        if (!pool.settings.isAllowedForTrade) revert PoolNotAllowedForTrade(poolId);
+    }
+
+    function _checkSlippage(
+        uint32 poolId,
+        uint160 sqrtPriceToCheck,
+        uint16 slippageToleranceBps
+    ) internal view {
+        uint160 sqrtPriceCurrent = protocol.getVirtualCurrentSqrtPriceX96(poolId);
+        uint160 diff = sqrtPriceCurrent > sqrtPriceToCheck
+            ? sqrtPriceCurrent - sqrtPriceToCheck
+            : sqrtPriceToCheck - sqrtPriceCurrent;
+        if (diff > (slippageToleranceBps * sqrtPriceToCheck) / 1e4) {
+            revert SlippageBeyondTolerance();
+        }
+    }
+
+    /// @notice Gets fix fee
+    /// @dev Allowed to be overriden for specific chain implementations
+    /// @return fixFee amount of fixFee in notional units
+    function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
+        return 0;
     }
 }
