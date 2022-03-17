@@ -41,7 +41,7 @@ export default {
     hardhat: {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
-      allowUnlimitedContractSize: true, // TODO: remove this
+      allowUnlimitedContractSize: true,
       forking: {
         url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
         blockNumber: 13075000,
@@ -72,7 +72,7 @@ export default {
   solidity: {
     compilers: [
       {
-        version: '0.8.12',
+        version: '0.8.13',
         settings: {
           optimizer: {
             enabled: true,
