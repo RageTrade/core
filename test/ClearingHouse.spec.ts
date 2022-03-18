@@ -17,6 +17,8 @@ import {
   IERC20,
   ClearingHouseTest,
   IUniswapV3Pool,
+  Account,
+  VPoolWrapper,
 } from '../typechain-types';
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
@@ -185,7 +187,7 @@ describe('Clearing House Library', () => {
     //   await hre.ethers.getContractFactory('VPoolWrapperDeployer')
     // ).deploy(futureVPoolFactoryAddress);
 
-    const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
+    let accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const clearingHouseTestLogic = await (
       await hre.ethers.getContractFactory('ClearingHouseTest', {
         libraries: {
@@ -194,7 +196,7 @@ describe('Clearing House Library', () => {
       })
     ).deploy();
 
-    const vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
+    let vPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapper')).deploy();
 
     const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
@@ -402,6 +404,10 @@ describe('Clearing House Library', () => {
     let swapParams: any;
     let liquidityChangeParams: any;
 
+    let fundingPaymentStateUpdatedTopicHash: string;
+    let poolIds: string[];
+    let poolsSumAValueAfterPause: BigNumber[];
+
     before(async () => {
       amount = parseTokenAmount('1000000', 6);
       truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(settlementToken.address);
@@ -420,12 +426,26 @@ describe('Clearing House Library', () => {
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
       };
-    });
-    it('Pause', async () => {
-      await clearingHouseTest.pause();
-      const curPaused = await clearingHouseTest.paused();
 
+      poolIds = [truncate(vTokenAddress), truncate(vTokenAddress1)];
+
+      const fp = await hre.ethers.getContractAt('FundingPayment', ethers.constants.AddressZero);
+      fundingPaymentStateUpdatedTopicHash = fp.filters.FundingPaymentStateUpdated().topics?.[0] as string;
+    });
+
+    it('Pause', async () => {
+      const tx = await clearingHouseTest.pause(poolIds);
+
+      const curPaused = await clearingHouseTest.paused();
       expect(curPaused).to.be.true;
+
+      // checks if the funding payment state updated event is emitted for all the pools
+      const rc = await tx.wait();
+      expect(rc.events?.filter(val => (val.topics[0] as string) === fundingPaymentStateUpdatedTopicHash).length).to.eq(
+        poolIds.length,
+      );
+
+      poolsSumAValueAfterPause = await getPoolsSumA(poolIds);
     });
 
     it('Create Account', async () => {
@@ -490,10 +510,20 @@ describe('Clearing House Library', () => {
     });
 
     it('UnPause', async () => {
-      await clearingHouseTest.unpause();
+      const tx = await clearingHouseTest.unpause([truncate(vTokenAddress), truncate(vTokenAddress1)]);
       const curPaused = await clearingHouseTest.paused();
 
       expect(curPaused).to.be.false;
+
+      // checks if the funding payment state updated event is emitted for all the pools
+      const rc = await tx.wait();
+      expect(rc.events?.filter(val => (val.topics[0] as string) === fundingPaymentStateUpdatedTopicHash).length).to.eq(
+        poolIds.length,
+      );
+
+      // some time is elapsed between test cases but still sumA should stay the same
+      const poolsSumAValueAfterUnpause = await getPoolsSumA(poolIds);
+      expect(poolsSumAValueAfterUnpause).to.deep.equal(poolsSumAValueAfterPause);
     });
   });
 
@@ -978,5 +1008,15 @@ describe('Clearing House Library', () => {
       settings: { oracle, twapDuration, isAllowedForDeposit },
     } = await clearingHouseTest.getCollateralInfo(truncate(vTokenAddress));
     return { token, settings: { oracle, twapDuration, isAllowedForDeposit } };
+  }
+
+  async function getPoolsSumA(poolIds: string[]) {
+    return await Promise.all(
+      poolIds.map(async poolId => {
+        const { vPoolWrapper } = await clearingHouseTest.getPoolInfo(poolId);
+        const wrapper = await hre.ethers.getContractAt('VPoolWrapper', vPoolWrapper);
+        return await wrapper.getSumAX128();
+      }),
+    );
   }
 });

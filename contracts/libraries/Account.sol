@@ -550,7 +550,10 @@ library Account {
         int256 fixFee,
         Protocol.Info storage protocol
     ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        protocol.vPoolWrapper(poolId).updateGlobalFundingState();
+        protocol.vPoolWrapper(poolId).updateGlobalFundingState({
+            realPriceX128: protocol.getRealTwapPriceX128(poolId),
+            virtualPriceX128: protocol.getVirtualTwapPriceX128(poolId)
+        });
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
             .BalanceAdjustments({

@@ -128,12 +128,28 @@ contract ClearingHouse is
         );
     }
 
-    function pause() external onlyGovernanceOrTeamMultisig {
+    function pause(uint32[] calldata allPoolIds) external onlyGovernanceOrTeamMultisig {
         _pause();
+
+        // update funding state for all the pools, so that funding payment upto pause moment is recorded
+        for (uint256 i; i < allPoolIds.length; i++) {
+            uint32 poolId = allPoolIds[i];
+            (uint256 realPriceX128, uint256 virtualPriceX128) = getTwapPrices(poolId);
+            protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState(realPriceX128, virtualPriceX128);
+        }
     }
 
-    function unpause() external onlyGovernanceOrTeamMultisig {
+    function unpause(uint32[] calldata allPoolIds) external onlyGovernanceOrTeamMultisig {
         _unpause();
+
+        // update funding state for all the pools
+        for (uint256 i; i < allPoolIds.length; i++) {
+            // record the funding payment as zero for the entire duration for which clearing house was paused.
+            protocol.pools[allPoolIds[i]].vPoolWrapper.updateGlobalFundingState({
+                realPriceX128: 1,
+                virtualPriceX128: 1
+            });
+        }
     }
 
     /// @inheritdoc IClearingHouseOwnerActions
