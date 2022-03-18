@@ -596,7 +596,6 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
-      nativeOracle.address,
     );
 
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());

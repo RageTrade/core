@@ -599,7 +599,6 @@ describe('Clearing House Scenario 6', () => {
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
-      nativeOracle.address,
     );
 
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());

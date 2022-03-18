@@ -18,14 +18,12 @@ interface IClearingHouseSystemActions is IClearingHouseStructures {
     /// @param defaultCollateralTokenOracle address of default collateral token oracle
     /// @param insuranceFund address of insurance fund
     /// @param vQuote address of vQuote
-    /// @param nativeOracle address of native oracle
     function __initialize_ClearingHouse(
         address rageTradeFactoryAddress,
         IERC20 defaultCollateralToken,
         IOracle defaultCollateralTokenOracle,
         IInsuranceFund insuranceFund,
-        IVQuote vQuote,
-        IOracle nativeOracle
+        IVQuote vQuote
     ) external;
 
     function registerPool(Pool calldata poolInfo) external;

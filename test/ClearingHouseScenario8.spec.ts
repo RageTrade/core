@@ -768,7 +768,6 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
-      nativeOracle.address,
     );
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());

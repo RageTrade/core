@@ -22,7 +22,6 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
         IOracle settlementTokenOracle;
         IInsuranceFund insuranceFund;
         IVQuote vQuote;
-        IOracle nativeOracle;
     }
 
     function _deployProxyForClearingHouseAndInitialize(DeployClearingHouseParams memory params)
@@ -42,8 +41,7 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                                 params.settlementToken,
                                 params.settlementTokenOracle,
                                 params.insuranceFund,
-                                params.vQuote,
-                                params.nativeOracle
+                                params.vQuote
                             )
                         )
                     )

@@ -68,13 +68,11 @@ contract ClearingHouse is
         IERC20 _defaultCollateralToken,
         IOracle _defaultCollateralTokenOracle,
         IInsuranceFund _insuranceFund,
-        IVQuote _vQuote,
-        IOracle _nativeOracle
+        IVQuote _vQuote
     ) external initializer {
         rageTradeFactoryAddress = _rageTradeFactoryAddress;
         protocol.settlementToken = _defaultCollateralToken;
         insuranceFund = _insuranceFund;
-        nativeOracle = _nativeOracle;
 
         protocol.vQuote = _vQuote;
 

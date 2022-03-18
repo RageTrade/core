@@ -76,13 +76,7 @@ describe('VTokenPositionSet Library', () => {
 
     rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
-    ).deploy(
-      clearingHouseLogic.address,
-      vPoolWrapperLogic.address,
-      insuranceFundLogic.address,
-      SETTLEMENT_TOKEN,
-      nativeOracle.address,
-    );
+    ).deploy(clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, SETTLEMENT_TOKEN);
 
     clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
     chSigner = await impersonateAccount(clearingHouse.address);
