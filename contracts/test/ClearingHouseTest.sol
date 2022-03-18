@@ -34,16 +34,6 @@ contract ClearingHouseTest is ClearingHouse {
     using VTokenPositionSet for VTokenPosition.Set;
     using VTokenPosition for VTokenPosition.Info;
 
-    uint256 public fixFee;
-
-    function setFixFee(uint256 _fixFee) external {
-        fixFee = _fixFee;
-    }
-
-    function _getFixFee(uint256) internal view override returns (uint256) {
-        return fixFee;
-    }
-
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
         return vToken.truncate();
     }

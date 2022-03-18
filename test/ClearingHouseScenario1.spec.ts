@@ -691,7 +691,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         liquidationSlippageSqrtToleranceBps: 150,
         minNotionalLiquidatable: 100000000,
       };
-      const fixFee = parseTokenAmount(0, 6);
+
       const removeLimitOrderFee = parseTokenAmount(10, 6);
       const minimumOrderNotional = parseTokenAmount(1, 6).div(100);
       const minRequiredMargin = parseTokenAmount(20, 6);
@@ -702,13 +702,12 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         minimumOrderNotional,
         minRequiredMargin,
       );
-      await clearingHouseTest.setFixFee(fixFee);
+
       const protocol = await clearingHouseTest.protocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
 
-      expect(await clearingHouseTest.fixFee()).eq(fixFee);
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
       expect(protocol.liquidationParams.rangeLiquidationFeeFraction).eq(liquidationParams.rangeLiquidationFeeFraction);
       expect(protocol.liquidationParams.tokenLiquidationFeeFraction).eq(liquidationParams.tokenLiquidationFeeFraction);
