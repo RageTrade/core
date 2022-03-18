@@ -8,6 +8,7 @@ import { smock } from '@defi-wonderland/smock';
 import { testSetup } from './utils/setup-general';
 import { activateMainnetFork, deactivateMainnetFork } from './utils/mainnet-fork';
 import { truncate } from './utils/vToken';
+import { tickToSqrtPriceX96 } from './utils/price-tick';
 
 describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -81,7 +82,8 @@ describe('Market Value and Required Margin', () => {
       },
     );
     vPoolFake.observe.returns([[0, -194430 * 60], []]);
-    vPoolFake.slot0.returns([0, -194430, 0, 0, 0, 0, false]);
+    const sqrtPriceX96 = tickToSqrtPriceX96(-194430);
+    vPoolFake.slot0.returns([sqrtPriceX96, -194430, 0, 0, 0, 0, false]);
 
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {
       address: vPoolWrapperAddress,
@@ -149,7 +151,9 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (InitialMargin) 30221.0403938581
     it('Scenario 2 - Price Moves', async () => {
       vPoolFake.observe.returns([[0, -193170 * 60], []]);
-      vPoolFake.slot0.returns([0, -193170, 0, 0, 0, 0, false]);
+      const tick = -193170;
+      const sqrtPriceX96 = tickToSqrtPriceX96(tick);
+      vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
       await matchNumbers(-8656594064, 26417987111, 13208993555);
     });
 
@@ -195,8 +199,10 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 36522806901
     // ReqMargin (InitialMargin) 73045.613802876
     it('Scenario 4 - Price Moves', async () => {
-      vPoolFake.observe.returns([[0, -194690 * 60], []]);
-      vPoolFake.slot0.returns([0, -194690, 0, 0, 0, 0, false]);
+      const tick = -194690;
+      vPoolFake.observe.returns([[0, tick * 60], []]);
+      const sqrtPriceX96 = tickToSqrtPriceX96(tick);
+      vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
 
       await matchNumbers(-9383544194, 68587488054, 34293744027);
     });
@@ -243,8 +249,10 @@ describe('Market Value and Required Margin', () => {
     // ReqMargin (MaintenanceMargin) 36689.976692
     // ReqMargin (InitialMargin) 73379.953383
     it('Scenario 6 - Price Moves', async () => {
-      vPoolFake.observe.returns([[0, -196480 * 60], []]);
-      vPoolFake.slot0.returns([0, -196480, 0, 0, 0, 0, false]);
+      const tick = -196480;
+      vPoolFake.observe.returns([[0, tick * 60], []]);
+      const sqrtPriceX96 = tickToSqrtPriceX96(tick);
+      vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
 
       await matchNumbers(-68061639307, 75336901712, 37668450856);
     });
@@ -260,8 +268,10 @@ describe('Market Value and Required Margin', () => {
 
       await VTokenPositionSet.setVQuoteAddress(vQuote.address);
 
-      vPoolFake.observe.returns([[0, -198080 * 60], []]);
-      vPoolFake.slot0.returns([0, -198080, 0, 0, 0, 0, false]);
+      const tick = -198080;
+      vPoolFake.observe.returns([[0, tick * 60], []]);
+      const sqrtPriceX96 = tickToSqrtPriceX96(tick);
+      vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
     });
     it('Scenario 1 - Full Range', async () => {
       vPoolWrapperFake.mint.returns([
