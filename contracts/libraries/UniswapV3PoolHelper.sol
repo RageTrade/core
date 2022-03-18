@@ -26,14 +26,7 @@ library UniswapV3PoolHelper {
     /// @param v3Pool The uniswap v3 pool contract
     /// @return sqrtPriceX96 the current sqrt price
     function sqrtPriceCurrent(IUniswapV3Pool v3Pool) internal view returns (uint160 sqrtPriceX96) {
-        int24 tick;
-        (sqrtPriceX96, tick, , , , , ) = v3Pool.slot0();
-        // TODO remove this logic, fix the tests to make it work without the logic.
-        // Sqrt price cannot be zero, unless the pool is uninitialized.
-        // This is a hack to make the tests pass.
-        if (sqrtPriceX96 == 0) {
-            sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
-        }
+        (sqrtPriceX96, , , , , , ) = v3Pool.slot0();
     }
 
     /// @notice Get twap price for uniswap v3 pool
