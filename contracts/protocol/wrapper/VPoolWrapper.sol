@@ -116,7 +116,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         liquidityFeePips = params.liquidityFeePips;
         protocolFeePips = params.protocolFeePips;
 
-        // initializes the funding payment state
+        // initializes the funding payment state by zeroing the funding payment for time 0 to blockTimestamp
         fpGlobal.update(0, 1, _blockTimestamp(), 1, 1);
     }
 
@@ -126,9 +126,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         emit AccruedProtocolFeeCollected(accruedProtocolFeeLast);
     }
 
-    // for updating global funding payment
-    function updateGlobalFundingState() public {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
+    /// @notice Update the global funding state, from clearing house
+    /// @dev Done when clearing house is paused or unpaused, to prevent funding payments from being received
+    ///     or paid when clearing house is in paused mode.
+    /// @param realPriceX128 real price from clearing house
+    /// @param virtualPriceX128 virtual price from clearing house
+    function updateGlobalFundingState(uint256 realPriceX128, uint256 virtualPriceX128) public onlyClearingHouse {
         fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
 
@@ -240,7 +243,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             WrapperValuesInside memory wrapperValuesInside
         )
     {
-        updateGlobalFundingState();
+        // records the funding payment for last updated timestamp to blockTimestamp using current price difference
+        _updateGlobalFundingState();
+
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidity.toInt128(), vPool.tickCurrent());
 
         (uint256 _amount0, uint256 _amount1) = vPool.mint({
@@ -269,7 +274,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             WrapperValuesInside memory wrapperValuesInside
         )
     {
-        updateGlobalFundingState();
+        // records the funding payment for last updated timestamp to blockTimestamp using current price difference
+        _updateGlobalFundingState();
+
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, -liquidity.toInt128(), vPool.tickCurrent());
 
         (uint256 _amount0, uint256 _amount1) = vPool.burn({
@@ -432,6 +439,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 ticksExtended.cross(step.tickNext, fpGlobal, sumFeeGlobalX128);
             }
         }
+    }
+
+    /// @notice Update global funding payment, by getting prices from Clearing House
+    function _updateGlobalFundingState() internal {
+        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
+        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
     }
 
     function _updateTicks(

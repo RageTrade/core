@@ -41,8 +41,6 @@ interface IVPoolWrapper {
 
     function vPool() external view returns (IUniswapV3Pool);
 
-    function updateGlobalFundingState() external;
-
     function getValuesInside(int24 tickLower, int24 tickUpper)
         external
         view
@@ -87,9 +85,11 @@ interface IVPoolWrapper {
 
     function getExtrapolatedSumAX128() external view returns (int256);
 
-    function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
-
     function liquidityFeePips() external view returns (uint24);
 
     function protocolFeePips() external view returns (uint24);
+
+    function updateGlobalFundingState(uint256 realPriceX128, uint256 virtualPriceX128) external;
+
+    function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
 }
