@@ -49,9 +49,7 @@ contracts
 ├── libraries
 │   ├── Account.sol (BUSL-1.1)
 │   ├── AddressHelper.sol (MIT)
-│   ├── Arbitrum.sol (MIT)
 │   ├── Bisection.sol (MIT)
-│   ├── Calldata.sol (MIT)
 │   ├── CollateralDeposit.sol (GPL-2.0-or-later)
 │   ├── FundingPayment.sol (GPL-2.0-or-later)
 │   ├── GoodAddressDeployer.sol (MIT)
@@ -79,9 +77,7 @@ contracts
 │   ├── RageTradeFactory.sol (GPL-2.0-or-later)
 │   ├── clearinghouse
 │   │   ├── ClearingHouse.sol (BUSL-1.1)
-│   │   ├── ClearingHouseArbitrum.sol (BUSL-1.1)
 │   │   ├── ClearingHouseDeployer.sol (GPL-2.0-or-later)
-│   │   ├── ClearingHouseEthereum.sol (BUSL-1.1)
 │   │   ├── ClearingHouseStorage.sol (BUSL-1.1)
 │   │   └── ClearingHouseView.sol (BUSL-1.1)
 │   ├── insurancefund
@@ -100,12 +96,10 @@ contracts
     ├── Extsload.sol (MIT)
     ├── Governable.sol (MIT)
     ├── Multicall.sol (GPL-2.0-or-later)
-    ├── OptimisticGasUsedClaim.sol (MIT)
     ├── ProxyAdmin.sol (MIT)
     ├── ProxyAdminDeployer.sol (MIT)
     ├── SwapSimulator.sol (BUSL-1.1)
     ├── TransparentUpgradeableProxy.sol (MIT)
-    ├── TxGasPriceLimit.sol (MIT)
     └── constants.sol (MIT)
 
 ```
