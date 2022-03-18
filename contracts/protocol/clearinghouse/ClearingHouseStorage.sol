@@ -22,10 +22,6 @@ abstract contract ClearingHouseStorage {
     address public rageTradeFactoryAddress;
     IInsuranceFund public insuranceFund;
 
-    // Oracle for the chain's native currency in terms of settlementToken
-    // Used to provide gas refund in settlementToken to the liquidators
-    IOracle public nativeOracle;
-
     // reserved for adding slots in future
     uint256[100] private _emptySlots2;
 }

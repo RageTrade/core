@@ -47,13 +47,7 @@ export async function testSetup({
 
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
-  ).deploy(
-    clearingHouseLogic.address,
-    vPoolWrapperLogic.address,
-    insuranceFundLogic.address,
-    settlementToken.address,
-    nativeOracle.address,
-  );
+  ).deploy(clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address);
 
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
 
@@ -160,13 +154,7 @@ export async function testSetupVQuote(signer?: SignerWithAddress) {
 
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
-  ).deploy(
-    clearingHouseLogic.address,
-    vPoolWrapperLogic.address,
-    insuranceFundLogic.address,
-    settlementToken.address,
-    nativeOracle.address,
-  );
+  ).deploy(clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address);
 
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
   const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());

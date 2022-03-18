@@ -26,10 +26,9 @@ describe('StorageLayout', () => {
       { label: 'accounts', slot: 209 },
       { label: 'rageTradeFactoryAddress', slot: 210 },
       { label: 'insuranceFund', slot: 211 },
-      { label: 'nativeOracle', slot: 212 },
-      { label: '_paused', slot: 364 },
-      { label: '_governance', slot: 414 },
-      { label: '_teamMultisig', slot: 415 },
+      { label: '_paused', slot: 363 },
+      { label: '_governance', slot: 413 },
+      { label: '_teamMultisig', slot: 414 },
     ]);
   });
 

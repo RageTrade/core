@@ -750,7 +750,6 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
-      nativeOracle.address,
     );
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());

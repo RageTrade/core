@@ -110,13 +110,7 @@ export async function setupClearingHouse({
   // rage trade factory
   const rageTradeFactory = await (
     await hre.ethers.getContractFactory('RageTradeFactory')
-  ).deploy(
-    clearingHouseLogic.address,
-    vPoolWrapperLogic.address,
-    insuranceFundLogic.address,
-    settlementToken.address,
-    nativeOracle.address,
-  );
+  ).deploy(clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address);
 
   // virtual quote
   const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
