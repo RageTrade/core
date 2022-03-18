@@ -29,8 +29,6 @@ import { IClearingHouseSystemActions } from '../../interfaces/clearinghouse/ICle
 
 import { Governable } from '../../utils/Governable.sol';
 import { Multicall } from '../../utils/Multicall.sol';
-import { OptimisticGasUsedClaim } from '../../utils/OptimisticGasUsedClaim.sol';
-
 import { ClearingHouseView } from './ClearingHouseView.sol';
 
 import { console } from 'hardhat/console.sol';
@@ -38,7 +36,6 @@ import { console } from 'hardhat/console.sol';
 contract ClearingHouse is
     IClearingHouse,
     Multicall,
-    OptimisticGasUsedClaim,
     ClearingHouseView, // contains storage
     Initializable, // contains storage
     PausableUpgradeable, // contains storage
@@ -327,17 +324,17 @@ contract ClearingHouse is
         int24 tickLower,
         int24 tickUpper
     ) external {
-        _removeLimitOrder(accountId, poolId, tickLower, tickUpper, 0);
+        _removeLimitOrder(accountId, poolId, tickLower, tickUpper);
     }
 
     /// @inheritdoc IClearingHouseActions
     function liquidateLiquidityPositions(uint256 accountId) external {
-        _liquidateLiquidityPositions(accountId, 0);
+        _liquidateLiquidityPositions(accountId);
     }
 
     /// @inheritdoc IClearingHouseActions
     function liquidateTokenPosition(uint256 targetAccountId, uint32 poolId) external returns (int256 keeperFee) {
-        return _liquidateTokenPosition(targetAccountId, poolId, 0);
+        return _liquidateTokenPosition(targetAccountId, poolId);
     }
 
     /**
@@ -390,18 +387,18 @@ contract ClearingHouse is
                 checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_LIMIT_ORDER) {
                 // REMOVE_LIMIT_ORDER
-                (uint32 poolId, int24 tickLower, int24 tickUpper, uint256 limitOrderFeeAndFixFee) = abi.decode(
+                (uint32 poolId, int24 tickLower, int24 tickUpper) = abi.decode(
                     operations[i].data,
-                    (uint32, int24, int24, uint256)
+                    (uint32, int24, int24)
                 );
-                _removeLimitOrder(accountId, poolId, tickLower, tickUpper, limitOrderFeeAndFixFee);
+                _removeLimitOrder(accountId, poolId, tickLower, tickUpper);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS) {
                 // LIQUIDATE_LIQUIDITY_POSITIONS
-                _liquidateLiquidityPositions(accountId, 0);
+                _liquidateLiquidityPositions(accountId);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
                 // LIQUIDATE_TOKEN_POSITION
                 uint32 poolId = abi.decode(operations[i].data, (uint32));
-                results[i] = abi.encode(_liquidateTokenPosition(accountId, poolId, 0));
+                results[i] = abi.encode(_liquidateTokenPosition(accountId, poolId));
             } else {
                 revert InvalidMulticallOperationType(operations[i].operationType);
             }
@@ -449,17 +446,10 @@ contract ClearingHouse is
         if (!pool.settings.isAllowedForTrade) revert PoolNotAllowedForTrade(poolId);
     }
 
-    function _liquidateLiquidityPositions(uint256 accountId, uint256 gasComputationUnitsClaim)
-        internal
-        whenNotPaused
-        returns (int256 keeperFee)
-    {
+    function _liquidateLiquidityPositions(uint256 accountId) internal whenNotPaused returns (int256 keeperFee) {
         Account.Info storage account = accounts[accountId];
         int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(
-            _getFixFee(gasComputationUnitsClaim),
-            protocol
-        );
+        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(0, protocol);
         int256 accountFee = keeperFee + insuranceFundFee;
 
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
@@ -470,20 +460,16 @@ contract ClearingHouse is
     }
 
     // TODO move this to Account library. is it possible?
-    function _liquidateTokenPosition(
-        uint256 accountId,
-        uint32 poolId,
-        uint256 gasComputationUnitsClaim
-    ) internal whenNotPaused returns (int256 keeperFee) {
+    function _liquidateTokenPosition(uint256 accountId, uint32 poolId)
+        internal
+        whenNotPaused
+        returns (int256 keeperFee)
+    {
         Account.Info storage account = accounts[accountId];
 
         _checkPoolId(poolId);
         int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateTokenPosition(
-            poolId,
-            _getFixFee(gasComputationUnitsClaim),
-            protocol
-        );
+        (keeperFee, insuranceFundFee) = account.liquidateTokenPosition(poolId, 0, protocol);
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
         protocol.settlementToken.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
@@ -493,13 +479,12 @@ contract ClearingHouse is
         uint256 accountId,
         uint32 poolId,
         int24 tickLower,
-        int24 tickUpper,
-        uint256 gasComputationUnitsClaim
+        int24 tickUpper
     ) internal whenNotPaused returns (uint256 keeperFee) {
         Account.Info storage account = accounts[accountId];
 
         _checkPoolId(poolId);
-        keeperFee = protocol.removeLimitOrderFee + _getFixFee(gasComputationUnitsClaim);
+        keeperFee = protocol.removeLimitOrderFee;
 
         account.removeLimitOrder(poolId, tickLower, tickUpper, keeperFee, protocol);
 
@@ -531,12 +516,5 @@ contract ClearingHouse is
         protocol.collaterals[collateralId] = Collateral(collateralToken, collateralSettings);
 
         emit CollateralSettingsUpdated(collateralToken, collateralSettings);
-    }
-
-    /// @notice Gets fix fee
-    /// @dev Allowed to be overriden for specific chain implementations
-    /// @return fixFee amount of fixFee in notional units
-    function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
-        return 0;
     }
 }
