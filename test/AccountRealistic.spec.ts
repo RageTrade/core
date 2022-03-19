@@ -83,19 +83,33 @@ describe('Account Library Test Realistic', () => {
     vPoolWrapperFake.swap.returns((input: any) => {
       if (input.amountSpecified.gt(0) === input.swapVTokenForVQuote) {
         return [
-          input.amountSpecified,
-          input.amountSpecified
-            .mul(priceX128)
-            .div(1n << 128n)
-            .mul(-1),
+          {
+            amountSpecified: input.amountSpecified,
+            vTokenIn: input.amountSpecified,
+            vQuoteIn: input.amountSpecified
+              .mul(priceX128)
+              .div(1n << 128n)
+              .mul(-1),
+            liquidityFees: 0,
+            protocolFees: 0,
+            sqrtPriceX96Start: 0,
+            sqrtPriceX96End: 0,
+          },
         ];
       } else {
         return [
-          input.amountSpecified
-            .mul(-1)
-            .mul(1n << 128n)
-            .div(priceX128),
-          input.amountSpecified,
+          {
+            amountSpecified: input.amountSpecified,
+            vTokenIn: input.amountSpecified
+              .mul(-1)
+              .mul(1n << 128n)
+              .div(priceX128),
+            vQuoteIn: input.amountSpecified,
+            liquidityFees: 0,
+            protocolFees: 0,
+            sqrtPriceX96Start: 0,
+            sqrtPriceX96End: 0,
+          },
         ];
       }
     });

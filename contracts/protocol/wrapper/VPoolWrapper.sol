@@ -158,19 +158,19 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @param amountSpecified: The amount of the swap, which implicitly configures the swap as exact input (positive), or exact output (negative)
     /// @param sqrtPriceLimitX96: The Q64.96 sqrt price limit. If zero for one, the price cannot be less than this
     /// value after the swap. If one for zero, the price cannot be greater than this value after the swap.
+    /// @return swapResult swap return values, which contain the execution details of the swap
     function swap(
         bool swapVTokenForVQuote, // zeroForOne
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
-    ) public onlyClearingHouse returns (int256 vTokenAmount, int256 vQuoteAmount) {
+    ) public onlyClearingHouse returns (SwapResult memory swapResult) {
         bool exactIn = amountSpecified >= 0;
 
         if (sqrtPriceLimitX96 == 0) {
             sqrtPriceLimitX96 = swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
         }
 
-        IClearingHouseStructures.SwapValues memory swapValues;
-        swapValues.amountSpecified = amountSpecified;
+        swapResult.amountSpecified = amountSpecified;
 
         SwapMath.beforeSwap(
             exactIn,
@@ -178,7 +178,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             UNISWAP_V3_DEFAULT_FEE_TIER,
             liquidityFeePips,
             protocolFeePips,
-            swapValues
+            swapResult
         );
 
         {
@@ -188,25 +188,24 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             (cache.realPriceX128, cache.virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
 
             // simulate swap and update our tick states
-            (int256 vTokenIn_simulated, int256 vQuoteIn_simulated) = vPool.simulateSwap(
-                swapVTokenForVQuote,
-                swapValues.amountSpecified,
-                sqrtPriceLimitX96,
-                cache,
-                _onSwapStep
-            );
+            (int256 vTokenIn_simulated, int256 vQuoteIn_simulated, SimulateSwap.State memory state) = vPool
+                .simulateSwap(swapVTokenForVQuote, swapResult.amountSpecified, sqrtPriceLimitX96, cache, _onSwapStep);
+
+            // store prices for the simulated swap in the swap result
+            swapResult.sqrtPriceX96Start = cache.sqrtPriceX96Start;
+            swapResult.sqrtPriceX96End = state.sqrtPriceX96;
 
             // execute actual swap on uniswap
-            (swapValues.vTokenIn, swapValues.vQuoteIn) = vPool.swap(
+            (swapResult.vTokenIn, swapResult.vQuoteIn) = vPool.swap(
                 address(this),
                 swapVTokenForVQuote,
-                swapValues.amountSpecified,
+                swapResult.amountSpecified,
                 sqrtPriceLimitX96,
                 ''
             );
 
             // simulated swap should be identical to actual swap
-            assert(vTokenIn_simulated == swapValues.vTokenIn && vQuoteIn_simulated == swapValues.vQuoteIn);
+            assert(vTokenIn_simulated == swapResult.vTokenIn && vQuoteIn_simulated == swapResult.vQuoteIn);
         }
 
         SwapMath.afterSwap(
@@ -215,18 +214,16 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             UNISWAP_V3_DEFAULT_FEE_TIER,
             liquidityFeePips,
             protocolFeePips,
-            swapValues
+            swapResult
         );
 
         // record the protocol fee, for withdrawal in future
-        accruedProtocolFee += swapValues.protocolFees;
+        accruedProtocolFee += swapResult.protocolFees;
 
         // burn the tokens received from the swap
         _vBurn();
 
-        emit Swap(swapValues.vTokenIn, swapValues.vQuoteIn, swapValues.liquidityFees, swapValues.protocolFees);
-
-        return (swapValues.vTokenIn, swapValues.vQuoteIn);
+        emit Swap(swapResult);
     }
 
     function mint(

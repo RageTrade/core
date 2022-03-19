@@ -102,7 +102,7 @@ describe('SimulateSwap', () => {
 
   describe('#onSwapStep', () => {
     beforeEach(async () => {
-      await test.clearSwapCache();
+      await test.clearSwapSteps();
     });
 
     for (const { zeroForOne, amountSpecified } of testCases) {

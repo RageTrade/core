@@ -219,7 +219,7 @@ describe('PoolWrapper', () => {
           const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
           expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
 
-          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+          const expectedSumBIncrease = SwapEvent.args.swapResult.vTokenIn
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -233,7 +233,7 @@ describe('PoolWrapper', () => {
         it('buy | exactOut vToken', async () => {
           const amountSpecified = parseUnits('-50', 18); // vToken
           const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(false, amountSpecified, 0));
-          expect(SwapEvent.args.vTokenIn.abs()).eq(amountSpecified.abs());
+          expect(SwapEvent.args.swapResult.vTokenIn.abs()).eq(amountSpecified.abs());
 
           const globalState = await getGlobal();
 
@@ -241,7 +241,7 @@ describe('PoolWrapper', () => {
           const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
           expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
 
-          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+          const expectedSumBIncrease = SwapEvent.args.swapResult.vTokenIn
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -255,7 +255,7 @@ describe('PoolWrapper', () => {
         it('sell | exactIn vToken', async () => {
           const amountSpecified = parseUnits('50', 18); // vToken
           const SwapEvent = await extractSwapEvent(vPoolWrapper.swap(true, amountSpecified, 0));
-          expect(SwapEvent.args.vTokenIn.abs()).eq(amountSpecified.abs());
+          expect(SwapEvent.args.swapResult.vTokenIn.abs()).eq(amountSpecified.abs());
 
           const globalState = await getGlobal();
 
@@ -263,7 +263,7 @@ describe('PoolWrapper', () => {
           const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
           expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
 
-          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+          const expectedSumBIncrease = SwapEvent.args.swapResult.vTokenIn
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -284,7 +284,7 @@ describe('PoolWrapper', () => {
           const valuesInside60 = await vPoolWrapper.getValuesInside(-60, 60);
           expect(valuesInside60.sumBInsideX128).to.eq(globalState.sumBX128);
 
-          const expectedSumBIncrease = SwapEvent.args.vTokenIn
+          const expectedSumBIncrease = SwapEvent.args.swapResult.vTokenIn
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -399,7 +399,7 @@ describe('PoolWrapper', () => {
           // since no trades went outside -20 and 20, values inside should be same as global
           expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
-          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+          const expectedFeeIncrease = SwapEvent.args.swapResult.liquidityFees
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -416,7 +416,7 @@ describe('PoolWrapper', () => {
           // since no trades went outside -20 and 20, values inside should be same as global
           expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
-          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+          const expectedFeeIncrease = SwapEvent.args.swapResult.liquidityFees
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -433,7 +433,7 @@ describe('PoolWrapper', () => {
           // since no trades went outside -20 and 20, values inside should be same as global
           expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
-          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+          const expectedFeeIncrease = SwapEvent.args.swapResult.liquidityFees
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);
@@ -450,7 +450,7 @@ describe('PoolWrapper', () => {
           // since no trades went outside -20 and 20, values inside should be same as global
           expect(valuesInside60.sumFeeInsideX128).to.eq(globalState.sumFeeGlobalX128);
 
-          const expectedFeeIncrease = SwapEvent.args.liquidityFees
+          const expectedFeeIncrease = SwapEvent.args.swapResult.liquidityFees
             // taking per liquidity
             .mul(Q128)
             .div(liquidity1);

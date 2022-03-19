@@ -130,15 +130,15 @@ contract VPoolWrapperMock is IVPoolWrapper {
         bool swapVTokenForVQuote, // zeroForOne
         int256 amountSpecified,
         uint160
-    ) public pure returns (int256 vTokenAmount, int256 vQuoteAmount) {
+    ) public pure returns (SwapResult memory swapResult) {
         if (amountSpecified > 0 == swapVTokenForVQuote) {
             // ETH exactIn || ETH exactOut
-            vTokenAmount = amountSpecified;
-            vQuoteAmount = -amountSpecified * 4000;
+            swapResult.vTokenIn = amountSpecified;
+            swapResult.vQuoteIn = -amountSpecified * 4000;
         } else {
             // USDC exactIn || USDC exactOut
-            vTokenAmount = -amountSpecified / 4000;
-            vQuoteAmount = amountSpecified;
+            swapResult.vTokenIn = -amountSpecified / 4000;
+            swapResult.vQuoteIn = amountSpecified;
         }
     }
 
