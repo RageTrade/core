@@ -233,7 +233,7 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
   ) {
     await settlementToken.connect(user).approve(clearingHouseTest.address, vTokenAmount);
     const truncatedVQuoteAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
-    await clearingHouseTest.connect(user).addMargin(userAccountNo, truncatedVQuoteAddress, vTokenAmount);
+    await clearingHouseTest.connect(user).updateMargin(userAccountNo, truncatedVQuoteAddress, vTokenAmount);
   }
 
   async function swapToken(
@@ -607,8 +607,8 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
     tokenSymbol: string,
     decimals: BigNumberish,
     rageTradeFactory: RageTradeFactory,
-    initialMarginRatio: BigNumberish,
-    maintainanceMarginRatio: BigNumberish,
+    initialMarginRatioBps: BigNumberish,
+    maintainanceMarginRatioBps: BigNumberish,
     twapDuration: BigNumberish,
     initialPrice: BigNumberish,
     lpFee: BigNumberish,
@@ -647,8 +647,9 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
         cTokenDecimals: decimals,
       },
       poolInitialSettings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
+        maxVirtualPriceDeviationRatioBps: 10000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,
@@ -670,8 +671,8 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
   }
 
   async function deployWrappers(rageTradeFactory: RageTradeFactory) {
-    const initialMargin = 20_000;
-    const maintainanceMargin = 10_000;
+    const initialMargin = 2000;
+    const maintainanceMargin = 1000;
     const twapDuration = 300;
     const initialPrice = tickToSqrtPriceX96(-198045);
     const initialPrice1 = tickToSqrtPriceX96(64197);
@@ -794,15 +795,24 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
   async function getPoolSettings(vTokenAddress: string) {
     let {
       settings: {
-        initialMarginRatio,
-        maintainanceMarginRatio,
+        initialMarginRatioBps,
+        maintainanceMarginRatioBps,
+        maxVirtualPriceDeviationRatioBps,
         twapDuration,
         isAllowedForTrade,
         isCrossMargined,
         oracle,
       },
     } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
-    return { initialMarginRatio, maintainanceMarginRatio, twapDuration, isAllowedForTrade, isCrossMargined, oracle };
+    return {
+      initialMarginRatioBps,
+      maintainanceMarginRatioBps,
+      maxVirtualPriceDeviationRatioBps,
+      twapDuration,
+      isAllowedForTrade,
+      isCrossMargined,
+      oracle,
+    };
   }
 
   before(async () => {
