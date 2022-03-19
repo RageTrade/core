@@ -108,12 +108,13 @@ contract ChainlinkOracle is IOracle {
         )
     {
         (uint80 round, int256 latestPrice, , uint256 latestTS, ) = aggregator.latestRoundData();
-        finalPrice = uint256(latestPrice);
 
         if (latestPrice < 0 && round <= 0) revert NotEnoughHistory();
 
         if (latestPrice < 0) {
             (round, finalPrice, latestTS) = _getRoundData(round - 1);
+        } else {
+            finalPrice = uint256(latestPrice);
         }
         return (round, finalPrice, latestTS);
     }
