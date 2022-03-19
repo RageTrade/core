@@ -141,9 +141,29 @@ describe('Account Library Test Basic', () => {
 
     vPoolWrapperFake.swap.returns((input: any) => {
       if (input.amountSpecified.gt(0) === input.swapVTokenForVQuote) {
-        return [input.amountSpecified, input.amountSpecified.mul(-1).mul(4000)];
+        return [
+          {
+            amountSpecified: input.amountSpecified,
+            vTokenIn: input.amountSpecified,
+            vQuoteIn: input.amountSpecified.mul(-1).mul(4000),
+            liquidityFees: 0,
+            protocolFees: 0,
+            sqrtPriceX96Start: 0,
+            sqrtPriceX96End: 0,
+          },
+        ];
       } else {
-        return [input.amountSpecified.mul(-1).div(4000), input.amountSpecified];
+        return [
+          {
+            amountSpecified: input.amountSpecified,
+            vTokenIn: input.amountSpecified.mul(-1).div(4000),
+            vQuoteIn: input.amountSpecified,
+            liquidityFees: 0,
+            protocolFees: 0,
+            sqrtPriceX96Start: 0,
+            sqrtPriceX96End: 0,
+          },
+        ];
       }
     });
 

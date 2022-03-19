@@ -349,7 +349,17 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 4 - Short Trade Position + Long Range)', async () => {
-      vPoolWrapperFake.swap.returns([100000000000000000000n, -249991359911]);
+      vPoolWrapperFake.swap.returns([
+        {
+          amountSpecified: 100000000000000000000n,
+          vTokenIn: 100000000000000000000n,
+          vQuoteIn: -249991359911n,
+          liquidityFees: 0,
+          protocolFees: 0,
+          sqrtPriceX96Start: 0,
+          sqrtPriceX96End: 0,
+        },
+      ]);
       await swap(-100000000000000000000n, 0, false, false);
 
       await matchNumbers(0, 49998271982, 24999135991);
@@ -379,7 +389,17 @@ describe('Market Value and Required Margin', () => {
     });
 
     it('Scenario 5 - Long Trade Position + Short Range)', async () => {
-      vPoolWrapperFake.swap.returns([-100000000000000000000n, 249991359914]);
+      vPoolWrapperFake.swap.returns([
+        {
+          amountSpecified: -100000000000000000000n,
+          vTokenIn: -100000000000000000000n,
+          vQuoteIn: 249991359914n,
+          liquidityFees: 0,
+          protocolFees: 0,
+          sqrtPriceX96Start: 0,
+          sqrtPriceX96End: 0,
+        },
+      ]);
       await swap(100000000000000000000n, 0, false, false);
 
       await matchNumbers(-3, 49998271982, 24999135991);

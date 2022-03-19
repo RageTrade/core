@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 import { SignedMath } from './SignedMath.sol';
 
-import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { console } from 'hardhat/console.sol';
 
@@ -12,21 +12,21 @@ import { console } from 'hardhat/console.sol';
 library SwapMath {
     using SignedMath for int256;
 
-    /// @notice Executed before swap call to uniswap, to inflate the swap values
+    /// @notice Executed before swap call to uniswap, to inflate the swap result values
     /// @param exactIn Whether user specified in amount or out amount
     /// @param swapVTokenForVQuote swap direction
     /// @param uniswapFeePips fee ratio that will be collected by uniswap
     /// @param liquidityFeePips fee ratio to be applied in rage trade for paying to liquidity providers
     /// @param protocolFeePips fee ratio to be applied in rage trade for protocol treasury
-    /// @param swapValues pointer to the swap values
-    /// @dev this method mutates the data pointed by swapValues
+    /// @param swapResult pointer to the swap result struct
+    /// @dev this method mutates the data pointed by swapResult
     function beforeSwap(
         bool exactIn,
         bool swapVTokenForVQuote,
         uint24 uniswapFeePips,
         uint24 liquidityFeePips,
         uint24 protocolFeePips,
-        IClearingHouseStructures.SwapValues memory swapValues
+        IVPoolWrapper.SwapResult memory swapResult
     ) internal pure {
         // inflate or deinfate to undo uniswap fees if necessary, and account for our fees
         if (exactIn) {
@@ -34,24 +34,24 @@ library SwapMath {
                 // CASE: exactIn vToken
                 // fee: not now, will collect fee in vQuote after swap
                 // inflate: for undoing the uniswap fees
-                swapValues.amountSpecified = inflate(swapValues.amountSpecified, uniswapFeePips);
+                swapResult.amountSpecified = inflate(swapResult.amountSpecified, uniswapFeePips);
             } else {
                 // CASE: exactIn vQuote
                 // fee: remove fee and do smaller swap, so trader gets less vTokens
                 // here, amountSpecified == swap amount + fee
-                (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
-                    swapValues.amountSpecified,
+                (swapResult.liquidityFees, swapResult.protocolFees) = calculateFees(
+                    swapResult.amountSpecified,
                     AmountTypeEnum.VQUOTE_AMOUNT_PLUS_FEES,
                     liquidityFeePips,
                     protocolFeePips
                 );
-                swapValues.amountSpecified = includeFees(
-                    swapValues.amountSpecified,
-                    swapValues.liquidityFees + swapValues.protocolFees,
+                swapResult.amountSpecified = includeFees(
+                    swapResult.amountSpecified,
+                    swapResult.liquidityFees + swapResult.protocolFees,
                     IncludeFeeEnum.SUBTRACT_FEE
                 );
                 // inflate: uniswap will collect fee so inflate to undo it
-                swapValues.amountSpecified = inflate(swapValues.amountSpecified, uniswapFeePips);
+                swapResult.amountSpecified = inflate(swapResult.amountSpecified, uniswapFeePips);
             }
         } else {
             if (!swapVTokenForVQuote) {
@@ -62,65 +62,65 @@ library SwapMath {
                 // CASE: exactOut vQuote
                 // fee: buy more vQuote (short more vToken) so that fee can be removed in vQuote
                 // here, amountSpecified + fee == swap amount
-                (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
-                    swapValues.amountSpecified,
+                (swapResult.liquidityFees, swapResult.protocolFees) = calculateFees(
+                    swapResult.amountSpecified,
                     AmountTypeEnum.VQUOTE_AMOUNT_MINUS_FEES,
                     liquidityFeePips,
                     protocolFeePips
                 );
-                swapValues.amountSpecified = includeFees(
-                    swapValues.amountSpecified,
-                    swapValues.liquidityFees + swapValues.protocolFees,
+                swapResult.amountSpecified = includeFees(
+                    swapResult.amountSpecified,
+                    swapResult.liquidityFees + swapResult.protocolFees,
                     IncludeFeeEnum.ADD_FEE
                 );
             }
         }
     }
 
-    /// @notice Executed after swap call to uniswap, to deinflate the swap values
+    /// @notice Executed after swap call to uniswap, to deinflate the swap result values
     /// @param exactIn Whether user specified in amount or out amount
     /// @param swapVTokenForVQuote swap direction
     /// @param uniswapFeePips fee that will be collected by uniswap
     /// @param liquidityFeePips fee ratio to be applied in rage trade for paying to liquidity providers
     /// @param protocolFeePips fee ratio to be applied in rage trade for protocol treasury
-    /// @param swapValues pointer to the swap values
-    /// @dev This method mutates the data pointed by swapValues
+    /// @param swapResult pointer to the swap result struct
+    /// @dev This method mutates the data pointed by swapResult
     function afterSwap(
         bool exactIn,
         bool swapVTokenForVQuote,
         uint24 uniswapFeePips,
         uint24 liquidityFeePips,
         uint24 protocolFeePips,
-        IClearingHouseStructures.SwapValues memory swapValues
+        IVPoolWrapper.SwapResult memory swapResult
     ) internal pure {
         // swap is done so now adjusting vTokenIn and vQuoteIn amounts to remove uniswap fees and add our fees
         if (exactIn) {
             if (swapVTokenForVQuote) {
                 // CASE: exactIn vToken
                 // deinflate: vToken amount was inflated so that uniswap can collect fee
-                swapValues.vTokenIn = deinflate(swapValues.vTokenIn, uniswapFeePips);
+                swapResult.vTokenIn = deinflate(swapResult.vTokenIn, uniswapFeePips);
 
                 // fee: collect the fee, give less vQuote to trader
                 // here, vQuoteIn == swap amount
-                (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
-                    swapValues.vQuoteIn,
+                (swapResult.liquidityFees, swapResult.protocolFees) = calculateFees(
+                    swapResult.vQuoteIn,
                     AmountTypeEnum.ZERO_FEE_VQUOTE_AMOUNT,
                     liquidityFeePips,
                     protocolFeePips
                 );
-                swapValues.vQuoteIn = includeFees(
-                    swapValues.vQuoteIn,
-                    swapValues.liquidityFees + swapValues.protocolFees,
+                swapResult.vQuoteIn = includeFees(
+                    swapResult.vQuoteIn,
+                    swapResult.liquidityFees + swapResult.protocolFees,
                     IncludeFeeEnum.SUBTRACT_FEE
                 );
             } else {
                 // CASE: exactIn vQuote
                 // deinflate: vQuote amount was inflated, hence need to deinflate for generating final statement
-                swapValues.vQuoteIn = deinflate(swapValues.vQuoteIn, uniswapFeePips);
+                swapResult.vQuoteIn = deinflate(swapResult.vQuoteIn, uniswapFeePips);
                 // fee: fee is already removed before swap, lets include it to the final bill, so that trader pays for it
-                swapValues.vQuoteIn = includeFees(
-                    swapValues.vQuoteIn,
-                    swapValues.liquidityFees + swapValues.protocolFees,
+                swapResult.vQuoteIn = includeFees(
+                    swapResult.vQuoteIn,
+                    swapResult.liquidityFees + swapResult.protocolFees,
                     IncludeFeeEnum.ADD_FEE
                 );
             }
@@ -128,28 +128,28 @@ library SwapMath {
             if (!swapVTokenForVQuote) {
                 // CASE: exactOut vToken
                 // deinflate: uniswap want to collect fee in vQuote and hence ask more, so need to deinflate it
-                swapValues.vQuoteIn = deinflate(swapValues.vQuoteIn, uniswapFeePips);
+                swapResult.vQuoteIn = deinflate(swapResult.vQuoteIn, uniswapFeePips);
                 // fee: collecting fees in vQuote
                 // here, vQuoteIn == swap amount
-                (swapValues.liquidityFees, swapValues.protocolFees) = calculateFees(
-                    swapValues.vQuoteIn,
+                (swapResult.liquidityFees, swapResult.protocolFees) = calculateFees(
+                    swapResult.vQuoteIn,
                     AmountTypeEnum.ZERO_FEE_VQUOTE_AMOUNT,
                     liquidityFeePips,
                     protocolFeePips
                 );
-                swapValues.vQuoteIn = includeFees(
-                    swapValues.vQuoteIn,
-                    swapValues.liquidityFees + swapValues.protocolFees,
+                swapResult.vQuoteIn = includeFees(
+                    swapResult.vQuoteIn,
+                    swapResult.liquidityFees + swapResult.protocolFees,
                     IncludeFeeEnum.ADD_FEE
                 );
             } else {
                 // CASE: exactOut vQuote
                 // deinflate: uniswap want to collect fee in vToken and hence ask more, so need to deinflate it
-                swapValues.vTokenIn = deinflate(swapValues.vTokenIn, uniswapFeePips);
+                swapResult.vTokenIn = deinflate(swapResult.vTokenIn, uniswapFeePips);
                 // fee: already calculated before, subtract now
-                swapValues.vQuoteIn = includeFees(
-                    swapValues.vQuoteIn,
-                    swapValues.liquidityFees + swapValues.protocolFees,
+                swapResult.vQuoteIn = includeFees(
+                    swapResult.vQuoteIn,
+                    swapResult.liquidityFees + swapResult.protocolFees,
                     IncludeFeeEnum.SUBTRACT_FEE
                 );
             }

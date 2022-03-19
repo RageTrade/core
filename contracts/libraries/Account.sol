@@ -94,11 +94,15 @@ library Account {
     /// @param poolId truncated address of vtoken whose position was taken
     /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
     /// @param vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
+    /// @param sqrtPriceX96Start shows the sqrtPriceX96 at the start of trade execution, can be 0 if not on v3Pool
+    /// @param sqrtPriceX96End shows the sqrtPriceX96 at the end of trade execution, can be 0 if not on v3Pool
     event TokenPositionChanged(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int256 vTokenAmountOut,
-        int256 vQuoteAmountOut
+        int256 vQuoteAmountOut,
+        uint160 sqrtPriceX96Start,
+        uint160 sqrtPriceX96End
     );
 
     /// @notice denotes token position change due to liquidity add/remove
@@ -567,7 +571,9 @@ library Account {
             targetAccount.id,
             poolId,
             balanceAdjustments.vTokenIncrease,
-            balanceAdjustments.vQuoteIncrease
+            balanceAdjustments.vQuoteIncrease,
+            0, // sqrtPriceX96Start set as zero because this is not a swap on the v3Pool
+            0 // sqrtPriceX96End set as zero because this is not a swap on the v3Pool
         );
 
         liquidatorBalanceAdjustments = IClearingHouseStructures.BalanceAdjustments({
@@ -581,7 +587,9 @@ library Account {
             liquidatorAccount.id,
             poolId,
             liquidatorBalanceAdjustments.vTokenIncrease,
-            liquidatorBalanceAdjustments.vQuoteIncrease
+            liquidatorBalanceAdjustments.vQuoteIncrease,
+            0, // sqrtPriceX96Start set as zero because this is not a swap on the v3Pool
+            0 // sqrtPriceX96End set as zero because this is not a swap on the v3Pool
         );
     }
 

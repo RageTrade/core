@@ -19,6 +19,7 @@ library SimulateSwap {
     using TickBitmapExtended for function(int16) external view returns (uint256);
 
     error ZeroAmount();
+    error InvalidSqrtPriceLimit(uint160 sqrtPriceLimitX96);
 
     struct Cache {
         // price at the beginning of the swap
@@ -38,7 +39,6 @@ library SimulateSwap {
         uint256 virtualPriceX128;
     }
 
-    // the top level state of the swap, the results of which are recorded in storage at the end
     struct State {
         // the amount remaining to be swapped in/out of the input/output asset
         int256 amountSpecifiedRemaining;
@@ -73,23 +73,16 @@ library SimulateSwap {
         uint256 feeAmount;
     }
 
-    function simulateSwap(
-        IUniswapV3Pool v3Pool,
-        bool zeroForOne,
-        int256 amountSpecified,
-        uint160 sqrtPriceLimitX96,
-        function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
-    ) internal returns (int256 amount0, int256 amount1) {
-        SimulateSwap.Cache memory cache;
-        return simulateSwap(v3Pool, zeroForOne, amountSpecified, sqrtPriceLimitX96, cache, onSwapStep);
-    }
-
     /// @notice Simulates a swap over an Uniswap V3 Pool, allowing to handle tick crosses.
+    /// @param v3Pool uniswap v3 pool address
     /// @param zeroForOne direction of swap, true means swap zero for one
     /// @param amountSpecified amount to swap in/out
     /// @param sqrtPriceLimitX96 the maximum price to swap to, if this price is reached, then the swap is stopped partially
-    /// @param cache swap cache
+    /// @param cache the swap cache, can be passed empty or with some values filled in to prevent STATICCALLS to v3Pool
     /// @param onSwapStep function to call for each step of the swap, passing in the swap state and the step computations
+    /// @return amount0 token0 amount
+    /// @return amount1 token1 amount
+    /// @return state swap state at the end of the swap
     function simulateSwap(
         IUniswapV3Pool v3Pool,
         bool zeroForOne,
@@ -97,29 +90,40 @@ library SimulateSwap {
         uint160 sqrtPriceLimitX96,
         SimulateSwap.Cache memory cache,
         function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
-    ) internal returns (int256 amount0, int256 amount1) {
+    )
+        internal
+        returns (
+            int256 amount0,
+            int256 amount1,
+            SimulateSwap.State memory state
+        )
+    {
         if (amountSpecified == 0) revert ZeroAmount();
 
-        // populate initial values for swap cache
-        (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();
-        cache.liquidityStart = v3Pool.liquidity();
+        // if cache.sqrtPriceX96Start is not set, then make a STATICCALL to v3Pool
+        if (cache.sqrtPriceX96Start == 0) {
+            (cache.sqrtPriceX96Start, cache.tickStart, , , , cache.feeProtocol, ) = v3Pool.slot0();
+        }
 
-        // tickSpacing of 0 is invalid
+        // if cache.liquidityStart is not set, then make a STATICCALL to v3Pool
+        if (cache.liquidityStart == 0) cache.liquidityStart = v3Pool.liquidity();
+
+        // if cache.tickSpacing is not set, then make a STATICCALL to v3Pool
         if (cache.tickSpacing == 0) {
             cache.fee = v3Pool.fee();
             cache.tickSpacing = v3Pool.tickSpacing();
         }
 
-        require(
+        // ensure that the sqrtPriceLimitX96 makes sense
+        if (
             zeroForOne
-                ? sqrtPriceLimitX96 < cache.sqrtPriceX96Start && sqrtPriceLimitX96 > TickMath.MIN_SQRT_RATIO
-                : sqrtPriceLimitX96 > cache.sqrtPriceX96Start && sqrtPriceLimitX96 < TickMath.MAX_SQRT_RATIO,
-            'SPL'
-        );
+                ? sqrtPriceLimitX96 > cache.sqrtPriceX96Start || sqrtPriceLimitX96 < TickMath.MIN_SQRT_RATIO
+                : sqrtPriceLimitX96 < cache.sqrtPriceX96Start || sqrtPriceLimitX96 > TickMath.MAX_SQRT_RATIO
+        ) revert InvalidSqrtPriceLimit(sqrtPriceLimitX96);
 
         bool exactInput = amountSpecified > 0;
 
-        SimulateSwap.State memory state = SimulateSwap.State({
+        state = SimulateSwap.State({
             amountSpecifiedRemaining: amountSpecified,
             amountCalculated: 0,
             sqrtPriceX96: cache.sqrtPriceX96Start,
@@ -179,6 +183,7 @@ library SimulateSwap {
                 );
             }
 
+            // jump to the method that handles the swap step
             onSwapStep(zeroForOne, cache, state, step);
 
             // shift tick if we reached the next price
@@ -201,9 +206,43 @@ library SimulateSwap {
             }
         }
 
-        return
-            zeroForOne == exactInput
-                ? (amountSpecified - state.amountSpecifiedRemaining, state.amountCalculated)
-                : (state.amountCalculated, amountSpecified - state.amountSpecifiedRemaining);
+        (amount0, amount1) = zeroForOne == exactInput
+            ? (amountSpecified - state.amountSpecifiedRemaining, state.amountCalculated)
+            : (state.amountCalculated, amountSpecified - state.amountSpecifiedRemaining);
+    }
+
+    /// @notice Overloads simulate swap to prevent passing a cache input
+    /// @param v3Pool uniswap v3 pool address
+    /// @param zeroForOne direction of swap, true means swap zero for one
+    /// @param amountSpecified amount to swap in/out
+    /// @param sqrtPriceLimitX96 the maximum price to swap to, if this price is reached, then the swap is stopped partially
+    /// @param onSwapStep function to call for each step of the swap, passing in the swap state and the step computations
+    /// @return amount0 token0 amount
+    /// @return amount1 token1 amount
+    /// @return state swap state at the end of the swap
+    /// @return cache swap cache populated with values, can be used for subsequent simulations
+    function simulateSwap(
+        IUniswapV3Pool v3Pool,
+        bool zeroForOne,
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96,
+        function(bool, SimulateSwap.Cache memory, SimulateSwap.State memory, SimulateSwap.Step memory) onSwapStep
+    )
+        internal
+        returns (
+            int256 amount0,
+            int256 amount1,
+            SimulateSwap.State memory state,
+            SimulateSwap.Cache memory cache
+        )
+    {
+        (amount0, amount1, state) = simulateSwap(
+            v3Pool,
+            zeroForOne,
+            amountSpecified,
+            sqrtPriceLimitX96,
+            cache,
+            onSwapStep
+        );
     }
 }

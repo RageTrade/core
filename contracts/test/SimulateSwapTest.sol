@@ -33,7 +33,6 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         SimulateSwap.State state;
         SimulateSwap.Step step;
     }
-    SimulateSwap.Cache _cache;
     SwapStep[] _steps;
 
     FundingPayment.Info public fpGlobal;
@@ -44,8 +43,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         vPool = vPool_;
     }
 
-    function clearSwapCache() external {
-        delete _cache;
+    function clearSwapSteps() external {
         delete _steps;
     }
 
@@ -58,7 +56,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96
     ) public returns (int256 amount0, int256 amount1) {
-        return vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
+        (amount0, amount1, , ) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapStep);
     }
 
     function simulateSwap2(
@@ -74,8 +72,7 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
             SwapStep[] memory steps
         )
     {
-        (amount0, amount1) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapSwap);
-        cache = _cache;
+        (amount0, amount1, , cache) = vPool.simulateSwap(zeroForOne, amountSpecified, sqrtPriceLimitX96, _onSwapStep);
         steps = _steps;
     }
 
@@ -89,24 +86,22 @@ contract SimulateSwapTest is IUniswapV3SwapCallback {
         SimulateSwap.Cache memory cache;
         cache.fee = fee;
         cache.tickSpacing = vPool.tickSpacing();
-        return
-            vPool.simulateSwap(
-                swapVTokenForVQuote,
-                amountSpecified,
-                swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
-                cache,
-                _onSwapSwap
-            );
+        (vTokenIn, vQuoteIn, ) = vPool.simulateSwap(
+            swapVTokenForVQuote,
+            amountSpecified,
+            swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
+            cache,
+            _onSwapStep
+        );
     }
 
-    function _onSwapSwap(
+    function _onSwapStep(
         bool,
-        SimulateSwap.Cache memory cache,
+        SimulateSwap.Cache memory,
         SimulateSwap.State memory state,
         SimulateSwap.Step memory step
     ) internal {
         // for reading
-        _cache = cache;
         _steps.push(SwapStep({ state: state, step: step }));
     }
 

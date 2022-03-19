@@ -190,22 +190,29 @@ library VTokenPositionSet {
         IVPoolWrapper wrapper,
         Protocol.Info storage protocol
     ) internal returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        (vTokenAmountOut, vQuoteAmountOut) = wrapper.swap(
+        IVPoolWrapper.SwapResult memory swapResult = wrapper.swap(
             swapParams.amount < 0,
             swapParams.isNotional ? swapParams.amount : -swapParams.amount,
             swapParams.sqrtPriceLimit
         );
 
         // change direction basis uniswap to balance increase
-        vTokenAmountOut = -vTokenAmountOut;
-        vQuoteAmountOut = -vQuoteAmountOut;
+        vTokenAmountOut = -swapResult.vTokenIn;
+        vQuoteAmountOut = -swapResult.vQuoteIn;
 
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
             .BalanceAdjustments(vQuoteAmountOut, vTokenAmountOut, vTokenAmountOut);
 
         set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        emit Account.TokenPositionChanged(accountId, poolId, vTokenAmountOut, vQuoteAmountOut);
+        emit Account.TokenPositionChanged(
+            accountId,
+            poolId,
+            vTokenAmountOut,
+            vQuoteAmountOut,
+            swapResult.sqrtPriceX96Start,
+            swapResult.sqrtPriceX96End
+        );
     }
 
     /// @notice function to liquidate all liquidity positions

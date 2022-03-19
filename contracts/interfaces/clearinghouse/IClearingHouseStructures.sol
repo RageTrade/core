@@ -96,14 +96,6 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         bool isPartialAllowed; // whether to end swap (partial) when sqrtPriceLimit is reached, instead of reverting
     }
 
-    struct SwapValues {
-        int256 amountSpecified; // amount of tokens/vQuote which were specified in the swap request
-        int256 vTokenIn; // actual amount of vTokens paid by account to the Pool
-        int256 vQuoteIn; // actual amount of vQuotes paid by account to the Pool
-        uint256 liquidityFees; // actual amount of fees paid by account to the Pool
-        uint256 protocolFees; // actual amount of fees paid by account to the Protocol
-    }
-
     struct VTokenPositionView {
         uint32 poolId; // id of the pool of which this token position is for
         int256 balance; // vTokenLong - vTokenShort
