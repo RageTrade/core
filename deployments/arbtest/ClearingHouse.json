@@ -1,5 +1,5 @@
 {
-  "address": "0xF9C251f607E80C08b59a4a7AAC8daC6462158248",
+  "address": "0x0a9397967521C012ddFC7A3CE748A03229f4C010",
   "abi": [
     {
       "inputs": [
@@ -598,7 +598,7 @@
             },
             {
               "internalType": "int256",
-              "name": "sumAX128Chkpt",
+              "name": "sumALastX128",
               "type": "int256"
             },
             {
