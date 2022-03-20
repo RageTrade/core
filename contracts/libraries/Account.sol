@@ -140,18 +140,36 @@ library Account {
     );
 
     /// @notice denotes funding payment for a range / token position
-    /// @dev for a token position tickLower = tickUpper = 0
+    /// @param accountId serial number of the account
+    /// @param poolId address of token for which funding was paid
+    /// @param amount amount of funding paid (negative) or received (positive)
+    /// @param sumALastX128 val of sum of the term A in funding payment math, when op took place
+    event TokenPositionFundingPaymentRealized(
+        uint256 indexed accountId,
+        uint32 indexed poolId,
+        int256 amount,
+        int256 sumALastX128
+    );
+
     /// @param accountId serial number of the account
     /// @param poolId address of token for which funding was paid
     /// @param tickLower lower tick of the range for which funding was paid
     /// @param tickUpper upper tick of the range for which funding was paid
     /// @param amount amount of funding paid (negative) or received (positive)
-    event FundingPaymentRealized(
+    /// @param sumALastX128 val of sum of the term A in funding payment math, when op took place
+    /// @param sumBInsideLastX128 val of sum of the term B in funding payment math, when op took place
+    /// @param sumFpInsideLastX128 val of sum of the term Fp in funding payment math, when op took place
+    /// @param sumFeeInsideLastX128 val of sum of the term Fee in wrapper, when op took place
+    event LiquidityPositionFundingPaymentRealized(
         uint256 indexed accountId,
         uint32 indexed poolId,
         int24 tickLower,
         int24 tickUpper,
-        int256 amount
+        int256 amount,
+        int256 sumALastX128,
+        int256 sumBInsideLastX128,
+        int256 sumFpInsideLastX128,
+        uint256 sumFeeInsideLastX128
     );
 
     /// @notice denotes fee payment for a range / token position
