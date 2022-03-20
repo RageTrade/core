@@ -59,7 +59,7 @@ export default {
       accounts: [pk],
     },
     arbtest: {
-      url: `https://arb-rinkeby.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      url: `https://rinkeby.arbitrum.io/rpc`,
       accounts: [pk],
       chainId: 421611,
     },

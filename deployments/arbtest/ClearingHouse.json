@@ -1,5 +1,5 @@
 {
-  "address": "0x367Ee41731Ab92FEA4B0715e93a1D9f1c699A1dB",
+  "address": "0xF9C251f607E80C08b59a4a7AAC8daC6462158248",
   "abi": [
     {
       "inputs": [
@@ -10,22 +10,6 @@
         }
       ],
       "name": "AccessDenied",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "length",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "limit",
-          "type": "uint256"
-        }
-      ],
-      "name": "CalldataLengthExceeded",
       "type": "error"
     },
     {
@@ -48,22 +32,6 @@
         }
       ],
       "name": "CollateralNotAllowedForUse",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "gasUsedClaim",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "gasUsedActual",
-          "type": "uint256"
-        }
-      ],
-      "name": "ExcessGasUsedClaim",
       "type": "error"
     },
     {
@@ -283,56 +251,6 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint32",
-          "name": "collateralId",
-          "type": "uint32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "MarginAdded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint32",
-          "name": "collateralId",
-          "type": "uint32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "MarginRemoved",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
           "indexed": false,
           "internalType": "address",
           "name": "account",
@@ -368,12 +286,17 @@
           "components": [
             {
               "internalType": "uint16",
-              "name": "initialMarginRatio",
+              "name": "initialMarginRatioBps",
               "type": "uint16"
             },
             {
               "internalType": "uint16",
-              "name": "maintainanceMarginRatio",
+              "name": "maintainanceMarginRatioBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "maxVirtualPriceDeviationRatioBps",
               "type": "uint16"
             },
             {
@@ -413,12 +336,22 @@
           "components": [
             {
               "internalType": "uint16",
-              "name": "liquidationFeeFraction",
+              "name": "rangeLiquidationFeeFraction",
               "type": "uint16"
             },
             {
               "internalType": "uint16",
-              "name": "tokenLiquidationPriceDeltaBps",
+              "name": "tokenLiquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "closeFactorMMThresholdBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "partialLiquidationCloseFactorBps",
               "type": "uint16"
             },
             {
@@ -427,9 +360,19 @@
               "type": "uint16"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint16",
+              "name": "liquidationSlippageSqrtToleranceBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint64",
               "name": "maxRangeLiquidationFees",
-              "type": "uint128"
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "minNotionalLiquidatable",
+              "type": "uint64"
             }
           ],
           "indexed": false,
@@ -517,37 +460,9 @@
           "internalType": "contract IVQuote",
           "name": "_vQuote",
           "type": "address"
-        },
-        {
-          "internalType": "contract IOracle",
-          "name": "_nativeOracle",
-          "type": "address"
         }
       ],
       "name": "__initialize_ClearingHouse",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint32",
-          "name": "collateralId",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "addMargin",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -569,7 +484,7 @@
       "inputs": [
         {
           "internalType": "uint32",
-          "name": "poolId",
+          "name": "collateralId",
           "type": "uint32"
         },
         {
@@ -667,9 +582,9 @@
         {
           "components": [
             {
-              "internalType": "contract IVToken",
-              "name": "vToken",
-              "type": "address"
+              "internalType": "uint32",
+              "name": "poolId",
+              "type": "uint32"
             },
             {
               "internalType": "int256",
@@ -688,11 +603,6 @@
             },
             {
               "components": [
-                {
-                  "internalType": "enum IClearingHouseEnums.LimitOrderType",
-                  "name": "limitOrderType",
-                  "type": "uint8"
-                },
                 {
                   "internalType": "int24",
                   "name": "tickLower",
@@ -732,6 +642,11 @@
                   "internalType": "uint256",
                   "name": "sumFeeInsideLastX128",
                   "type": "uint256"
+                },
+                {
+                  "internalType": "enum IClearingHouseEnums.LimitOrderType",
+                  "name": "limitOrderType",
+                  "type": "uint8"
                 }
               ],
               "internalType": "struct IClearingHouseStructures.LiquidityPositionView[]",
@@ -798,6 +713,30 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "accountId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "poolId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getAccountNetTokenPosition",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "netPosition",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint32",
           "name": "collateralId",
           "type": "uint32"
@@ -846,30 +785,6 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint32",
-          "name": "poolId",
-          "type": "uint32"
-        }
-      ],
-      "name": "getNetTokenPosition",
-      "outputs": [
-        {
-          "internalType": "int256",
-          "name": "netPosition",
-          "type": "int256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint32",
           "name": "poolId",
           "type": "uint32"
@@ -898,12 +813,17 @@
               "components": [
                 {
                   "internalType": "uint16",
-                  "name": "initialMarginRatio",
+                  "name": "initialMarginRatioBps",
                   "type": "uint16"
                 },
                 {
                   "internalType": "uint16",
-                  "name": "maintainanceMarginRatio",
+                  "name": "maintainanceMarginRatioBps",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "maxVirtualPriceDeviationRatioBps",
                   "type": "uint16"
                 },
                 {
@@ -1026,35 +946,6 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "gasComputationUnitsClaim",
-          "type": "uint256"
-        }
-      ],
-      "name": "liquidateLiquidityPositionsWithGasClaim",
-      "outputs": [
-        {
-          "internalType": "int256",
-          "name": "keeperFee",
-          "type": "int256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "liquidatorAccountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
           "name": "targetAccountId",
           "type": "uint256"
         },
@@ -1062,92 +953,14 @@
           "internalType": "uint32",
           "name": "poolId",
           "type": "uint32"
-        },
-        {
-          "internalType": "uint16",
-          "name": "liquidationBps",
-          "type": "uint16"
         }
       ],
       "name": "liquidateTokenPosition",
       "outputs": [
         {
-          "components": [
-            {
-              "internalType": "int256",
-              "name": "vQuoteIncrease",
-              "type": "int256"
-            },
-            {
-              "internalType": "int256",
-              "name": "vTokenIncrease",
-              "type": "int256"
-            },
-            {
-              "internalType": "int256",
-              "name": "traderPositionIncrease",
-              "type": "int256"
-            }
-          ],
-          "internalType": "struct IClearingHouseStructures.BalanceAdjustments",
-          "name": "liquidatorBalanceAdjustments",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "liquidatorAccountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "targetAccountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint32",
-          "name": "poolId",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint16",
-          "name": "liquidationBps",
-          "type": "uint16"
-        },
-        {
-          "internalType": "uint256",
-          "name": "gasComputationUnitsClaim",
-          "type": "uint256"
-        }
-      ],
-      "name": "liquidateTokenPositionWithGasClaim",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "int256",
-              "name": "vQuoteIncrease",
-              "type": "int256"
-            },
-            {
-              "internalType": "int256",
-              "name": "vTokenIncrease",
-              "type": "int256"
-            },
-            {
-              "internalType": "int256",
-              "name": "traderPositionIncrease",
-              "type": "int256"
-            }
-          ],
-          "internalType": "struct IClearingHouseStructures.BalanceAdjustments",
-          "name": "liquidatorBalanceAdjustments",
-          "type": "tuple"
+          "internalType": "int256",
+          "name": "keeperFee",
+          "type": "int256"
         }
       ],
       "stateMutability": "nonpayable",
@@ -1210,19 +1023,6 @@
     },
     {
       "inputs": [],
-      "name": "nativeOracle",
-      "outputs": [
-        {
-          "internalType": "contract IOracle",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "numAccounts",
       "outputs": [
         {
@@ -1235,7 +1035,13 @@
       "type": "function"
     },
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "uint32[]",
+          "name": "allPoolIds",
+          "type": "uint32[]"
+        }
+      ],
       "name": "pause",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -1259,6 +1065,11 @@
       "name": "protocolInfo",
       "outputs": [
         {
+          "internalType": "contract IERC20",
+          "name": "settlementToken",
+          "type": "address"
+        },
+        {
           "internalType": "contract IVQuote",
           "name": "vQuote",
           "type": "address"
@@ -1267,12 +1078,22 @@
           "components": [
             {
               "internalType": "uint16",
-              "name": "liquidationFeeFraction",
+              "name": "rangeLiquidationFeeFraction",
               "type": "uint16"
             },
             {
               "internalType": "uint16",
-              "name": "tokenLiquidationPriceDeltaBps",
+              "name": "tokenLiquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "closeFactorMMThresholdBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "partialLiquidationCloseFactorBps",
               "type": "uint16"
             },
             {
@@ -1281,9 +1102,19 @@
               "type": "uint16"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint16",
+              "name": "liquidationSlippageSqrtToleranceBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint64",
               "name": "maxRangeLiquidationFees",
-              "type": "uint128"
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "minNotionalLiquidatable",
+              "type": "uint64"
             }
           ],
           "internalType": "struct IClearingHouseStructures.LiquidationParams",
@@ -1345,12 +1176,17 @@
               "components": [
                 {
                   "internalType": "uint16",
-                  "name": "initialMarginRatio",
+                  "name": "initialMarginRatioBps",
                   "type": "uint16"
                 },
                 {
                   "internalType": "uint16",
-                  "name": "maintainanceMarginRatio",
+                  "name": "maintainanceMarginRatioBps",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "maxVirtualPriceDeviationRatioBps",
                   "type": "uint16"
                 },
                 {
@@ -1413,68 +1249,6 @@
         }
       ],
       "name": "removeLimitOrder",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint32",
-          "name": "poolId",
-          "type": "uint32"
-        },
-        {
-          "internalType": "int24",
-          "name": "tickLower",
-          "type": "int24"
-        },
-        {
-          "internalType": "int24",
-          "name": "tickUpper",
-          "type": "int24"
-        },
-        {
-          "internalType": "uint256",
-          "name": "gasComputationUnitsClaim",
-          "type": "uint256"
-        }
-      ],
-      "name": "removeLimitOrderWithGasClaim",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "keeperFee",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "accountId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint32",
-          "name": "collateralId",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "removeMargin",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1575,7 +1349,13 @@
       "type": "function"
     },
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "uint32[]",
+          "name": "allPoolIds",
+          "type": "uint32[]"
+        }
+      ],
       "name": "unpause",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -1619,6 +1399,29 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "accountId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "collateralId",
+          "type": "uint32"
+        },
+        {
+          "internalType": "int256",
+          "name": "amount",
+          "type": "int256"
+        }
+      ],
+      "name": "updateMargin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint32",
           "name": "poolId",
           "type": "uint32"
@@ -1627,12 +1430,17 @@
           "components": [
             {
               "internalType": "uint16",
-              "name": "initialMarginRatio",
+              "name": "initialMarginRatioBps",
               "type": "uint16"
             },
             {
               "internalType": "uint16",
-              "name": "maintainanceMarginRatio",
+              "name": "maintainanceMarginRatioBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "maxVirtualPriceDeviationRatioBps",
               "type": "uint16"
             },
             {
@@ -1690,12 +1498,22 @@
           "components": [
             {
               "internalType": "uint16",
-              "name": "liquidationFeeFraction",
+              "name": "rangeLiquidationFeeFraction",
               "type": "uint16"
             },
             {
               "internalType": "uint16",
-              "name": "tokenLiquidationPriceDeltaBps",
+              "name": "tokenLiquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "closeFactorMMThresholdBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "partialLiquidationCloseFactorBps",
               "type": "uint16"
             },
             {
@@ -1704,9 +1522,19 @@
               "type": "uint16"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint16",
+              "name": "liquidationSlippageSqrtToleranceBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint64",
               "name": "maxRangeLiquidationFees",
-              "type": "uint128"
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "minNotionalLiquidatable",
+              "type": "uint64"
             }
           ],
           "internalType": "struct IClearingHouseStructures.LiquidationParams",
