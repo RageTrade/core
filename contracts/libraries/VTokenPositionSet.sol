@@ -126,7 +126,7 @@ library VTokenPositionSet {
         int256 fundingPayment = position.unrealizedFundingPayment(wrapper);
         set.vQuoteBalance += fundingPayment;
 
-        position.sumAX128Chkpt = extrapolatedSumAX128;
+        position.sumALastX128 = extrapolatedSumAX128;
 
         emit Account.TokenPositionFundingPaymentRealized(accountId, poolId, fundingPayment, extrapolatedSumAX128);
     }
@@ -370,7 +370,7 @@ library VTokenPositionSet {
             vTokenPositions[i].poolId = set.active[i];
             vTokenPositions[i].balance = set.positions[set.active[i]].balance;
             vTokenPositions[i].netTraderPosition = set.positions[set.active[i]].netTraderPosition;
-            vTokenPositions[i].sumAX128Chkpt = set.positions[set.active[i]].sumAX128Chkpt;
+            vTokenPositions[i].sumALastX128 = set.positions[set.active[i]].sumALastX128;
             vTokenPositions[i].liquidityPositions = set.positions[set.active[i]].liquidityPositions.getInfo();
         }
     }

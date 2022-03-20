@@ -210,11 +210,11 @@ contract AccountTest {
         returns (
             int256 balance,
             int256 netTraderPosition,
-            int256 sumAChkpt
+            int256 sumALast
         )
     {
         VTokenPosition.Info storage vTokenPosition = accounts[accountId].tokenPositions.positions[vToken.truncate()];
-        return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumAX128Chkpt);
+        return (vTokenPosition.balance, vTokenPosition.netTraderPosition, vTokenPosition.sumALastX128);
     }
 
     function getAccountQuoteBalance(uint256 accountId) external view returns (int256 balance) {
