@@ -128,7 +128,7 @@ library VTokenPositionSet {
 
         position.sumAX128Chkpt = extrapolatedSumAX128;
 
-        emit Account.FundingPaymentRealized(accountId, poolId, 0, 0, fundingPayment);
+        emit Account.TokenPositionFundingPaymentRealized(accountId, poolId, fundingPayment, extrapolatedSumAX128);
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount

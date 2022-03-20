@@ -56,7 +56,7 @@ import {
 
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
-import { FundingPaymentRealizedEvent } from '../typechain-types/Account';
+import { TokenPositionFundingPaymentRealizedEvent } from '../typechain-types/Account';
 import { truncate } from './utils/vToken';
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -287,8 +287,6 @@ describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liqui
     txnReceipt: ContractReceipt,
     expectedUserAccountNo: BigNumberish,
     expectedTokenAddress: string,
-    expectedTickLower: BigNumberish,
-    expectedTickUpper: BigNumberish,
     expectedFundingPayment: BigNumberish,
   ) {
     const eventList = txnReceipt.logs
@@ -303,14 +301,14 @@ describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liqui
         }
       })
       .filter(event => event !== null)
-      .filter(event => event?.name === 'FundingPaymentRealized') as unknown as FundingPaymentRealizedEvent[];
+      .filter(
+        event => event?.name === 'TokenPositionFundingPaymentRealized',
+      ) as unknown as TokenPositionFundingPaymentRealizedEvent[];
 
     const event = eventList[0];
 
     expect(event.args.accountId).to.eq(expectedUserAccountNo);
     expect(event.args.poolId).to.eq(Number(truncate(expectedTokenAddress)));
-    expect(event.args.tickLower).to.eq(expectedTickLower);
-    expect(event.args.tickUpper).to.eq(expectedTickUpper);
     expect(event.args.amount).to.eq(expectedFundingPayment);
   }
 
@@ -331,14 +329,7 @@ describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liqui
       expectedTokenAmountOut,
       expectedVQuoteAmountOutWithFee,
     );
-    await checkFundingPaymentEvent(
-      swapReceipt,
-      expectedUserAccountNo,
-      expectedTokenAddress,
-      0,
-      0,
-      expectedFundingPayment,
-    );
+    await checkFundingPaymentEvent(swapReceipt, expectedUserAccountNo, expectedTokenAddress, expectedFundingPayment);
   }
 
   async function swapTokenAndCheck(

@@ -165,7 +165,24 @@ library LiquidityPosition {
         int256 unrealizedLiquidityFee = position.unrealizedFees(wrapperValuesInside.sumFeeInsideX128).toInt256();
         balanceAdjustments.vQuoteIncrease += unrealizedLiquidityFee;
 
-        emit Account.FundingPaymentRealized(accountId, poolId, position.tickLower, position.tickUpper, fundingPayment);
+        // updating checkpoints
+        position.sumALastX128 = wrapperValuesInside.sumAX128;
+        position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
+        position.sumFpInsideLastX128 = wrapperValuesInside.sumFpInsideX128;
+        position.sumFeeInsideLastX128 = wrapperValuesInside.sumFeeInsideX128;
+
+        emit Account.LiquidityPositionFundingPaymentRealized(
+            accountId,
+            poolId,
+            position.tickLower,
+            position.tickUpper,
+            fundingPayment,
+            wrapperValuesInside.sumAX128,
+            wrapperValuesInside.sumBInsideX128,
+            wrapperValuesInside.sumFpInsideX128,
+            wrapperValuesInside.sumFeeInsideX128
+        );
+
         emit Account.LiquidityPositionEarningsRealized(
             accountId,
             poolId,
@@ -173,11 +190,6 @@ library LiquidityPosition {
             position.tickUpper,
             unrealizedLiquidityFee
         );
-        // updating checkpoints
-        position.sumALastX128 = wrapperValuesInside.sumAX128;
-        position.sumBInsideLastX128 = wrapperValuesInside.sumBInsideX128;
-        position.sumFpInsideLastX128 = wrapperValuesInside.sumFpInsideX128;
-        position.sumFeeInsideLastX128 = wrapperValuesInside.sumFeeInsideX128;
     }
 
     /**
