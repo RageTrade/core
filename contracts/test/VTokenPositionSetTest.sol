@@ -106,12 +106,12 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         view
         returns (
             int256 balance,
-            int256 sumACkhpt,
+            int256 sumALastX128,
             int256 netTraderPosition
         )
     {
         VTokenPosition.Info storage pos = dummy.positions[vToken.truncate()];
-        return (pos.balance, pos.sumAX128Chkpt, pos.netTraderPosition);
+        return (pos.balance, pos.sumALastX128, pos.netTraderPosition);
     }
 
     function getVQuoteBalance() external view returns (int256 balance) {

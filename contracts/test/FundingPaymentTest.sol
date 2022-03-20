@@ -51,27 +51,27 @@ contract FundingPaymentTest {
     function billLp(
         int256 sumAX128,
         int256 sumFpInsideX128,
-        int256 sumAChkptX128,
-        int256 sumBInsideChkptX128,
-        int256 sumFpInsideChkptX128,
+        int256 sumALastX128,
+        int256 sumBInsideLastX128,
+        int256 sumFpInsideLastX128,
         uint256 liquidity
     ) internal pure returns (int256) {
         return
             FundingPayment.bill(
                 sumAX128,
                 sumFpInsideX128,
-                sumAChkptX128,
-                sumBInsideChkptX128,
-                sumFpInsideChkptX128,
+                sumALastX128,
+                sumBInsideLastX128,
+                sumFpInsideLastX128,
                 liquidity
             );
     }
 
     function billTrader(
         int256 sumAX128,
-        int256 sumAChkptX128,
+        int256 sumALastX128,
         int256 netTraderPosition
     ) internal pure returns (int256) {
-        return FundingPayment.bill(sumAX128, sumAChkptX128, netTraderPosition);
+        return FundingPayment.bill(sumAX128, sumALastX128, netTraderPosition);
     }
 }

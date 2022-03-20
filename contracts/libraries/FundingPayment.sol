@@ -102,33 +102,32 @@ library FundingPayment {
     /// @notice Positive bill is rewarded to LPs, Negative bill is charged from LPs
     /// @param sumAX128 latest value of sumA (to be taken from global state)
     /// @param sumFpInsideX128 latest value of sumFp inside range (to be computed using global state + tick state)
-    /// @param sumAChkptX128 value of sumA when LP updated their liquidity last time
-    /// @param sumBInsideChkptX128 value of sumB inside range when LP updated their liquidity last time
-    /// @param sumFpInsideChkptX128 value of sumFp inside range when LP updated their liquidity last time
+    /// @param sumALastX128 value of sumA when LP updated their liquidity last time
+    /// @param sumBInsideLastX128 value of sumB inside range when LP updated their liquidity last time
+    /// @param sumFpInsideLastX128 value of sumFp inside range when LP updated their liquidity last time
     /// @param liquidity amount of liquidity which was constant for LP in the time duration
     function bill(
         int256 sumAX128,
         int256 sumFpInsideX128,
-        int256 sumAChkptX128,
-        int256 sumBInsideChkptX128,
-        int256 sumFpInsideChkptX128,
+        int256 sumALastX128,
+        int256 sumBInsideLastX128,
+        int256 sumFpInsideLastX128,
         uint256 liquidity
     ) internal pure returns (int256) {
         return
-            (sumFpInsideX128 -
-                extrapolatedSumFpX128(sumAChkptX128, sumBInsideChkptX128, sumFpInsideChkptX128, sumAX128))
+            (sumFpInsideX128 - extrapolatedSumFpX128(sumALastX128, sumBInsideLastX128, sumFpInsideLastX128, sumAX128))
                 .mulDivRoundingDown(liquidity, FixedPoint128.Q128);
     }
 
     /// @notice Positive bill is rewarded to Traders, Negative bill is charged from Traders
     /// @param sumAX128 latest value of sumA (to be taken from global state)
-    /// @param sumAChkptX128 value of sumA when trader updated their netTraderPosition
-    /// @param netTraderPosition oken amount which should be constant for time duration since sumAChkptX128 was recorded
+    /// @param sumALastX128 value of sumA when trader updated their netTraderPosition
+    /// @param netTraderPosition oken amount which should be constant for time duration since sumALastX128 was recorded
     function bill(
         int256 sumAX128,
-        int256 sumAChkptX128,
+        int256 sumALastX128,
         int256 netTraderPosition
     ) internal pure returns (int256) {
-        return netTraderPosition.mulDiv((sumAX128 - sumAChkptX128), int256(FixedPoint128.Q128));
+        return netTraderPosition.mulDiv((sumAX128 - sumALastX128), int256(FixedPoint128.Q128));
     }
 }
