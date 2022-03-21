@@ -115,8 +115,7 @@ library Protocol {
         uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
         if (
             // if virtual price is too off from real price then screw that, we'll just use real price
-            (int256(realPriceX128) - int256(virtualPriceX128)).absUint() >
-            Math.max(realPriceX128, virtualPriceX128).mulDiv(maxDeviationBps, 1e4)
+            (int256(realPriceX128) - int256(virtualPriceX128)).absUint() > realPriceX128.mulDiv(maxDeviationBps, 1e4)
         ) {
             virtualPriceX128 = realPriceX128;
         }
