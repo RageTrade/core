@@ -552,65 +552,6 @@ library Account {
         account.tokenPositions.vQuoteBalance += balanceAdjustments.vQuoteIncrease;
     }
 
-    /// @notice exchanges token position between account (at liquidationPrice) and liquidator account (at liquidator price)
-    /// @notice also charges fixFee from the account and pays to liquidator
-    /// @param targetAccount is account being liquidated
-    /// @param liquidatorAccount is account of liquidator
-    /// @param poolId id of the rage trade pool
-    /// @param tokensToTrade number of tokens to trade
-    /// @param liquidationPriceX128 price at which tokens should be traded out
-    /// @param liquidatorPriceX128 discounted price at which tokens should be given to liquidator
-    /// @param fixFee is the fee to be given to liquidator to compensate for gas price
-    /// @param protocol platform constants
-    function _updateLiquidationAccounts(
-        Account.Info storage targetAccount,
-        Account.Info storage liquidatorAccount,
-        uint32 poolId,
-        int256 tokensToTrade,
-        uint256 liquidationPriceX128,
-        uint256 liquidatorPriceX128,
-        int256 fixFee,
-        Protocol.Info storage protocol
-    ) internal returns (IClearingHouseStructures.BalanceAdjustments memory liquidatorBalanceAdjustments) {
-        protocol.vPoolWrapper(poolId).updateGlobalFundingState({
-            realPriceX128: protocol.getRealTwapPriceX128(poolId),
-            virtualPriceX128: protocol.getVirtualTwapPriceX128(poolId)
-        });
-
-        IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments = IClearingHouseStructures
-            .BalanceAdjustments({
-                vQuoteIncrease: -tokensToTrade.mulDiv(liquidationPriceX128, FixedPoint128.Q128) - fixFee,
-                vTokenIncrease: tokensToTrade,
-                traderPositionIncrease: tokensToTrade
-            });
-
-        targetAccount.tokenPositions.update(targetAccount.id, balanceAdjustments, poolId, protocol);
-        emit TokenPositionChanged(
-            targetAccount.id,
-            poolId,
-            balanceAdjustments.vTokenIncrease,
-            balanceAdjustments.vQuoteIncrease,
-            0, // sqrtPriceX96Start set as zero because this is not a swap on the v3Pool
-            0 // sqrtPriceX96End set as zero because this is not a swap on the v3Pool
-        );
-
-        liquidatorBalanceAdjustments = IClearingHouseStructures.BalanceAdjustments({
-            vQuoteIncrease: tokensToTrade.mulDiv(liquidatorPriceX128, FixedPoint128.Q128) + fixFee,
-            vTokenIncrease: -tokensToTrade,
-            traderPositionIncrease: -tokensToTrade
-        });
-
-        liquidatorAccount.tokenPositions.update(liquidatorAccount.id, liquidatorBalanceAdjustments, poolId, protocol);
-        emit TokenPositionChanged(
-            liquidatorAccount.id,
-            poolId,
-            liquidatorBalanceAdjustments.vTokenIncrease,
-            liquidatorBalanceAdjustments.vQuoteIncrease,
-            0, // sqrtPriceX96Start set as zero because this is not a swap on the v3Pool
-            0 // sqrtPriceX96End set as zero because this is not a swap on the v3Pool
-        );
-    }
-
     /**
      *  Internal view methods
      */
