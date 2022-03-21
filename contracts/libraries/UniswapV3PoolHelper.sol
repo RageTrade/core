@@ -12,7 +12,6 @@ import { console } from 'hardhat/console.sol';
 library UniswapV3PoolHelper {
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
-    error UV3PH_IllegalTwapDuration(uint32 period);
     error UV3PH_OracleConsultFailed();
 
     /// @notice Get the pool's current tick
@@ -44,7 +43,7 @@ library UniswapV3PoolHelper {
     /// @return _twapTick the twap tick
     function twapTick(IUniswapV3Pool v3Pool, uint32 twapDuration) internal view returns (int24 _twapTick) {
         if (twapDuration == 0) {
-            revert UV3PH_IllegalTwapDuration(0);
+            return v3Pool.tickCurrent();
         }
 
         uint32[] memory secondAgos = new uint32[](2);
