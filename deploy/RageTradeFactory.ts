@@ -6,10 +6,11 @@ import {
   ProxyAdmin__factory,
   VQuote__factory,
 } from '../typechain-types';
+import { parseUnits } from 'ethers/lib/utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
-    deployments: { deploy, get, read, save },
+    deployments: { deploy, get, read, save, execute },
     getNamedAccounts,
   } = hre;
 
@@ -18,17 +19,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const vPoolWrapperLogic = await get('VPoolWrapperLogic');
   const insuranceFundLogic = await get('InsuranceFundLogic');
   const settlementToken = await get('SettlementToken');
-  const nativeOracle = await get('NativeOracle');
 
   const deployment = await deploy('RageTradeFactory', {
     from: deployer,
     log: true,
-    args: [
-      clearingHouseLogic.address,
-      vPoolWrapperLogic.address,
-      insuranceFundLogic.address,
-      settlementToken.address,
-          ],
+    args: [clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address],
   });
 
   if (deployment.newlyDeployed) {
@@ -53,6 +48,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     name: 'TransparentUpgradeableProxy',
     address: clearingHouseAddress,
   });
+
+  execute(
+    'ClearingHouse',
+    { from: deployer },
+    'updateProtocolSettings',
+    {
+      rangeLiquidationFeeFraction: 1500,
+      tokenLiquidationFeeFraction: 3000,
+      insuranceFundFeeShareBps: 5000,
+      maxRangeLiquidationFees: 100000000,
+      closeFactorMMThresholdBps: 7500,
+      partialLiquidationCloseFactorBps: 5000,
+      liquidationSlippageSqrtToleranceBps: 150,
+      minNotionalLiquidatable: 100000000,
+    },
+    parseUnits('10', 6), // removeLimitOrderFee
+    parseUnits('1', 6).div(100), // minimumOrderNotional
+    parseUnits('20', 6), // minRequiredMargin
+  );
 
   const proxyAdminAddress = await read('RageTradeFactory', 'proxyAdmin');
   await save('ProxyAdmin', { abi: ProxyAdmin__factory.abi, address: proxyAdminAddress });
