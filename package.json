@@ -14,8 +14,8 @@
     "deploy:optest": "hardhat deploy --network optest",
     "deploy:localhost": "hardhat --network localhost deploy",
     "etherscan": "hardhat etherscan-verify",
-    "format": "prettier --check contracts test",
-    "format:fix": "prettier --write contracts test",
+    "format": "prettier --check contracts deploy test",
+    "format:fix": "prettier --write contracts deploy test",
     "size": "hardhat size-contracts",
     "test": "hardhat test",
     "typechain": "hardhat typechain"
