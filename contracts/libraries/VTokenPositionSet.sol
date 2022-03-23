@@ -4,18 +4,18 @@ pragma solidity ^0.8.9;
 
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
+import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
 import { Account } from './Account.sol';
 import { AddressHelper } from './AddressHelper.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
-import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
-
+import { Protocol } from './Protocol.sol';
+import { PriceMath } from './PriceMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { SignedMath } from './SignedMath.sol';
 import { VTokenPosition } from './VTokenPosition.sol';
 import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
-import { Protocol } from './Protocol.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
@@ -27,6 +27,7 @@ import { console } from 'hardhat/console.sol';
 library VTokenPositionSet {
     using AddressHelper for address;
     using FullMath for uint256;
+    using PriceMath for uint256;
     using SafeCast for uint256;
     using SignedFullMath for int256;
     using SignedMath for int256;
@@ -344,14 +345,13 @@ library VTokenPositionSet {
             // IVToken vToken = protocol[poolId].vToken;
             VTokenPosition.Info storage position = set.positions[poolId];
 
-            //TODO: Replace priceX128 and sqrtPriceX96 with price with checks
-            uint256 priceX128 = protocol.getVirtualTwapPriceX128(poolId);
-            uint160 sqrtPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
+            (, uint256 virtualPriceX128) = protocol.getTwapPricesWithDeviationCheck(poolId);
+            uint160 virtualSqrtPriceX96 = virtualPriceX128.toSqrtPriceX96();
             //Value of token position for current vToken
-            accountMarketValue += position.marketValue(poolId, priceX128, protocol);
+            accountMarketValue += position.marketValue(poolId, virtualPriceX128, protocol);
 
             //Value of all active range position for the current vToken
-            accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
+            accountMarketValue += position.liquidityPositions.marketValue(virtualSqrtPriceX96, poolId, protocol);
         }
 
         // Value of the vQuote token balance
@@ -392,19 +392,22 @@ library VTokenPositionSet {
     ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
         VTokenPosition.Info storage position = set.positions[poolId];
 
-        //TODO: Replace price and sqrtTwapPriceX96 to price with checks
-        uint256 price = protocol.getVirtualTwapPriceX128(poolId);
-        uint160 sqrtTwapPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
+        (, uint256 virtualPriceX128) = protocol.getTwapPricesWithDeviationCheck(poolId);
+        uint160 virtualSqrtPriceX96 = virtualPriceX128.toSqrtPriceX96();
+
         uint16 marginRatio = protocol.getMarginRatioBps(poolId, isInitialMargin);
 
         int256 tokenPosition = position.balance;
-        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, sqrtTwapPriceX96).toInt256();
+        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, virtualSqrtPriceX96).toInt256();
 
         longSideRisk = SignedMath
-            .max(position.netTraderPosition.mulDiv(price, FixedPoint128.Q128) + longSideRiskRanges, 0)
+            .max(position.netTraderPosition.mulDiv(virtualPriceX128, FixedPoint128.Q128) + longSideRiskRanges, 0)
             .mulDiv(marginRatio, 1e4);
 
-        shortSideRisk = SignedMath.max(-tokenPosition, 0).mulDiv(price, FixedPoint128.Q128).mulDiv(marginRatio, 1e4);
+        shortSideRisk = SignedMath.max(-tokenPosition, 0).mulDiv(virtualPriceX128, FixedPoint128.Q128).mulDiv(
+            marginRatio,
+            1e4
+        );
         return (longSideRisk, shortSideRisk);
     }
 
