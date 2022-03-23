@@ -214,15 +214,14 @@ library LiquidityPosition {
     function longSideRisk(
         LiquidityPosition.Info storage position,
         uint32 poolId,
-        Protocol.Info storage protocol
+        uint160 valuationPriceX96
     ) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX96;
         {
-            uint160 sqrtPriceTwapX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
-            uint160 sqrtPriceForExecutionPriceX96 = sqrtPriceTwapX96 <= sqrtPriceUpperX96
-                ? sqrtPriceTwapX96
+            uint160 sqrtPriceForExecutionPriceX96 = valuationPriceX96 <= sqrtPriceUpperX96
+                ? valuationPriceX96
                 : sqrtPriceUpperX96;
             longPositionExecutionPriceX96 = uint256(sqrtPriceLowerX96).mulDiv(
                 sqrtPriceForExecutionPriceX96,
