@@ -23,7 +23,8 @@
   },
   "peerDependencies": {
     "ethers": "5.x",
-    "typescript": "4.x"
+    "typescript": "4.x",
+    "hardhat": "2.x"
   },
   "devDependencies": {
     "@134dd3v/prettier-plugin-solidity": "^1.0.0-beta.18",
