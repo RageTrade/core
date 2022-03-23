@@ -218,14 +218,14 @@ library LiquidityPositionSet {
         return set.active.exists(tickLower.concat(tickUpper));
     }
 
-    function longSideRisk(
-        LiquidityPosition.Set storage set,
-        uint32 poolId,
-        uint160 valuationPriceX96
-    ) internal view returns (uint256 risk) {
+    function longSideRisk(LiquidityPosition.Set storage set, uint160 valuationPriceX96)
+        internal
+        view
+        returns (uint256 risk)
+    {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            risk += set.positions[id].longSideRisk(poolId, valuationPriceX96);
+            risk += set.positions[id].longSideRisk(valuationPriceX96);
         }
     }
 

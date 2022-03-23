@@ -211,11 +211,11 @@ library LiquidityPosition {
         return info.tickLower != 0 || info.tickUpper != 0;
     }
 
-    function longSideRisk(
-        LiquidityPosition.Info storage position,
-        uint32 poolId,
-        uint160 valuationPriceX96
-    ) internal view returns (uint256) {
+    function longSideRisk(LiquidityPosition.Info storage position, uint160 valuationPriceX96)
+        internal
+        view
+        returns (uint256)
+    {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX96;
