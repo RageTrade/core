@@ -18,7 +18,8 @@
     "format:fix": "prettier --write contracts deploy test",
     "size": "hardhat size-contracts",
     "test": "hardhat test",
-    "typechain": "hardhat typechain"
+    "typechain": "hardhat typechain",
+    "postinstall": "hardhat compile"
   },
   "peerDependencies": {
     "ethers": "5.x",
