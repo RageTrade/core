@@ -344,10 +344,12 @@ library VTokenPositionSet {
             // IVToken vToken = protocol[poolId].vToken;
             VTokenPosition.Info storage position = set.positions[poolId];
 
-            //Value of token position for current vToken
-            accountMarketValue += position.marketValue(poolId, protocol);
-
+            //TODO: Replace priceX128 and sqrtPriceX96 with price with checks
+            uint256 priceX128 = protocol.getVirtualTwapPriceX128(poolId);
             uint160 sqrtPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
+            //Value of token position for current vToken
+            accountMarketValue += position.marketValue(poolId, priceX128, protocol);
+
             //Value of all active range position for the current vToken
             accountMarketValue += position.liquidityPositions.marketValue(sqrtPriceX96, poolId, protocol);
         }
@@ -390,11 +392,13 @@ library VTokenPositionSet {
     ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
         VTokenPosition.Info storage position = set.positions[poolId];
 
+        //TODO: Replace price and sqrtTwapPriceX96 to price with checks
         uint256 price = protocol.getVirtualTwapPriceX128(poolId);
+        uint160 sqrtTwapPriceX96 = protocol.getVirtualTwapSqrtPriceX96(poolId);
         uint16 marginRatio = protocol.getMarginRatioBps(poolId, isInitialMargin);
 
         int256 tokenPosition = position.balance;
-        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, protocol).toInt256();
+        int256 longSideRiskRanges = position.liquidityPositions.longSideRisk(poolId, sqrtTwapPriceX96).toInt256();
 
         longSideRisk = SignedMath
             .max(position.netTraderPosition.mulDiv(price, FixedPoint128.Q128) + longSideRiskRanges, 0)

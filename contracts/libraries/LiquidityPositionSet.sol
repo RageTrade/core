@@ -221,11 +221,11 @@ library LiquidityPositionSet {
     function longSideRisk(
         LiquidityPosition.Set storage set,
         uint32 poolId,
-        Protocol.Info storage protocol
+        uint160 valuationPriceX96
     ) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
-            risk += set.positions[id].longSideRisk(poolId, protocol);
+            risk += set.positions[id].longSideRisk(poolId, valuationPriceX96);
         }
     }
 
