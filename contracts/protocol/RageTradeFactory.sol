@@ -97,7 +97,6 @@ contract RageTradeFactory is
     /// @dev An already deployed oracle contract address (implementing IOracle) is needed prior to using this
     /// @param initializePoolParams parameters for initializing the pool
     function initializePool(InitializePoolParams calldata initializePoolParams) external onlyGovernance {
-        // TODO change wrapper deployment to use CREATE2 so that we can pass wrapper address
         // as an argument to vtoken constructer and make wrapper variable as immutable.
         // this will save sload on all vtoken mints (swaps liqudity adds).
         // STEP 1: Deploy the virtual token ERC20, such that it will be token0

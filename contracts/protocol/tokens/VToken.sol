@@ -8,7 +8,7 @@ import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import { IVToken } from '../../interfaces/IVToken.sol';
 
 contract VToken is ERC20, IVToken {
-    address public vPoolWrapper; // TODO change to immutable
+    address public vPoolWrapper;
 
     uint8 immutable _decimals;
 

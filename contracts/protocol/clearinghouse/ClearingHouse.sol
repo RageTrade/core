@@ -410,7 +410,6 @@ contract ClearingHouse is
         emit Account.LiquidityPositionsLiquidated(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
     }
 
-    // TODO move this to Account library. is it possible?
     function _liquidateTokenPosition(uint256 accountId, uint32 poolId)
         internal
         whenNotPaused
