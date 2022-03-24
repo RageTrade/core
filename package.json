@@ -7,25 +7,25 @@
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "coverage": "hardhat coverage --testfiles \"test/registry/*.ts\"",
-    "deploy": "hardhat deploy",
-    "deploy:goerli": "hardhat deploy --network goerli",
-    "deploy:rinkeby": "hardhat deploy --network rinkeby",
-    "deploy:arbtest": "hardhat deploy --network arbtest",
-    "deploy:optest": "hardhat deploy --network optest",
-    "deploy:localhost": "hardhat --network localhost deploy",
+    "deploy": "TS_NODE_SKIP_IGNORE=true hardhat deploy",
+    "deploy:goerli": "yarn deploy --network goerli",
+    "deploy:rinkeby": "yarn deploy --network rinkeby",
+    "deploy:arbtest": "yarn deploy --network arbtest",
+    "deploy:optest": "yarn deploy --network optest",
+    "deploy:localhost": "yarn --network localhost deploy",
     "etherscan": "hardhat etherscan-verify",
     "etherscan:arbtest": "npx hardhat run ./scripts/etherscan-verify.ts --network arbtest",
     "format": "prettier --check contracts deploy test",
     "format:fix": "prettier --write contracts deploy test",
     "size": "hardhat size-contracts",
-    "test": "hardhat test",
+    "test": "TS_NODE_SKIP_IGNORE=true hardhat test",
     "typechain": "hardhat typechain",
     "postinstall": "hardhat compile"
   },
   "peerDependencies": {
     "ethers": "5.x",
-    "typescript": "4.x",
-    "hardhat": "2.x"
+    "hardhat": "2.x",
+    "typescript": "4.x"
   },
   "devDependencies": {
     "@134dd3v/prettier-plugin-solidity": "^1.0.0-beta.18",
@@ -36,8 +36,8 @@
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@protodev-rage/hardhat-tenderly": "^1.0.13",
     "@ragetrade/sdk": "^0.3.0",
-    "@typechain/ethers-v5": "^9.0.0",
-    "@typechain/hardhat": "^4.0.0",
+    "@typechain/ethers-v5": "^10.0.0",
+    "@typechain/hardhat": "^6.0.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.21",
@@ -54,8 +54,8 @@
     "prettier": "^2.5.1",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.7.0",
-    "typechain": "^7.0.0",
-    "typescript": "^4.6.2"
+    "typechain": "^8.0.0",
+    "typescript": "^4.6.3"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",

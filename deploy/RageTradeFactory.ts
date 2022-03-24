@@ -8,7 +8,7 @@ import {
   ProxyAdmin__factory,
   VQuote__factory,
 } from '../typechain-types';
-import { IClearingHouseStructures } from '../typechain-types/ClearingHouse';
+import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
 import { parseUnits } from 'ethers/lib/utils';
 import { truncate } from '../test/utils/vToken';
 
