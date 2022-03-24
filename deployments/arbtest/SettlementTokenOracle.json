@@ -1,0 +1,25 @@
+{
+  "address": "0x377625827DC9479a59D8d7B9Fe439584a44662cE",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "twapDuration",
+          "type": "uint32"
+        }
+      ],
+      "name": "getTwapPriceX128",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "priceX128",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "numDeployments": 1
+}
