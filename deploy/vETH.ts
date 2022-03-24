@@ -3,7 +3,6 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { IUniswapV3Pool__factory, VPoolWrapper__factory, VToken__factory } from '../typechain-types';
 
 import { getNetworkInfo } from './network-info';
-import { AggregatorV3Interface__factory } from '../typechain-types';
 
 import {
   PoolInitializedEvent,
@@ -110,3 +109,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func;
 
 func.tags = ['vETH'];
+func.dependencies = ['RageTradeFactory'];
