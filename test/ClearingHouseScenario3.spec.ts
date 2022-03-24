@@ -29,7 +29,11 @@ import {
   RealTokenMockDecimals,
 } from '../typechain-types';
 
-import { AccountInterface, TokenPositionChangedEvent } from '../typechain-types/Account';
+import {
+  AccountInterface,
+  TokenPositionChangedEvent,
+  TokenPositionFundingPaymentRealizedEvent,
+} from '../typechain-types/artifacts/contracts/libraries/Account';
 
 import {
   UNISWAP_V3_FACTORY_ADDRESS,
@@ -56,7 +60,6 @@ import {
 
 import { smock } from '@defi-wonderland/smock';
 import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
-import { TokenPositionFundingPaymentRealizedEvent } from '../typechain-types/Account';
 import { truncate } from './utils/vToken';
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 

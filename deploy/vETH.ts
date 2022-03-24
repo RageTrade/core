@@ -9,7 +9,7 @@ import {
   VTokenDeployer,
   RageTradeFactory,
   IClearingHouseStructures,
-} from '../typechain-types/RageTradeFactory';
+} from '../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {

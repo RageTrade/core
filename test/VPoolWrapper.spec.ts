@@ -2,7 +2,7 @@ import hre from 'hardhat';
 import { BigNumber, BigNumberish, FixedNumber } from '@ethersproject/bignumber';
 import { ethers } from 'ethers';
 import { VPoolWrapperMock2, VQuote, VToken, UniswapV3Pool, SimulateSwapTest } from '../typechain-types';
-import { SwapEvent } from '../typechain-types/VPoolWrapper';
+import { SwapEvent } from '../typechain-types/artifacts/contracts/protocol/wrapper/VPoolWrapper';
 import { Q128, Q96, toQ128, toQ96 } from './utils/fixed-point';
 import { formatEther, formatUnits, parseEther, parseUnits } from '@ethersproject/units';
 import {
@@ -16,7 +16,7 @@ import { setupWrapper } from './utils/setup-wrapper';
 import { MockContract } from '@defi-wonderland/smock';
 import { expect } from 'chai';
 import { maxLiquidityForAmounts } from './utils/liquidity';
-import { TransferEvent } from '../typechain-types/ERC20';
+import { TransferEvent } from '../typechain-types/artifacts/@openzeppelin/contracts/token/ERC20/IERC20';
 import { ContractTransaction } from '@ethersproject/contracts';
 
 describe('PoolWrapper', () => {

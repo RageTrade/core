@@ -34,7 +34,7 @@ import {
 import { amountsForLiquidity, maxLiquidityForAmounts } from './utils/liquidity';
 import { randomInt } from 'crypto';
 import { truncate } from './utils/vToken';
-import { IClearingHouseStructures } from '../typechain-types/IClearingHouseEvents';
+import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/interfaces/clearinghouse/IClearingHouseEvents';
 
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;

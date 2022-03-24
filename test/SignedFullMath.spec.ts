@@ -2,8 +2,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import hre from 'hardhat';
-
-import { SignedFullMathTest } from '../typechain-types/SignedFullMathTest';
+import { SignedFullMathTest } from '../typechain-types';
 
 interface TestCase {
   a: BigNumberish;

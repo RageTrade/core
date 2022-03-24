@@ -6,7 +6,7 @@ import { SimulateSwapTest, UniswapV3Pool, VQuote, VPoolWrapperMock2, VToken } fr
 import { setupWrapper } from './utils/setup-wrapper';
 import { tickToPrice } from './utils/price-tick';
 import { BigNumber, BigNumberish, ContractTransaction, ethers } from 'ethers';
-import { TransferEvent } from '../typechain-types/ERC20';
+import { TransferEvent } from '../typechain-types/artifacts/@openzeppelin/contracts/token/ERC20/IERC20';
 import { priceToTick } from './utils/price-tick';
 import assert from 'assert';
 
