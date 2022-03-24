@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { getNetworkInfo } from '../network-info';
-import { IERC20Metadata__factory } from '../../typechain-types';
+import { getNetworkInfo } from './network-info';
+import { IERC20Metadata__factory } from '../typechain-types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
