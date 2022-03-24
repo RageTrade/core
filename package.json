@@ -1,7 +1,7 @@
 {
-  "name": "@anon-farm/perpswap",
-  "version": "0.0.1",
-  "repository": "https://github.com/Anon-Farm/perpswap.git",
+  "name": "@ragetrade/core",
+  "version": "1.0.0",
+  "repository": "https://github.com/rage-trade/core",
   "license": "MIT",
   "scripts": {
     "clean": "hardhat clean",
