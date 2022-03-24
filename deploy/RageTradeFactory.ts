@@ -1,12 +1,16 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import {
+  ClearingHouse,
   ClearingHouse__factory,
   InsuranceFund__factory,
+  IOracle__factory,
   ProxyAdmin__factory,
   VQuote__factory,
 } from '../typechain-types';
+import { IClearingHouseStructures } from '../typechain-types/ClearingHouse';
 import { parseUnits } from 'ethers/lib/utils';
+import { truncate } from '../test/utils/vToken';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -83,8 +87,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     name: 'TransparentUpgradeableProxy',
     address: insuranceFundAddress,
   });
+
+  const collateralInfo: IClearingHouseStructures.CollateralStruct = await read(
+    'ClearingHouse',
+    'getCollateralInfo',
+    truncate(settlementToken.address),
+  );
+  await save('SettlementTokenOracle', { abi: IOracle__factory.abi, address: collateralInfo.settings.oracle });
+  console.log('saved "SettlementTokenOracle":', collateralInfo.settings.oracle);
+  await hre.tenderly.push({
+    name: 'SettlementTokenOracle',
+    address: collateralInfo.settings.oracle,
+  });
 };
 
 export default func;
 
 func.tags = ['RageTradeFactory'];
+func.dependencies = ['ClearingHouseLogic', 'VPoolWrapperLogic', 'InsuranceFundLogic', 'SettlementToken'];
