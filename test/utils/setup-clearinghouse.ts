@@ -11,7 +11,7 @@ import {
   RealTokenMock,
   SettlementTokenMock,
 } from '../../typechain-types';
-import { IClearingHouseStructures } from '../../typechain-types/RageTradeFactory';
+import { IClearingHouseStructures } from '../../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
 import { getCreateAddressFor } from './create-addresses';
 import { priceToSqrtPriceX96 } from './price-tick';
 import { randomAddress } from './random';

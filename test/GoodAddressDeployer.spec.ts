@@ -3,8 +3,7 @@ import { expect } from 'chai';
 import { BigNumber, ethers } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 import hre from 'hardhat';
-import { GoodAddressDeployerTest__factory } from '../typechain-types/';
-import { GoodAddressDeployerTest } from '../typechain-types/GoodAddressDeployerTest';
+import { GoodAddressDeployerTest, GoodAddressDeployerTest__factory } from '../typechain-types/';
 
 describe('GoodAddressDeployer', () => {
   let test: MockContract<GoodAddressDeployerTest>;

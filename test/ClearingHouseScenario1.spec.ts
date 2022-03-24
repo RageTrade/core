@@ -27,7 +27,7 @@ import {
   AccountInterface,
   TokenPositionFundingPaymentRealizedEvent,
   TokenPositionChangedEvent,
-} from '../typechain-types/Account';
+} from '../typechain-types/artifacts/contracts/libraries/Account';
 
 // import { ConstantsStruct } from '../typechain-types/ClearingHouse';
 import {
