@@ -1,5 +1,5 @@
 {
-  "address": "0x0a9397967521C012ddFC7A3CE748A03229f4C010",
+  "address": "0x470a1982270e44743682b37C70101e9388Ceaa34",
   "abi": [
     {
       "inputs": [
@@ -145,17 +145,6 @@
     {
       "inputs": [],
       "name": "T",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint32",
-          "name": "period",
-          "type": "uint32"
-        }
-      ],
-      "name": "UV3PH_IllegalTwapDuration",
       "type": "error"
     },
     {
