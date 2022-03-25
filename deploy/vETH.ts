@@ -82,27 +82,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await save('ETH-vToken', { abi: VToken__factory.abi, address: poolInitializedLog.args.vToken });
     console.log('saved "ETH-vToken":', poolInitializedLog.args.vToken);
-    await hre.tenderly.push({
-      name: 'VToken',
-      address: poolInitializedLog.args.vToken,
-    });
-
+    if (hre.network.config.chainId !== 31337) {
+      await hre.tenderly.push({
+        name: 'VToken',
+        address: poolInitializedLog.args.vToken,
+      });
+    }
     await save('ETH-vPool', {
       abi: IUniswapV3Pool__factory.abi,
       address: poolInitializedLog.args.vPool,
     });
     console.log('saved "ETH-vPool":', poolInitializedLog.args.vPool);
-    await hre.tenderly.push({
-      name: 'IUniswapV3Pool',
-      address: poolInitializedLog.args.vPool,
-    });
+    if (hre.network.config.chainId !== 31337) {
+      await hre.tenderly.push({
+        name: 'IUniswapV3Pool',
+        address: poolInitializedLog.args.vPool,
+      });
+    }
 
     await save('ETH-vPoolWrapper', { abi: VPoolWrapper__factory.abi, address: poolInitializedLog.args.vPoolWrapper });
     console.log('saved "ETH-vPoolWrapper":', poolInitializedLog.args.vPoolWrapper);
-    await hre.tenderly.push({
-      name: 'TransparentUpgradeableProxy',
-      address: poolInitializedLog.args.vPoolWrapper,
-    });
+    if (hre.network.config.chainId !== 31337) {
+      await hre.tenderly.push({
+        name: 'TransparentUpgradeableProxy',
+        address: poolInitializedLog.args.vPoolWrapper,
+      });
+    }
   }
 };
 

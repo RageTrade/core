@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await execute('SettlementToken', { from: deployer }, 'mint', deployer, hre.ethers.BigNumber.from(10).pow(8));
 
-    if (deployment.newlyDeployed) {
+    if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
       await hre.tenderly.push({
         name: 'SettlementTokenMock',
         address: deployment.address,
