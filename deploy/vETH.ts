@@ -10,6 +10,7 @@ import {
   RageTradeFactory,
   IClearingHouseStructures,
 } from '../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
+import { priceToPriceX128 } from '../test/utils/price-tick';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -45,6 +46,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         log: true,
       });
+      await execute('ETH-IndexOracle', { from: deployer }, 'setPriceX128', await priceToPriceX128(3000, 6, 18));
     }
 
     const deployVTokenParams: VTokenDeployer.DeployVTokenParamsStruct = {
