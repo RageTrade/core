@@ -112,13 +112,13 @@ library Protocol {
         realPriceX128 = protocol.getRealTwapPriceX128(poolId);
         virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
 
-        uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
-        if (
-            // if virtual price is too off from real price then screw that, we'll just use real price
-            (int256(realPriceX128) - int256(virtualPriceX128)).absUint() > realPriceX128.mulDiv(maxDeviationBps, 1e4)
-        ) {
-            virtualPriceX128 = realPriceX128;
-        }
+        // uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
+        // if (
+        //     // if virtual price is too off from real price then screw that, we'll just use real price
+        //     (int256(realPriceX128) - int256(virtualPriceX128)).absUint() > realPriceX128.mulDiv(maxDeviationBps, 1e4)
+        // ) {
+        //     virtualPriceX128 = realPriceX128;
+        // }
         return (realPriceX128, virtualPriceX128);
     }
 
