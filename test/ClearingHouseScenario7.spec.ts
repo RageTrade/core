@@ -857,7 +857,7 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.protocolInfo();
+      const protocol = await clearingHouseTest.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);

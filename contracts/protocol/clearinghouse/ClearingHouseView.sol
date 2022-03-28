@@ -67,18 +67,7 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     /// @inheritdoc IClearingHouseView
-    function getTwapPrices(uint32 poolId) public view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
-        realPriceX128 = protocol.getRealTwapPriceX128(poolId);
-        virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
-    }
-
-    /// @inheritdoc IClearingHouseView
-    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
-        return protocol.pools[poolId].vToken.isZero();
-    }
-
-    /// @inheritdoc IClearingHouseView
-    function protocolInfo()
+    function getProtocolInfo()
         public
         view
         returns (
@@ -96,5 +85,16 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
         minRequiredMargin = protocol.minRequiredMargin;
         removeLimitOrderFee = protocol.removeLimitOrderFee;
         minimumOrderNotional = protocol.minimumOrderNotional;
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function getTwapPrices(uint32 poolId) public view returns (uint256 realPriceX128, uint256 virtualPriceX128) {
+        realPriceX128 = protocol.getRealTwapPriceX128(poolId);
+        virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
+    }
+
+    /// @inheritdoc IClearingHouseView
+    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
+        return protocol.pools[poolId].vToken.isZero();
     }
 }

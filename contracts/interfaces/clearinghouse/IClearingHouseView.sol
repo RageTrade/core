@@ -58,17 +58,6 @@ interface IClearingHouseView is IClearingHouseStructures {
     /// @return pool the Pool struct
     function getPoolInfo(uint32 poolId) external view returns (Pool memory);
 
-    /// @notice Gets the real and virtual prices from the respective oracle of the given poolId
-    /// @param poolId the id of the pool
-    /// @return realPriceX128 the real price of the pool
-    /// @return virtualPriceX128 the virtual price of the pool
-    function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
-
-    /// @notice Checks if a poolId is unused
-    /// @param poolId the id of the pool
-    /// @return true if the poolId is unused, false otherwise
-    function isPoolIdAvailable(uint32 poolId) external view returns (bool);
-
     /// @notice Gets the protocol info, global protocol settings
     /// @return settlementToken the token in which profit is settled
     /// @return vQuote the vQuote token contract
@@ -76,7 +65,7 @@ interface IClearingHouseView is IClearingHouseStructures {
     /// @return minRequiredMargin minimum required margin an account has to keep with non-zero netPosition
     /// @return removeLimitOrderFee the fee charged for using removeLimitOrder service
     /// @return minimumOrderNotional the minimum order notional
-    function protocolInfo()
+    function getProtocolInfo()
         external
         view
         returns (
@@ -87,4 +76,15 @@ interface IClearingHouseView is IClearingHouseStructures {
             uint256 removeLimitOrderFee,
             uint256 minimumOrderNotional
         );
+
+    /// @notice Gets the real and virtual prices from the respective oracle of the given poolId
+    /// @param poolId the id of the pool
+    /// @return realPriceX128 the real price of the pool
+    /// @return virtualPriceX128 the virtual price of the pool
+    function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
+
+    /// @notice Checks if a poolId is unused
+    /// @param poolId the id of the pool
+    /// @return true if the poolId is unused, false otherwise
+    function isPoolIdAvailable(uint32 poolId) external view returns (bool);
 }
