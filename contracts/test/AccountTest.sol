@@ -181,7 +181,11 @@ contract AccountTest {
 
     function liquidateLiquidityPositions(uint256 accountId)
         external
-        returns (int256 keeperFee, int256 insuranceFundFee)
+        returns (
+            int256 keeperFee,
+            int256 insuranceFundFee,
+            int256 accountMarketValue
+        )
     {
         return accounts[accountId].liquidateLiquidityPositions(fixFee, protocol);
     }
