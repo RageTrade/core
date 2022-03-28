@@ -68,7 +68,7 @@ library Account {
     /// @notice error to denote that there is enough margin, hence the liquidation is invalid
     /// @param accountMarketValue shows the account market value before liquidation
     /// @param totalRequiredMargin shows the total required margin before liquidation
-    error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
+    error InvalidLiquidationAccountAboveWater(int256 accountMarketValue, int256 totalRequiredMargin);
 
     /// @notice error to denote that there are active ranges present during token liquidation, hence the liquidation is invalid
     /// @param poolId shows the poolId for which range is active
@@ -352,7 +352,7 @@ library Account {
 
         (accountMarketValue, totalRequiredMargin) = account._getAccountValueAndRequiredMargin(false, protocol);
         if (accountMarketValue > totalRequiredMargin) {
-            revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+            revert InvalidLiquidationAccountAboveWater(accountMarketValue, totalRequiredMargin);
         }
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(account.id, protocol);
 
@@ -387,7 +387,7 @@ library Account {
             );
 
             if (accountMarketValue > totalRequiredMargin) {
-                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+                revert InvalidLiquidationAccountAboveWater(accountMarketValue, totalRequiredMargin);
             } else if (
                 accountMarketValue >
                 totalRequiredMargin.mulDiv(protocol.liquidationParams.closeFactorMMThresholdBps, 1e4)
