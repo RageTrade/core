@@ -709,7 +709,7 @@ describe('Clearing House Scenario 6', () => {
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.protocolInfo();
+      const protocol = await clearingHouseTest.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);

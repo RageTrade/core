@@ -707,7 +707,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.protocolInfo();
+      const protocol = await clearingHouseTest.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);

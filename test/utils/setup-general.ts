@@ -103,7 +103,7 @@ export async function testSetup({
   const vPoolAddress = events[0].args[0];
   const vTokenAddress = events[0].args[1];
   const vPoolWrapperAddress = events[0].args[2];
-  // const constants = (await clearingHouse.protocolInfo()).constants;
+  // const constants = (await clearingHouse.getProtocolInfo()).constants;
 
   return {
     settlementToken,
@@ -163,7 +163,7 @@ export async function testSetupVQuote(signer?: SignerWithAddress) {
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
   const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
-  // const constants = (await clearingHouse.protocolInfo()).constants;
+  // const constants = (await clearingHouse.getProtocolInfo()).constants;
 
   return {
     settlementToken,

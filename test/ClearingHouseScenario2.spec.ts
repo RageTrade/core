@@ -857,7 +857,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.protocolInfo();
+      const protocol = await clearingHouseTest.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);

@@ -839,7 +839,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.protocolInfo();
+      const protocol = await clearingHouseTest.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
