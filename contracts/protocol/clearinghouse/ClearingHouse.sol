@@ -222,29 +222,6 @@ contract ClearingHouse is
         return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
     }
 
-    function _updateRangeOrder(
-        Account.Info storage account,
-        uint32 poolId,
-        LiquidityChangeParams memory liquidityChangeParams,
-        bool checkMargin
-    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        _checkPoolId(poolId);
-
-        if (liquidityChangeParams.sqrtPriceCurrent != 0) {
-            _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
-        }
-
-        uint256 notionalValueAbs;
-        (vTokenAmountOut, vQuoteAmountOut, notionalValueAbs) = account.liquidityChange(
-            poolId,
-            liquidityChangeParams,
-            protocol,
-            checkMargin
-        );
-
-        if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
-    }
-
     /// @inheritdoc IClearingHouseActions
     function removeLimitOrder(
         uint256 accountId,
@@ -374,6 +351,29 @@ contract ClearingHouse is
         } else {
             protocol.settlementToken.safeTransfer(msg.sender, uint256(-amount));
         }
+    }
+
+    function _updateRangeOrder(
+        Account.Info storage account,
+        uint32 poolId,
+        LiquidityChangeParams memory liquidityChangeParams,
+        bool checkMargin
+    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+        _checkPoolId(poolId);
+
+        if (liquidityChangeParams.sqrtPriceCurrent != 0) {
+            _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
+        }
+
+        uint256 notionalValueAbs;
+        (vTokenAmountOut, vQuoteAmountOut, notionalValueAbs) = account.liquidityChange(
+            poolId,
+            liquidityChangeParams,
+            protocol,
+            checkMargin
+        );
+
+        if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
     function _swapToken(
