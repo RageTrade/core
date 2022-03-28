@@ -397,17 +397,30 @@ contract ClearingHouse is
         }
     }
 
-    function _liquidateLiquidityPositions(uint256 accountId) internal whenNotPaused returns (int256 keeperFee) {
+    function _liquidateLiquidityPositions(uint256 accountId) internal whenNotPaused returns (int256) {
         Account.Info storage account = accounts[accountId];
-        int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(0, protocol);
+
+        (int256 keeperFee, int256 insuranceFundFee, int256 accountMarketValue) = account.liquidateLiquidityPositions(
+            0,
+            protocol
+        );
+
         int256 accountFee = keeperFee + insuranceFundFee;
 
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
         protocol.settlementToken.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
-        emit Account.LiquidityPositionsLiquidated(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
+        emit Account.LiquidityPositionsLiquidated(
+            accountId,
+            msg.sender,
+            accountFee,
+            keeperFee,
+            insuranceFundFee,
+            accountMarketValue
+        );
+
+        return keeperFee;
     }
 
     function _liquidateTokenPosition(uint256 accountId, uint32 poolId)

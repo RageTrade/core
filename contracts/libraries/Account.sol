@@ -204,7 +204,8 @@ library Account {
         address indexed keeperAddress,
         int256 liquidationFee,
         int256 keeperFee,
-        int256 insuranceFundFee
+        int256 insuranceFundFee,
+        int256 accountMarketValueFinal
     );
 
     /// @notice denotes token position liquidation event
@@ -219,7 +220,8 @@ library Account {
         uint256 indexed liquidatorAccountId,
         uint32 indexed poolId,
         int256 keeperFee,
-        int256 insuranceFundFee
+        int256 insuranceFundFee,
+        int256 accountMarketValueFinal
     );
 
     /**
@@ -336,9 +338,15 @@ library Account {
         Account.Info storage account,
         uint256 fixFee,
         Protocol.Info storage protocol
-    ) external returns (int256 keeperFee, int256 insuranceFundFee) {
+    )
+        external
+        returns (
+            int256 keeperFee,
+            int256 insuranceFundFee,
+            int256 accountMarketValue
+        )
+    {
         // check basis maintanace margin
-        int256 accountMarketValue;
         int256 totalRequiredMargin;
         uint256 notionalAmountClosed;
 
@@ -402,6 +410,7 @@ library Account {
             }
         }
 
+        int256 accountMarketValueFinal;
         {
             uint160 sqrtPriceLimit;
             {
@@ -424,7 +433,7 @@ library Account {
                 protocol
             );
 
-            int256 accountMarketValueFinal = account._getAccountValue(protocol);
+            accountMarketValueFinal = account._getAccountValue(protocol);
 
             (keeperFee, insuranceFundFee) = _computeLiquidationFees(
                 accountMarketValueFinal,
@@ -437,7 +446,7 @@ library Account {
 
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
 
-        emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee);
+        emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee, accountMarketValueFinal);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)
