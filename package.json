@@ -1,7 +1,7 @@
 {
   "name": "@ragetrade/core",
   "version": "1.0.0",
-  "repository": "https://github.com/rage-trade/core",
+  "repository": "https://github.com/ragetrade/core",
   "license": "MIT",
   "scripts": {
     "clean": "hardhat clean",
@@ -14,7 +14,7 @@
     "deploy:optest": "yarn deploy --network optest",
     "deploy:localhost": "yarn --network localhost deploy",
     "etherscan": "hardhat etherscan-verify",
-    "etherscan:arbtest": "npx hardhat run ./scripts/etherscan-verify.ts --network arbtest",
+    "etherscan:arbtest": "TS_NODE_SKIP_IGNORE=true hardhat run ./scripts/etherscan-verify.ts --network arbtest",
     "format": "prettier --check contracts deploy test",
     "format:fix": "prettier --write contracts deploy test",
     "size": "hardhat size-contracts",
