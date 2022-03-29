@@ -2,8 +2,10 @@
 
 pragma solidity ^0.8.9;
 
+import { IExtsload } from '../interfaces/IExtsload.sol';
+
 /// @notice Allows the contract to make it's state public
-abstract contract Extsload {
+abstract contract Extsload is IExtsload {
     function extsload(bytes32 slot) external view returns (bytes32 val) {
         assembly {
             val := sload(slot)
