@@ -627,7 +627,7 @@ describe('Account Library Test Realistic', () => {
     it('Liquidation - Fail (Account Above Water)', async () => {
       const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
       await expect(test.liquidateLiquidityPositions(0)).to.be.revertedWith(
-        'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
+        'InvalidLiquidationAccountAboveWater(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
     it('Liquidation - Success (Account Positive)', async () => {
@@ -746,7 +746,7 @@ describe('Account Library Test Realistic', () => {
     it('Liquidation - Fail (Account Above Water)', async () => {
       const { accountMarketValue, requiredMargin } = await test.getAccountValueAndRequiredMargin(0, false);
       await expect(test.liquidateLiquidityPositions(0)).to.be.revertedWith(
-        'InvalidLiquidationAccountAbovewater(' + accountMarketValue + ', ' + requiredMargin + ')',
+        'InvalidLiquidationAccountAboveWater(' + accountMarketValue + ', ' + requiredMargin + ')',
       );
     });
     it('Liquidation - Success (Account Positive)', async () => {
