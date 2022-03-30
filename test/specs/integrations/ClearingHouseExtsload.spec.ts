@@ -4,6 +4,7 @@ import { vEthFixture } from '../../fixtures/vETH';
 import { truncate } from '../../utils/vToken';
 import { ClearingHouseExtsloadTest } from '../../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { expect } from 'chai';
+import { activateMainnetFork } from '../../utils/mainnet-fork';
 
 describe('Clearing House Extsload', () => {
   let clearingHouse: ClearingHouse;
@@ -12,6 +13,7 @@ describe('Clearing House Extsload', () => {
   let test: ClearingHouseExtsloadTest;
 
   before(async () => {
+    await activateMainnetFork();
     ({ clearingHouse, vToken, vPool } = await vEthFixture());
     test = await (await hre.ethers.getContractFactory('ClearingHouseExtsloadTest')).deploy();
   });
@@ -25,7 +27,6 @@ describe('Clearing House Extsload', () => {
     it('settings', async () => {
       const result = await test.pools_settings(clearingHouse.address, truncate(vToken.address));
       const poolInfo = await clearingHouse.getPoolInfo(truncate(vToken.address));
-      console.log(result);
 
       expect(result).to.deep.eq(poolInfo.settings);
     });
