@@ -18,6 +18,7 @@ import { expect } from 'chai';
 import { maxLiquidityForAmounts } from '../helpers/liquidity';
 import { TransferEvent } from '../../typechain-types/artifacts/@openzeppelin/contracts/token/ERC20/IERC20';
 import { ContractTransaction } from '@ethersproject/contracts';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('PoolWrapper', () => {
   let vPoolWrapper: MockContract<VPoolWrapperMock2>;
@@ -526,14 +527,37 @@ describe('PoolWrapper', () => {
   });
 
   describe('#admin', () => {
+    let owner: SignerWithAddress;
+    let stranger: SignerWithAddress;
+    before(async () => {
+      [owner, stranger] = await hre.ethers.getSigners();
+    });
+
     it('setLiquidityFee', async () => {
-      await vPoolWrapper.setLiquidityFee(123);
+      await vPoolWrapper.connect(owner).setLiquidityFee(123);
       expect(await vPoolWrapper.liquidityFeePips()).to.eq(123);
     });
 
     it('setProtocolFee', async () => {
-      await vPoolWrapper.setProtocolFee(124);
+      await vPoolWrapper.connect(owner).setProtocolFee(124);
       expect(await vPoolWrapper.protocolFeePips()).to.eq(124);
+    });
+
+    it('fundingRateOverrideX128', async () => {
+      await vPoolWrapper.connect(owner).setFundingRateOverride(124);
+      expect(await vPoolWrapper.fundingRateOverrideX128()).to.eq(124);
+    });
+
+    it('setLiquidityFee owner check', async () => {
+      await expect(vPoolWrapper.connect(stranger).setLiquidityFee(123)).to.be.revertedWith('ddd');
+    });
+
+    it('setProtocolFee owner check', async () => {
+      await expect(vPoolWrapper.connect(stranger).setProtocolFee(123)).to.be.revertedWith('ddd');
+    });
+
+    it('setProtocolFee owner check', async () => {
+      await expect(vPoolWrapper.connect(stranger).setFundingRateOverride(123)).to.be.revertedWith('ddd');
     });
   });
 

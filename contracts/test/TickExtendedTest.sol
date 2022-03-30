@@ -21,6 +21,8 @@ contract TickExtendedTest {
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128;
 
+    int256 fundingRateOverrideX128 = type(int256).max;
+
     IUniswapV3Pool public vPool;
 
     constructor() {
@@ -88,7 +90,14 @@ contract TickExtendedTest {
         uint256 realPriceX128,
         uint256 virtualPriceX128
     ) public {
-        fpGlobal.update(vTokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
+        fpGlobal.update(
+            vTokenAmount,
+            liquidity,
+            blockTimestamp,
+            realPriceX128,
+            virtualPriceX128,
+            fundingRateOverrideX128
+        );
     }
 
     function cross(int24 tickNext) external {

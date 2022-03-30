@@ -185,6 +185,19 @@ describe('FundingPayment', () => {
     });
   });
 
+  describe('#fundingRateOverrideX128', () => {
+    it('works', async () => {
+      // setting funding rate override to 2%
+      await test.setFundingRateOverrideX128(toQ128(0.02));
+
+      // passing a funding rate of 124-100/100/24 = 0.1%
+      const a1 = await test.nextAX128(0, 1, toQ128(124), toQ128(100));
+      expect(a1).to.eq(toQ128(0.02)); // since dt = 1, a == funding rate
+      const a2 = await test.nextAX128(0, 2, toQ128(124), toQ128(100));
+      expect(a2).to.eq(toQ128(0.02).mul(2)); // since dt = 2, a == funding rate * 2
+    });
+  });
+
   async function update({
     vTokenAmount,
     liquidity,

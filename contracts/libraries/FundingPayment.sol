@@ -38,15 +38,23 @@ library FundingPayment {
     /// @param blockTimestamp timestamp of current block
     /// @param realPriceX128 spot price
     /// @param virtualPriceX128 perpetual's price
+    /// @param fundingRateOverrideX128 override for funding rate, ignored if type(int256).max
     function update(
         FundingPayment.Info storage info,
         int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
         uint256 realPriceX128,
-        uint256 virtualPriceX128
+        uint256 virtualPriceX128,
+        int256 fundingRateOverrideX128
     ) internal {
-        int256 a = nextAX128(info.timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+        int256 a = nextAX128(
+            info.timestampLast,
+            blockTimestamp,
+            realPriceX128,
+            virtualPriceX128,
+            fundingRateOverrideX128
+        );
         info.sumFpX128 += a.mulDivRoundingDown(info.sumBX128, int256(FixedPoint128.Q128));
         info.sumAX128 += a;
         info.sumBX128 += vTokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
@@ -61,18 +69,22 @@ library FundingPayment {
     /// @param blockTimestamp end timestamp of duration
     /// @param realPriceX128 spot price of token, used to calculate funding rate
     /// @param virtualPriceX128 futures price of token, used to calculate funding rate
+    /// @param fundingRateOverrideX128 override for funding rate, ignored if type(int256).max
     /// @return aX128 value called "a" (see funding payment math documentation)
     function nextAX128(
         uint48 timestampLast,
         uint48 blockTimestamp,
         uint256 realPriceX128,
-        uint256 virtualPriceX128
+        uint256 virtualPriceX128,
+        int256 fundingRateOverrideX128
     ) internal pure returns (int256 aX128) {
         return
-            (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
-                blockTimestamp - timestampLast,
-                1 days
-            );
+            fundingRateOverrideX128 == type(int256).max
+                ? (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
+                    blockTimestamp - timestampLast,
+                    1 days
+                )
+                : fundingRateOverrideX128 * int48(blockTimestamp - timestampLast);
     }
 
     function extrapolatedSumAX128(
@@ -80,9 +92,12 @@ library FundingPayment {
         uint48 timestampLast,
         uint48 blockTimestamp,
         uint256 realPriceX128,
-        uint256 virtualPriceX128
+        uint256 virtualPriceX128,
+        int256 fundingRateOverrideX128
     ) internal pure returns (int256) {
-        return sumAX128 + nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+        return
+            sumAX128 +
+            nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128, fundingRateOverrideX128);
     }
 
     /// @notice Extrapolates (updates) the value of sumFp by adding the missing component to it using sumAGlobalX128

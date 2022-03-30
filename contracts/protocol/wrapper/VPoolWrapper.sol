@@ -64,6 +64,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128;
 
+    int256 public fundingRateOverrideX128;
+
     mapping(int24 => TickExtended.Info) public ticksExtended;
 
     error NotClearingHouse();
@@ -116,8 +118,10 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         liquidityFeePips = params.liquidityFeePips;
         protocolFeePips = params.protocolFeePips;
 
+        fundingRateOverrideX128 = type(int256).max;
+
         // initializes the funding payment state by zeroing the funding payment for time 0 to blockTimestamp
-        fpGlobal.update(0, 1, _blockTimestamp(), 1, 1);
+        fpGlobal.update(0, 1, _blockTimestamp(), 1, 1, fundingRateOverrideX128);
     }
 
     function collectAccruedProtocolFee() external onlyClearingHouse returns (uint256 accruedProtocolFeeLast) {
@@ -132,7 +136,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @param realPriceX128 real price from clearing house
     /// @param virtualPriceX128 virtual price from clearing house
     function updateGlobalFundingState(uint256 realPriceX128, uint256 virtualPriceX128) public onlyClearingHouse {
-        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
+        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128, fundingRateOverrideX128);
     }
 
     /**
@@ -147,6 +151,11 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     function setProtocolFee(uint24 protocolFeePips_) external onlyGovernance {
         protocolFeePips = protocolFeePips_;
         emit ProtocolFeeUpdated(protocolFeePips_);
+    }
+
+    function setFundingRateOverride(int256 fundingRateOverrideX128_) external onlyGovernance {
+        fundingRateOverrideX128 = fundingRateOverrideX128_;
+        emit FundingRateOverrideUpdated(fundingRateOverrideX128_);
     }
 
     /**
@@ -329,7 +338,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 fpGlobal.timestampLast,
                 _blockTimestamp(),
                 realPriceX128,
-                virtualPriceX128
+                virtualPriceX128,
+                fundingRateOverrideX128
             );
     }
 
@@ -423,7 +433,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
                 state.liquidity,
                 _blockTimestamp(),
                 cache.realPriceX128,
-                cache.virtualPriceX128
+                cache.virtualPriceX128,
+                fundingRateOverrideX128
             );
 
             sumFeeGlobalX128 += liquidityFees.mulDiv(FixedPoint128.Q128, state.liquidity);
@@ -441,7 +452,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @notice Update global funding payment, by getting prices from Clearing House
     function _updateGlobalFundingState() internal {
         (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
-        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128);
+        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128, fundingRateOverrideX128);
     }
 
     function _updateTicks(
