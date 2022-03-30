@@ -10,7 +10,7 @@ import {
 } from '../typechain-types';
 import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
 import { parseUnits } from 'ethers/lib/utils';
-import { truncate } from '../test/utils/vToken';
+import { truncate } from '../test/helpers/vToken';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {

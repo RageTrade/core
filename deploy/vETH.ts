@@ -10,7 +10,7 @@ import {
   RageTradeFactory,
   IClearingHouseStructures,
 } from '../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
-import { priceToPriceX128 } from '../test/utils/price-tick';
+import { priceToPriceX128 } from '../test/helpers/price-tick';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {

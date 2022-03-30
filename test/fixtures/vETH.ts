@@ -5,8 +5,8 @@ import {
   priceToTick,
   sqrtPriceX96ToPrice,
   tickToNearestInitializableTick,
-} from '../utils/price-tick';
-import { truncate } from '../utils/vToken';
+} from '../helpers/price-tick';
+import { truncate } from '../helpers/vToken';
 
 export const vEthFixture = deployments.createFixture(async hre => {
   const rageTradeDeployments = await deployments.fixture('vETH');
