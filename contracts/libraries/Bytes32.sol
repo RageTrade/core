@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import 'hardhat/console.sol';
+
 library Bytes32 {
     function slice(
         bytes32 input,
@@ -9,10 +11,44 @@ library Bytes32 {
         uint256 end
     ) internal pure returns (uint256 val) {
         assembly {
-            // val := shr(and(input, not(shl(sub(shl(1, start), 1), end))), sub(256, end))
             val := shl(start, input)
             val := shr(add(start, sub(256, end)), val)
         }
+    }
+
+    // extracts given least significant bits
+    function extract(bytes32 input, uint256 bits) internal pure returns (uint256 value, bytes32 inputUpdated) {
+        assembly {
+            let shift := sub(256, bits)
+            value := shr(shift, shl(shift, input))
+            inputUpdated := shr(bits, input)
+        }
+    }
+
+    function extractAddress(bytes32 input) internal pure returns (address value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = extract(input, 160);
+        assembly {
+            value := temp
+        }
+    }
+
+    function extractUint16(bytes32 input) internal pure returns (uint16 value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = extract(input, 16);
+        value = uint16(temp);
+    }
+
+    function extractUint32(bytes32 input) internal pure returns (uint32 value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = extract(input, 32);
+        value = uint32(temp);
+    }
+
+    function extractBool(bytes32 input) internal pure returns (bool value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = extract(input, 8);
+        value = temp != 0;
     }
 
     function offset(bytes32 key, uint256 offset_) internal pure returns (bytes32) {

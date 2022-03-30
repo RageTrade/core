@@ -4,11 +4,11 @@ pragma solidity ^0.8.9;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
+import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
+import { IExtsload } from '../IExtsload.sol';
 import { IVQuote } from '../IVQuote.sol';
 
-import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
-
-interface IClearingHouseView is IClearingHouseStructures {
+interface IClearingHouseView is IClearingHouseStructures, IExtsload {
     /// @notice Gets details about account id
     /// @param accountId the account id
     /// @return owner address of the account creator

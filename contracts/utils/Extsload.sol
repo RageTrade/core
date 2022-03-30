@@ -6,13 +6,13 @@ import { IExtsload } from '../interfaces/IExtsload.sol';
 
 /// @notice Allows the contract to make it's state public
 abstract contract Extsload is IExtsload {
-    function extsload(uint256 slot) external view returns (uint256 val) {
+    function extsload(bytes32 slot) external view returns (bytes32 val) {
         assembly {
             val := sload(slot)
         }
     }
 
-    function extsload(uint256[] memory slots) external view returns (uint256[] memory) {
+    function extsload(bytes32[] memory slots) external view returns (bytes32[] memory) {
         assembly {
             let end := add(0x20, add(slots, mul(mload(slots), 0x20)))
             for {
