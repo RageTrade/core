@@ -1,11 +1,11 @@
+.git
 .github
 .vscode
 .env
 .env.example
 cache
+coverage
 node_modules
-test
-types
 deployments/localhost
 .gitignore
 .prettierrc
