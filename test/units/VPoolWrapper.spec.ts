@@ -549,15 +549,15 @@ describe('PoolWrapper', () => {
     });
 
     it('setLiquidityFee owner check', async () => {
-      await expect(vPoolWrapper.connect(stranger).setLiquidityFee(123)).to.be.revertedWith('ddd');
+      await expect(vPoolWrapper.connect(stranger).setLiquidityFee(123)).to.be.revertedWith('NotGovernance()');
     });
 
     it('setProtocolFee owner check', async () => {
-      await expect(vPoolWrapper.connect(stranger).setProtocolFee(123)).to.be.revertedWith('ddd');
+      await expect(vPoolWrapper.connect(stranger).setProtocolFee(123)).to.be.revertedWith('NotGovernance()');
     });
 
     it('setProtocolFee owner check', async () => {
-      await expect(vPoolWrapper.connect(stranger).setFundingRateOverride(123)).to.be.revertedWith('ddd');
+      await expect(vPoolWrapper.connect(stranger).setFundingRateOverride(123)).to.be.revertedWith('NotGovernance()');
     });
   });
 
