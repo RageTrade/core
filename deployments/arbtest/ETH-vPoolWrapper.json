@@ -1,5 +1,5 @@
 {
-  "address": "0x54AA053434cCC0D7a03aA53631d7a92873fDe7BE",
+  "address": "0xA8c9590b4aD8038961BEdFF5bb87EEAfE06706b8",
   "abi": [
     {
       "inputs": [
@@ -128,6 +128,19 @@
         }
       ],
       "name": "Burn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "fundingRateOverrideX128",
+          "type": "int256"
+        }
+      ],
+      "name": "FundingRateOverrideUpdated",
       "type": "event"
     },
     {
@@ -456,6 +469,19 @@
     },
     {
       "inputs": [],
+      "name": "fundingRateOverrideX128",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getExtrapolatedSumAX128",
       "outputs": [
         {
@@ -657,6 +683,19 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "fundingRateOverrideX128_",
+          "type": "int256"
+        }
+      ],
+      "name": "setFundingRateOverride",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
