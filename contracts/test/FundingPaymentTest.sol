@@ -9,6 +9,12 @@ contract FundingPaymentTest {
 
     FundingPayment.Info public fpGlobal;
 
+    int256 public fundingRateOverrideX128 = type(int256).max;
+
+    function setFundingRateOverrideX128(int256 _fundingRateOverrideX128) public {
+        fundingRateOverrideX128 = _fundingRateOverrideX128;
+    }
+
     function update(
         int256 vTokenAmount,
         uint256 liquidity,
@@ -16,7 +22,15 @@ contract FundingPaymentTest {
         uint256 realPriceX128,
         uint256 virtualPriceX128
     ) public {
-        return fpGlobal.update(vTokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
+        return
+            fpGlobal.update(
+                vTokenAmount,
+                liquidity,
+                blockTimestamp,
+                realPriceX128,
+                virtualPriceX128,
+                fundingRateOverrideX128
+            );
     }
 
     function nextAX128(
@@ -24,8 +38,15 @@ contract FundingPaymentTest {
         uint48 blockTimestamp,
         uint256 realPriceX128,
         uint256 virtualPriceX128
-    ) public pure returns (int256) {
-        return FundingPayment.nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+    ) public view returns (int256) {
+        return
+            FundingPayment.nextAX128(
+                timestampLast,
+                blockTimestamp,
+                realPriceX128,
+                virtualPriceX128,
+                fundingRateOverrideX128
+            );
     }
 
     function extrapolatedSumAX128(
@@ -34,9 +55,16 @@ contract FundingPaymentTest {
         uint48 blockTimestamp,
         uint256 realPriceX128,
         uint256 virtualPriceX128
-    ) public pure returns (int256) {
+    ) public view returns (int256) {
         return
-            FundingPayment.extrapolatedSumAX128(sumA, timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+            FundingPayment.extrapolatedSumAX128(
+                sumA,
+                timestampLast,
+                blockTimestamp,
+                realPriceX128,
+                virtualPriceX128,
+                fundingRateOverrideX128
+            );
     }
 
     function extrapolatedSumFpX128(

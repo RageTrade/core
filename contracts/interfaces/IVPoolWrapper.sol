@@ -47,6 +47,8 @@ interface IVPoolWrapper {
 
     event ProtocolFeeUpdated(uint24 protocolFeePips);
 
+    event FundingRateOverrideUpdated(int256 fundingRateOverrideX128);
+
     function __initialize_VPoolWrapper(InitializeVPoolWrapperParams memory params) external;
 
     function vPool() external view returns (IUniswapV3Pool);
