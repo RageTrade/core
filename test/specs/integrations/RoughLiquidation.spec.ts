@@ -1,10 +1,12 @@
 import { formatUnits, parseEther, parseUnits } from 'ethers/lib/utils';
 import { vEthFixture } from '../../fixtures/vETH';
+import { activateMainnetFork } from '../../utils/mainnet-fork';
 import { sqrtPriceX96ToPrice } from '../../utils/price-tick';
 import { truncate } from '../../utils/vToken';
 
 describe('Rough Liquidation', () => {
   before(async () => {
+    await activateMainnetFork();
     await vEthFixture();
   });
 
