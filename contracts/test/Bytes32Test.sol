@@ -24,4 +24,8 @@ contract Bytes32Test {
     function offset(bytes32 key, uint256 offset_) public pure returns (bytes32) {
         return Bytes32.offset(key, offset_);
     }
+
+    function extract(bytes32 input, uint256 bits) public pure returns (uint256 value, bytes32 inputUpdated) {
+        return Bytes32.extract(input, bits);
+    }
 }

@@ -26,9 +26,18 @@ describe('Bytes32', () => {
     it('keccak256One', async () => {
       const val = hexZeroPad(BigNumber.from(0).toHexString(), 32);
       const result = await test.keccak256One(val);
-      console.log(result);
 
       expect(result).to.eq(hexlify(keccak256(val)));
+    });
+  });
+
+  describe('#extract', () => {
+    it('works', async () => {
+      const { value, inputUpdated } = await test.extract(bytes32('0xffff'), 8);
+      console.log(value, inputUpdated);
+
+      expect(value).to.eq(255);
+      expect(inputUpdated).to.eq(bytes32('0xff'));
     });
   });
 });
