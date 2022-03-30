@@ -1,5 +1,5 @@
 {
-  "address": "0x470a1982270e44743682b37C70101e9388Ceaa34",
+  "address": "0x2969960AC552B3E9e79b7e5105D4996fFc40cB8c",
   "abi": [
     {
       "inputs": [
@@ -850,6 +850,86 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getProtocolInfo",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "settlementToken",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IVQuote",
+          "name": "vQuote",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "rangeLiquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "tokenLiquidationFeeFraction",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "closeFactorMMThresholdBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "partialLiquidationCloseFactorBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "insuranceFundFeeShareBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "liquidationSlippageSqrtToleranceBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint64",
+              "name": "maxRangeLiquidationFees",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "minNotionalLiquidatable",
+              "type": "uint64"
+            }
+          ],
+          "internalType": "struct IClearingHouseStructures.LiquidationParams",
+          "name": "liquidationParams",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minRequiredMargin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "removeLimitOrderFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minimumOrderNotional",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint32",
@@ -1044,86 +1124,6 @@
           "internalType": "bool",
           "name": "",
           "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "protocolInfo",
-      "outputs": [
-        {
-          "internalType": "contract IERC20",
-          "name": "settlementToken",
-          "type": "address"
-        },
-        {
-          "internalType": "contract IVQuote",
-          "name": "vQuote",
-          "type": "address"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint16",
-              "name": "rangeLiquidationFeeFraction",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "tokenLiquidationFeeFraction",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "closeFactorMMThresholdBps",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "partialLiquidationCloseFactorBps",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "insuranceFundFeeShareBps",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint16",
-              "name": "liquidationSlippageSqrtToleranceBps",
-              "type": "uint16"
-            },
-            {
-              "internalType": "uint64",
-              "name": "maxRangeLiquidationFees",
-              "type": "uint64"
-            },
-            {
-              "internalType": "uint64",
-              "name": "minNotionalLiquidatable",
-              "type": "uint64"
-            }
-          ],
-          "internalType": "struct IClearingHouseStructures.LiquidationParams",
-          "name": "liquidationParams",
-          "type": "tuple"
-        },
-        {
-          "internalType": "uint256",
-          "name": "minRequiredMargin",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "removeLimitOrderFee",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "minimumOrderNotional",
-          "type": "uint256"
         }
       ],
       "stateMutability": "view",
