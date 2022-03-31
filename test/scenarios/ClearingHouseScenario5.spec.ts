@@ -34,8 +34,8 @@ import {
   TokenPositionFundingPaymentRealizedEvent,
 } from '../../typechain-types/artifacts/contracts/libraries/Account';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { SETTLEMENT_TOKEN } from '../helpers/realConstants';
-import { stealFunds } from '../helpers/stealFunds';
+import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
+import { stealFunds } from '../helpers/steal-funds';
 
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 

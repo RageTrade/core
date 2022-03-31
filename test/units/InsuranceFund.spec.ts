@@ -6,7 +6,7 @@ import { parseTokenAmount } from '@ragetrade/sdk';
 
 import { IERC20, InsuranceFund } from '../../typechain-types';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { stealFunds } from '../helpers/stealFunds';
+import { stealFunds } from '../helpers/steal-funds';
 
 const settlementToken = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
