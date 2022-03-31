@@ -13,13 +13,7 @@ library ClearingHouseExtsload {
     using Bytes32 for bytes32;
 
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
-
     bytes32 constant POOLS_MAPPING_SLOT = PROTOCOL_SLOT;
-
-    // uint256 constant COLLATERAL_MAPPING_SLOT = PROTOCOL_SLOT + 1;
-    // uint256 constant SETTLEMENT_TOKEN_SLOT = PROTOCOL_SLOT + 2;
-
-    // vPool
 
     function pools_vPool(IClearingHouse clearingHouse, uint32 poolId) internal view returns (address vPool) {
         bytes32 result = clearingHouse.extsload(pools_vPool_key(poolId));
@@ -68,8 +62,6 @@ library ClearingHouseExtsload {
     function pools_vPool_key(uint32 poolId) internal pure returns (bytes32) {
         return Bytes32.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(1);
     }
-
-    // custom
 
     function pools_vPool_and_settings_twapDuration(IClearingHouse clearingHouse, uint32 poolId)
         internal
