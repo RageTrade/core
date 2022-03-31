@@ -1,5 +1,5 @@
-import { network } from 'hardhat';
 import { config } from 'dotenv';
+import { network } from 'hardhat';
 
 config();
 const { ALCHEMY_KEY } = process.env;

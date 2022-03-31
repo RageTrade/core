@@ -1,12 +1,12 @@
-import { smock } from '@defi-wonderland/smock';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
-import { ClearingHouse, ERC20, RageTradeFactory, VQuote } from '../../typechain-types';
 
+import { smock } from '@defi-wonderland/smock';
+
+import { ERC20 } from '../../typechain-types';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { setupClearingHouse, initializePool } from '../helpers/setup-clearinghouse';
+import { initializePool, setupClearingHouse } from '../helpers/setup-clearinghouse';
 
 describe('RageTradeFactory', () => {
   // before(activateMainnetFork);

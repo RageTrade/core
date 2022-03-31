@@ -1,8 +1,10 @@
-import { FakeContract, smock } from '@defi-wonderland/smock';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { ChainlinkOracle, MockAggregatorV3, FlagsInterface } from '../../typechain-types';
-import { parseTokenAmount } from '../helpers/stealFunds';
+
+import { FakeContract, smock } from '@defi-wonderland/smock';
+import { parseTokenAmount } from '@ragetrade/sdk';
+
+import { ChainlinkOracle, FlagsInterface, MockAggregatorV3 } from '../../typechain-types';
 
 describe('ChainlinkPriceFeed Spec', () => {
   let chainlinkOracle: ChainlinkOracle;

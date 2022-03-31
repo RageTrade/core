@@ -1,31 +1,23 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { network } from 'hardhat';
-import { BigNumber, utils } from 'ethers';
-import {
-  VTokenPositionSetTest,
-  RageTradeFactory,
-  VQuote,
-  VPoolWrapper,
-  ERC20,
-  UniswapV3Pool,
-  ClearingHouse,
-} from '../../typechain-types';
-import {
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-  UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  SETTLEMENT_TOKEN,
-} from '../helpers/realConstants';
-import { config } from 'dotenv';
-import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
+
 import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { getCreateAddressFor } from '../helpers/create-addresses';
+import { getCreateAddressFor, truncate } from '@ragetrade/sdk';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
+
+import {
+  ClearingHouse,
+  ERC20,
+  RageTradeFactory,
+  UniswapV3Pool,
+  VPoolWrapper,
+  VQuote,
+  VTokenPositionSetTest,
+} from '../../typechain-types';
 import { impersonateAccount } from '../helpers/impersonate-account';
-import { truncate } from '../helpers/vToken';
+import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
+import { SETTLEMENT_TOKEN } from '../helpers/realConstants';
 
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';

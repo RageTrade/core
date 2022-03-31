@@ -1,7 +1,7 @@
-import hre from 'hardhat';
-import fs from 'fs';
-import { getEntryFromStorage, getStorageLayout, printStorage, StorageEntry } from '../helpers/get-storage-layout';
 import { expect } from 'chai';
+import hre from 'hardhat';
+
+import { getEntryFromStorage, getStorageLayout, StorageEntry } from '../helpers/get-storage-layout';
 
 interface TestCase {
   label: string;

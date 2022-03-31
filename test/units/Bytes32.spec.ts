@@ -2,8 +2,10 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { hexlify, hexZeroPad, keccak256 } from 'ethers/lib/utils';
 import hre from 'hardhat';
+
+import { bytes32 } from '@ragetrade/sdk';
+
 import { Bytes32Test } from '../../typechain-types/artifacts/contracts/test/Bytes32Test';
-import { bytes32 } from '../helpers/casting';
 
 describe('Bytes32', () => {
   let test: Bytes32Test;

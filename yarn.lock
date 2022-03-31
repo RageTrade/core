@@ -1096,13 +1096,14 @@
     fs-extra "^9.0.1"
     js-yaml "^3.14.0"
 
-"@ragetrade/sdk@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-0.3.0.tgz#b0b152674a0339a16f5fa5cf4f920fde6644113d"
-  integrity sha512-akEiWxVtxYNL/sH/6Z4fiD5x9HnR6MvnXIKeMM4Sscmpe3/Bgb65vnWf6ssqvp3k+Iep0U4mtToTjwg9Yvq6uw==
+"@ragetrade/sdk@^0.5.10":
+  version "0.5.10"
+  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-0.5.10.tgz#fbe5ae1fec477e51f58e303bb51cb597ead8df8d"
+  integrity sha512-AYotn75KNdjeXHTLUE5KkpHFBy4/s/4KRLDZtKB9iqIZYVOC1KZw2C8bqg9+ypvaA3hFXQmI0C+9D8altH3olA==
   dependencies:
-    "@uniswap/v3-sdk" "^3.8.1"
-    ethers "^5.5.3"
+    "@uniswap/v3-sdk" "^3.8.2"
+    ethers "^5.6.2"
+    ethers-repl "^1.0.3"
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
@@ -1554,7 +1555,7 @@
     base64-sol "1.0.1"
     hardhat-watcher "^2.1.1"
 
-"@uniswap/v3-sdk@^3.8.1", "@uniswap/v3-sdk@^3.8.2":
+"@uniswap/v3-sdk@^3.8.2":
   version "3.8.2"
   resolved "https://registry.yarnpkg.com/@uniswap/v3-sdk/-/v3-sdk-3.8.2.tgz#6e10eebe0da851a4f6a5036a1e70a896a5c239d4"
   integrity sha512-JVrs1ZuWKP8JmYi5hxFliOnCFAEREwMpE7qB6rKPCo155/pIRyQ90lJfQZCJO7pP/webx5t5JFxCOytmDIp29Q==
@@ -4311,6 +4312,13 @@ ethereumjs-wallet@0.6.5:
     utf8 "^3.0.0"
     uuid "^3.3.2"
 
+ethers-repl@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/ethers-repl/-/ethers-repl-1.0.3.tgz#fca4474f330469d11da66b7d6c0a4efffff25814"
+  integrity sha512-Pdq6hzTEqoEAf56gEtaCwrYTP2Xz4SgP0A1G3zPVO/GVh9/BedxGynClH4kUOPljztS3WsewppdlXBpf/0vBlQ==
+  dependencies:
+    fs-extra "^10.0.0"
+
 ethers@^4.0.32, ethers@^4.0.40:
   version "4.0.49"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-4.0.49.tgz#0eb0e9161a0c8b4761be547396bbe2fb121a8894"
@@ -4362,7 +4370,7 @@ ethers@^5.0.1, ethers@^5.0.2, ethers@^5.4.7, ethers@^5.5.0:
     "@ethersproject/web" "5.5.0"
     "@ethersproject/wordlists" "5.5.0"
 
-ethers@^5.5.3, ethers@^5.5.4:
+ethers@^5.5.4:
   version "5.5.4"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.5.4.tgz#e1155b73376a2f5da448e4a33351b57a885f4352"
   integrity sha512-N9IAXsF8iKhgHIC6pquzRgPBJEzc9auw3JoRkaKe+y4Wl/LFBtDDunNe7YmdomontECAcC5APaAgWZBiu1kirw==
@@ -4398,7 +4406,7 @@ ethers@^5.5.3, ethers@^5.5.4:
     "@ethersproject/web" "5.5.1"
     "@ethersproject/wordlists" "5.5.0"
 
-ethers@^5.6.1:
+ethers@^5.6.1, ethers@^5.6.2:
   version "5.6.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.6.2.tgz#e75bac7f038c5e0fdde667dba62fc223924143a2"
   integrity sha512-EzGCbns24/Yluu7+ToWnMca3SXJ1Jk1BvWB7CCmVNxyOeM4LLvw2OLuIHhlkhQk1dtOcj9UMsdkxUh8RiG1dxQ==

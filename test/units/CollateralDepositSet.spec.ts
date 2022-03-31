@@ -1,28 +1,12 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { getCreateAddressFor } from '../helpers/create-addresses';
-import {
-  CollateralDepositSetTest,
-  RageTradeFactory,
-  ClearingHouse,
-  OracleMock,
-  RealTokenMock,
-  ERC20,
-} from '../../typechain-types';
-
-import { utils } from 'ethers';
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import {
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-  UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  SETTLEMENT_TOKEN,
-} from '../helpers/realConstants';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { FakeContract, smock } from '@defi-wonderland/smock';
+import { BigNumber } from '@ethersproject/bignumber';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+
+import { CollateralDepositSetTest, ERC20, OracleMock } from '../../typechain-types';
+import { activateMainnetFork } from '../helpers/mainnet-fork';
 
 describe('Collateral Deposit Set Library', () => {
   let test: CollateralDepositSetTest;

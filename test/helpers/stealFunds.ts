@@ -1,7 +1,9 @@
-const hre = require('hardhat');
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import hre from 'hardhat';
 
-const stealFunds = async (
+import { BigNumberish } from '@ethersproject/bignumber';
+import { parseTokenAmount } from '@ragetrade/sdk';
+
+export const stealFunds = async (
   tokenAddr: string,
   decimals: number,
   receiverAddress: string,
@@ -17,8 +19,3 @@ const stealFunds = async (
   const tokenContract = await hre.ethers.getContractAt('IERC20', tokenAddr, signer);
   await tokenContract.transfer(receiverAddress, parseTokenAmount(amount, decimals));
 };
-
-const parseTokenAmount = (value: BigNumberish, decimals: number) =>
-  BigNumber.from(value).mul(BigNumber.from(10).pow(BigNumber.from(decimals)));
-
-export { stealFunds, parseTokenAmount };

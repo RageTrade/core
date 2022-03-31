@@ -1,14 +1,11 @@
 import hre, { ethers } from 'hardhat';
-import { FakeContract, smock } from '@defi-wonderland/smock';
-import { ClearingHouse, ERC20, VQuote, RageTradeFactory } from '../../typechain-types';
-import {
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-  UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  SETTLEMENT_TOKEN,
-} from './realConstants';
+
+import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { getCreateAddressFor } from './create-addresses';
+import { getCreateAddressFor } from '@ragetrade/sdk';
+
+import { ERC20, RageTradeFactory } from '../../typechain-types';
+
 // import { ConstantsStruct } from '../../typechain-types/ClearingHouse';
 
 export async function testSetup({

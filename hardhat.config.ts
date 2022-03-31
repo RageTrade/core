@@ -2,14 +2,15 @@ import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@protodev-rage/hardhat-tenderly';
 import '@typechain/hardhat';
-import { config } from 'dotenv';
-import { ethers } from 'ethers';
-import { task } from 'hardhat/config';
 import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
 import 'hardhat-gas-reporter';
 import 'hardhat-tracer';
 import 'solidity-coverage';
+
+import { config } from 'dotenv';
+import { ethers } from 'ethers';
+import { task } from 'hardhat/config';
 
 config();
 const { ALCHEMY_KEY } = process.env;

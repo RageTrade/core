@@ -1,26 +1,25 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
+
+import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
+import { BigNumberish } from '@ethersproject/bignumber';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { parseTokenAmount, truncate } from '@ragetrade/sdk';
+
 import {
-  VTokenPositionSetTest2,
-  VPoolWrapper,
-  UniswapV3Pool,
   AccountTest,
-  RealTokenMock,
+  ClearingHouse,
   ERC20,
-  VQuote,
   OracleMock,
   RageTradeFactory,
-  ClearingHouse,
+  RealTokenMock,
+  UniswapV3Pool,
+  VPoolWrapper,
+  VQuote,
+  VTokenPositionSetTest2,
 } from '../../typechain-types';
-import { MockContract, FakeContract } from '@defi-wonderland/smock';
-import { smock } from '@defi-wonderland/smock';
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { testSetupVQuote, testSetupToken } from '../helpers/setup-general';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-import { parseTokenAmount } from '../helpers/stealFunds';
-import { truncate } from '../helpers/vToken';
+import { testSetupToken, testSetupVQuote } from '../helpers/setup-general';
 
 describe('Account Library Test Basic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;

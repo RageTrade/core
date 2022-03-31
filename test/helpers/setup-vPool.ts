@@ -1,20 +1,16 @@
 import hre, { ethers } from 'hardhat';
-import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
+
+import { MockContract, smock } from '@defi-wonderland/smock';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { priceToSqrtPriceX96 } from '@ragetrade/sdk';
+
 import {
-  ERC20,
-  IOracle,
   IUniswapV3PoolDeployer,
   UniswapV3Pool__factory,
-  VToken__factory,
-  VQuote__factory,
   VQuote,
+  VQuote__factory,
+  VToken__factory,
 } from '../../typechain-types';
-import { BigNumber } from '@ethersproject/bignumber';
-import { getCreateAddress } from './create-addresses';
-import { toQ96 } from './fixed-point';
-import { parseEther, parseUnits } from '@ethersproject/units';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { priceToSqrtPriceX96 } from './price-tick';
 
 export interface SetupArgs {
   vPriceInitial: number;

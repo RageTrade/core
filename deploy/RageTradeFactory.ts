@@ -1,7 +1,10 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { parseUnits } from 'ethers/lib/utils';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+
+import { truncate } from '@ragetrade/sdk';
+
 import {
-  ClearingHouse,
   ClearingHouse__factory,
   InsuranceFund__factory,
   IOracle__factory,
@@ -9,8 +12,6 @@ import {
   VQuote__factory,
 } from '../typechain-types';
 import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
-import { parseUnits } from 'ethers/lib/utils';
-import { truncate } from '../test/helpers/vToken';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {

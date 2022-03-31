@@ -1,9 +1,8 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ClearingHouse } from '../../typechain-types';
-import { SETTLEMENT_TOKEN } from '../helpers/realConstants';
-import { expect } from 'chai';
 import hre from 'hardhat';
-import { constants } from '../helpers/dummyConstants';
+
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+
+import { ClearingHouse } from '../../typechain-types';
 
 describe('ClearingHouseState', () => {
   let signers: SignerWithAddress[];

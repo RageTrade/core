@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import hre from 'hardhat';
+
 import { BisectionTest } from '../../typechain-types';
 
 describe('Bisection', () => {

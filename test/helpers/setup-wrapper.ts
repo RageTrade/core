@@ -1,9 +1,11 @@
-import hre from 'hardhat';
-import { smock } from '@defi-wonderland/smock';
 import { BigNumberish } from 'ethers';
+import hre from 'hardhat';
+
+import { smock } from '@defi-wonderland/smock';
+import { toQ128 } from '@ragetrade/sdk';
+
 import { ClearingHouse, VPoolWrapperMock2__factory } from '../../typechain-types';
-import { setupVPool, SetupArgs } from './setup-vPool';
-import { toQ128 } from './fixed-point';
+import { SetupArgs, setupVPool } from './setup-vPool';
 
 export async function setupWrapper(setupArgs: SetupArgs) {
   const signer = setupArgs.signer ?? (await hre.ethers.getSigners())[0];

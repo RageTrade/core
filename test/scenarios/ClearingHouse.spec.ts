@@ -1,45 +1,34 @@
 import { expect } from 'chai';
-import hre from 'hardhat';
-import { network } from 'hardhat';
+import { config } from 'dotenv';
 import { ethers } from 'ethers';
+import hre from 'hardhat';
 
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { parseUnits } from '@ethersproject/units';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import {
+  getCreateAddressFor,
+  parseTokenAmount,
+  priceToSqrtPriceX96,
+  sqrtPriceX96ToTick,
+  truncate,
+} from '@ragetrade/sdk';
+import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
-import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { getCreateAddressFor } from '../helpers/create-addresses';
 import {
   AccountTest,
-  RageTradeFactory,
-  ClearingHouse,
-  ERC20,
-  RealTokenMock,
-  OracleMock,
-  IERC20,
   ClearingHouseTest,
+  IERC20,
   IUniswapV3Pool,
-  Account,
-  VPoolWrapper,
+  OracleMock,
+  RageTradeFactory,
+  RealTokenMock,
 } from '../../typechain-types';
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import {
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-  UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  SETTLEMENT_TOKEN,
-} from '../helpers/realConstants';
-
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
-import { config } from 'dotenv';
-import { stealFunds, parseTokenAmount } from '../helpers/stealFunds';
-import { priceToSqrtPriceX96, sqrtPriceX96ToTick } from '../helpers/price-tick';
-
-import { smock } from '@defi-wonderland/smock';
-import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
-import { randomAddress } from '../helpers/random';
 import { IClearingHouseStructures } from '../../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
-import { truncate } from '../helpers/vToken';
-import { parseUnits } from '@ethersproject/units';
+import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
+import { SETTLEMENT_TOKEN } from '../helpers/realConstants';
+import { stealFunds } from '../helpers/stealFunds';
+
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();

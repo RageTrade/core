@@ -1,8 +1,10 @@
-import hre from 'hardhat';
-import { TickExtendedTest, UniswapV3PoolMock } from '../../typechain-types';
-import { BigNumber, BigNumberish, ethers } from 'ethers';
 import { expect } from 'chai';
-import { Q128, toQ128 } from '../helpers/fixed-point';
+import { BigNumber, BigNumberish, ethers } from 'ethers';
+import hre from 'hardhat';
+
+import { Q128, toQ128 } from '@ragetrade/sdk';
+
+import { TickExtendedTest, UniswapV3PoolMock } from '../../typechain-types';
 
 describe('TickExtended', () => {
   let test: TickExtendedTest;
