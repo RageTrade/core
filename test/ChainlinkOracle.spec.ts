@@ -1,12 +1,13 @@
 import { FakeContract, smock } from '@defi-wonderland/smock';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { ChainlinkOracle, MockAggregatorV3 } from '../typechain-types';
+import { ChainlinkOracle, MockAggregatorV3, FlagsInterface } from '../typechain-types';
 import { parseTokenAmount } from './utils/stealFunds';
 
 describe('ChainlinkPriceFeed Spec', () => {
   let chainlinkOracle: ChainlinkOracle;
   let aggregator: FakeContract<MockAggregatorV3>;
+  let flags: FakeContract<FlagsInterface>;
   let currentTime: number;
   let roundData: any[];
 
@@ -20,9 +21,12 @@ describe('ChainlinkPriceFeed Spec', () => {
 
   before(async () => {
     aggregator = await smock.fake('MockAggregatorV3');
+    flags = await smock.fake('FlagsInterface');
     aggregator.decimals.returns(8);
 
-    chainlinkOracle = await (await ethers.getContractFactory('ChainlinkOracle')).deploy(aggregator.address, 18, 6);
+    chainlinkOracle = await (
+      await ethers.getContractFactory('ChainlinkOracle')
+    ).deploy(aggregator.address, flags.address, 18, 6);
   });
 
   describe('Error Handling', () => {

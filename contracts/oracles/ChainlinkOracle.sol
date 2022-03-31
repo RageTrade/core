@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import { AggregatorV3Interface } from '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
+import { FlagsInterface } from '@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol';
+
 import { FixedPoint96 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint96.sol';
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
@@ -23,19 +25,26 @@ contract ChainlinkOracle is IOracle {
     using PriceMath for uint256;
 
     AggregatorV3Interface public aggregator;
+    FlagsInterface public chainlinkFlags;
+
     uint8 immutable vTokenDecimals;
     uint8 immutable vQuoteDecimals;
+    address private constant FLAG_ARBITRUM_SEQ_OFFLINE =
+        address(bytes20(bytes32(uint256(keccak256('chainlink.flags.arbitrum-seq-offline')) - 1)));
 
     error NotEnoughHistory();
+    error SequencerOffline();
     error IllegalAggregatorAddress(address aggregator);
 
     constructor(
         address _aggregator,
+        address _flags,
         uint8 _vTokenDecimals,
         uint8 _vQuoteDecimals
     ) {
         if (_aggregator.isZero()) revert IllegalAggregatorAddress(address(0));
         aggregator = AggregatorV3Interface(_aggregator);
+        chainlinkFlags = FlagsInterface(_flags);
         vTokenDecimals = _vTokenDecimals;
         vQuoteDecimals = _vQuoteDecimals;
     }
@@ -49,6 +58,10 @@ contract ChainlinkOracle is IOracle {
     }
 
     function getPrice(uint256 twapDuration) internal view returns (uint256) {
+        bool isRaised = chainlinkFlags.getFlag(FLAG_ARBITRUM_SEQ_OFFLINE);
+        if (isRaised) {
+            revert SequencerOffline();
+        }
         (uint80 round, uint256 latestPrice, uint256 latestTS) = _getLatestRoundData();
         uint256 endTS = block.timestamp;
         uint256 thresholdTS = endTS - twapDuration;
