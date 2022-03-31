@@ -1,21 +1,20 @@
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { FakeContract, smock } from '@defi-wonderland/smock';
+import JSBI from 'jsbi';
 
+import { FakeContract, smock } from '@defi-wonderland/smock';
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { tickToSqrtPriceX96, toQ128 } from '@ragetrade/sdk';
 import {
+  ADDRESS_ZERO,
+  maxLiquidityForAmounts as maxLiquidityForAmounts_,
   SqrtPriceMath,
   TickMath,
-  maxLiquidityForAmounts as maxLiquidityForAmounts_,
-  ADDRESS_ZERO,
-  tickToPrice,
 } from '@uniswap/v3-sdk';
+
 // import { constants } from './utils/dummyConstants';
 import { LiquidityPositionTest, UniswapV3Pool } from '../../typechain-types';
-import JSBI from 'jsbi';
-import { toQ128 } from '../helpers/fixed-point';
-import { priceToTick, tickToSqrtPriceX96 } from '../helpers/price-tick';
 
 describe('LiquidityPosition Library', () => {
   let test: LiquidityPositionTest;

@@ -1,9 +1,11 @@
-import hre from 'hardhat';
-import { ClearingHouse, IUniswapV3Pool, IVToken } from '../../typechain-types';
-import { vEthFixture } from '../fixtures/vETH';
-import { truncate } from '../helpers/vToken';
-import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { expect } from 'chai';
+import hre from 'hardhat';
+
+import { truncate } from '@ragetrade/sdk';
+
+import { ClearingHouse, IUniswapV3Pool, IVToken } from '../../typechain-types';
+import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
+import { vEthFixture } from '../fixtures/vETH';
 import { activateMainnetFork } from '../helpers/mainnet-fork';
 
 describe('Clearing House Extsload', () => {

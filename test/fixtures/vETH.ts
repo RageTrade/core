@@ -1,12 +1,7 @@
 import { formatUnits, parseUnits } from 'ethers/lib/utils';
-import hre, { deployments } from 'hardhat';
-import {
-  priceToNearestPriceX128,
-  priceToTick,
-  sqrtPriceX96ToPrice,
-  tickToNearestInitializableTick,
-} from '../helpers/price-tick';
-import { truncate } from '../helpers/vToken';
+import { deployments } from 'hardhat';
+
+import { priceToTick, sqrtPriceX96ToPrice, tickToNearestInitializableTick, truncate } from '@ragetrade/sdk';
 
 export const vEthFixture = deployments.createFixture(async hre => {
   const rageTradeDeployments = await deployments.fixture('vETH');

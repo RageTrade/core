@@ -1,66 +1,42 @@
 //PositionNotional Threshold New
 
 import { expect } from 'chai';
-import hre from 'hardhat';
-import { network } from 'hardhat';
-import { ContractReceipt, ContractTransaction, ethers, providers } from 'ethers';
+import { config } from 'dotenv';
+import { ContractReceipt, ContractTransaction, ethers } from 'ethers';
+import hre, { network } from 'hardhat';
 
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-
-import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { getCreateAddressFor } from '../helpers/create-addresses';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
-  AccountTest,
-  RageTradeFactory,
-  ClearingHouse,
-  ERC20,
-  RealTokenMock,
-  OracleMock,
-  IERC20,
-  ClearingHouseTest,
-  IUniswapV3Pool,
-  VPoolWrapperMockRealistic,
-  VToken,
-  VQuote,
+  parseTokenAmount,
+  getCreateAddressFor,
+  priceToSqrtPriceX96,
+  sqrtPriceX96ToPrice,
+  tickToSqrtPriceX96,
+  truncate,
+} from '@ragetrade/sdk';
+
+import {
   Account__factory,
+  ClearingHouseTest,
+  IERC20,
   InsuranceFund,
-  UniswapV3Pool,
+  IUniswapV3Pool,
+  OracleMock,
+  RageTradeFactory,
   RealTokenMockDecimals,
+  VPoolWrapperMockRealistic,
+  VQuote,
+  VToken,
 } from '../../typechain-types';
-
 import {
-  AccountInterface,
   TokenPositionChangedEvent,
   TokenPositionFundingPaymentRealizedEvent,
 } from '../../typechain-types/artifacts/contracts/libraries/Account';
+import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
+import { SETTLEMENT_TOKEN } from '../helpers/realConstants';
+import { stealFunds } from '../helpers/stealFunds';
 
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import {
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-  UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  SETTLEMENT_TOKEN,
-} from '../helpers/realConstants';
-
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
-import { config } from 'dotenv';
-import { stealFunds, parseTokenAmount } from '../helpers/stealFunds';
-import {
-  sqrtPriceX96ToTick,
-  priceToSqrtPriceX96WithoutContract,
-  priceToTick,
-  tickToPrice,
-  tickToSqrtPriceX96,
-  sqrtPriceX96ToPrice,
-  priceToSqrtPriceX96,
-  sqrtPriceX96ToPriceX128,
-  priceX128ToPrice,
-} from '../helpers/price-tick';
-
-import { smock } from '@defi-wonderland/smock';
-import { ADDRESS_ZERO, priceToClosestTick } from '@uniswap/v3-sdk';
-import { truncate } from '../helpers/vToken';
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
 config();

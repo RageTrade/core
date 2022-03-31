@@ -1,9 +1,9 @@
-import { FakeContract, smock } from '@defi-wonderland/smock';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
+import hre from 'hardhat';
 
-import { ERC20, VQuote } from '../../typechain-types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+
+import { VQuote } from '../../typechain-types';
 
 describe('VQuote', () => {
   let vQuote: VQuote;

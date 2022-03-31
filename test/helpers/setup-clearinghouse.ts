@@ -1,25 +1,13 @@
-import { smock } from '@defi-wonderland/smock';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumberish, ethers } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import hre from 'hardhat';
-import {
-  ClearingHouse,
-  ERC20,
-  VQuote,
-  RageTradeFactory,
-  RealTokenMock,
-  SettlementTokenMock,
-} from '../../typechain-types';
-import { IClearingHouseStructures } from '../../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
-import { getCreateAddressFor } from './create-addresses';
-import { priceToSqrtPriceX96 } from './price-tick';
-import { randomAddress } from './random';
-import {
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_POOL_BYTE_CODE_HASH,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-} from './realConstants';
+
+import { smock } from '@defi-wonderland/smock';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { getCreateAddressFor, priceToSqrtPriceX96 } from '@ragetrade/sdk';
+
+import { RageTradeFactory, RealTokenMock, SettlementTokenMock } from '../../typechain-types';
+import { UNISWAP_V3_DEFAULT_FEE_TIER } from './realConstants';
 
 interface SetupClearingHouseArgs {
   signer?: SignerWithAddress;

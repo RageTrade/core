@@ -1,14 +1,13 @@
 import { expect } from 'chai';
+import { BigNumber, BigNumberish } from 'ethers';
 import hre from 'hardhat';
-import { BigNumber, BigNumberish, utils } from 'ethers';
-import { VTokenPositionSetTest2, VPoolWrapper, UniswapV3Pool, VQuote, ClearingHouse } from '../../typechain-types';
-import { MockContract, FakeContract } from '@defi-wonderland/smock';
-import { smock } from '@defi-wonderland/smock';
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { testSetup } from '../helpers/setup-general';
+
+import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
+import { tickToSqrtPriceX96, truncate } from '@ragetrade/sdk';
+
+import { ClearingHouse, UniswapV3Pool, VPoolWrapper, VQuote, VTokenPositionSetTest2 } from '../../typechain-types';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { truncate } from '../helpers/vToken';
-import { tickToSqrtPriceX96 } from '../helpers/price-tick';
+import { testSetup } from '../helpers/setup-general';
 
 describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;

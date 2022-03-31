@@ -1,7 +1,7 @@
-import hre from 'hardhat';
 import { expect } from 'chai';
+import hre from 'hardhat';
+
 import { SignedMathTest } from '../../typechain-types';
-import { BigNumber } from 'ethers';
 
 describe('SignedMath', () => {
   let test: SignedMathTest;

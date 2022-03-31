@@ -1,10 +1,11 @@
-import { BigNumber } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
 
+import { BigNumber } from '@ethersproject/bignumber';
+import { Q128, toQ128 } from '@ragetrade/sdk';
+
 import { FundingPaymentTest } from '../../typechain-types';
-import { Q128, toQ128 } from '../helpers/fixed-point';
 
 const DAY = 24 * 60 * 60;
 

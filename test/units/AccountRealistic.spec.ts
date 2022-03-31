@@ -1,40 +1,36 @@
 import { expect } from 'chai';
+import { randomInt } from 'crypto';
 import hre from 'hardhat';
-import {
-  VTokenPositionSetTest2,
-  VPoolWrapper,
-  UniswapV3Pool,
-  AccountTest,
-  RealTokenMock,
-  ERC20,
-  VQuote,
-  OracleMock,
-  RageTradeFactory,
-  ClearingHouse,
-  VToken,
-} from '../../typechain-types';
-import { MockContract, FakeContract } from '@defi-wonderland/smock';
-import { smock } from '@defi-wonderland/smock';
-// import { ConstantsStruct } from '../typechain-types/ClearingHouse';
-import { testSetupVQuote, testSetupToken } from '../helpers/setup-general';
-import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+
+import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-import { parseTokenAmount } from '../helpers/stealFunds';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
+  amountsForLiquidity,
+  parseTokenAmount,
+  priceToNearestPriceX128,
   priceToSqrtPriceX96,
-  priceToPriceX128,
   priceToTick,
   tickToSqrtPriceX96,
-  sqrtPriceX96ToPriceX128,
-  priceToNearestPriceX128,
-  priceX128ToSqrtPriceX96,
-  sqrtPriceX96ToTick,
-} from '../helpers/price-tick';
-import { amountsForLiquidity, maxLiquidityForAmounts } from '../helpers/liquidity';
-import { randomInt } from 'crypto';
-import { truncate } from '../helpers/vToken';
+  truncate,
+} from '@ragetrade/sdk';
+
+import {
+  AccountTest,
+  ClearingHouse,
+  ERC20,
+  OracleMock,
+  RageTradeFactory,
+  RealTokenMock,
+  UniswapV3Pool,
+  VPoolWrapper,
+  VQuote,
+  VToken,
+  VTokenPositionSetTest2,
+} from '../../typechain-types';
 import { IClearingHouseStructures } from '../../typechain-types/artifacts/contracts/interfaces/clearinghouse/IClearingHouseEvents';
+import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
+import { testSetupToken, testSetupVQuote } from '../helpers/setup-general';
 
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
@@ -122,6 +118,7 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         input.tickUpper,
         input.liquidity,
+        // @ts-ignore TODO remove
         true, // round up for add liquidity
       );
 
@@ -144,6 +141,7 @@ describe('Account Library Test Realistic', () => {
         sqrtPriceCurrent,
         input.tickUpper,
         input.liquidity,
+        // @ts-ignore TODO remove
         false, // round down for remove liquidity
       );
 

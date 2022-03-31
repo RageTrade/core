@@ -1,14 +1,15 @@
-import hre from 'hardhat';
-import { expect } from 'chai';
-import { MockContract } from '@defi-wonderland/smock';
-import { parseEther, parseUnits, formatEther, formatUnits } from 'ethers/lib/utils';
-import { SimulateSwapTest, UniswapV3Pool, VQuote, VPoolWrapperMock2, VToken } from '../../typechain-types';
-import { setupWrapper } from '../helpers/setup-wrapper';
-import { tickToPrice } from '../helpers/price-tick';
-import { BigNumber, BigNumberish, ContractTransaction, ethers } from 'ethers';
-import { TransferEvent } from '../../typechain-types/artifacts/@openzeppelin/contracts/token/ERC20/IERC20';
-import { priceToTick } from '../helpers/price-tick';
 import assert from 'assert';
+import { expect } from 'chai';
+import { BigNumber, BigNumberish, ContractTransaction, ethers } from 'ethers';
+import { parseEther, parseUnits } from 'ethers/lib/utils';
+import hre from 'hardhat';
+
+import { MockContract } from '@defi-wonderland/smock';
+import { priceToTick, tickToPrice } from '@ragetrade/sdk';
+
+import { SimulateSwapTest, UniswapV3Pool, VPoolWrapperMock2, VQuote, VToken } from '../../typechain-types';
+import { TransferEvent } from '../../typechain-types/artifacts/@openzeppelin/contracts/token/ERC20/IERC20';
+import { setupWrapper } from '../helpers/setup-wrapper';
 
 describe('VPoolWrapper.swap', () => {
   let vPoolWrapper: MockContract<VPoolWrapperMock2>;

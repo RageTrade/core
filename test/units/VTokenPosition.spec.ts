@@ -1,6 +1,7 @@
 import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 import hre from 'hardhat';
-import { BigNumber, utils } from 'ethers';
+
 import { VTokenPositionTest } from '../../typechain-types';
 
 describe('VTokenPosition Library', () => {

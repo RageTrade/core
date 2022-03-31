@@ -1,16 +1,16 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+
+import { priceToPriceX128 } from '@ragetrade/sdk';
+
 import { IUniswapV3Pool__factory, VPoolWrapper__factory, VToken__factory } from '../typechain-types';
-
-import { getNetworkInfo } from './network-info';
-
 import {
-  PoolInitializedEvent,
-  VTokenDeployer,
-  RageTradeFactory,
   IClearingHouseStructures,
+  PoolInitializedEvent,
+  RageTradeFactory,
+  VTokenDeployer,
 } from '../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
-import { priceToPriceX128 } from '../test/helpers/price-tick';
+import { getNetworkInfo } from './network-info';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {

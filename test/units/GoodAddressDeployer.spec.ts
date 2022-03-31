@@ -1,8 +1,10 @@
-import { smock, MockContract } from '@defi-wonderland/smock';
 import { expect } from 'chai';
 import { BigNumber, ethers } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 import hre from 'hardhat';
+
+import { MockContract, smock } from '@defi-wonderland/smock';
+
 import { GoodAddressDeployerTest, GoodAddressDeployerTest__factory } from '../../typechain-types';
 
 describe('GoodAddressDeployer', () => {

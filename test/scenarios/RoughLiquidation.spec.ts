@@ -1,8 +1,9 @@
-import { formatUnits, parseEther, parseUnits } from 'ethers/lib/utils';
+import { parseEther, parseUnits } from 'ethers/lib/utils';
+
+import { truncate } from '@ragetrade/sdk';
+
 import { vEthFixture } from '../fixtures/vETH';
 import { activateMainnetFork } from '../helpers/mainnet-fork';
-import { sqrtPriceX96ToPrice } from '../helpers/price-tick';
-import { truncate } from '../helpers/vToken';
 
 describe('Rough Liquidation', () => {
   before(async () => {
