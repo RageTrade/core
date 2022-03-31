@@ -110,9 +110,7 @@ describe('RageTradeFactory', () => {
 
       // blockTimestamp method does not exist on vPoolWrapper
       const _vPoolWrapper = await hre.ethers.getContractAt('VPoolWrapperMockRealistic', vPoolWrapper.address);
-      await expect(_vPoolWrapper.blockTimestamp()).to.be.revertedWith(
-        "function selector was not recognized and there's no fallback function",
-      );
+      await expect(_vPoolWrapper.blockTimestamp()).to.be.reverted;
 
       // upgrading the logic to include the blockTimestamp method
       const newVPoolWrapperLogic = await (await hre.ethers.getContractFactory('VPoolWrapperMockRealistic')).deploy();
