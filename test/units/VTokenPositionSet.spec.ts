@@ -17,7 +17,7 @@ import {
 } from '../../typechain-types';
 import { impersonateAccount } from '../helpers/impersonate-account';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
-import { SETTLEMENT_TOKEN } from '../helpers/realConstants';
+import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 
 const realToken0 = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const realToken1 = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';

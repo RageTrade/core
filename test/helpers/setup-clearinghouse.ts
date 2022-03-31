@@ -7,7 +7,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor, priceToSqrtPriceX96 } from '@ragetrade/sdk';
 
 import { RageTradeFactory, RealTokenMock, SettlementTokenMock } from '../../typechain-types';
-import { UNISWAP_V3_DEFAULT_FEE_TIER } from './realConstants';
+import { UNISWAP_V3_DEFAULT_FEE_TIER } from './real-constants';
 
 interface SetupClearingHouseArgs {
   signer?: SignerWithAddress;
