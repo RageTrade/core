@@ -253,7 +253,7 @@ describe('Market Value and Required Margin', () => {
       const sqrtPriceX96 = tickToSqrtPriceX96(tick);
       vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
 
-      await matchNumbers(-68061639307, 75336901712, 37668450856);
+      await matchNumbers(-68061639307, 73379953383, 36689976691);
     });
   });
   describe('Additional Cases', () => {
