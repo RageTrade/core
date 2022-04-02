@@ -27,77 +27,69 @@ library FundingPayment {
 
     event FundingPaymentStateUpdated(
         FundingPayment.Info fundingPayment,
-        uint256 realPriceX128,
+        int256 fundingRateX128,
         uint256 virtualPriceX128
     );
+
+    /// @notice Calculates the funding rate based on prices
+    /// @param realPriceX128 spot price of token
+    /// @param virtualPriceX128 futures price of token
+    function getFundingRate(uint256 realPriceX128, uint256 virtualPriceX128)
+        internal
+        pure
+        returns (int256 fundingRateX128)
+    {
+        return (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(FixedPoint128.Q128, realPriceX128) / 1 days;
+    }
 
     /// @notice Used to update the state of the funding payment whenever a trade takes place
     /// @param info pointer to the funding payment state
     /// @param vTokenAmount trade token amount
     /// @param liquidity active liquidity in the range during the trade (step)
     /// @param blockTimestamp timestamp of current block
-    /// @param realPriceX128 spot price
-    /// @param virtualPriceX128 perpetual's price
-    /// @param fundingRateOverrideX128 override for funding rate, ignored if type(int256).max
+    /// @param fundingRateX128 the constant funding rate to apply for the duration between timestampLast and blockTimestamp
+    /// @param virtualPriceX128 futures price of token
     function update(
         FundingPayment.Info storage info,
         int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
-        uint256 realPriceX128,
-        uint256 virtualPriceX128,
-        int256 fundingRateOverrideX128
+        int256 fundingRateX128,
+        uint256 virtualPriceX128
     ) internal {
-        int256 a = nextAX128(
-            info.timestampLast,
-            blockTimestamp,
-            realPriceX128,
-            virtualPriceX128,
-            fundingRateOverrideX128
-        );
+        int256 a = nextAX128(info.timestampLast, blockTimestamp, fundingRateX128, virtualPriceX128);
         info.sumFpX128 += a.mulDivRoundingDown(info.sumBX128, int256(FixedPoint128.Q128));
         info.sumAX128 += a;
         info.sumBX128 += vTokenAmount.mulDiv(int256(FixedPoint128.Q128), int256(liquidity));
         info.timestampLast = blockTimestamp;
 
-        emit FundingPaymentStateUpdated(info, realPriceX128, virtualPriceX128);
+        emit FundingPaymentStateUpdated(info, fundingRateX128, virtualPriceX128);
     }
 
     /// @notice Used to get the rate of funding payment for the duration between last trade and this trade
     /// @dev Positive A value means at this duration, longs pay shorts. Negative means shorts pay longs.
     /// @param timestampLast start timestamp of duration
     /// @param blockTimestamp end timestamp of duration
-    /// @param realPriceX128 spot price of token, used to calculate funding rate
-    /// @param virtualPriceX128 futures price of token, used to calculate funding rate
-    /// @param fundingRateOverrideX128 override for funding rate, ignored if type(int256).max
+    /// @param virtualPriceX128 futures price of token
+    /// @param fundingRateX128 the constant funding rate to apply for the duration between timestampLast and blockTimestamp
     /// @return aX128 value called "a" (see funding payment math documentation)
     function nextAX128(
         uint48 timestampLast,
         uint48 blockTimestamp,
-        uint256 realPriceX128,
-        uint256 virtualPriceX128,
-        int256 fundingRateOverrideX128
+        int256 fundingRateX128,
+        uint256 virtualPriceX128
     ) internal pure returns (int256 aX128) {
-        return
-            fundingRateOverrideX128 == type(int256).max
-                ? (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(virtualPriceX128, realPriceX128).mulDiv(
-                    blockTimestamp - timestampLast,
-                    1 days
-                )
-                : fundingRateOverrideX128 * int48(blockTimestamp - timestampLast);
+        return fundingRateX128.mulDiv(virtualPriceX128, FixedPoint128.Q128) * int48(blockTimestamp - timestampLast);
     }
 
     function extrapolatedSumAX128(
         int256 sumAX128,
         uint48 timestampLast,
         uint48 blockTimestamp,
-        uint256 realPriceX128,
-        uint256 virtualPriceX128,
-        int256 fundingRateOverrideX128
+        int256 fundingRateX128,
+        uint256 virtualPriceX128
     ) internal pure returns (int256) {
-        return
-            sumAX128 +
-            nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128, fundingRateOverrideX128);
+        return sumAX128 + nextAX128(timestampLast, blockTimestamp, fundingRateX128, virtualPriceX128);
     }
 
     /// @notice Extrapolates (updates) the value of sumFp by adding the missing component to it using sumAGlobalX128

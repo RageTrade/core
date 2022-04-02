@@ -87,17 +87,10 @@ contract TickExtendedTest {
         int256 vTokenAmount,
         uint256 liquidity,
         uint48 blockTimestamp,
-        uint256 realPriceX128,
-        uint256 virtualPriceX128
+        uint256 virtualPriceX128,
+        int256 fundingRateX128
     ) public {
-        fpGlobal.update(
-            vTokenAmount,
-            liquidity,
-            blockTimestamp,
-            realPriceX128,
-            virtualPriceX128,
-            fundingRateOverrideX128
-        );
+        fpGlobal.update(vTokenAmount, liquidity, blockTimestamp, fundingRateX128, virtualPriceX128);
     }
 
     function cross(int24 tickNext) external {

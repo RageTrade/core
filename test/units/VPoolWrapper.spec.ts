@@ -520,6 +520,22 @@ describe('PoolWrapper', () => {
     });
   });
 
+  describe('#fundingRateOverrideX128', () => {
+    it('should use actual prices in getFundingRate() when fundingRateOverrideX128 is null', async () => {
+      await vPoolWrapper.setFundingRateOverride(ethers.constants.MaxInt256);
+
+      const { fundingRateX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
+      expect(fundingRateX128).to.eq(0); // because real and virtual twap are equal
+    });
+
+    it('should use fundingRateOverrideX128 in getFundingRate() when fundingRateOverrideX128 is not null', async () => {
+      await vPoolWrapper.setFundingRateOverride(ethers.constants.MaxInt256.sub(1));
+
+      const { fundingRateX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
+      expect(fundingRateX128).to.eq(ethers.constants.MaxInt256.sub(1)); // since fundingRateOverrideX128 != MaxInt256
+    });
+  });
+
   describe('#admin', () => {
     let owner: SignerWithAddress;
     let stranger: SignerWithAddress;

@@ -35,18 +35,40 @@ interface IVPoolWrapper {
         uint256 sumFeeInsideX128; // sum of all the fee terms in side the tick range in the pool
     }
 
+    /// @notice Emitted whenever a swap takes place
+    /// @param swapResult the swap result values
     event Swap(SwapResult swapResult);
 
+    /// @notice Emitted whenever liquidity is added
+    /// @param tickLower the lower tick of the range
+    /// @param tickUpper the upper tick of the range
+    /// @param liquidity the amount of liquidity that was added
+    /// @param vTokenPrincipal the amount of vToken that was sent to UniswapV3Pool
+    /// @param vQuotePrincipal the mount of vQuote charged was sent to UniswapV3Pool
     event Mint(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 vQuotePrincipal);
 
+    /// @notice Emitted whenever liquidity is removed
+    /// @param tickLower the lower tick of the range
+    /// @param tickUpper the upper tick of the range
+    /// @param liquidity the amount of liquidity that was removed
+    /// @param vTokenPrincipal the amount of vToken that was received from UniswapV3Pool
+    /// @param vQuotePrincipal the mount of vQuote charged was received from UniswapV3Pool
     event Burn(int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 vTokenPrincipal, uint256 vQuotePrincipal);
 
+    /// @notice Emitted whenever clearing house enquired about the accrued protocol fees
+    /// @param amount the amount of accrued protocol fees
     event AccruedProtocolFeeCollected(uint256 amount);
 
+    /// @notice Emitted when governance updates the liquidity fees
+    /// @param liquidityFeePips the new liquidity fee ratio
     event LiquidityFeeUpdated(uint24 liquidityFeePips);
 
+    /// @notice Emitted when governance updates the protocol fees
+    /// @param protocolFeePips the new protocol fee ratio
     event ProtocolFeeUpdated(uint24 protocolFeePips);
 
+    /// @notice Emitted when funding rate override is updated
+    /// @param fundingRateOverrideX128 the new funding rate override value
     event FundingRateOverrideUpdated(int256 fundingRateOverrideX128);
 
     function __initialize_VPoolWrapper(InitializeVPoolWrapperParams memory params) external;
@@ -101,7 +123,13 @@ interface IVPoolWrapper {
 
     function protocolFeePips() external view returns (uint24);
 
-    function updateGlobalFundingState(uint256 realPriceX128, uint256 virtualPriceX128) external;
+    /// @notice Used by clearing house to update funding rate when clearing house is paused or unpaused.
+    /// @param useZeroFundingRate: used to discount funding payment during the duration ch was paused.
+    function updateGlobalFundingState(bool useZeroFundingRate) external;
 
+    /// @notice Used by clearing house to know how much protocol fee was collected.
+    /// @return accruedProtocolFeeLast amount of protocol fees accrued since last collection.
+    /// @dev Does not do any token transfer, just reduces the state in wrapper by accruedProtocolFeeLast.
+    ///     Clearing house already has the amount of settlement tokens to send to treasury.
     function collectAccruedProtocolFee() external returns (uint256 accruedProtocolFeeLast);
 }

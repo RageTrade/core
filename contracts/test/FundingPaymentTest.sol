@@ -2,17 +2,24 @@
 
 pragma solidity ^0.8.9;
 
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+
 import { FundingPayment } from '../libraries/FundingPayment.sol';
+import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 
 contract FundingPaymentTest {
+    using SignedFullMath for int256;
+
     using FundingPayment for FundingPayment.Info;
 
     FundingPayment.Info public fpGlobal;
 
-    int256 public fundingRateOverrideX128 = type(int256).max;
-
-    function setFundingRateOverrideX128(int256 _fundingRateOverrideX128) public {
-        fundingRateOverrideX128 = _fundingRateOverrideX128;
+    function getFundingRate(uint256 realPriceX128, uint256 virtualPriceX128)
+        internal
+        pure
+        returns (int256 fundingRateX128)
+    {
+        return FundingPayment.getFundingRate(realPriceX128, virtualPriceX128);
     }
 
     function update(
@@ -27,9 +34,8 @@ contract FundingPaymentTest {
                 vTokenAmount,
                 liquidity,
                 blockTimestamp,
-                realPriceX128,
-                virtualPriceX128,
-                fundingRateOverrideX128
+                FundingPayment.getFundingRate(realPriceX128, virtualPriceX128),
+                virtualPriceX128
             );
     }
 
@@ -38,14 +44,13 @@ contract FundingPaymentTest {
         uint48 blockTimestamp,
         uint256 realPriceX128,
         uint256 virtualPriceX128
-    ) public view returns (int256) {
+    ) public pure returns (int256) {
         return
             FundingPayment.nextAX128(
                 timestampLast,
                 blockTimestamp,
-                realPriceX128,
-                virtualPriceX128,
-                fundingRateOverrideX128
+                FundingPayment.getFundingRate(realPriceX128, virtualPriceX128),
+                virtualPriceX128
             );
     }
 
@@ -55,15 +60,14 @@ contract FundingPaymentTest {
         uint48 blockTimestamp,
         uint256 realPriceX128,
         uint256 virtualPriceX128
-    ) public view returns (int256) {
+    ) public pure returns (int256) {
         return
             FundingPayment.extrapolatedSumAX128(
                 sumA,
                 timestampLast,
                 blockTimestamp,
-                realPriceX128,
-                virtualPriceX128,
-                fundingRateOverrideX128
+                FundingPayment.getFundingRate(realPriceX128, virtualPriceX128),
+                virtualPriceX128
             );
     }
 
