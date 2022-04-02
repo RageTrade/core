@@ -134,8 +134,7 @@ contract ClearingHouse is
         // update funding state for all the pools, so that funding payment upto pause moment is recorded
         for (uint256 i; i < allPoolIds.length; i++) {
             uint32 poolId = allPoolIds[i];
-            (uint256 realPriceX128, uint256 virtualPriceX128) = getTwapPrices(poolId);
-            protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState(realPriceX128, virtualPriceX128);
+            protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: false });
         }
     }
 
@@ -145,10 +144,7 @@ contract ClearingHouse is
         // update funding state for all the pools
         for (uint256 i; i < allPoolIds.length; i++) {
             // record the funding payment as zero for the entire duration for which clearing house was paused.
-            protocol.pools[allPoolIds[i]].vPoolWrapper.updateGlobalFundingState({
-                realPriceX128: 1,
-                virtualPriceX128: 1
-            });
+            protocol.pools[allPoolIds[i]].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: true });
         }
     }
 

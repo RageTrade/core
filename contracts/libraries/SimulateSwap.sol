@@ -35,8 +35,8 @@ library SimulateSwap {
         // the lp fee share of the pool
         uint24 fee;
         // extra values for cache, that may be useful for _onSwapStep
-        uint256 realPriceX128;
-        uint256 virtualPriceX128;
+        uint256 value1;
+        uint256 value2;
     }
 
     struct State {

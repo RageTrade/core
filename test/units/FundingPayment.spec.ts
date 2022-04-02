@@ -20,11 +20,9 @@ describe('FundingPayment', () => {
       const a = await test.nextAX128(10, 20, toQ128(101), toQ128(100));
       expect(a.gt(0)).to.be.true;
       expect(a).to.eq(
-        Q128.mul(101 - 100)
+        getFundingRate(101, 100)
           .mul(100)
-          .div(101)
-          .mul(20 - 10)
-          .div(DAY),
+          .mul(20 - 10),
       ); // (101-100)/101 * 100 * (20-10) / DAY
     });
 
@@ -32,11 +30,9 @@ describe('FundingPayment', () => {
       const a = await test.nextAX128(10, 20, toQ128(99), toQ128(100));
       expect(a.gt(0)).to.be.false;
       expect(a).to.eq(
-        Q128.mul(99 - 100)
+        getFundingRate(99, 100)
           .mul(100)
-          .div(99)
-          .mul(20 - 10)
-          .div(DAY),
+          .mul(20 - 10),
       ); // (101-100)/101 * 100 * (20-10) / DAY
     });
 
@@ -44,12 +40,10 @@ describe('FundingPayment', () => {
       const a = await test.nextAX128(10, 20, toQ128(1.01), toQ128(1));
       expect(a.gt(0)).to.be.true;
       expect(a).to.eq(
-        toQ128(1.01)
-          .sub(toQ128(1)) // rp - vp
+        getFundingRate(toQ128(1.01), toQ128(1))
           .mul(toQ128(1)) // vp
-          .div(toQ128(1.01)) // rp
-          .mul(20 - 10) // dt
-          .div(DAY),
+          .div(toQ128(1)) // FixedPoint.Q128
+          .mul(20 - 10), // dt
       ); // (101-100)/101 * 100 * (20-10) / DAY
     });
   });
@@ -186,19 +180,6 @@ describe('FundingPayment', () => {
     });
   });
 
-  describe('#fundingRateOverrideX128', () => {
-    it('works', async () => {
-      // setting funding rate override to 2%
-      await test.setFundingRateOverrideX128(toQ128(0.02));
-
-      // passing a funding rate of 124-100/100/24 = 0.1%
-      const a1 = await test.nextAX128(0, 1, toQ128(124), toQ128(100));
-      expect(a1).to.eq(toQ128(0.02)); // since dt = 1, a == funding rate
-      const a2 = await test.nextAX128(0, 2, toQ128(124), toQ128(100));
-      expect(a2).to.eq(toQ128(0.02).mul(2)); // since dt = 2, a == funding rate * 2
-    });
-  });
-
   async function update({
     vTokenAmount,
     liquidity,
@@ -224,5 +205,14 @@ describe('FundingPayment', () => {
   function ifNegThenSubOne(bn: BigNumber) {
     if (bn.lt(0)) bn = bn.sub(1);
     return bn;
+  }
+
+  function getFundingRate(realPriceX128: BigNumberish, virtualPriceX128: BigNumberish) {
+    realPriceX128 = BigNumber.from(realPriceX128);
+    virtualPriceX128 = BigNumber.from(virtualPriceX128);
+
+    return Q128.mul(realPriceX128.sub(virtualPriceX128))
+      .div(realPriceX128)
+      .div(1 * 24 * 60 * 60);
   }
 });

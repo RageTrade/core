@@ -64,6 +64,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128;
 
+    int256 constant FUNDING_RATE_OVERRIDE_NULL_VALUE = type(int256).max;
     int256 public fundingRateOverrideX128;
 
     mapping(int24 => TickExtended.Info) public ticksExtended;
@@ -121,7 +122,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         fundingRateOverrideX128 = type(int256).max;
 
         // initializes the funding payment state by zeroing the funding payment for time 0 to blockTimestamp
-        fpGlobal.update(0, 1, _blockTimestamp(), 1, 1, fundingRateOverrideX128);
+        fpGlobal.update({
+            vTokenAmount: 0,
+            liquidity: 1,
+            blockTimestamp: _blockTimestamp(),
+            virtualPriceX128: 1,
+            fundingRateX128: 0 // causes zero funding payment
+        });
     }
 
     function collectAccruedProtocolFee() external onlyClearingHouse returns (uint256 accruedProtocolFeeLast) {
@@ -133,10 +140,15 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @notice Update the global funding state, from clearing house
     /// @dev Done when clearing house is paused or unpaused, to prevent funding payments from being received
     ///     or paid when clearing house is in paused mode.
-    /// @param realPriceX128 real price from clearing house
-    /// @param virtualPriceX128 virtual price from clearing house
-    function updateGlobalFundingState(uint256 realPriceX128, uint256 virtualPriceX128) public onlyClearingHouse {
-        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128, fundingRateOverrideX128);
+    function updateGlobalFundingState(bool useZeroFundingRate) public onlyClearingHouse {
+        (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
+        fpGlobal.update({
+            vTokenAmount: 0,
+            liquidity: 1,
+            blockTimestamp: _blockTimestamp(),
+            virtualPriceX128: virtualPriceX128,
+            fundingRateX128: useZeroFundingRate ? int256(0) : fundingRateX128
+        });
     }
 
     /**
@@ -194,7 +206,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             SimulateSwap.Cache memory cache;
             cache.tickSpacing = UNISWAP_V3_DEFAULT_TICKSPACING;
             cache.fee = UNISWAP_V3_DEFAULT_FEE_TIER;
-            (cache.realPriceX128, cache.virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
+            (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
+            _writeCacheExtraValues(cache, virtualPriceX128, fundingRateX128);
 
             // simulate swap and update our tick states
             (int256 vTokenIn_simulated, int256 vQuoteIn_simulated, SimulateSwap.State memory state) = vPool
@@ -326,20 +339,36 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         VIEW METHODS
      */
 
+    function getFundingRateAndVirtualPrice() public view returns (int256 fundingRateX128, uint256 virtualPriceX128) {
+        int256 _fundingRateOverrideX128 = fundingRateOverrideX128;
+        bool shouldUseActualPrices = _fundingRateOverrideX128 == FUNDING_RATE_OVERRIDE_NULL_VALUE;
+
+        uint32 poolId = vToken.truncate();
+        virtualPriceX128 = clearingHouse.getVirtualTwapPriceX128(poolId);
+
+        if (shouldUseActualPrices) {
+            // uses actual price to calculate funding rate
+            uint256 realPriceX128 = clearingHouse.getRealTwapPriceX128(poolId);
+            fundingRateX128 = FundingPayment.getFundingRate(realPriceX128, virtualPriceX128);
+        } else {
+            // uses funding rate override
+            fundingRateX128 = _fundingRateOverrideX128;
+        }
+    }
+
     function getSumAX128() external view returns (int256) {
         return fpGlobal.sumAX128;
     }
 
     function getExtrapolatedSumAX128() public view returns (int256) {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
+        (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
         return
             FundingPayment.extrapolatedSumAX128(
                 fpGlobal.sumAX128,
                 fpGlobal.timestampLast,
                 _blockTimestamp(),
-                realPriceX128,
-                virtualPriceX128,
-                fundingRateOverrideX128
+                fundingRateX128,
+                virtualPriceX128
             );
     }
 
@@ -401,6 +430,34 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         _vBurn();
     }
 
+    function _readCacheExtraValues(SimulateSwap.Cache memory cache)
+        private
+        pure
+        returns (uint256 virtualPriceX128, int256 fundingRateX128)
+    {
+        uint256 value1 = cache.value1;
+        uint256 value2 = cache.value2;
+        assembly {
+            virtualPriceX128 := value1
+            fundingRateX128 := value2
+        }
+    }
+
+    function _writeCacheExtraValues(
+        SimulateSwap.Cache memory cache,
+        uint256 virtualPriceX128,
+        int256 fundingRateX128
+    ) private pure {
+        uint256 value1;
+        uint256 value2;
+        assembly {
+            value1 := virtualPriceX128
+            value2 := fundingRateX128
+        }
+        cache.value1 = value1;
+        cache.value2 = value2;
+    }
+
     function _onSwapStep(
         bool swapVTokenForVQuote,
         SimulateSwap.Cache memory cache,
@@ -428,14 +485,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         // );
 
         if (state.liquidity > 0 && vTokenAmount > 0) {
-            fpGlobal.update(
-                swapVTokenForVQuote ? vTokenAmount.toInt256() : -vTokenAmount.toInt256(), // when trader goes long, LP goes short
-                state.liquidity,
-                _blockTimestamp(),
-                cache.realPriceX128,
-                cache.virtualPriceX128,
-                fundingRateOverrideX128
-            );
+            (uint256 virtualPriceX128, int256 fundingRateX128) = _readCacheExtraValues(cache);
+            fpGlobal.update({
+                vTokenAmount: swapVTokenForVQuote ? vTokenAmount.toInt256() : -vTokenAmount.toInt256(), // when trader goes long, LP goes short
+                liquidity: state.liquidity,
+                blockTimestamp: _blockTimestamp(),
+                virtualPriceX128: virtualPriceX128,
+                fundingRateX128: fundingRateX128
+            });
 
             sumFeeGlobalX128 += liquidityFees.mulDiv(FixedPoint128.Q128, state.liquidity);
         }
@@ -451,8 +508,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     /// @notice Update global funding payment, by getting prices from Clearing House
     function _updateGlobalFundingState() internal {
-        (uint256 realPriceX128, uint256 virtualPriceX128) = clearingHouse.getTwapPrices(vToken.truncate());
-        fpGlobal.update(0, 1, _blockTimestamp(), realPriceX128, virtualPriceX128, fundingRateOverrideX128);
+        (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
+        fpGlobal.update({
+            vTokenAmount: 0,
+            liquidity: 1,
+            blockTimestamp: _blockTimestamp(),
+            virtualPriceX128: virtualPriceX128,
+            fundingRateX128: fundingRateX128
+        });
     }
 
     function _updateTicks(

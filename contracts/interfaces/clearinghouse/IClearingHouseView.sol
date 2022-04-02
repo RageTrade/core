@@ -77,11 +77,15 @@ interface IClearingHouseView is IClearingHouseStructures, IExtsload {
             uint256 minimumOrderNotional
         );
 
-    /// @notice Gets the real and virtual prices from the respective oracle of the given poolId
+    /// @notice Gets the real twap price from the respective oracle of the given poolId
     /// @param poolId the id of the pool
     /// @return realPriceX128 the real price of the pool
+    function getRealTwapPriceX128(uint32 poolId) external view returns (uint256 realPriceX128);
+
+    /// @notice Gets the virtual twap price from the respective oracle of the given poolId
+    /// @param poolId the id of the pool
     /// @return virtualPriceX128 the virtual price of the pool
-    function getTwapPrices(uint32 poolId) external view returns (uint256 realPriceX128, uint256 virtualPriceX128);
+    function getVirtualTwapPriceX128(uint32 poolId) external view returns (uint256 virtualPriceX128);
 
     /// @notice Checks if a poolId is unused
     /// @param poolId the id of the pool

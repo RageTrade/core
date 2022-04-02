@@ -263,20 +263,20 @@ describe('TickExtended', () => {
     liquidity,
     blockTimestamp,
     realPrice,
-    virtualPrice,
+    fundingRate,
   }: {
     vTokenAmount: BigNumberish;
     liquidity: BigNumberish;
     blockTimestamp: BigNumberish;
     realPrice?: number;
-    virtualPrice?: number;
+    fundingRate?: number;
   }) {
     await test.registerTrade(
       vTokenAmount,
       liquidity,
       blockTimestamp,
       toQ128(realPrice ?? 1.01),
-      toQ128(virtualPrice ?? 1),
+      toQ128(fundingRate ?? 1),
     );
   }
 });
