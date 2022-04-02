@@ -220,11 +220,14 @@ library LiquidityPosition {
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX96;
         {
-            uint160 sqrtPriceForExecutionPriceX96 = valuationPriceX96 <= sqrtPriceUpperX96
+            uint160 sqrtPriceUpperMinX96 = valuationPriceX96 <= sqrtPriceUpperX96
                 ? valuationPriceX96
                 : sqrtPriceUpperX96;
-            longPositionExecutionPriceX96 = uint256(sqrtPriceLowerX96).mulDiv(
-                sqrtPriceForExecutionPriceX96,
+            uint160 sqrtPriceLowerMinX96 = valuationPriceX96 <= sqrtPriceLowerX96
+                ? valuationPriceX96
+                : sqrtPriceLowerX96;
+            longPositionExecutionPriceX96 = uint256(sqrtPriceLowerMinX96).mulDiv(
+                sqrtPriceUpperMinX96,
                 FixedPoint96.Q96
             );
         }
