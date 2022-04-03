@@ -5,6 +5,7 @@
 cache
 node_modules
 types
+./test
 deployments/localhost
 .gitignore
 .prettierrc
