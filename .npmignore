@@ -4,7 +4,6 @@
 .env.example
 cache
 node_modules
-test
 types
 deployments/localhost
 .gitignore
