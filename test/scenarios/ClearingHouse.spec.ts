@@ -77,6 +77,7 @@ describe('Clearing House Library', () => {
       sqrtPriceLimit: 0,
       isNotional: false,
       isPartialAllowed: false,
+      isSettleProfit: false,
     };
     await clearingHouseTest.connect(user).swapToken(accountNo, truncatedAddress, swapParams);
   }
@@ -656,6 +657,7 @@ describe('Clearing House Library', () => {
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
+        isSettleProfit: false,
       };
 
       await clearingHouseTest.connect(user2).updateRangeOrder(user2AccountNo, truncatedAddress, liquidityChangeParams);
@@ -676,6 +678,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user2).swapToken(user1AccountNo, truncatedAddress, swapParams),
@@ -688,6 +691,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
@@ -700,6 +704,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
@@ -712,6 +717,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       expect(clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams)).to.be.reverted;
     });
@@ -722,6 +728,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: false,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
       const accountTokenPosition = await clearingHouseTest.getAccountOpenTokenPosition(user1AccountNo, vTokenAddress);
@@ -741,6 +748,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
 
       await expect(
@@ -754,6 +762,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
 
       await expect(
@@ -767,6 +776,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
@@ -781,6 +791,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams),
@@ -795,6 +806,7 @@ describe('Clearing House Library', () => {
         sqrtPriceLimit: 0,
         isNotional: true,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await clearingHouseTest.connect(user1).swapToken(user1AccountNo, truncatedAddress, swapParams);
       const accountTokenPosition = await clearingHouseTest.functions.getAccountQuoteBalance(user1AccountNo);
@@ -823,6 +835,7 @@ describe('Clearing House Library', () => {
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user2).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -838,6 +851,7 @@ describe('Clearing House Library', () => {
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -853,6 +867,7 @@ describe('Clearing House Library', () => {
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams),
@@ -869,6 +884,7 @@ describe('Clearing House Library', () => {
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
+        isSettleProfit: false,
       };
 
       expect(clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams))
@@ -885,6 +901,7 @@ describe('Clearing House Library', () => {
         limitOrderType: 0,
         sqrtPriceCurrent: 0,
         slippageToleranceBps: 0,
+        isSettleProfit: false,
       };
       await clearingHouseTest.connect(user1).updateRangeOrder(user1AccountNo, truncatedAddress, liquidityChangeParams);
       await checkLiquidityPositionNum(vTokenAddress, 1);
