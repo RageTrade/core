@@ -97,6 +97,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       sqrtPriceLimit: 0,
       isNotional: false,
       isPartialAllowed: false,
+      isSettleProfit: false,
     };
     await clearingHouseTest.connect(user).swapToken(accountNo, truncatedAddress, swapParams);
   }
@@ -214,6 +215,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       sqrtPriceLimit: sqrtPriceLimit,
       isNotional: isNotional,
       isPartialAllowed: isPartialAllowed,
+      isSettleProfit: false,
     };
     return await clearingHouseTest.connect(user).swapToken(userAccountNo, truncatedAddress, swapParams);
   }
@@ -380,6 +382,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
+      isSettleProfit: false,
     };
 
     await clearingHouseTest.connect(user).updateRangeOrder(userAccountNo, truncatedAddress, liquidityChangeParams);
@@ -1198,6 +1201,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         slippageToleranceBps: slippageToleranceBps,
         closeTokenPosition: false,
         limitOrderType: limitOrderType,
+        isSettleProfit: false,
       };
 
       await expect(
@@ -1326,6 +1330,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
         sqrtPriceLimit: sqrtPriceThreshold,
         isNotional: false,
         isPartialAllowed: false,
+        isSettleProfit: false,
       };
       await expect(
         clearingHouseTest.connect(user2).swapToken(user2AccountNo, truncatedAddress, swapParams),
