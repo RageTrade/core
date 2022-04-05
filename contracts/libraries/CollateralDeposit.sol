@@ -37,6 +37,10 @@ library CollateralDeposit {
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
+    function getBalance(CollateralDeposit.Set storage set, uint32 collateralId) internal returns (uint256) {
+        return set.deposits[collateralId];
+    }
+
     /// @notice Increase the deposit amount of a given collateralId
     /// @param set CollateralDepositSet of the account
     /// @param collateralId The collateralId of the collateral to increase the deposit amount of

@@ -55,7 +55,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         dummy.swapToken(
             accountId,
             vToken.truncate(),
-            IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
+            IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false, false),
             wrapper,
             protocol
         );
@@ -65,7 +65,7 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
         dummy.swapToken(
             accountId,
             vToken.truncate(),
-            IClearingHouseStructures.SwapParams(vTokenNotional, 0, true, false),
+            IClearingHouseStructures.SwapParams(vTokenNotional, 0, true, false, false),
             wrapper,
             protocol
         );
@@ -88,7 +88,8 @@ contract VTokenPositionSetTest is AccountProtocolInfoMock {
                 0,
                 0,
                 false,
-                IClearingHouseEnums.LimitOrderType.NONE
+                IClearingHouseEnums.LimitOrderType.NONE,
+                false
             );
         dummy.liquidityChange(accountId, vToken.truncate(), liquidityChangeParams, protocol);
     }
