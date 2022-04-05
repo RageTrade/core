@@ -946,7 +946,7 @@ describe('Clearing House Library', () => {
           operationType: 2,
           data: ethers.utils.defaultAbiCoder.encode(
             [
-              'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed) swapParams)',
+              'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed, bool isSettleProfit) swapParams)',
             ],
             [
               {
@@ -956,6 +956,7 @@ describe('Clearing House Library', () => {
                   sqrtPriceLimit: 0,
                   isNotional: true,
                   isPartialAllowed: false,
+                  isSettleProfit: false,
                 },
               },
             ],
@@ -965,7 +966,7 @@ describe('Clearing House Library', () => {
           operationType: 2,
           data: ethers.utils.defaultAbiCoder.encode(
             [
-              'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed) swapParams)',
+              'tuple(uint32 vTokenTruncatedAddress, tuple(int256 amount, uint160 sqrtPriceLimit, bool isNotional, bool isPartialAllowed, bool isSettleProfit) swapParams)',
             ],
             [
               {
@@ -975,6 +976,7 @@ describe('Clearing House Library', () => {
                   sqrtPriceLimit: 0,
                   isNotional: true,
                   isPartialAllowed: false,
+                  isSettleProfit: false,
                 },
               },
             ],
