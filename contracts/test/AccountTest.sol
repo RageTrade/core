@@ -152,7 +152,7 @@ contract AccountTest {
     ) external {
         accounts[accountId].swapToken(
             vToken.truncate(),
-            IClearingHouseStructures.SwapParams(amount, 0, false, false),
+            IClearingHouseStructures.SwapParams(amount, 0, false, false, false),
             protocol,
             true
         );
@@ -165,7 +165,7 @@ contract AccountTest {
     ) external {
         accounts[accountId].swapToken(
             vToken.truncate(),
-            IClearingHouseStructures.SwapParams(amount, 0, true, false),
+            IClearingHouseStructures.SwapParams(amount, 0, true, false, false),
             protocol,
             true
         );

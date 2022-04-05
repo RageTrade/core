@@ -169,7 +169,7 @@ library VTokenPositionSet {
                 accountId,
                 poolId,
                 /// @dev 0 means no price limit and false means amount mentioned is token amount
-                IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false),
+                IClearingHouseStructures.SwapParams(vTokenAmount, 0, false, false, false),
                 protocol.vPoolWrapper(poolId),
                 protocol
             );

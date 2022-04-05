@@ -289,6 +289,9 @@ library Account {
         // mints erc20 tokens in callback and send to the pool
         (vTokenAmountOut, vQuoteAmountOut) = account.tokenPositions.swapToken(account.id, poolId, swapParams, protocol);
 
+        if (swapParams.isSettleProfit) {
+            account._settleProfit(protocol);
+        }
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
@@ -323,6 +326,9 @@ library Account {
             protocol
         );
 
+        if (liquidityChangeParams.isSettleProfit) {
+            account._settleProfit(protocol);
+        }
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
 
@@ -429,7 +435,7 @@ library Account {
             (, int256 vQuoteAmountSwapped) = account.tokenPositions.swapToken(
                 account.id,
                 poolId,
-                IClearingHouseStructures.SwapParams(tokensToTrade, sqrtPriceLimit, false, true),
+                IClearingHouseStructures.SwapParams(tokensToTrade, sqrtPriceLimit, false, true, false),
                 protocol
             );
 
@@ -549,6 +555,23 @@ library Account {
     /**
      *  Internal methods
      */
+
+    function _settleProfit(Account.Info storage account, Protocol.Info storage protocol) internal {
+        int256 profits = account._getAccountPositionProfits(protocol);
+        uint32 settlementCollateralId = AddressHelper.truncate(protocol.settlementToken);
+        if (profits > 0) {
+            account._updateVQuoteBalance(-profits);
+            account.collateralDeposits.increaseBalance(settlementCollateralId, uint256(profits));
+        } else if (profits < 0) {
+            uint256 balance = account.collateralDeposits.getBalance(settlementCollateralId);
+            uint256 profitAbsUint = uint256(-profits);
+            uint256 balanceToUpdate = balance > profitAbsUint ? profitAbsUint : balance;
+            if (balanceToUpdate > 0) {
+                account.collateralDeposits.decreaseBalance(settlementCollateralId, balanceToUpdate);
+                account._updateVQuoteBalance(-balanceToUpdate.toInt256());
+            }
+        }
+    }
 
     /// @notice updates the vQuote balance for 'account' by 'amount'
     /// @param account pointer to 'account' struct
