@@ -197,6 +197,12 @@ contract ClearingHouse is
         _updateProfit(account, amount, true);
     }
 
+    function settleProfit(uint256 accountId) external whenNotPaused {
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
+
+        account.settleProfit(protocol);
+    }
+
     /// @inheritdoc IClearingHouseActions
     function swapToken(
         uint256 accountId,
