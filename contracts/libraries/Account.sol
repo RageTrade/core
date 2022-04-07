@@ -568,7 +568,7 @@ library Account {
             uint256 balanceToUpdate = balance > profitAbsUint ? profitAbsUint : balance;
             if (balanceToUpdate > 0) {
                 account.collateralDeposits.decreaseBalance(settlementCollateralId, balanceToUpdate);
-                account._updateVQuoteBalance(-balanceToUpdate.toInt256());
+                account._updateVQuoteBalance(balanceToUpdate.toInt256());
             }
         }
     }

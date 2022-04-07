@@ -37,7 +37,7 @@ library CollateralDeposit {
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
-    function getBalance(CollateralDeposit.Set storage set, uint32 collateralId) internal returns (uint256) {
+    function getBalance(CollateralDeposit.Set storage set, uint32 collateralId) internal view returns (uint256) {
         return set.deposits[collateralId];
     }
 
