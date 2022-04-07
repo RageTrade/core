@@ -239,14 +239,7 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        if (amount > 0) {
-            account.collateralDeposits.increaseBalance(collateralId, uint256(amount));
-        } else {
-            account.collateralDeposits.decreaseBalance(collateralId, uint256(-amount));
-            if (checkMargin) account._checkIfMarginAvailable(true, protocol);
-        }
-
-        emit MarginUpdated(account.id, collateralId, amount);
+        _updateMargin(account, collateralId, amount, protocol, checkMargin);
     }
 
     /// @notice updates 'amount' of profit generated in settlement token
@@ -259,14 +252,11 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account._updateVQuoteBalance(amount);
+        _updateProfit(account, amount, protocol, checkMargin);
+    }
 
-        if (checkMargin && amount < 0) {
-            account._checkIfProfitAvailable(protocol);
-            account._checkIfMarginAvailable(true, protocol);
-        }
-
-        emit ProfitUpdated(account.id, amount);
+    function settleProfit(Account.Info storage account, Protocol.Info storage protocol) external {
+        _settleProfit(account, protocol);
     }
 
     /// @notice swaps 'vToken' of token amount equal to 'swapParams.amount'
@@ -560,17 +550,58 @@ library Account {
         int256 profits = account._getAccountPositionProfits(protocol);
         uint32 settlementCollateralId = AddressHelper.truncate(protocol.settlementToken);
         if (profits > 0) {
-            account._updateVQuoteBalance(-profits);
-            account.collateralDeposits.increaseBalance(settlementCollateralId, uint256(profits));
+            account._updateProfit(-profits, protocol, false);
+            account._updateMargin(settlementCollateralId, profits, protocol, false);
         } else if (profits < 0) {
             uint256 balance = account.collateralDeposits.getBalance(settlementCollateralId);
             uint256 profitAbsUint = uint256(-profits);
             uint256 balanceToUpdate = balance > profitAbsUint ? profitAbsUint : balance;
             if (balanceToUpdate > 0) {
-                account.collateralDeposits.decreaseBalance(settlementCollateralId, balanceToUpdate);
-                account._updateVQuoteBalance(balanceToUpdate.toInt256());
+                account._updateMargin(settlementCollateralId, -balanceToUpdate.toInt256(), protocol, false);
+                account._updateProfit(balanceToUpdate.toInt256(), protocol, false);
             }
         }
+    }
+
+    /// @notice updates 'amount' of profit generated in settlement token
+    /// @param account account to remove profit from
+    /// @param amount amount of profit(settlement token) to add/remove
+    /// @param protocol set of all constants and token addresses
+    function _updateProfit(
+        Account.Info storage account,
+        int256 amount,
+        Protocol.Info storage protocol,
+        bool checkMargin
+    ) internal {
+        account._updateVQuoteBalance(amount);
+
+        if (checkMargin && amount < 0) {
+            account._checkIfProfitAvailable(protocol);
+            account._checkIfMarginAvailable(true, protocol);
+        }
+
+        emit ProfitUpdated(account.id, amount);
+    }
+
+    /// @notice changes deposit balance of 'vToken' by 'amount'
+    /// @param account account to deposit balance into
+    /// @param collateralId collateral id of the token
+    /// @param amount amount of token to deposit or withdraw
+    function _updateMargin(
+        Account.Info storage account,
+        uint32 collateralId,
+        int256 amount,
+        Protocol.Info storage protocol,
+        bool checkMargin
+    ) internal {
+        if (amount > 0) {
+            account.collateralDeposits.increaseBalance(collateralId, uint256(amount));
+        } else {
+            account.collateralDeposits.decreaseBalance(collateralId, uint256(-amount));
+            if (checkMargin) account._checkIfMarginAvailable(true, protocol);
+        }
+
+        emit MarginUpdated(account.id, collateralId, amount);
     }
 
     /// @notice updates the vQuote balance for 'account' by 'amount'
