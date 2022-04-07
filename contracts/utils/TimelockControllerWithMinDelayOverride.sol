@@ -7,9 +7,10 @@ import { TimelockController } from '@openzeppelin/contracts/governance/TimelockC
 /// @title Timelock controller with a minimum delay override for certain functions
 contract TimelockControllerWithMinDelayOverride is TimelockController {
     uint256 private _minDelayOverridePlusOne;
-    mapping(bytes32 => uint256) public minDelayOverridesPlusOne;
+    mapping(bytes32 => uint256) private _minDelayOverridesPlusOne;
 
-    event MinDelayOverrideChange(address target, bytes4 selector, uint256 newMinDelay);
+    event MinDelayOverrideSet(address target, bytes4 selector, uint256 newMinDelay);
+    event MinDelayOverrideUnset(address target, bytes4 selector);
 
     constructor(
         uint256 minDelay,
@@ -23,8 +24,20 @@ contract TimelockControllerWithMinDelayOverride is TimelockController {
         uint256 minDelayOverride
     ) public {
         require(msg.sender == address(this), 'TimelockController: caller must be timelock');
-        minDelayOverridesPlusOne[getKey(target, selector)] = minDelayOverride + 1;
-        emit MinDelayOverrideChange(target, selector, minDelayOverride);
+        _minDelayOverridesPlusOne[_getKey(target, selector)] = minDelayOverride + 1;
+        emit MinDelayOverrideSet(target, selector, minDelayOverride);
+    }
+
+    function unsetMinDelayOverride(address target, bytes4 selector) public {
+        require(msg.sender == address(this), 'TimelockController: caller must be timelock');
+        delete _minDelayOverridesPlusOne[_getKey(target, selector)];
+        emit MinDelayOverrideUnset(target, selector);
+    }
+
+    function getMinDelayOverride(address target, bytes4 selector) external view returns (uint256 minDelayOverride) {
+        uint256 minDelayOverridePlusOne = _minDelayOverridesPlusOne[_getKey(target, selector)];
+        require(minDelayOverridePlusOne > 0, 'TimelockController: minDelayOverride not set');
+        return minDelayOverridePlusOne - 1;
     }
 
     function schedule(
@@ -36,7 +49,7 @@ contract TimelockControllerWithMinDelayOverride is TimelockController {
         uint256 delay
     ) public virtual override onlyRole(PROPOSER_ROLE) {
         if (data.length >= 4) {
-            uint256 minDelayOverridePlusOne = minDelayOverridesPlusOne[getKey(target, getSelectorFromData(data))];
+            uint256 minDelayOverridePlusOne = _minDelayOverridesPlusOne[_getKey(target, _getSelector(data))];
             if (minDelayOverridePlusOne != 0) {
                 _minDelayOverridePlusOne = minDelayOverridePlusOne; // SSTORE
             }
@@ -50,21 +63,22 @@ contract TimelockControllerWithMinDelayOverride is TimelockController {
         return minDelayOverridePlusOne == 0 ? super.getMinDelay() : minDelayOverridePlusOne - 1;
     }
 
-    function getSelectorFromData(bytes calldata data) internal pure returns (bytes4 selector) {
+    function _getSelector(bytes calldata data) internal pure returns (bytes4 selector) {
+        assert(data.length >= 4);
         assembly {
             // clear first memory word
             mstore(0, 0)
             // copy calldata to memory scratch space
-            calldatacopy(28, data.offset, 4)
+            calldatacopy(0, data.offset, 4)
             // load memory to stack
             selector := mload(0)
         }
     }
 
-    function getKey(address target, bytes4 selector) public pure returns (bytes32 c) {
+    function _getKey(address target, bytes4 selector) internal pure returns (bytes32 c) {
         assembly {
             // store a in the last 20 bytes and b in the 4 bytes before
-            c := xor(target, shl(selector, 160))
+            c := xor(target, selector)
         }
     }
 }
