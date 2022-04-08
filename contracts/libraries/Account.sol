@@ -425,7 +425,13 @@ library Account {
             (, int256 vQuoteAmountSwapped) = account.tokenPositions.swapToken(
                 account.id,
                 poolId,
-                IClearingHouseStructures.SwapParams(tokensToTrade, sqrtPriceLimit, false, true, false),
+                IClearingHouseStructures.SwapParams({
+                    amount: tokensToTrade,
+                    sqrtPriceLimit: sqrtPriceLimit,
+                    isNotional: false,
+                    isPartialAllowed: true,
+                    settleProfit: false
+                }),
                 protocol
             );
 
