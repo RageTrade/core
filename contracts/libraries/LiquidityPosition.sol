@@ -218,7 +218,7 @@ library LiquidityPosition {
     {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
-        uint256 longPositionExecutionPriceX96;
+        uint256 longPositionExecutionPriceX128;
         {
             uint160 sqrtPriceUpperMinX96 = valuationPriceX96 <= sqrtPriceUpperX96
                 ? valuationPriceX96
@@ -226,10 +226,7 @@ library LiquidityPosition {
             uint160 sqrtPriceLowerMinX96 = valuationPriceX96 <= sqrtPriceLowerX96
                 ? valuationPriceX96
                 : sqrtPriceLowerX96;
-            longPositionExecutionPriceX96 = uint256(sqrtPriceLowerMinX96).mulDiv(
-                sqrtPriceUpperMinX96,
-                FixedPoint96.Q96
-            );
+            longPositionExecutionPriceX128 = uint256(sqrtPriceLowerMinX96).mulDiv(sqrtPriceUpperMinX96, 1 << 64);
         }
 
         uint256 maxNetLongPosition;
@@ -248,7 +245,7 @@ library LiquidityPosition {
             } else maxNetLongPosition = maxLongTokens + uint256(-1 * position.vTokenAmountIn);
         }
 
-        return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
+        return maxNetLongPosition.mulDiv(longPositionExecutionPriceX128, FixedPoint128.Q128);
     }
 
     function marketValue(
