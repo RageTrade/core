@@ -98,7 +98,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       sqrtPriceLimit: 0,
       isNotional: false,
       isPartialAllowed: false,
-      isSettleProfit: false,
+      settleProfit: false,
     };
     await clearingHouseTest.connect(user).swapToken(accountNo, truncatedAddress, swapParams);
   }
@@ -216,7 +216,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       sqrtPriceLimit: sqrtPriceLimit,
       isNotional: isNotional,
       isPartialAllowed: isPartialAllowed,
-      isSettleProfit: false,
+      settleProfit: false,
     };
     return await clearingHouseTest.connect(user).swapToken(userAccountNo, truncatedAddress, swapParams);
   }
@@ -387,7 +387,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
-      isSettleProfit: false,
+      settleProfit: false,
     };
 
     await clearingHouseTest.connect(user).updateRangeOrder(userAccountNo, truncatedAddress, liquidityChangeParams);

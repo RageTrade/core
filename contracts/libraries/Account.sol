@@ -279,7 +279,7 @@ library Account {
         // mints erc20 tokens in callback and send to the pool
         (vTokenAmountOut, vQuoteAmountOut) = account.tokenPositions.swapToken(account.id, poolId, swapParams, protocol);
 
-        if (swapParams.isSettleProfit) {
+        if (swapParams.settleProfit) {
             account._settleProfit(protocol);
         }
         // after all the stuff, account should be above water
@@ -316,7 +316,7 @@ library Account {
             protocol
         );
 
-        if (liquidityChangeParams.isSettleProfit) {
+        if (liquidityChangeParams.settleProfit) {
             account._settleProfit(protocol);
         }
         // after all the stuff, account should be above water

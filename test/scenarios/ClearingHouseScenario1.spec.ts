@@ -85,7 +85,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       sqrtPriceLimit: 0,
       isNotional: false,
       isPartialAllowed: false,
-      isSettleProfit: false,
+      settleProfit: false,
     };
     await clearingHouseTest.connect(user).swapToken(accountNo, truncatedAddress, swapParams);
   }
@@ -186,7 +186,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       sqrtPriceLimit: sqrtPriceLimit,
       isNotional: isNotional,
       isPartialAllowed: isPartialAllowed,
-      isSettleProfit: false,
+      settleProfit: false,
     };
     return await clearingHouseTest.connect(user).swapToken(userAccountNo, truncatedAddress, swapParams);
   }
@@ -341,7 +341,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
-      isSettleProfit: false,
+      settleProfit: false,
     };
 
     await clearingHouseTest.connect(user).updateRangeOrder(userAccountNo, truncatedAddress, liquidityChangeParams);

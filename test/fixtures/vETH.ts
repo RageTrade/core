@@ -49,7 +49,7 @@ export const vEthFixture = deployments.createFixture(async hre => {
     slippageToleranceBps: 0,
     closeTokenPosition: false,
     limitOrderType: 0,
-    isSettleProfit: false,
+    settleProfit: false,
   });
 
   // create user account

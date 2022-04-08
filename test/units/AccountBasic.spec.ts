@@ -269,7 +269,7 @@ describe('Account Library Test Basic', () => {
         slippageToleranceBps: 0,
         closeTokenPosition: false,
         limitOrderType: 0,
-        isSettleProfit: false,
+        settleProfit: false,
       };
       await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
       await checkVTokenBalance(vTokenAddress, '-1');
@@ -291,7 +291,7 @@ describe('Account Library Test Basic', () => {
           slippageToleranceBps: 0,
           closeTokenPosition: false,
           limitOrderType: 0,
-          isSettleProfit: false,
+          settleProfit: false,
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
@@ -336,7 +336,7 @@ describe('Account Library Test Basic', () => {
           slippageToleranceBps: 0,
           closeTokenPosition: false,
           limitOrderType: 1,
-          isSettleProfit: false,
+          settleProfit: false,
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
@@ -382,7 +382,7 @@ describe('Account Library Test Basic', () => {
           slippageToleranceBps: 0,
           closeTokenPosition: false,
           limitOrderType: 2,
-          isSettleProfit: false,
+          settleProfit: false,
         };
 
         await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
