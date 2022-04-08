@@ -122,18 +122,18 @@ library LiquidityPosition {
         balanceAdjustments.vQuoteIncrease -= vQuotePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
-        emit Account.LiquidityChanged(
+        uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
+
+        emitLiquidityChangeEvent(
+            position,
             accountId,
             poolId,
-            position.tickLower,
-            position.tickUpper,
             liquidityDelta,
-            position.limitOrderType,
+            sqrtPriceCurrent,
             -vTokenPrincipal,
             -vQuotePrincipal
         );
 
-        uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
         int256 vTokenAmountCurrent;
         {
             (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
@@ -342,6 +342,28 @@ library LiquidityPosition {
         vQuoteIncrease = (sumFeeInsideX128 - position.sumFeeInsideLastX128).mulDiv(
             position.liquidity,
             FixedPoint128.Q128
+        );
+    }
+
+    function emitLiquidityChangeEvent(
+        LiquidityPosition.Info storage position,
+        uint256 accountId,
+        uint32 poolId,
+        int128 liquidityDelta,
+        uint160 sqrtPriceX96,
+        int256 vTokenAmountOut,
+        int256 vQuoteAmountOut
+    ) internal {
+        emit Account.LiquidityChanged(
+            accountId,
+            poolId,
+            position.tickLower,
+            position.tickUpper,
+            liquidityDelta,
+            position.limitOrderType,
+            vTokenAmountOut,
+            vQuoteAmountOut,
+            sqrtPriceX96
         );
     }
 }
