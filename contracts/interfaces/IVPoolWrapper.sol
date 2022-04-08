@@ -71,7 +71,7 @@ interface IVPoolWrapper {
     /// @param fundingRateOverrideX128 the new funding rate override value
     event FundingRateOverrideUpdated(int256 fundingRateOverrideX128);
 
-    function __initialize_VPoolWrapper(InitializeVPoolWrapperParams memory params) external;
+    function initialize(InitializeVPoolWrapperParams memory params) external;
 
     function vPool() external view returns (IUniswapV3Pool);
 

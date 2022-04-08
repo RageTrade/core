@@ -24,7 +24,7 @@ contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     /// @param _clearingHouse address of clearing house (proxy) contract
     /// @param name "Rage Trade iSettlementToken"
     /// @param symbol "iSettlementToken"
-    function __initialize_InsuranceFund(
+    function initialize(
         IERC20 _settlementToken,
         IClearingHouse _clearingHouse,
         string calldata name,

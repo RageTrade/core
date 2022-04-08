@@ -18,7 +18,7 @@ interface IClearingHouseSystemActions is IClearingHouseStructures {
     /// @param defaultCollateralTokenOracle address of default collateral token oracle
     /// @param insuranceFund address of insurance fund
     /// @param vQuote address of vQuote
-    function __initialize_ClearingHouse(
+    function initialize(
         address rageTradeFactoryAddress,
         IERC20 defaultCollateralToken,
         IOracle defaultCollateralTokenOracle,

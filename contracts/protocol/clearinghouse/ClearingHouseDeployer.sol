@@ -35,7 +35,7 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                         params.clearingHouseLogicAddress,
                         address(proxyAdmin),
                         abi.encodeCall(
-                            IClearingHouseSystemActions.__initialize_ClearingHouse,
+                            IClearingHouseSystemActions.initialize,
                             (
                                 address(this), // RageTradeFactory
                                 params.settlementToken,

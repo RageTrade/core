@@ -62,7 +62,7 @@ contract ClearingHouse is
         SYSTEM FUNCTIONS
      */
 
-    function __initialize_ClearingHouse(
+    function initialize(
         address _rageTradeFactoryAddress,
         IERC20 _defaultCollateralToken,
         IOracle _defaultCollateralTokenOracle,
