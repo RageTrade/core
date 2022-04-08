@@ -54,7 +54,7 @@ describe('Market Value and Required Margin', () => {
       sqrtPriceLimit: sqrtPriceLimit,
       isNotional: isNotional,
       isPartialAllowed: isPartialAllowed,
-      isSettleProfit: false,
+      settleProfit: false,
     };
     await VTokenPositionSet.swap(vTokenAddress, swapParams);
   };

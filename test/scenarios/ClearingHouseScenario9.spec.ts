@@ -98,7 +98,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       sqrtPriceLimit: 0,
       isNotional: false,
       isPartialAllowed: false,
-      isSettleProfit: false,
+      settleProfit: false,
     };
     await clearingHouseTest.connect(user).swapToken(accountNo, truncatedAddress, swapParams);
   }
@@ -224,7 +224,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
     sqrtPriceLimit: BigNumberish,
     isNotional: boolean,
     isPartialAllowed: boolean,
-    isSettleProfit: boolean,
+    settleProfit: boolean,
   ): Promise<ContractTransaction> {
     const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
     const swapParams = {
@@ -232,7 +232,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       sqrtPriceLimit: sqrtPriceLimit,
       isNotional: isNotional,
       isPartialAllowed: isPartialAllowed,
-      isSettleProfit: isSettleProfit,
+      settleProfit: settleProfit,
     };
     return await clearingHouseTest.connect(user).swapToken(userAccountNo, truncatedAddress, swapParams);
   }
@@ -324,7 +324,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
     sqrtPriceLimit: BigNumberish,
     isNotional: boolean,
     isPartialAllowed: boolean,
-    isSettleProfit: boolean,
+    settleProfit: boolean,
     expectedStartTick: number,
     expectedEndTick: number,
     expectedEndVTokenBalance: BigNumberish,
@@ -342,7 +342,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       sqrtPriceLimit,
       isNotional,
       isPartialAllowed,
-      isSettleProfit,
+      settleProfit,
     );
 
     await checkVirtualTick(tokenPool, expectedEndTick);
@@ -391,7 +391,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
     liquidityDelta: BigNumberish,
     closeTokenPosition: boolean,
     limitOrderType: number,
-    isSettleProfit: boolean,
+    settleProfit: boolean,
   ) {
     const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(tokenAddress);
 
@@ -403,7 +403,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
-      isSettleProfit: isSettleProfit,
+      settleProfit: settleProfit,
     };
 
     await clearingHouseTest.connect(user).updateRangeOrder(userAccountNo, truncatedAddress, liquidityChangeParams);
@@ -419,7 +419,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
     liquidityDelta: BigNumberish,
     closeTokenPosition: boolean,
     limitOrderType: number,
-    isSettleProfit: boolean,
+    settleProfit: boolean,
     liquidityPositionNum: BigNumberish,
     expectedEndLiquidityPositionNum: BigNumberish,
     expectedEndVTokenBalance: BigNumberish,
@@ -439,7 +439,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       liquidityDelta,
       closeTokenPosition,
       limitOrderType,
-      isSettleProfit,
+      settleProfit,
     );
     checkApproximateVTokenBalance
       ? await checkVTokenBalanceApproxiate(userAccountNo, tokenAddress, expectedEndVTokenBalance, 9)
@@ -980,7 +980,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       const tickUpper = 68000;
       const liquidityDelta = 750000000000n;
       const limitOrderType = 0;
-      const isSettleProfit = false;
+      const settleProfit = false;
 
       await updateRangeOrder(
         user0,
@@ -991,7 +991,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
         liquidityDelta,
         false,
         limitOrderType,
-        isSettleProfit,
+        settleProfit,
       );
     });
 
@@ -1006,7 +1006,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       const endTick = 65000;
 
       const swapTokenAmount = '1191477359';
-      const isSettleProfit = false;
+      const settleProfit = false;
 
       const swapTxn = await swapToken(
         user1,
@@ -1016,7 +1016,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
         0,
         false,
         false,
-        isSettleProfit,
+        settleProfit,
       );
 
       const netProfit = await clearingHouseTest.getAccountNetProfit(user1AccountNo);
@@ -1036,7 +1036,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       const endTick = 66000;
 
       const swapTokenAmount = '1418441634';
-      const isSettleProfit = false;
+      const settleProfit = false;
 
       const swapTxn = await swapToken(
         user2,
@@ -1046,7 +1046,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
         0,
         false,
         false,
-        isSettleProfit,
+        settleProfit,
       );
 
       const netProfit = await clearingHouseTest.getAccountNetProfit(user2AccountNo);
@@ -1064,7 +1064,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       const endTick = 65500;
 
       const swapTokenAmount = '-700356461';
-      const isSettleProfit = true;
+      const settleProfit = true;
 
       const swapTxn = await swapToken(
         user1,
@@ -1074,7 +1074,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
         0,
         false,
         false,
-        isSettleProfit,
+        settleProfit,
       );
 
       expect(await clearingHouseTest.getAccountNetProfit(user1AccountNo)).to.eq(0n);
@@ -1092,7 +1092,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       const tickUpper = 68000;
       const liquidityDelta = -250000000000n;
       const limitOrderType = 0;
-      const isSettleProfit = true;
+      const settleProfit = true;
 
       await updateRangeOrder(
         user0,
@@ -1103,7 +1103,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
         liquidityDelta,
         false,
         limitOrderType,
-        isSettleProfit,
+        settleProfit,
       );
 
       expect(await clearingHouseTest.getAccountNetProfit(user0AccountNo)).to.eq(0n);

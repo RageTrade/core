@@ -262,7 +262,7 @@ describe('Account Library Test Realistic', () => {
       slippageToleranceBps: 0,
       closeTokenPosition: closeTokenPosition,
       limitOrderType: limitOrderType,
-      isSettleProfit: false,
+      settleProfit: false,
     };
 
     await test.liquidityChange(0, vTokenAddress, liquidityChangeParams);
