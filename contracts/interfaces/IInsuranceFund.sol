@@ -6,7 +6,7 @@ import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 
 interface IInsuranceFund {
-    function __initialize_InsuranceFund(
+    function initialize(
         IERC20 settlementToken,
         IClearingHouse clearingHouse,
         string calldata name,

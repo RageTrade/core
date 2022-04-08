@@ -28,12 +28,7 @@ describe('insuranceFund', () => {
 
     const factory = await hre.ethers.getContractFactory('InsuranceFund');
     insuranceFund = await factory.deploy();
-    await insuranceFund.__initialize_InsuranceFund(
-      settlementToken,
-      signer2Address,
-      'Rage Trade iSettlementToken',
-      'iSettlementToken',
-    );
+    await insuranceFund.initialize(settlementToken, signer2Address, 'Rage Trade iSettlementToken', 'iSettlementToken');
     vQuote = await hre.ethers.getContractAt('IERC20', settlementToken);
 
     await stealFunds(settlementToken, 6, signer0Address, '10000', whaleFosettlementToken);

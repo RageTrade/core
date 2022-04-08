@@ -23,7 +23,7 @@ export async function setupWrapper(setupArgs: SetupArgs) {
   });
 
   const vPoolWrapper = await (await smock.mock<VPoolWrapperMock2__factory>('VPoolWrapperMock2')).deploy();
-  await vPoolWrapper.__initialize_VPoolWrapper({
+  await vPoolWrapper.initialize({
     clearingHouse: signer.address,
     vToken: vToken.address,
     vQuote: vQuote.address,

@@ -23,7 +23,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
     IUniswapV3Pool public vPool;
 
-    function __initialize_VPoolWrapper(InitializeVPoolWrapperParams calldata params) external {}
+    function initialize(InitializeVPoolWrapperParams calldata params) external {}
 
     function updateGlobalFundingState(bool useZeroFundingRate) public {}
 
