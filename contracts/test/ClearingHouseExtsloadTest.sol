@@ -2,8 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import { IExtsload } from '../interfaces/IExtsload.sol';
+import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
+
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
+import { IExtsload } from '../interfaces/IExtsload.sol';
+import { IOracle } from '../interfaces/IOracle.sol';
 
 import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 
@@ -19,28 +22,28 @@ contract ClearingHouseExtsloadTest {
         _;
     }
 
-    function pools_vPool_and_settings_twapDuration(IClearingHouse clearingHouse, uint32 poolId)
+    function getVPoolAndTwapDuration(IClearingHouse clearingHouse, uint32 poolId)
         public
         view
-        returns (address vPool, uint32 twapDuration)
+        returns (IUniswapV3Pool vPool, uint32 twapDuration)
     {
-        (vPool, twapDuration) = ClearingHouseExtsload.pools_vPool_and_settings_twapDuration(clearingHouse, poolId);
+        (vPool, twapDuration) = ClearingHouseExtsload.getVPoolAndTwapDuration(clearingHouse, poolId);
     }
 
-    function check_pools_vPool_and_settings_twapDuration(IClearingHouse clearingHouse, uint32 poolId)
+    function checkVPoolAndTwapDuration(IClearingHouse clearingHouse, uint32 poolId)
         public
         notView
-        returns (address vPool, uint32 twapDuration)
+        returns (IUniswapV3Pool vPool, uint32 twapDuration)
     {
-        (vPool, twapDuration) = ClearingHouseExtsload.pools_vPool_and_settings_twapDuration(clearingHouse, poolId);
+        (vPool, twapDuration) = ClearingHouseExtsload.getVPoolAndTwapDuration(clearingHouse, poolId);
         clearingHouse.getPoolInfo(poolId);
     }
 
-    function pools_vPool(IClearingHouse clearingHouse, uint32 poolId) public view returns (address vPool) {
-        vPool = ClearingHouseExtsload.pools_vPool(clearingHouse, poolId);
+    function getVPool(IClearingHouse clearingHouse, uint32 poolId) public view returns (IUniswapV3Pool vPool) {
+        vPool = ClearingHouseExtsload.getVPool(clearingHouse, poolId);
     }
 
-    function pools_settings(IClearingHouse clearingHouse, uint32 poolId)
+    function getPoolSettings(IClearingHouse clearingHouse, uint32 poolId)
         public
         view
         returns (
@@ -50,9 +53,9 @@ contract ClearingHouseExtsloadTest {
             uint32 twapDuration,
             bool isAllowedForTrade,
             bool isCrossMargined,
-            address oracle
+            IOracle oracle
         )
     {
-        return ClearingHouseExtsload.pools_settings(clearingHouse, poolId);
+        return ClearingHouseExtsload.getPoolSettings(clearingHouse, poolId);
     }
 }
