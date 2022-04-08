@@ -136,7 +136,8 @@ library Account {
         int128 liquidityDelta,
         IClearingHouseEnums.LimitOrderType limitOrderType,
         int256 vTokenAmountOut,
-        int256 vQuoteAmountOut
+        int256 vQuoteAmountOut,
+        uint160 sqrtPriceX96
     );
 
     /// @notice denotes funding payment for a range / token position
