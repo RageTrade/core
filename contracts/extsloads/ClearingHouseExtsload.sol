@@ -10,8 +10,6 @@ import { IOracle } from '../interfaces/IOracle.sol';
 
 import { Bytes32 } from '../libraries/Bytes32.sol';
 
-import 'hardhat/console.sol';
-
 library ClearingHouseExtsload {
     using Bytes32 for bytes32;
 

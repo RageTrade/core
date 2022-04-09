@@ -8,8 +8,6 @@ import { FundingPayment } from './FundingPayment.sol';
 
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Extended tick state for VPoolWrapper
 library TickExtended {
     struct Info {

@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.9;
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Bisection Method
 /// @notice https://en.wikipedia.org/wiki/Bisection_method
 library Bisection {

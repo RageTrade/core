@@ -4,8 +4,6 @@ pragma solidity ^0.8.9;
 
 import { Uint32L8ArrayLib } from '../libraries/Uint32L8Array.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract Uint32L8ArrayTest {
     using Uint32L8ArrayLib for uint32[8];
 

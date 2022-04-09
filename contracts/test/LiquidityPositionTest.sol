@@ -11,8 +11,6 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { AccountProtocolInfoMock } from './mocks/AccountProtocolInfoMock.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract LiquidityPositionTest is AccountProtocolInfoMock {
     using LiquidityPosition for LiquidityPosition.Info;
 

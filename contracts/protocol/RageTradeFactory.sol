@@ -31,8 +31,6 @@ import { Governable } from '../utils/Governable.sol';
 
 import { UNISWAP_V3_FACTORY_ADDRESS, UNISWAP_V3_DEFAULT_FEE_TIER } from '../utils/constants.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract RageTradeFactory is
     Governable,
     ClearingHouseDeployer,

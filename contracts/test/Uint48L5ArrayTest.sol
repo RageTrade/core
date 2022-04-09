@@ -4,8 +4,6 @@ pragma solidity ^0.8.9;
 
 import { Uint48L5ArrayLib } from '../libraries/Uint48L5Array.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract Uint48L5ArrayTest {
     using Uint48L5ArrayLib for uint48[5];
 

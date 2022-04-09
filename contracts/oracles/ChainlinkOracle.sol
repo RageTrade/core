@@ -16,8 +16,6 @@ import { PriceMath } from '../libraries/PriceMath.sol';
 
 import { IOracle } from '../interfaces/IOracle.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract ChainlinkOracle is IOracle {
     using AddressHelper for address;
     using FullMath for uint256;

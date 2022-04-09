@@ -11,8 +11,6 @@ import { TickBitmapExtended } from './TickBitmapExtended.sol';
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Simulate Uniswap V3 Swaps
 library SimulateSwap {
     using SafeCast for uint256;

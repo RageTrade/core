@@ -16,8 +16,6 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title VToken position functions
 library VTokenPosition {
     using FullMath for uint256;

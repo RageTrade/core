@@ -6,8 +6,6 @@ import { SignedMath } from './SignedMath.sol';
 
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Swap computation functions
 library SwapMath {
     using SignedMath for int256;

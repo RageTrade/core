@@ -22,8 +22,6 @@ import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Cross margined account functions
 /// @dev This library is deployed and used as an external library by ClearingHouse contract.
 library Account {

@@ -6,8 +6,6 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Funding payment functions
 /// @notice Funding Payment Logic used to distribute the FP bill paid by traders among the LPs in the liquidity range
 library FundingPayment {

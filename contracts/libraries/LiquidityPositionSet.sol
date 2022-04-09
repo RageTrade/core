@@ -11,8 +11,6 @@ import { Protocol } from './Protocol.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Liquidity position set functions
 library LiquidityPositionSet {
     using LiquidityPosition for LiquidityPosition.Info;

@@ -5,8 +5,6 @@ pragma solidity ^0.8.9;
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract SignedFullMathTest {
     function mulDiv(
         uint256 a,
