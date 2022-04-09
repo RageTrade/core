@@ -195,6 +195,7 @@ contract ClearingHouse is
         _updateProfit(account, amount, true);
     }
 
+    /// @inheritdoc IClearingHouseActions
     function settleProfit(uint256 accountId) external whenNotPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 

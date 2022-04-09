@@ -30,6 +30,10 @@ interface IClearingHouseActions is IClearingHouseStructures {
     /// @param amount amount of token to withdraw
     function updateProfit(uint256 accountId, int256 amount) external;
 
+    /// @notice settles the profit/loss made with the settlement token collateral deposits
+    /// @param accountId account id
+    function settleProfit(uint256 accountId) external;
+
     /// @notice swaps token associated with 'poolId' by 'amount' (Long if amount>0 else Short)
     /// @param accountId account id
     /// @param poolId truncated address of token to withdraw
