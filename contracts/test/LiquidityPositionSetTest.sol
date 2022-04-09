@@ -5,8 +5,6 @@ pragma solidity ^0.8.9;
 import { LiquidityPositionSet, LiquidityPosition } from '../libraries/LiquidityPositionSet.sol';
 import { VPoolWrapperMock } from './mocks/VPoolWrapperMock.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract LiquidityPositionSetTest {
     using LiquidityPositionSet for LiquidityPosition.Set;
     using LiquidityPosition for LiquidityPosition.Info;

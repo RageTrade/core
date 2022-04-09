@@ -21,8 +21,6 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title VToken position set functions
 library VTokenPositionSet {
     using AddressHelper for address;

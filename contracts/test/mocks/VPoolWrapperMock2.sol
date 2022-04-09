@@ -5,8 +5,6 @@ pragma solidity ^0.8.9;
 import { VPoolWrapper } from '../../protocol/wrapper/VPoolWrapper.sol';
 import { SwapMath } from '../../libraries/SwapMath.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract VPoolWrapperMock2 is VPoolWrapper {
     uint48 public blockTimestamp;
 

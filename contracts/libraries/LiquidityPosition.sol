@@ -22,8 +22,6 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Liquidity position functions
 library LiquidityPosition {
     using FullMath for uint256;

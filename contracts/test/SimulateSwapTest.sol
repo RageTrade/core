@@ -18,8 +18,6 @@ import { TickExtended } from '../libraries/TickExtended.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract SimulateSwapTest is IUniswapV3SwapCallback {
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;

@@ -4,8 +4,6 @@ pragma solidity ^0.8.9;
 
 import { Uint48Lib } from '../libraries/Uint48.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract Uint48Test {
     function assertConcat(int24 val1, int24 val2) external pure returns (uint48 concatenated) {
         concatenated = concat(val1, val2);

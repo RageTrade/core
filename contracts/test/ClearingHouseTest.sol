@@ -19,8 +19,6 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { ClearingHouse } from '../protocol/clearinghouse/ClearingHouse.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract ClearingHouseTest is ClearingHouse {
     using AddressHelper for address;
     using AddressHelper for IVToken;

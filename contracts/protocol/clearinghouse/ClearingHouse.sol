@@ -30,8 +30,6 @@ import { Governable } from '../../utils/Governable.sol';
 import { Multicall } from '../../utils/Multicall.sol';
 import { ClearingHouseView } from './ClearingHouseView.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract ClearingHouse is
     IClearingHouse,
     Multicall,

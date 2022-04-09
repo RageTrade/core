@@ -10,8 +10,6 @@ import { IOracle } from '../interfaces/IOracle.sol';
 
 import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 
-import 'hardhat/console.sol';
-
 contract ClearingHouseExtsloadTest {
     modifier notView() {
         assembly {

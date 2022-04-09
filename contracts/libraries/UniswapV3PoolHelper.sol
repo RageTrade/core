@@ -6,8 +6,6 @@ import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickM
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title UniswapV3Pool helper functions
 library UniswapV3PoolHelper {
     using UniswapV3PoolHelper for IUniswapV3Pool;

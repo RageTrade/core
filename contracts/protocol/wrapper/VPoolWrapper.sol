@@ -33,8 +33,6 @@ import { Extsload } from '../../utils/Extsload.sol';
 
 import { UNISWAP_V3_DEFAULT_TICKSPACING, UNISWAP_V3_DEFAULT_FEE_TIER } from '../../utils/constants.sol';
 
-import { console } from 'hardhat/console.sol';
-
 contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCallback, Initializable, Extsload {
     using AddressHelper for IVToken;
     using FullMath for uint256;

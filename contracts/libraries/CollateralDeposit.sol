@@ -13,8 +13,6 @@ import { Uint32L8ArrayLib } from './Uint32L8Array.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 
-import { console } from 'hardhat/console.sol';
-
 /// @title Collateral deposit set functions
 library CollateralDeposit {
     using AddressHelper for address;
