@@ -152,7 +152,7 @@ contract AccountTest {
     ) external {
         accounts[accountId].swapToken(
             vToken.truncate(),
-            IClearingHouseStructures.SwapParams(amount, 0, false, false),
+            IClearingHouseStructures.SwapParams(amount, 0, false, false, false),
             protocol,
             true
         );
@@ -165,7 +165,7 @@ contract AccountTest {
     ) external {
         accounts[accountId].swapToken(
             vToken.truncate(),
-            IClearingHouseStructures.SwapParams(amount, 0, true, false),
+            IClearingHouseStructures.SwapParams(amount, 0, true, false, false),
             protocol,
             true
         );
@@ -181,7 +181,11 @@ contract AccountTest {
 
     function liquidateLiquidityPositions(uint256 accountId)
         external
-        returns (int256 keeperFee, int256 insuranceFundFee)
+        returns (
+            int256 keeperFee,
+            int256 insuranceFundFee,
+            int256 accountMarketValue
+        )
     {
         return accounts[accountId].liquidateLiquidityPositions(fixFee, protocol);
     }

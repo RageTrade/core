@@ -42,6 +42,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         uint16 slippageToleranceBps; // slippage tolerance in bps, to prevent sandwitch attack
         bool closeTokenPosition; // whether to close the token position generated due to the liquidity change
         LimitOrderType limitOrderType; // limit order type
+        bool settleProfit; // whether to settle profit against USDC margin
     }
 
     struct LiquidityPositionView {
@@ -94,6 +95,7 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         uint160 sqrtPriceLimit; // threshold sqrt price which should not be crossed
         bool isNotional; // whether the amount represents vQuote amount
         bool isPartialAllowed; // whether to end swap (partial) when sqrtPriceLimit is reached, instead of reverting
+        bool settleProfit; // whether to settle profit against USDC margin
     }
 
     struct VTokenPositionView {

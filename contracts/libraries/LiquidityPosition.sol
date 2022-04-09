@@ -122,18 +122,18 @@ library LiquidityPosition {
         balanceAdjustments.vQuoteIncrease -= vQuotePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
-        emit Account.LiquidityChanged(
+        uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
+
+        emitLiquidityChangeEvent(
+            position,
             accountId,
             poolId,
-            position.tickLower,
-            position.tickUpper,
             liquidityDelta,
-            position.limitOrderType,
+            sqrtPriceCurrent,
             -vTokenPrincipal,
             -vQuotePrincipal
         );
 
-        uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
         int256 vTokenAmountCurrent;
         {
             (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
@@ -218,15 +218,15 @@ library LiquidityPosition {
     {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
-        uint256 longPositionExecutionPriceX96;
+        uint256 longPositionExecutionPriceX128;
         {
-            uint160 sqrtPriceForExecutionPriceX96 = valuationPriceX96 <= sqrtPriceUpperX96
+            uint160 sqrtPriceUpperMinX96 = valuationPriceX96 <= sqrtPriceUpperX96
                 ? valuationPriceX96
                 : sqrtPriceUpperX96;
-            longPositionExecutionPriceX96 = uint256(sqrtPriceLowerX96).mulDiv(
-                sqrtPriceForExecutionPriceX96,
-                FixedPoint96.Q96
-            );
+            uint160 sqrtPriceLowerMinX96 = valuationPriceX96 <= sqrtPriceLowerX96
+                ? valuationPriceX96
+                : sqrtPriceLowerX96;
+            longPositionExecutionPriceX128 = uint256(sqrtPriceLowerMinX96).mulDiv(sqrtPriceUpperMinX96, 1 << 64);
         }
 
         uint256 maxNetLongPosition;
@@ -245,7 +245,7 @@ library LiquidityPosition {
             } else maxNetLongPosition = maxLongTokens + uint256(-1 * position.vTokenAmountIn);
         }
 
-        return maxNetLongPosition.mulDiv(longPositionExecutionPriceX96, FixedPoint96.Q96);
+        return maxNetLongPosition.mulDiv(longPositionExecutionPriceX128, FixedPoint128.Q128);
     }
 
     function marketValue(
@@ -342,6 +342,28 @@ library LiquidityPosition {
         vQuoteIncrease = (sumFeeInsideX128 - position.sumFeeInsideLastX128).mulDiv(
             position.liquidity,
             FixedPoint128.Q128
+        );
+    }
+
+    function emitLiquidityChangeEvent(
+        LiquidityPosition.Info storage position,
+        uint256 accountId,
+        uint32 poolId,
+        int128 liquidityDelta,
+        uint160 sqrtPriceX96,
+        int256 vTokenAmountOut,
+        int256 vQuoteAmountOut
+    ) internal {
+        emit Account.LiquidityChanged(
+            accountId,
+            poolId,
+            position.tickLower,
+            position.tickUpper,
+            liquidityDelta,
+            position.limitOrderType,
+            vTokenAmountOut,
+            vQuoteAmountOut,
+            sqrtPriceX96
         );
     }
 }

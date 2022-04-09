@@ -25,7 +25,7 @@ contract VPoolWrapperMock is IVPoolWrapper {
 
     function __initialize_VPoolWrapper(InitializeVPoolWrapperParams calldata params) external {}
 
-    function updateGlobalFundingState(uint256 realPriceX128, uint256 virtualPriceX128) public {}
+    function updateGlobalFundingState(bool useZeroFundingRate) public {}
 
     function getValuesInside(int24 tickLower, int24 tickUpper)
         public

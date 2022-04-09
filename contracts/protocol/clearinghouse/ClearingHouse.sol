@@ -134,8 +134,7 @@ contract ClearingHouse is
         // update funding state for all the pools, so that funding payment upto pause moment is recorded
         for (uint256 i; i < allPoolIds.length; i++) {
             uint32 poolId = allPoolIds[i];
-            (uint256 realPriceX128, uint256 virtualPriceX128) = getTwapPrices(poolId);
-            protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState(realPriceX128, virtualPriceX128);
+            protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: false });
         }
     }
 
@@ -145,10 +144,7 @@ contract ClearingHouse is
         // update funding state for all the pools
         for (uint256 i; i < allPoolIds.length; i++) {
             // record the funding payment as zero for the entire duration for which clearing house was paused.
-            protocol.pools[allPoolIds[i]].vPoolWrapper.updateGlobalFundingState({
-                realPriceX128: 1,
-                virtualPriceX128: 1
-            });
+            protocol.pools[allPoolIds[i]].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: true });
         }
     }
 
@@ -201,6 +197,12 @@ contract ClearingHouse is
         _updateProfit(account, amount, true);
     }
 
+    function settleProfit(uint256 accountId) external whenNotPaused {
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
+
+        account.settleProfit(protocol);
+    }
+
     /// @inheritdoc IClearingHouseActions
     function swapToken(
         uint256 accountId,
@@ -220,29 +222,6 @@ contract ClearingHouse is
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
 
         return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
-    }
-
-    function _updateRangeOrder(
-        Account.Info storage account,
-        uint32 poolId,
-        LiquidityChangeParams memory liquidityChangeParams,
-        bool checkMargin
-    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
-        _checkPoolId(poolId);
-
-        if (liquidityChangeParams.sqrtPriceCurrent != 0) {
-            _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
-        }
-
-        uint256 notionalValueAbs;
-        (vTokenAmountOut, vQuoteAmountOut, notionalValueAbs) = account.liquidityChange(
-            poolId,
-            liquidityChangeParams,
-            protocol,
-            checkMargin
-        );
-
-        if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -376,6 +355,29 @@ contract ClearingHouse is
         }
     }
 
+    function _updateRangeOrder(
+        Account.Info storage account,
+        uint32 poolId,
+        LiquidityChangeParams memory liquidityChangeParams,
+        bool checkMargin
+    ) internal whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
+        _checkPoolId(poolId);
+
+        if (liquidityChangeParams.sqrtPriceCurrent != 0) {
+            _checkSlippage(poolId, liquidityChangeParams.sqrtPriceCurrent, liquidityChangeParams.slippageToleranceBps);
+        }
+
+        uint256 notionalValueAbs;
+        (vTokenAmountOut, vQuoteAmountOut, notionalValueAbs) = account.liquidityChange(
+            poolId,
+            liquidityChangeParams,
+            protocol,
+            checkMargin
+        );
+
+        if (notionalValueAbs < protocol.minimumOrderNotional) revert LowNotionalValue(notionalValueAbs);
+    }
+
     function _swapToken(
         Account.Info storage account,
         uint32 poolId,
@@ -397,17 +399,30 @@ contract ClearingHouse is
         }
     }
 
-    function _liquidateLiquidityPositions(uint256 accountId) internal whenNotPaused returns (int256 keeperFee) {
+    function _liquidateLiquidityPositions(uint256 accountId) internal whenNotPaused returns (int256) {
         Account.Info storage account = accounts[accountId];
-        int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateLiquidityPositions(0, protocol);
+
+        (int256 keeperFee, int256 insuranceFundFee, int256 accountMarketValue) = account.liquidateLiquidityPositions(
+            0,
+            protocol
+        );
+
         int256 accountFee = keeperFee + insuranceFundFee;
 
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
         protocol.settlementToken.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
 
-        emit Account.LiquidityPositionsLiquidated(accountId, msg.sender, accountFee, keeperFee, insuranceFundFee);
+        emit Account.LiquidityPositionsLiquidated(
+            accountId,
+            msg.sender,
+            accountFee,
+            keeperFee,
+            insuranceFundFee,
+            accountMarketValue
+        );
+
+        return keeperFee;
     }
 
     function _liquidateTokenPosition(uint256 accountId, uint32 poolId)

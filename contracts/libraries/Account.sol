@@ -68,7 +68,7 @@ library Account {
     /// @notice error to denote that there is enough margin, hence the liquidation is invalid
     /// @param accountMarketValue shows the account market value before liquidation
     /// @param totalRequiredMargin shows the total required margin before liquidation
-    error InvalidLiquidationAccountAbovewater(int256 accountMarketValue, int256 totalRequiredMargin);
+    error InvalidLiquidationAccountAboveWater(int256 accountMarketValue, int256 totalRequiredMargin);
 
     /// @notice error to denote that there are active ranges present during token liquidation, hence the liquidation is invalid
     /// @param poolId shows the poolId for which range is active
@@ -136,7 +136,8 @@ library Account {
         int128 liquidityDelta,
         IClearingHouseEnums.LimitOrderType limitOrderType,
         int256 vTokenAmountOut,
-        int256 vQuoteAmountOut
+        int256 vQuoteAmountOut,
+        uint160 sqrtPriceX96
     );
 
     /// @notice denotes funding payment for a range / token position
@@ -204,7 +205,8 @@ library Account {
         address indexed keeperAddress,
         int256 liquidationFee,
         int256 keeperFee,
-        int256 insuranceFundFee
+        int256 insuranceFundFee,
+        int256 accountMarketValueFinal
     );
 
     /// @notice denotes token position liquidation event
@@ -219,7 +221,8 @@ library Account {
         uint256 indexed liquidatorAccountId,
         uint32 indexed poolId,
         int256 keeperFee,
-        int256 insuranceFundFee
+        int256 insuranceFundFee,
+        int256 accountMarketValueFinal
     );
 
     /**
@@ -237,14 +240,7 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        if (amount > 0) {
-            account.collateralDeposits.increaseBalance(collateralId, uint256(amount));
-        } else {
-            account.collateralDeposits.decreaseBalance(collateralId, uint256(-amount));
-            if (checkMargin) account._checkIfMarginAvailable(true, protocol);
-        }
-
-        emit MarginUpdated(account.id, collateralId, amount);
+        _updateMargin(account, collateralId, amount, protocol, checkMargin);
     }
 
     /// @notice updates 'amount' of profit generated in settlement token
@@ -257,14 +253,11 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        account._updateVQuoteBalance(amount);
+        _updateProfit(account, amount, protocol, checkMargin);
+    }
 
-        if (checkMargin && amount < 0) {
-            account._checkIfProfitAvailable(protocol);
-            account._checkIfMarginAvailable(true, protocol);
-        }
-
-        emit ProfitUpdated(account.id, amount);
+    function settleProfit(Account.Info storage account, Protocol.Info storage protocol) external {
+        _settleProfit(account, protocol);
     }
 
     /// @notice swaps 'vToken' of token amount equal to 'swapParams.amount'
@@ -287,6 +280,9 @@ library Account {
         // mints erc20 tokens in callback and send to the pool
         (vTokenAmountOut, vQuoteAmountOut) = account.tokenPositions.swapToken(account.id, poolId, swapParams, protocol);
 
+        if (swapParams.settleProfit) {
+            account._settleProfit(protocol);
+        }
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
     }
@@ -321,6 +317,9 @@ library Account {
             protocol
         );
 
+        if (liquidityChangeParams.settleProfit) {
+            account._settleProfit(protocol);
+        }
         // after all the stuff, account should be above water
         if (checkMargin) account._checkIfMarginAvailable(true, protocol);
 
@@ -336,15 +335,21 @@ library Account {
         Account.Info storage account,
         uint256 fixFee,
         Protocol.Info storage protocol
-    ) external returns (int256 keeperFee, int256 insuranceFundFee) {
+    )
+        external
+        returns (
+            int256 keeperFee,
+            int256 insuranceFundFee,
+            int256 accountMarketValue
+        )
+    {
         // check basis maintanace margin
-        int256 accountMarketValue;
         int256 totalRequiredMargin;
         uint256 notionalAmountClosed;
 
         (accountMarketValue, totalRequiredMargin) = account._getAccountValueAndRequiredMargin(false, protocol);
         if (accountMarketValue > totalRequiredMargin) {
-            revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+            revert InvalidLiquidationAccountAboveWater(accountMarketValue, totalRequiredMargin);
         }
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(account.id, protocol);
 
@@ -379,7 +384,7 @@ library Account {
             );
 
             if (accountMarketValue > totalRequiredMargin) {
-                revert InvalidLiquidationAccountAbovewater(accountMarketValue, totalRequiredMargin);
+                revert InvalidLiquidationAccountAboveWater(accountMarketValue, totalRequiredMargin);
             } else if (
                 accountMarketValue >
                 totalRequiredMargin.mulDiv(protocol.liquidationParams.closeFactorMMThresholdBps, 1e4)
@@ -402,6 +407,7 @@ library Account {
             }
         }
 
+        int256 accountMarketValueFinal;
         {
             uint160 sqrtPriceLimit;
             {
@@ -420,11 +426,17 @@ library Account {
             (, int256 vQuoteAmountSwapped) = account.tokenPositions.swapToken(
                 account.id,
                 poolId,
-                IClearingHouseStructures.SwapParams(tokensToTrade, sqrtPriceLimit, false, true),
+                IClearingHouseStructures.SwapParams({
+                    amount: tokensToTrade,
+                    sqrtPriceLimit: sqrtPriceLimit,
+                    isNotional: false,
+                    isPartialAllowed: true,
+                    settleProfit: false
+                }),
                 protocol
             );
 
-            int256 accountMarketValueFinal = account._getAccountValue(protocol);
+            accountMarketValueFinal = account._getAccountValue(protocol);
 
             (keeperFee, insuranceFundFee) = _computeLiquidationFees(
                 accountMarketValueFinal,
@@ -437,7 +449,7 @@ library Account {
 
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
 
-        emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee);
+        emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee, accountMarketValueFinal);
     }
 
     /// @notice removes limit order based on the current price position (keeper call)
@@ -540,6 +552,64 @@ library Account {
     /**
      *  Internal methods
      */
+
+    function _settleProfit(Account.Info storage account, Protocol.Info storage protocol) internal {
+        int256 profits = account._getAccountPositionProfits(protocol);
+        uint32 settlementCollateralId = AddressHelper.truncate(protocol.settlementToken);
+        if (profits > 0) {
+            account._updateProfit(-profits, protocol, false);
+            account._updateMargin(settlementCollateralId, profits, protocol, false);
+        } else if (profits < 0) {
+            uint256 balance = account.collateralDeposits.getBalance(settlementCollateralId);
+            uint256 profitAbsUint = uint256(-profits);
+            uint256 balanceToUpdate = balance > profitAbsUint ? profitAbsUint : balance;
+            if (balanceToUpdate > 0) {
+                account._updateMargin(settlementCollateralId, -balanceToUpdate.toInt256(), protocol, false);
+                account._updateProfit(balanceToUpdate.toInt256(), protocol, false);
+            }
+        }
+    }
+
+    /// @notice updates 'amount' of profit generated in settlement token
+    /// @param account account to remove profit from
+    /// @param amount amount of profit(settlement token) to add/remove
+    /// @param protocol set of all constants and token addresses
+    function _updateProfit(
+        Account.Info storage account,
+        int256 amount,
+        Protocol.Info storage protocol,
+        bool checkMargin
+    ) internal {
+        account._updateVQuoteBalance(amount);
+
+        if (checkMargin && amount < 0) {
+            account._checkIfProfitAvailable(protocol);
+            account._checkIfMarginAvailable(true, protocol);
+        }
+
+        emit ProfitUpdated(account.id, amount);
+    }
+
+    /// @notice changes deposit balance of 'vToken' by 'amount'
+    /// @param account account to deposit balance into
+    /// @param collateralId collateral id of the token
+    /// @param amount amount of token to deposit or withdraw
+    function _updateMargin(
+        Account.Info storage account,
+        uint32 collateralId,
+        int256 amount,
+        Protocol.Info storage protocol,
+        bool checkMargin
+    ) internal {
+        if (amount > 0) {
+            account.collateralDeposits.increaseBalance(collateralId, uint256(amount));
+        } else {
+            account.collateralDeposits.decreaseBalance(collateralId, uint256(-amount));
+            if (checkMargin) account._checkIfMarginAvailable(true, protocol);
+        }
+
+        emit MarginUpdated(account.id, collateralId, amount);
+    }
 
     /// @notice updates the vQuote balance for 'account' by 'amount'
     /// @param account pointer to 'account' struct

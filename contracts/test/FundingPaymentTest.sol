@@ -2,12 +2,25 @@
 
 pragma solidity ^0.8.9;
 
+import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
+
 import { FundingPayment } from '../libraries/FundingPayment.sol';
+import { SignedFullMath } from '../libraries/SignedFullMath.sol';
 
 contract FundingPaymentTest {
+    using SignedFullMath for int256;
+
     using FundingPayment for FundingPayment.Info;
 
     FundingPayment.Info public fpGlobal;
+
+    function getFundingRate(uint256 realPriceX128, uint256 virtualPriceX128)
+        internal
+        pure
+        returns (int256 fundingRateX128)
+    {
+        return FundingPayment.getFundingRate(realPriceX128, virtualPriceX128);
+    }
 
     function update(
         int256 vTokenAmount,
@@ -16,7 +29,14 @@ contract FundingPaymentTest {
         uint256 realPriceX128,
         uint256 virtualPriceX128
     ) public {
-        return fpGlobal.update(vTokenAmount, liquidity, blockTimestamp, realPriceX128, virtualPriceX128);
+        return
+            fpGlobal.update(
+                vTokenAmount,
+                liquidity,
+                blockTimestamp,
+                FundingPayment.getFundingRate(realPriceX128, virtualPriceX128),
+                virtualPriceX128
+            );
     }
 
     function nextAX128(
@@ -25,7 +45,13 @@ contract FundingPaymentTest {
         uint256 realPriceX128,
         uint256 virtualPriceX128
     ) public pure returns (int256) {
-        return FundingPayment.nextAX128(timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+        return
+            FundingPayment.nextAX128(
+                timestampLast,
+                blockTimestamp,
+                FundingPayment.getFundingRate(realPriceX128, virtualPriceX128),
+                virtualPriceX128
+            );
     }
 
     function extrapolatedSumAX128(
@@ -36,7 +62,13 @@ contract FundingPaymentTest {
         uint256 virtualPriceX128
     ) public pure returns (int256) {
         return
-            FundingPayment.extrapolatedSumAX128(sumA, timestampLast, blockTimestamp, realPriceX128, virtualPriceX128);
+            FundingPayment.extrapolatedSumAX128(
+                sumA,
+                timestampLast,
+                blockTimestamp,
+                FundingPayment.getFundingRate(realPriceX128, virtualPriceX128),
+                virtualPriceX128
+            );
     }
 
     function extrapolatedSumFpX128(

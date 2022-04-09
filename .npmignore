@@ -1,10 +1,30 @@
+.git
 .github
+.gitignore
+
+# VS Code
 .vscode
+
+# env files
 .env
 .env.example
-cache
+
+# npm
 node_modules
+
+# hardhat
+cache
+coverage
+coverage.json
+deploy
 types
 deployments/localhost
-.gitignore
+hardhat.config.ts
+scripts
+typechain-types
+
+# misc
 .prettierrc
+.solcover.js
+CONTRIBUTING.md
+tsconfig.json
