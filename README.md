@@ -16,8 +16,9 @@ This repository contains the core smart contracts for the Rage Trade Protocol.
 - `yarn compile`: compiles contracts
 - `yarn test`: runs tests
 - `yarn coverage`: runs tests and generates coverage report
-- `yarn deploy:localhost`: for local deployment
-- `yarn deploy:arbtest`: for testnet deployment
+- `yarn deploy --network localhost`: for local deployment
+- `yarn deploy --network arbtest`: for testnet deployment
+- `yarn deploy --network arbmain`: for mainnet deployment
 
 ## Licensing
 
