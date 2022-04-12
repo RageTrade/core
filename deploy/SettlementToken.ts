@@ -2,7 +2,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 import { IERC20Metadata__factory } from '../typechain-types';
-import { getNetworkInfo } from './network-info';
+import { getNetworkInfo, waitConfirmations } from './network-info';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -19,9 +19,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       contract: 'SettlementTokenMock',
       from: deployer,
       log: true,
+      waitConfirmations,
     });
 
-    await execute('SettlementToken', { from: deployer }, 'mint', deployer, hre.ethers.BigNumber.from(10).pow(8));
+    await execute(
+      'SettlementToken',
+      { from: deployer, waitConfirmations },
+      'mint',
+      deployer,
+      hre.ethers.BigNumber.from(10).pow(8),
+    );
 
     if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
       await hre.tenderly.push({

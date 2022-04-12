@@ -1,3 +1,5 @@
+import hre from 'hardhat';
+
 export const skip = () => true;
 
 export interface NetworkInfo {
@@ -58,3 +60,5 @@ export function getNetworkInfo(chainId?: number): NetworkInfo {
       return defaultInfo;
   }
 }
+
+export const waitConfirmations = hre.network.config.chainId !== 31337 ? 2 : 0;

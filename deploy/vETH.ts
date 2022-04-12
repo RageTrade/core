@@ -10,7 +10,7 @@ import {
   RageTradeFactory,
   VTokenDeployer,
 } from '../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
-import { getNetworkInfo } from './network-info';
+import { getNetworkInfo, waitConfirmations } from './network-info';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -39,6 +39,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [oracleAddress, 18, 6],
         from: deployer,
         log: true,
+        waitConfirmations,
       });
     } else {
       ethIndexOracleDeployment = await deploy('ETH-IndexOracle', {
@@ -46,7 +47,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         log: true,
       });
-      await execute('ETH-IndexOracle', { from: deployer }, 'setPriceX128', await priceToPriceX128(3000, 6, 18));
+      await execute(
+        'ETH-IndexOracle',
+        { from: deployer, waitConfirmations },
+        'setPriceX128',
+        await priceToPriceX128(3000, 6, 18),
+      );
     }
 
     const deployVTokenParams: VTokenDeployer.DeployVTokenParamsStruct = {
@@ -73,7 +79,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       slotsToInitialize: 100,
     };
 
-    const tx = await execute('RageTradeFactory', { from: deployer }, 'initializePool', params);
+    const tx = await execute('RageTradeFactory', { from: deployer, waitConfirmations }, 'initializePool', params);
 
     const poolInitializedLog = tx.events?.find(
       event => event?.event === 'PoolInitialized',

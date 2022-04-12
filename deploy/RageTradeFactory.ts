@@ -12,6 +12,7 @@ import {
   VQuote__factory,
 } from '../typechain-types';
 import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
+import { waitConfirmations } from './network-info';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -29,6 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     args: [clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address],
+    waitConfirmations,
   });
 
   if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
@@ -60,7 +62,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   execute(
     'ClearingHouse',
-    { from: deployer },
+    { from: deployer, waitConfirmations },
     'updateProtocolSettings',
     {
       rangeLiquidationFeeFraction: 1500,
