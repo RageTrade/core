@@ -1,6 +1,6 @@
 <p>
     <a href="https://github.com/rage-trade/perpswap-contracts/actions"><img alt="test status" src="https://github.com/rage-trade/perpswap-contracts/actions/workflows/tests.yml/badge.svg"></a>
-    <a href="https://solidity.readthedocs.io/en/v0.8.12/"><img alt="solidity v0.8.12" src="https://badgen.net/badge/solidity/v0.8.12/blue"></a>
+    <a href="https://solidity.readthedocs.io/en/v0.8.13/"><img alt="solidity v0.8.13" src="https://badgen.net/badge/solidity/v0.8.13/blue"></a>
 </p>
 
 # Rage Trade
@@ -21,16 +21,21 @@ This repository contains the core smart contracts for the Rage Trade Protocol.
 
 ## Licensing
 
-The primary license for Rage Trade Core is the MIT License, see [LICENSE](./LICENSE). However, our dependencies have various licenses and hence the files that import them inherits the maximum restrictive license of it's dependencies, specified by the SPDX identifier in the file.
+The primary license for Rage Trade Core is the MIT License. However, our dependencies have various licenses and hence the files that import them inherits the maximum restrictive license of it's dependencies, specified by the SPDX identifier in the file.
 
-> TODO: find opportunities to get rid of GPL or BUSL imports.
+- For files licensed as `MIT`, please see [our license](./LICENSE).
+- For files licensed as `GPL-2.0-or-later`, please see [Uniswap/v3-core's GPL](https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/LICENSE_GPL).
+- For files licensed as `BUSL-1.1`, please see [Uniswap/v3-core's BUSL](https://github.com/Uniswap/v3-core/blob/main/LICENSE).
 
 Following is an overview of SPDX License Identifiers used by the source code in our repository.
 
 ```
 contracts
+├── extsloads
+│   └── ClearingHouseExtsload.sol (MIT)
 ├── interfaces
 │   ├── IClearingHouse.sol (GPL-2.0-or-later)
+│   ├── IExtsload.sol (MIT)
 │   ├── IGovernable.sol (MIT)
 │   ├── IInsuranceFund.sol (GPL-2.0-or-later)
 │   ├── IOracle.sol (MIT)
@@ -50,6 +55,7 @@ contracts
 │   ├── Account.sol (BUSL-1.1)
 │   ├── AddressHelper.sol (MIT)
 │   ├── Bisection.sol (MIT)
+│   ├── Bytes32.sol (MIT)
 │   ├── CollateralDeposit.sol (GPL-2.0-or-later)
 │   ├── FundingPayment.sol (GPL-2.0-or-later)
 │   ├── GoodAddressDeployer.sol (MIT)
@@ -99,7 +105,7 @@ contracts
     ├── ProxyAdmin.sol (MIT)
     ├── ProxyAdminDeployer.sol (MIT)
     ├── SwapSimulator.sol (BUSL-1.1)
+    ├── TimelockControllerWithMinDelayOverride.sol (MIT)
     ├── TransparentUpgradeableProxy.sol (MIT)
     └── constants.sol (MIT)
-
 ```
