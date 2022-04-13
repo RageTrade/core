@@ -1,21 +1,11 @@
 {
-  "address": "0x2E36bCF86EB14c45bd3c65BbC25D738252e8A3c9",
+  "address": "0xfDB147bf47a903283A2ca0D128041e87c388E301",
   "abi": [
     {
       "inputs": [
         {
-          "internalType": "string",
-          "name": "vTokenName",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "vTokenSymbol",
-          "type": "string"
-        },
-        {
           "internalType": "uint8",
-          "name": "cTokenDecimals",
+          "name": "decimals_",
           "type": "uint8"
         }
       ],
@@ -50,6 +40,25 @@
         }
       ],
       "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
       "type": "event"
     },
     {
@@ -122,6 +131,19 @@
           "type": "bool"
         }
       ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "vPoolWrapper",
+          "type": "address"
+        }
+      ],
+      "name": "authorize",
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -222,7 +244,26 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "receiver",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isAuth",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
           "type": "address"
         },
         {
@@ -250,14 +291,21 @@
       "type": "function"
     },
     {
-      "inputs": [
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
         {
           "internalType": "address",
-          "name": "_vPoolWrapper",
+          "name": "",
           "type": "address"
         }
       ],
-      "name": "setVPoolWrapper",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -342,18 +390,18 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "vPoolWrapper",
-      "outputs": [
+      "inputs": [
         {
           "internalType": "address",
-          "name": "",
+          "name": "newOwner",
           "type": "address"
         }
       ],
-      "stateMutability": "view",
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     }
   ],
-  "numDeployments": 1
+  "numDeployments": 4
 }
