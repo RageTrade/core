@@ -1,5 +1,5 @@
 {
-  "address": "0xA9708751Cef1FfB5C66b9D09505e057A816Bf949",
+  "address": "0x8be0ca6Ac3C5b09577119C4Bb31eD0337811A540",
   "abi": [
     {
       "inputs": [],
@@ -55,34 +55,6 @@
       ],
       "name": "Transfer",
       "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "contract IERC20",
-          "name": "_settlementToken",
-          "type": "address"
-        },
-        {
-          "internalType": "contract IClearingHouse",
-          "name": "_clearingHouse",
-          "type": "address"
-        },
-        {
-          "internalType": "string",
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "symbol",
-          "type": "string"
-        }
-      ],
-      "name": "__initialize_InsuranceFund",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
     },
     {
       "inputs": [
@@ -252,6 +224,34 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_settlementToken",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IClearingHouse",
+          "name": "_clearingHouse",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "name",
       "outputs": [
@@ -370,5 +370,5 @@
       "type": "function"
     }
   ],
-  "numDeployments": 1
+  "numDeployments": 2
 }

@@ -55,6 +55,10 @@ export default {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_KEY}`,
       accounts: [pk],
     },
+    kovan: {
+      url: `https://eth-kovan.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+      accounts: [pk],
+    },
     arbmain: {
       url: `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts: [pk],

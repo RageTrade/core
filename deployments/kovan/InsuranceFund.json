@@ -1,27 +1,6 @@
 {
-  "address": "0x2E36bCF86EB14c45bd3c65BbC25D738252e8A3c9",
+  "address": "0x93e207b49a8Ab4e67fFCd85b767A53dEf6e74F97",
   "abi": [
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "vTokenName",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "vTokenSymbol",
-          "type": "string"
-        },
-        {
-          "internalType": "uint8",
-          "name": "cTokenDecimals",
-          "type": "uint8"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
     {
       "inputs": [],
       "name": "Unauthorised",
@@ -152,9 +131,22 @@
           "type": "uint256"
         }
       ],
-      "name": "burn",
+      "name": "claim",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "clearingHouse",
+      "outputs": [
+        {
+          "internalType": "contract IClearingHouse",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -197,6 +189,19 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "spender",
           "type": "address"
@@ -221,17 +226,27 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "receiver",
+          "internalType": "contract IERC20",
+          "name": "_settlementToken",
           "type": "address"
         },
         {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
+          "internalType": "contract IClearingHouse",
+          "name": "_clearingHouse",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
         }
       ],
-      "name": "mint",
+      "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -250,16 +265,16 @@
       "type": "function"
     },
     {
-      "inputs": [
+      "inputs": [],
+      "name": "settlementToken",
+      "outputs": [
         {
-          "internalType": "address",
-          "name": "_vPoolWrapper",
+          "internalType": "contract IERC20",
+          "name": "",
           "type": "address"
         }
       ],
-      "name": "setVPoolWrapper",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -342,16 +357,16 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "vPoolWrapper",
-      "outputs": [
+      "inputs": [
         {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "shares",
+          "type": "uint256"
         }
       ],
-      "stateMutability": "view",
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     }
   ],
