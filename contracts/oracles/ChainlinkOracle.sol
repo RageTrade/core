@@ -56,9 +56,12 @@ contract ChainlinkOracle is IOracle {
     }
 
     function getPrice(uint256 twapDuration) internal view returns (uint256) {
-        bool isRaised = chainlinkFlags.getFlag(FLAG_ARBITRUM_SEQ_OFFLINE);
-        if (isRaised) {
-            revert SequencerOffline();
+        FlagsInterface _chainlinkFlags = chainlinkFlags;
+        if (address(_chainlinkFlags) != address(0)) {
+            bool isRaised = _chainlinkFlags.getFlag(FLAG_ARBITRUM_SEQ_OFFLINE);
+            if (isRaised) {
+                revert SequencerOffline();
+            }
         }
         (uint80 round, uint256 latestPrice, uint256 latestTS) = _getLatestRoundData();
         uint256 endTS = block.timestamp;
