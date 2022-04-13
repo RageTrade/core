@@ -5,9 +5,10 @@ export const skip = () => true;
 export interface NetworkInfo {
   clearingHouseContractName: string;
   settlementTokenAddress?: string;
+  FlagsInterface?: string;
   UNISWAP_V3_FACTORY_ADDRESS: string;
   UNISWAP_V3_DEFAULT_FEE_TIER: number;
-  ETH_USD_ORACLE?: string | undefined;
+  CHAINLINK_ETH_USD_ORACLE?: string | undefined;
 }
 
 export const UNISWAP_V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
@@ -22,6 +23,7 @@ export const defaultInfo: NetworkInfo = {
 export const arbitrumInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouse',
   settlementTokenAddress: '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8', // USDC Arbitrum
+  FlagsInterface: '0x3C14e07Edd0dC67442FA96f1Ec6999c57E810a83',
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
 };
@@ -29,23 +31,24 @@ export const arbitrumInfo: NetworkInfo = {
 export const arbitrumTestnetInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouse',
   settlementTokenAddress: '0x33a010E74A354bd784a62cca3A4047C1A84Ceeab', // USDC Arbitrum Testnet
+  FlagsInterface: '0x491B1dDA0A8fa069bbC1125133A975BF4e85a91b',
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
-  ETH_USD_ORACLE: '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8',
+  CHAINLINK_ETH_USD_ORACLE: '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8',
 };
 
 export const optimisticKovanInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouse',
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
-  ETH_USD_ORACLE: '0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261',
+  CHAINLINK_ETH_USD_ORACLE: '0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261',
 };
 
 export const rinkebyInfo: NetworkInfo = {
   clearingHouseContractName: 'ClearingHouse',
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
-  ETH_USD_ORACLE: '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e',
+  CHAINLINK_ETH_USD_ORACLE: '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e',
 };
 
 export function getNetworkInfo(chainId?: number): NetworkInfo {
