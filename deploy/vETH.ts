@@ -11,6 +11,7 @@ import {
   VTokenDeployer,
 } from '../typechain-types/artifacts/contracts/protocol/RageTradeFactory';
 import { getNetworkInfo, waitConfirmations } from './network-info';
+import { ethers } from 'ethers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -31,12 +32,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
 
     let ethIndexOracleDeployment;
-    const oracleAddress = getNetworkInfo(hre.network.config.chainId).ETH_USD_ORACLE;
+    const { CHAINLINK_ETH_USD_ORACLE, FlagsInterface } = getNetworkInfo(hre.network.config.chainId);
 
-    if (oracleAddress) {
+    if (CHAINLINK_ETH_USD_ORACLE) {
       ethIndexOracleDeployment = await deploy('ETH-IndexOracle', {
         contract: 'ChainlinkOracle',
-        args: [oracleAddress, 18, 6],
+        args: [CHAINLINK_ETH_USD_ORACLE, FlagsInterface ?? ethers.constants.AddressZero, 18, 6],
         from: deployer,
         log: true,
         waitConfirmations,
