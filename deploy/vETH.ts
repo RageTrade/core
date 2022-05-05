@@ -65,8 +65,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const poolInitialSettings: IClearingHouseStructures.PoolSettingsStruct = {
       initialMarginRatioBps: 2000,
       maintainanceMarginRatioBps: 1000,
-      maxVirtualPriceDeviationRatioBps: 1000, // 10%
-      twapDuration: 300,
+      maxVirtualPriceDeviationRatioBps: 500, // 5%
+      twapDuration: 900, // 15 minutes
       isAllowedForTrade: true,
       isCrossMargined: true,
       oracle: ethIndexOracleDeployment.address,

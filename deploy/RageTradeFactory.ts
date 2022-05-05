@@ -71,7 +71,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       maxRangeLiquidationFees: 100000000,
       closeFactorMMThresholdBps: 7500,
       partialLiquidationCloseFactorBps: 5000,
-      liquidationSlippageSqrtToleranceBps: 150,
+      liquidationSlippageSqrtToleranceBps: 150, // note that this is sqrt
       minNotionalLiquidatable: 100000000,
     },
     parseUnits('10', 6), // removeLimitOrderFee
