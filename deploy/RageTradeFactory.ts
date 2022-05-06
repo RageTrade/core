@@ -31,6 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
     args: [clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address],
     waitConfirmations,
+    gasLimit: 100_000_000,
   });
 
   if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
@@ -62,7 +63,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   execute(
     'ClearingHouse',
-    { from: deployer, waitConfirmations },
+    { from: deployer, waitConfirmations, gasLimit: 20_000_000 },
     'updateProtocolSettings',
     {
       rangeLiquidationFeeFraction: 1500,
