@@ -85,7 +85,7 @@ library Account {
     /// @param accountId serial number of the account
     /// @param collateralId token in which margin is deposited
     /// @param amount amount of tokens deposited
-    event MarginUpdated(uint256 indexed accountId, uint32 indexed collateralId, int256 amount);
+    event MarginUpdated(uint256 indexed accountId, uint32 indexed collateralId, int256 amount, bool isSettleProfit);
 
     /// @notice denotes token position change
     /// @param accountId serial number of the account
@@ -238,7 +238,7 @@ library Account {
         Protocol.Info storage protocol,
         bool checkMargin
     ) external {
-        _updateMargin(account, collateralId, amount, protocol, checkMargin);
+        _updateMargin(account, collateralId, amount, protocol, checkMargin, false);
     }
 
     /// @notice updates 'amount' of profit generated in settlement token
@@ -556,13 +556,25 @@ library Account {
         uint32 settlementCollateralId = AddressHelper.truncate(protocol.settlementToken);
         if (profits > 0) {
             account._updateProfit(-profits, protocol, false);
-            account._updateMargin(settlementCollateralId, profits, protocol, false);
+            account._updateMargin({
+                collateralId: settlementCollateralId,
+                amount: profits,
+                protocol: protocol,
+                checkMargin: false,
+                isSettleProfit: true
+            });
         } else if (profits < 0) {
             uint256 balance = account.collateralDeposits.getBalance(settlementCollateralId);
             uint256 profitAbsUint = uint256(-profits);
             uint256 balanceToUpdate = balance > profitAbsUint ? profitAbsUint : balance;
             if (balanceToUpdate > 0) {
-                account._updateMargin(settlementCollateralId, -balanceToUpdate.toInt256(), protocol, false);
+                account._updateMargin({
+                    collateralId: settlementCollateralId,
+                    amount: -balanceToUpdate.toInt256(),
+                    protocol: protocol,
+                    checkMargin: false,
+                    isSettleProfit: true
+                });
                 account._updateProfit(balanceToUpdate.toInt256(), protocol, false);
             }
         }
@@ -597,7 +609,8 @@ library Account {
         uint32 collateralId,
         int256 amount,
         Protocol.Info storage protocol,
-        bool checkMargin
+        bool checkMargin,
+        bool isSettleProfit
     ) internal {
         if (amount > 0) {
             account.collateralDeposits.increaseBalance(collateralId, uint256(amount));
@@ -606,7 +619,7 @@ library Account {
             if (checkMargin) account._checkIfMarginAvailable(true, protocol);
         }
 
-        emit MarginUpdated(account.id, collateralId, amount);
+        emit MarginUpdated(account.id, collateralId, amount, isSettleProfit);
     }
 
     /// @notice updates the vQuote balance for 'account' by 'amount'
