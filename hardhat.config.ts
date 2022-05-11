@@ -70,6 +70,7 @@ export default {
     hardhat: {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
+      blockGasLimit: 100_000_000,
       allowUnlimitedContractSize: true,
       forking: {
         url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
