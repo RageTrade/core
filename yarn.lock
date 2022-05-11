@@ -5202,10 +5202,10 @@ hardhat-gas-reporter@^1.0.8:
     eth-gas-reporter "^0.2.24"
     sha1 "^1.1.1"
 
-hardhat-tracer@^1.1.0-rc.3:
-  version "1.1.0-rc.3"
-  resolved "https://registry.yarnpkg.com/hardhat-tracer/-/hardhat-tracer-1.1.0-rc.3.tgz#b28fb471a240f57fdbdb91206a976ad5759ca249"
-  integrity sha512-UGOfwRXkdxWM66JqcyGDJfIjiDXNkqgiaomLPvILg3nppVTjxtBmddYtnvGhDrV9FE1NgWyBnP1B35NaRIKM8A==
+hardhat-tracer@^1.1.0-rc.5:
+  version "1.1.0-rc.5"
+  resolved "https://registry.yarnpkg.com/hardhat-tracer/-/hardhat-tracer-1.1.0-rc.5.tgz#89c959c9534e7f2f09b75700adb47d970f71bf12"
+  integrity sha512-AB9jWNbaVqRhR86zwDZC/flGNHaWqQM2aOv8Ku6nMIdeND/bjd2veQA1MTsmNhSUzkw5oOgjQQRH2KF+tUrJXw==
   dependencies:
     ethers "^5.6.1"
 
