@@ -407,7 +407,7 @@ library Account {
             VTokenPosition.Info storage vTokenPosition = account.tokenPositions.getTokenPosition(poolId, false);
             tokensToTrade = -vTokenPosition.balance;
             uint256 tokenNotionalValue = tokensToTrade.absUint().mulDiv(
-                protocol.getVirtualTwapPriceX128(poolId),
+                protocol.getCachedVirtualTwapPriceX128(poolId),
                 FixedPoint128.Q128
             );
 
@@ -568,6 +568,10 @@ library Account {
     /**
      *  Internal methods
      */
+
+    function updateAccountPoolPrices(Account.Info storage account, Protocol.Info storage protocol) internal {
+        account.tokenPositions.updateOpenPoolPrices(protocol);
+    }
 
     function _settleProfit(Account.Info storage account, Protocol.Info storage protocol) internal {
         int256 profits = account._getAccountPositionProfits(protocol);
