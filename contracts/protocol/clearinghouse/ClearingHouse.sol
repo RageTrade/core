@@ -179,7 +179,9 @@ contract ClearingHouse is
         uint32 collateralId,
         int256 amount
     ) public whenNotPaused {
-        _updateMargin(_getAccountAndCheckOwner(accountId), collateralId, amount, amount < 0);
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
+        _updateAccountPoolPrices(account);
+        _updateMargin(account, collateralId, amount, amount < 0);
     }
 
     /// @inheritdoc IClearingHouseActions
@@ -191,14 +193,14 @@ contract ClearingHouse is
     /// @inheritdoc IClearingHouseActions
     function updateProfit(uint256 accountId, int256 amount) external whenNotPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
-
+        _updateAccountPoolPrices(account);
         _updateProfit(account, amount, true);
     }
 
     /// @inheritdoc IClearingHouseActions
     function settleProfit(uint256 accountId) external whenNotPaused {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
-
+        _updateAccountPoolPrices(account);
         account.settleProfit(protocol);
     }
 
@@ -209,6 +211,7 @@ contract ClearingHouse is
         SwapParams memory swapParams
     ) external whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
+        _updateAccountPoolPrices(account);
         return _swapToken(account, poolId, swapParams, true);
     }
 
@@ -219,7 +222,7 @@ contract ClearingHouse is
         LiquidityChangeParams calldata liquidityChangeParams
     ) external whenNotPaused returns (int256 vTokenAmountOut, int256 vQuoteAmountOut) {
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
-
+        _updateAccountPoolPrices(account);
         return _updateRangeOrder(account, poolId, liquidityChangeParams, true);
     }
 
@@ -230,16 +233,19 @@ contract ClearingHouse is
         int24 tickLower,
         int24 tickUpper
     ) external {
+        _updateAccountPoolPrices(accounts[accountId]);
         _removeLimitOrder(accountId, poolId, tickLower, tickUpper);
     }
 
     /// @inheritdoc IClearingHouseActions
     function liquidateLiquidityPositions(uint256 accountId) external {
+        _updateAccountPoolPrices(accounts[accountId]);
         _liquidateLiquidityPositions(accountId);
     }
 
     /// @inheritdoc IClearingHouseActions
     function liquidateTokenPosition(uint256 targetAccountId, uint32 poolId) external returns (int256 keeperFee) {
+        _updateAccountPoolPrices(accounts[targetAccountId]);
         return _liquidateTokenPosition(targetAccountId, poolId);
     }
 
@@ -254,6 +260,7 @@ contract ClearingHouse is
         results = new bytes[](operations.length);
 
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
+        _updateAccountPoolPrices(account);
 
         bool checkProfit = false;
         bool checkMargin = false;
@@ -316,6 +323,10 @@ contract ClearingHouse is
     /**
         INTERNAL HELPERS
      */
+
+    function _updateAccountPoolPrices(Account.Info storage account) internal {
+        account.updateAccountPoolPrices(protocol);
+    }
 
     function _updateMargin(
         Account.Info storage account,

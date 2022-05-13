@@ -21,4 +21,11 @@ library SafeCast {
             z = int256(y);
         }
     }
+
+    error SafeCast_UInt224Overflow(uint256 value);
+
+    function toUint224(uint256 y) internal pure returns (uint224 z) {
+        if (y > 2**224) revert SafeCast_UInt224Overflow(y);
+        z = uint224(y);
+    }
 }
