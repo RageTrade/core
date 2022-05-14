@@ -26,9 +26,9 @@ describe('StorageLayout', () => {
       { label: 'accounts', slot: 210 },
       { label: 'rageTradeFactoryAddress', slot: 211 },
       { label: 'insuranceFund', slot: 212 },
-      { label: '_paused', slot: 367 },
-      { label: '_governance', slot: 417 },
-      { label: '_teamMultisig', slot: 418 },
+      { label: '_paused', slot: 368 },
+      { label: '_governance', slot: 418 },
+      { label: '_teamMultisig', slot: 419 },
     ]);
   });
 
