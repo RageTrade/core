@@ -18,6 +18,7 @@ import {
 
 import {
   Account__factory,
+  ArbSysMock,
   ClearingHouseTest,
   IERC20,
   IUniswapV3Pool,
@@ -48,6 +49,7 @@ describe('Clearing House Scenario 6', () => {
   let oracleAddress: string;
   // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
+  let arbSysMock: ArbSysMock;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
@@ -663,6 +665,14 @@ describe('Clearing House Scenario 6', () => {
       twapDuration: 300,
       isAllowedForDeposit: true,
     });
+    arbSysMock = await (await hre.ethers.getContractFactory('ArbSysMock')).deploy();
+
+    const mockBytecode = await hre.ethers.provider.getCode(arbSysMock.address);
+
+    await network.provider.send('hardhat_setCode', ['0x0000000000000000000000000000000000000064', mockBytecode]);
+
+    arbSysMock = await hre.ethers.getContractAt('ArbSysMock', '0x0000000000000000000000000000000000000064');
+    arbSysMock.setArbBlockNumber(1);
   });
 
   after(deactivateMainnetFork);
@@ -760,6 +770,8 @@ describe('Clearing House Scenario 6', () => {
   describe('#Scenario 1', async () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await vPoolWrapper.setBlockTimestamp(0);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
+
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
@@ -808,6 +820,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 600', async () => {
       const timestampIncrease = 600;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -860,6 +873,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -901,6 +915,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 1300', async () => {
       const timestampIncrease = 1300;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -942,6 +957,7 @@ describe('Clearing House Scenario 6', () => {
     it('Timestamp and Oracle Update - 1400', async () => {
       const timestampIncrease = 1400;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -984,6 +1000,7 @@ describe('Clearing House Scenario 6', () => {
       const timestampIncrease = 1900;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1032,6 +1049,7 @@ describe('Clearing House Scenario 6', () => {
       const timestampIncrease = 2500;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
