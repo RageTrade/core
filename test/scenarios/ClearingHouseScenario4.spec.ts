@@ -18,6 +18,7 @@ import {
 
 import {
   Account__factory,
+  ArbSysMock,
   ClearingHouseTest,
   IERC20,
   InsuranceFund,
@@ -48,6 +49,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
   let testContractAddress: string;
   let oracleAddress: string;
   let clearingHouseTest: ClearingHouseTest;
+  let arbSysMock: ArbSysMock;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
@@ -105,6 +107,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
   async function changeWrapperTimestampAndCheck(timestampIncrease: number) {
     await vPoolWrapper.setBlockTimestamp(timestampIncrease);
     await vPoolWrapper1.setBlockTimestamp(timestampIncrease);
+    await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
 
     await network.provider.send('evm_setNextBlockTimestamp', [timestampIncrease + 100 + initialBlockTimestamp]);
     expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -746,6 +749,15 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
+
+    arbSysMock = await (await hre.ethers.getContractFactory('ArbSysMock')).deploy();
+
+    const mockBytecode = await hre.ethers.provider.getCode(arbSysMock.address);
+
+    await network.provider.send('hardhat_setCode', ['0x0000000000000000000000000000000000000064', mockBytecode]);
+
+    arbSysMock = await hre.ethers.getContractAt('ArbSysMock', '0x0000000000000000000000000000000000000064');
+    arbSysMock.setArbBlockNumber(1);
   }
 
   async function getPoolSettings(vTokenAddress: string) {

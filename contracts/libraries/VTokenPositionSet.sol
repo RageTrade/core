@@ -333,6 +333,7 @@ library VTokenPositionSet {
     function updateOpenPoolPrices(VTokenPosition.Set storage set, Protocol.Info storage protocol) internal {
         for (uint8 i = 0; i < set.active.length; i++) {
             uint32 poolId = set.active[i];
+            if (poolId == 0) break;
             protocol.updatePoolPriceCache(poolId);
         }
     }
