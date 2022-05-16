@@ -246,7 +246,7 @@ library Protocol {
         int256 vQuoteAmount
     ) internal view returns (uint256 notionalValue) {
         return
-            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
+            vTokenAmount.absUint().mulDiv(protocol.getCachedVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
             vQuoteAmount.absUint();
     }
 
