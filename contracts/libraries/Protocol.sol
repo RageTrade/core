@@ -94,6 +94,8 @@ library Protocol {
             (int256(realPriceX128) - int256(virtualPriceX128)).absUint() > realPriceX128.mulDiv(maxDeviationBps, 1e4)
         ) {
             poolPriceCache.isDeviationBreached = true;
+        } else {
+            poolPriceCache.isDeviationBreached = false;
         }
         poolPriceCache.realPriceX128 = realPriceX128.toUint224();
         poolPriceCache.virtualPriceX128 = virtualPriceX128.toUint224();
@@ -198,9 +200,9 @@ library Protocol {
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
         if (poolPriceCache.updateBlockNum == curArbBlockNum) {
             if (poolPriceCache.isDeviationBreached) {
-                return (poolPriceCache.realPriceX128, poolPriceCache.virtualPriceX128);
-            } else {
                 return (poolPriceCache.realPriceX128, poolPriceCache.realPriceX128);
+            } else {
+                return (poolPriceCache.realPriceX128, poolPriceCache.virtualPriceX128);
             }
         } else {
             return protocol.getTwapPricesWithDeviationCheck(poolId);
