@@ -138,13 +138,26 @@ library LiquidityPosition {
             balanceAdjustments.traderPositionIncrease += (vTokenAmountCurrent - position.vTokenAmountIn);
         }
 
+        uint128 liquidityNew = position.liquidity;
         if (liquidityDelta > 0) {
-            position.liquidity += uint128(liquidityDelta);
+            liquidityNew += uint128(liquidityDelta);
         } else if (liquidityDelta < 0) {
-            position.liquidity -= uint128(-liquidityDelta);
+            liquidityNew -= uint128(-liquidityDelta);
         }
 
-        position.vTokenAmountIn = vTokenAmountCurrent + vTokenPrincipal;
+        if (liquidityNew != 0) {
+            // update state
+            position.liquidity = liquidityNew;
+            position.vTokenAmountIn = vTokenAmountCurrent + vTokenPrincipal;
+        } else {
+            // clear all the state
+            position.liquidity = 0;
+            position.vTokenAmountIn = 0;
+            position.sumALastX128 = 0;
+            position.sumBInsideLastX128 = 0;
+            position.sumFpInsideLastX128 = 0;
+            position.sumFeeInsideLastX128 = 0;
+        }
     }
 
     function update(
