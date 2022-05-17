@@ -36,7 +36,7 @@ async function main() {
   const proxyAdmin = await get('ProxyAdmin');
   const settlementTokenOracle = await get('SettlementTokenOracle');
   await hreVerify('VQuote', { address: vQuote.address, constructorArguments: [6] });
-  const chInitializeData = ClearingHouse__factory.createInterface().encodeFunctionData('__initialize_ClearingHouse', [
+  const chInitializeData = ClearingHouse__factory.createInterface().encodeFunctionData('initialize', [
     rageTradeFactory.address,
     settlementToken.address,
     settlementTokenOracle.address,
@@ -62,7 +62,7 @@ async function main() {
   const ethVToken = await get('ETH-vToken');
   await hreVerify('ETH-IndexOracle', { address: ethOracle.address });
   await hreVerify('ETH-vPool', { address: ethVPool.address });
-  const vpwData = VPoolWrapper__factory.createInterface().encodeFunctionData('__initialize_VPoolWrapper', [
+  const vpwData = VPoolWrapper__factory.createInterface().encodeFunctionData('initialize', [
     {
       clearingHouse: clearingHouse.address,
       vToken: ethVToken.address,

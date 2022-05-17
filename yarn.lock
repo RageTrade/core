@@ -1308,6 +1308,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/fs-extra@^9.0.13":
+  version "9.0.13"
+  resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-9.0.13.tgz#7594fbae04fe7f1918ce8b3d213f74ff44ac1f45"
+  integrity sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==
+  dependencies:
+    "@types/node" "*"
+
 "@types/glob@^7.1.1":
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/@types/glob/-/glob-7.2.0.tgz#bc1b5bf3aa92f25bd5dd39f35c57361bdce5b2eb"
@@ -4780,6 +4787,15 @@ fs-extra@^10.0.0:
     jsonfile "^6.0.1"
     universalify "^2.0.0"
 
+fs-extra@^10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-10.1.0.tgz#02873cfbc4084dde127eaa5f9905eef2325d1abf"
+  integrity sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==
+  dependencies:
+    graceful-fs "^4.2.0"
+    jsonfile "^6.0.1"
+    universalify "^2.0.0"
+
 fs-extra@^4.0.2, fs-extra@^4.0.3:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-4.0.3.tgz#0d852122e5bc5beb453fb028e9c0c9bf36340c94"
@@ -5186,10 +5202,10 @@ hardhat-gas-reporter@^1.0.8:
     eth-gas-reporter "^0.2.24"
     sha1 "^1.1.1"
 
-hardhat-tracer@^1.1.0-rc.3:
-  version "1.1.0-rc.3"
-  resolved "https://registry.yarnpkg.com/hardhat-tracer/-/hardhat-tracer-1.1.0-rc.3.tgz#b28fb471a240f57fdbdb91206a976ad5759ca249"
-  integrity sha512-UGOfwRXkdxWM66JqcyGDJfIjiDXNkqgiaomLPvILg3nppVTjxtBmddYtnvGhDrV9FE1NgWyBnP1B35NaRIKM8A==
+hardhat-tracer@^1.1.0-rc.5:
+  version "1.1.0-rc.5"
+  resolved "https://registry.yarnpkg.com/hardhat-tracer/-/hardhat-tracer-1.1.0-rc.5.tgz#89c959c9534e7f2f09b75700adb47d970f71bf12"
+  integrity sha512-AB9jWNbaVqRhR86zwDZC/flGNHaWqQM2aOv8Ku6nMIdeND/bjd2veQA1MTsmNhSUzkw5oOgjQQRH2KF+tUrJXw==
   dependencies:
     ethers "^5.6.1"
 

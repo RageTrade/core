@@ -31,6 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
     args: [clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, settlementToken.address],
     waitConfirmations,
+    gasLimit: 100_000_000,
   });
 
   if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
@@ -51,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   const clearingHouseAddress = await read('RageTradeFactory', 'clearingHouse');
-  await save('ClearingHouse', { abi: ClearingHouse__factory.abi, address: clearingHouseAddress });
+  await save('ClearingHouse', { abi: clearingHouseLogic.abi, address: clearingHouseAddress });
   console.log('saved "ClearingHouse":', clearingHouseAddress);
   if (hre.network.config.chainId !== 31337) {
     await hre.tenderly.push({
@@ -62,7 +63,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   execute(
     'ClearingHouse',
-    { from: deployer, waitConfirmations },
+    { from: deployer, waitConfirmations, gasLimit: 20_000_000 },
     'updateProtocolSettings',
     {
       rangeLiquidationFeeFraction: 1500,
@@ -71,7 +72,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       maxRangeLiquidationFees: 100000000,
       closeFactorMMThresholdBps: 7500,
       partialLiquidationCloseFactorBps: 5000,
-      liquidationSlippageSqrtToleranceBps: 150,
+      liquidationSlippageSqrtToleranceBps: 150, // note that this is sqrt
       minNotionalLiquidatable: 100000000,
     },
     parseUnits('10', 6), // removeLimitOrderFee
