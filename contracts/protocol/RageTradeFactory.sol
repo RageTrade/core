@@ -113,7 +113,7 @@ contract RageTradeFactory is
         // STEP 4: Deploys a proxy for the wrapper contract for the vPool, and initialize it as well
         IVPoolWrapper vPoolWrapper = _deployProxyForVPoolWrapperAndInitialize(
             IVPoolWrapper.InitializeVPoolWrapperParams(
-                clearingHouse,
+                address(clearingHouse),
                 vToken,
                 vQuote,
                 vPool,
