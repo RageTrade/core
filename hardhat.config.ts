@@ -7,6 +7,7 @@ import 'hardhat-deploy';
 import 'hardhat-gas-reporter';
 import 'hardhat-tracer';
 import 'solidity-coverage';
+import 'solidity-docgen';
 
 import { config } from 'dotenv';
 import { ethers } from 'ethers';
@@ -153,5 +154,8 @@ export default {
   tenderly: {
     project: process.env.TENDERLY_PROJECT,
     username: process.env.TENDERLY_USERNAME,
+  },
+  docgen: {
+    pages: 'files',
   },
 };
