@@ -23,7 +23,7 @@
     "@chainlink/contracts": "^0.4.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
-    "@uniswap/v3-core-0.8-support": "https://github.com/uniswap/v3-core.git#36bc9101b91e2b8b5690f59e0911a85deb2d2480",
+    "@uniswap/v3-core-0.8-support": "https://github.com/uniswap/v3-core.git#6562c52e8f75f0c10f9deaf44861847585fc8129",
     "@uniswap/v3-periphery": "^1.4.0"
   },
   "devDependencies": {
