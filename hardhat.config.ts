@@ -21,14 +21,36 @@ import nodePath from 'path';
 task(TASK_COMPILE, 'Compiles the entire project, building all artifacts').setAction(async (taskArgs, _, runSuper) => {
   const compileSolOutput = await runSuper(taskArgs);
 
-  copyEventErrorAbi(
-    'artifacts/contracts/libraries/Account.sol/Account.json',
+  copyEventErrorAbis(
+    [
+      'artifacts/contracts/libraries/Account.sol/Account.json',
+      'artifacts/contracts/libraries/CollateralDeposit.sol/CollateralDeposit.json',
+      'artifacts/contracts/libraries/LiquidityPosition.sol/LiquidityPosition.json',
+      'artifacts/contracts/libraries/LiquidityPositionSet.sol/LiquidityPositionSet.json',
+      'artifacts/contracts/libraries/VTokenPosition.sol/VTokenPosition.json',
+      'artifacts/contracts/libraries/VTokenPositionSet.sol/VTokenPositionSet.json',
+    ],
     'artifacts/contracts/protocol/clearinghouse/ClearingHouse.sol/ClearingHouse.json',
   );
-  copyEventErrorAbi(
-    'artifacts/contracts/libraries/FundingPayment.sol/FundingPayment.json',
+
+  copyEventErrorAbis(
+    [
+      'artifacts/contracts/libraries/AddressHelper.sol/AddressHelper.json',
+      'artifacts/contracts/libraries/FundingPayment.sol/FundingPayment.json',
+      'artifacts/contracts/libraries/SimulateSwap.sol/SimulateSwap.json',
+      'artifacts/contracts/libraries/PriceMath.sol/PriceMath.json',
+      'artifacts/contracts/libraries/SafeCast.sol/SafeCast.json',
+      'artifacts/contracts/libraries/UniswapV3PoolHelper.sol/UniswapV3PoolHelper.json',
+      'artifacts/@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol/TickMath.json',
+    ],
     'artifacts/contracts/protocol/wrapper/VPoolWrapper.sol/VPoolWrapper.json',
   );
+
+  function copyEventErrorAbis(froms: string[], to: string) {
+    for (const from of froms) {
+      copyEventErrorAbi(from, to);
+    }
+  }
 
   function copyEventErrorAbi(from: string, to: string) {
     const fromArtifact = readJsonSync(nodePath.resolve(__dirname, from));
