@@ -67,7 +67,7 @@ library VTokenPosition {
     /// @param position token position
     /// @param priceX128 price in Q128
     /// @param poolId id of the rage trade pool
-    /// @param protocol platform constants
+    /// @param protocol ref to the protocol state
     function marketValue(
         VTokenPosition.Info storage position,
         uint32 poolId,
@@ -80,7 +80,7 @@ library VTokenPosition {
     /// @notice returns the market value of the supplied token position
     /// @param position token position
     /// @param poolId id of the rage trade pool
-    /// @param protocol platform constants
+    /// @param protocol ref to the protocol state
     function marketValue(
         VTokenPosition.Info storage position,
         uint32 poolId,
@@ -111,6 +111,11 @@ library VTokenPosition {
         return unrealizedFpBill;
     }
 
+    /// @notice gets the account's net position for a given poolId
+    /// @param position token position
+    /// @param poolId id of the rage trade pool
+    /// @param protocol ref to the protocol state
+    /// @return net position
     function getNetPosition(
         VTokenPosition.Info storage position,
         uint32 poolId,

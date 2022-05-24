@@ -50,14 +50,26 @@ library Protocol {
         uint256[100] _emptySlots;
     }
 
+    /// @notice gets the uniswap v3 pool address for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return UniswapV3Pool contract object
     function vPool(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
         return protocol.pools[poolId].vPool;
     }
 
+    /// @notice gets the wrapper address for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return VPoolWrapper contract object
     function vPoolWrapper(Protocol.Info storage protocol, uint32 poolId) internal view returns (IVPoolWrapper) {
         return protocol.pools[poolId].vPoolWrapper;
     }
 
+    /// @notice gets the virtual twap sqrt price for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return sqrtPriceX96 virtual twap sqrt price
     function getVirtualTwapSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -67,6 +79,10 @@ library Protocol {
         return pool.vPool.twapSqrtPrice(pool.settings.twapDuration);
     }
 
+    /// @notice gets the virtual current sqrt price for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return sqrtPriceX96 virtual current sqrt price
     function getVirtualCurrentSqrtPriceX96(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -75,10 +91,18 @@ library Protocol {
         return protocol.pools[poolId].vPool.sqrtPriceCurrent();
     }
 
+    /// @notice gets the virtual current tick for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return tick virtual current tick
     function getVirtualCurrentTick(Protocol.Info storage protocol, uint32 poolId) internal view returns (int24 tick) {
         return protocol.pools[poolId].vPool.tickCurrent();
     }
 
+    /// @notice gets the virtual twap price for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return priceX128 virtual twap price
     function getVirtualTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -87,6 +111,10 @@ library Protocol {
         return protocol.getVirtualTwapSqrtPriceX96(poolId).toPriceX128();
     }
 
+    /// @notice gets the virtual current price for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return priceX128 virtual current price
     function getVirtualCurrentPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -95,6 +123,10 @@ library Protocol {
         return protocol.getVirtualCurrentSqrtPriceX96(poolId).toPriceX128();
     }
 
+    /// @notice gets the real twap price for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return priceX128 virtual twap price
     function getRealTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -104,6 +136,11 @@ library Protocol {
         return pool.settings.oracle.getTwapPriceX128(pool.settings.twapDuration);
     }
 
+    /// @notice gets the twap prices with deviation check for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return realPriceX128 the real price
+    /// @return virtualPriceX128 the virtual price if under deviation else real price
     function getTwapPricesWithDeviationCheck(Protocol.Info storage protocol, uint32 poolId)
         internal
         view
@@ -122,6 +159,11 @@ library Protocol {
         return (realPriceX128, virtualPriceX128);
     }
 
+    /// @notice gets the margin ratio for a poolId
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @param isInitialMargin whether to use initial margin or maintainance margin
+    /// @return margin rato in bps
     function getMarginRatioBps(
         Protocol.Info storage protocol,
         uint32 poolId,
@@ -134,6 +176,10 @@ library Protocol {
         }
     }
 
+    /// @notice checks if the pool is cross margined
+    /// @param protocol ref to the protocol state
+    /// @param poolId the poolId of the pool
+    /// @return bool whether the pool is cross margined
     function isPoolCrossMargined(Protocol.Info storage protocol, uint32 poolId) internal view returns (bool) {
         return protocol.pools[poolId].settings.isCrossMargined;
     }

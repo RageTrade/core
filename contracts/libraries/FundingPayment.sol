@@ -104,13 +104,14 @@ library FundingPayment {
         return sumFpX128 + sumBX128.mulDiv(sumAGlobalX128 - sumAX128, int256(FixedPoint128.Q128));
     }
 
-    /// @notice Positive bill is rewarded to LPs, Negative bill is charged from LPs
+    /// @notice Positive bill is charged from LPs, Negative bill is rewarded to LPs
     /// @param sumAX128 latest value of sumA (to be taken from global state)
     /// @param sumFpInsideX128 latest value of sumFp inside range (to be computed using global state + tick state)
     /// @param sumALastX128 value of sumA when LP updated their liquidity last time
     /// @param sumBInsideLastX128 value of sumB inside range when LP updated their liquidity last time
     /// @param sumFpInsideLastX128 value of sumFp inside range when LP updated their liquidity last time
     /// @param liquidity amount of liquidity which was constant for LP in the time duration
+    /// @return amount of vQuote tokens that should be charged if positive
     function bill(
         int256 sumAX128,
         int256 sumFpInsideX128,
@@ -124,10 +125,11 @@ library FundingPayment {
                 .mulDivRoundingDown(liquidity, FixedPoint128.Q128);
     }
 
-    /// @notice Positive bill is rewarded to Traders, Negative bill is charged from Traders
+    /// @notice Positive bill is charged from Traders, Negative bill is rewarded to Traders
     /// @param sumAX128 latest value of sumA (to be taken from global state)
     /// @param sumALastX128 value of sumA when trader updated their netTraderPosition
     /// @param netTraderPosition oken amount which should be constant for time duration since sumALastX128 was recorded
+    /// @return amount of vQuote tokens that should be charged if positive
     function bill(
         int256 sumAX128,
         int256 sumALastX128,

@@ -41,6 +41,11 @@ library LiquidityPositionSet {
      *  Internal methods
      */
 
+    /// @notice activates a position by initializing it and adding it to the set
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param tickLower lower tick of the range to be activated
+    /// @param tickUpper upper tick of the range to be activated
+    /// @return position storage ref of the activated position
     function activate(
         LiquidityPosition.Set storage set,
         int24 tickLower,
@@ -59,6 +64,9 @@ library LiquidityPositionSet {
         }
     }
 
+    /// @notice deactivates a position by removing it from the set
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param position storage ref to the position to be deactivated
     function deactivate(LiquidityPosition.Set storage set, LiquidityPosition.Info storage position) internal {
         if (position.liquidity != 0) {
             revert LPS_DeactivationFailed(position.tickLower, position.tickUpper, position.liquidity);
@@ -67,6 +75,13 @@ library LiquidityPositionSet {
         set.active.exclude(position.tickLower.concat(position.tickUpper));
     }
 
+    /// @notice changes liquidity of a position in the set
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param accountId serial number of the account
+    /// @param poolId truncated address of vToken
+    /// @param liquidityChangeParams parameters of the liquidity change
+    /// @param balanceAdjustments adjustments to made to the account's balance later
+    /// @param protocol ref to the state of the protocol
     function liquidityChange(
         LiquidityPosition.Set storage set,
         uint256 accountId,
@@ -92,16 +107,23 @@ library LiquidityPositionSet {
         );
     }
 
+    /// @notice changes liquidity of a position in the set
+    /// @param accountId serial number of the account
+    /// @param poolId truncated address of vToken
+    /// @param position storage ref to the position to be changed
+    /// @param liquidityDelta amount of liquidity to be added or removed
+    /// @param balanceAdjustments adjustments to made to the account's balance later
+    /// @param protocol ref to the state of the protocol
     function liquidityChange(
         LiquidityPosition.Set storage set,
         uint256 accountId,
         uint32 poolId,
         LiquidityPosition.Info storage position,
-        int128 liquidity,
+        int128 liquidityDelta,
         IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments,
         Protocol.Info storage protocol
     ) internal {
-        position.liquidityChange(accountId, poolId, liquidity, balanceAdjustments, protocol);
+        position.liquidityChange(accountId, poolId, liquidityDelta, balanceAdjustments, protocol);
 
         emit TokenPositionChangedDueToLiquidityChanged(
             accountId,
@@ -116,6 +138,13 @@ library LiquidityPositionSet {
         }
     }
 
+    /// @notice removes liquidity from a position in the set
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param accountId serial number of the account
+    /// @param poolId truncated address of vToken
+    /// @param position storage ref to the position to be closed
+    /// @param balanceAdjustments adjustments to made to the account's balance later
+    /// @param protocol ref to the state of the protocol
     function closeLiquidityPosition(
         LiquidityPosition.Set storage set,
         uint256 accountId,
@@ -127,6 +156,15 @@ library LiquidityPositionSet {
         set.liquidityChange(accountId, poolId, position, -int128(position.liquidity), balanceAdjustments, protocol);
     }
 
+    /// @notice removes liquidity from a position in the set
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param accountId serial number of the account
+    /// @param poolId truncated address of vToken
+    /// @param currentTick current tick of the pool
+    /// @param tickLower lower tick of the range to be closed
+    /// @param tickUpper upper tick of the range to be closed
+    /// @param balanceAdjustments adjustments to made to the account's balance later
+    /// @param protocol ref to the state of the protocol
     function removeLimitOrder(
         LiquidityPosition.Set storage set,
         uint256 accountId,
@@ -142,6 +180,12 @@ library LiquidityPositionSet {
         set.closeLiquidityPosition(accountId, poolId, position, balanceAdjustments, protocol);
     }
 
+    /// @notice removes liquidity from all the positions in the set
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param accountId serial number of the account
+    /// @param poolId truncated address of vToken
+    /// @param balanceAdjustments adjustments to made to the account's balance later
+    /// @param protocol ref to the state of the protocol
     function closeAllLiquidityPositions(
         LiquidityPosition.Set storage set,
         uint256 accountId,
@@ -168,6 +212,11 @@ library LiquidityPositionSet {
      *  Internal view methods
      */
 
+    /// @notice gets the liquidity position of a tick range
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param tickLower lower tick of the range to be closed
+    /// @param tickUpper upper tick of the range to be closed
+    /// @return position liquidity position of the tick range
     function getLiquidityPosition(
         LiquidityPosition.Set storage set,
         int24 tickLower,
@@ -184,6 +233,9 @@ library LiquidityPositionSet {
         return position;
     }
 
+    /// @notice gets information about all the liquidity position
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @return liquidityPositions Information about all the liquidity position for the pool
     function getInfo(LiquidityPosition.Set storage set)
         internal
         view
@@ -205,6 +257,10 @@ library LiquidityPositionSet {
         }
     }
 
+    /// @notice gets the net position due to all the liquidity positions
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param sqrtPriceCurrent current sqrt price of the pool
+    /// @return netPosition due to all the liquidity positions
     function getNetPosition(LiquidityPosition.Set storage set, uint160 sqrtPriceCurrent)
         internal
         view
@@ -217,10 +273,18 @@ library LiquidityPositionSet {
         }
     }
 
+    /// @notice checks whether the liquidity position set is empty
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @return true if the liquidity position set is empty
     function isEmpty(LiquidityPosition.Set storage set) internal view returns (bool) {
         return set.active.isEmpty();
     }
 
+    /// @notice checks whether for given ticks, a liquidity position is active
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param tickLower lower tick of the range
+    /// @param tickUpper upper tick of the range
+    /// @return true if the liquidity position is active
     function isPositionActive(
         LiquidityPosition.Set storage set,
         int24 tickLower,
@@ -229,6 +293,10 @@ library LiquidityPositionSet {
         return set.active.exists(tickLower.concat(tickUpper));
     }
 
+    /// @notice gets the total long side risk for all the active liquidity positions
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param valuationPriceX96 price used to value the vToken asset
+    /// @return risk the net long side risk for all the active liquidity positions
     function longSideRisk(LiquidityPosition.Set storage set, uint160 valuationPriceX96)
         internal
         view
@@ -240,6 +308,12 @@ library LiquidityPositionSet {
         }
     }
 
+    /// @notice gets the total market value of all the active liquidity positions
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @param sqrtPriceCurrent price used to value the vToken asset
+    /// @param poolId the id of the pool
+    /// @param protocol ref to the state of the protocol
+    /// @return marketValue_ the total market value of all the active liquidity positions
     function marketValue(
         LiquidityPosition.Set storage set,
         uint160 sqrtPriceCurrent,
@@ -265,6 +339,9 @@ library LiquidityPositionSet {
         }
     }
 
+    /// @notice gets the max net position possible due to all the liquidity positions
+    /// @param set storage ref to the account's set of liquidity positions of a pool
+    /// @return risk the max net position possible due to all the liquidity positions
     function maxNetPosition(LiquidityPosition.Set storage set) internal view returns (uint256 risk) {
         for (uint256 i = 0; i < set.active.length; i++) {
             uint48 id = set.active[i];
