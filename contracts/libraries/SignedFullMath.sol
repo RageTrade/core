@@ -12,6 +12,11 @@ library SignedFullMath {
     using SafeCast for uint256;
     using SignedMath for int256;
 
+    /// @notice uses full math on signed int and two unsigned ints
+    /// @param a: signed int
+    /// @param b: unsigned int to be multiplied by
+    /// @param denominator: unsigned int to be divided by
+    /// @return result of a * b / denominator
     function mulDiv(
         int256 a,
         uint256 b,
@@ -23,6 +28,11 @@ library SignedFullMath {
         }
     }
 
+    /// @notice uses full math on three signed ints
+    /// @param a: signed int
+    /// @param b: signed int to be multiplied by
+    /// @param denominator: signed int to be divided by
+    /// @return result of a * b / denominator
     function mulDiv(
         int256 a,
         int256 b,
@@ -43,8 +53,12 @@ library SignedFullMath {
         }
     }
 
-    /// @notice Rounds down towards negative infinity
-    /// @dev In Solidity -3/2 is -1. But this method result is -2
+    /// @notice rounds down towards negative infinity
+    /// @dev in Solidity -3/2 is -1. But this method result is -2
+    /// @param a: signed int
+    /// @param b: unsigned int to be multiplied by
+    /// @param denominator: unsigned int to be divided by
+    /// @return result of a * b / denominator rounded towards negative infinity
     function mulDivRoundingDown(
         int256 a,
         uint256 b,
@@ -56,8 +70,12 @@ library SignedFullMath {
         }
     }
 
-    /// @notice Rounds down towards negative infinity
-    /// @dev In Solidity -3/2 is -1. But this method result is -2
+    /// @notice rounds down towards negative infinity
+    /// @dev in Solidity -3/2 is -1. But this method result is -2
+    /// @param a: signed int
+    /// @param b: signed int to be multiplied by
+    /// @param denominator: signed int to be divided by
+    /// @return result of a * b / denominator rounded towards negative infinity
     function mulDivRoundingDown(
         int256 a,
         int256 b,
@@ -69,6 +87,11 @@ library SignedFullMath {
         }
     }
 
+    /// @notice checks if full multiplication of a & b would have a remainder if divided by denominator
+    /// @param a: multiplicand
+    /// @param b: multiplier
+    /// @param denominator: divisor
+    /// @return hasRemainder true if there is a remainder, false otherwise
     function _hasRemainder(
         uint256 a,
         uint256 b,
