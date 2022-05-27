@@ -28,7 +28,8 @@ import {
 import {
   TokenPositionChangedEvent,
   TokenPositionFundingPaymentRealizedEvent,
-} from '../../typechain-types/artifacts/contracts/libraries/Account';
+} from '../../typechain-types/artifacts/contracts/libraries/VTokenPositionSet';
+
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 import { stealFunds } from '../helpers/steal-funds';
