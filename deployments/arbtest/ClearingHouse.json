@@ -1,5 +1,5 @@
 {
-  "address": "0x50dAAC4F57F2F58f0Db2819f94954F3A1DBB90eC",
+  "address": "0x655315A4115AE42dAa0670DcB3eb377E207749c3",
   "abi": [
     {
       "inputs": [
@@ -135,6 +135,17 @@
         }
       ],
       "name": "PoolNotAllowedForTrade",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "SafeCast_UInt224Overflow",
       "type": "error"
     },
     {
@@ -2296,5 +2307,5 @@
       "type": "event"
     }
   ],
-  "numDeployments": 1
+  "numDeployments": 3
 }
