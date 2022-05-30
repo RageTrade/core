@@ -37,7 +37,7 @@ library FundingPayment {
         pure
         returns (int256 fundingRateX128)
     {
-        return (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(FixedPoint128.Q128, realPriceX128) / 1 days;
+        return (int256(virtualPriceX128) - int256(realPriceX128)).mulDiv(FixedPoint128.Q128, realPriceX128) / 1 days;
     }
 
     /// @notice Used to update the state of the funding payment whenever a trade takes place
