@@ -28,6 +28,7 @@ import {
   VPoolWrapperMockRealistic,
   VQuote,
   VToken,
+  VTokenPositionSet__factory,
 } from '../../typechain-types';
 import {
   TokenPositionChangedEvent,
@@ -248,7 +249,9 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
         try {
           return {
             ...log,
-            ...Account__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(log),
+            ...VTokenPositionSet__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(
+              log,
+            ),
           };
         } catch {
           return null;
@@ -275,7 +278,9 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
         try {
           return {
             ...log,
-            ...Account__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(log),
+            ...VTokenPositionSet__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(
+              log,
+            ),
           };
         } catch {
           return null;
