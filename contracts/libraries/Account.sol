@@ -325,7 +325,7 @@ library Account {
     }
 
     /// @notice liquidates all range positions in case the account is under water
-    /// @notice charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
+    ///     charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
     /// @param account account to liquidate
     /// @param protocol set of all constants and token addresses
@@ -346,11 +346,15 @@ library Account {
         uint256 notionalAmountClosed;
 
         (accountMarketValue, totalRequiredMargin) = account._getAccountValueAndRequiredMargin(false, protocol);
+
+        // check and revert if account is above water
         if (accountMarketValue > totalRequiredMargin) {
             revert InvalidLiquidationAccountAboveWater(accountMarketValue, totalRequiredMargin);
         }
+        // liquidate all liquidity positions
         notionalAmountClosed = account.tokenPositions.liquidateLiquidityPositions(account.id, protocol);
 
+        // compute liquidation fees
         (keeperFee, insuranceFundFee) = _computeLiquidationFees(
             accountMarketValue,
             notionalAmountClosed,
@@ -362,7 +366,11 @@ library Account {
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
     }
 
-    /// @notice liquidates all range positions in case the account is under water
+    /// @notice liquidates token position specified by 'poolId' in case account is underwater
+    ///     charges a liquidation fee to the account and pays partially to the insurance fund and rest to the keeper.
+    /// @dev closes position uptil a specified slippage threshold in protocol.liquidationParams
+    /// @dev insurance fund covers the remaining fee if the account market value is not enough
+    /// @dev if there is range position this reverts (liquidators are supposed to liquidate range positions first)
     /// @param account account to liquidate
     /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
@@ -373,6 +381,8 @@ library Account {
         Protocol.Info storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         bool isPartialLiquidation;
+
+        // check if there is range position and revert
         if (account.tokenPositions.isTokenRangeActive(poolId)) revert InvalidLiquidationActiveRangePresent(poolId);
 
         {
@@ -381,9 +391,11 @@ library Account {
                 protocol
             );
 
+            // check and revert if account is above water
             if (accountMarketValue > totalRequiredMargin) {
                 revert InvalidLiquidationAccountAboveWater(accountMarketValue, totalRequiredMargin);
             } else if (
+                // check if account is underwater but within partial liquidation threshold
                 accountMarketValue >
                 totalRequiredMargin.mulDiv(protocol.liquidationParams.closeFactorMMThresholdBps, 1e4)
             ) {
@@ -393,6 +405,8 @@ library Account {
 
         int256 tokensToTrade;
         {
+            // get the net token position and tokensToTrade = -tokenPosition
+            // since no ranges are supposed to be there so only tokenPosition is in vTokenPositionSet
             VTokenPosition.Info storage vTokenPosition = account.tokenPositions.getTokenPosition(poolId, false);
             tokensToTrade = -vTokenPosition.balance;
             uint256 tokenNotionalValue = tokensToTrade.absUint().mulDiv(
@@ -400,6 +414,9 @@ library Account {
                 FixedPoint128.Q128
             );
 
+            // check if the token position is less than a certain notional value
+            // if so then liquidate the whole position even if partial liquidation is allowed
+            // otherwise do partial liquidation
             if (isPartialLiquidation && tokenNotionalValue > protocol.liquidationParams.minNotionalLiquidatable) {
                 tokensToTrade = tokensToTrade.mulDiv(protocol.liquidationParams.partialLiquidationCloseFactorBps, 1e4);
             }
@@ -409,6 +426,7 @@ library Account {
         {
             uint160 sqrtPriceLimit;
             {
+                // calculate sqrt price limit based on slippage threshold
                 uint160 sqrtTwapPrice = protocol.getVirtualTwapSqrtPriceX96(poolId);
                 if (tokensToTrade > 0) {
                     sqrtPriceLimit = uint256(sqrtTwapPrice)
@@ -421,6 +439,7 @@ library Account {
                 }
             }
 
+            // close position uptil sqrt price limit
             (, int256 vQuoteAmountSwapped) = account.tokenPositions.swapToken(
                 account.id,
                 poolId,
@@ -434,8 +453,10 @@ library Account {
                 protocol
             );
 
+            // get the account market value after closing the position
             accountMarketValueFinal = account._getAccountValue(protocol);
 
+            // compute liquidation fees
             (keeperFee, insuranceFundFee) = _computeLiquidationFees(
                 accountMarketValueFinal,
                 vQuoteAmountSwapped.absUint(),
@@ -445,6 +466,7 @@ library Account {
             );
         }
 
+        // deduct liquidation fees from account
         account._updateVQuoteBalance(-(keeperFee + insuranceFundFee));
 
         emit TokenPositionLiquidated(account.id, 0, poolId, keeperFee, insuranceFundFee, accountMarketValueFinal);
