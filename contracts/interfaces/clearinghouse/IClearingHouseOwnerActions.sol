@@ -32,6 +32,6 @@ interface IClearingHouseOwnerActions is IClearingHouseStructures {
     ) external;
 
     /// @notice withdraws protocol fees collected in the supplied wrappers to team multisig
-    /// @param wrapperAddresses list of wrapper addresses to collect fees from
-    function withdrawProtocolFee(address[] calldata wrapperAddresses) external;
+    /// @param poolIds list of pool ids to collect fees from
+    function withdrawProtocolFee(uint32[] calldata poolIds) external;
 }

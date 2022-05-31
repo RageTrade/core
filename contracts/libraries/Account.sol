@@ -187,9 +187,9 @@ library Account {
     );
 
     /// @notice denotes protocol fee withdrawal from a pool wrapper
-    /// @param wrapperAddress address of token for which fee was paid
+    /// @param poolId poolId of token for which fee was withdrawn
     /// @param feeAmount amount of protocol fee which was withdrawn
-    event ProtocolFeesWithdrawn(address indexed wrapperAddress, uint256 feeAmount);
+    event ProtocolFeesWithdrawn(uint32 indexed poolId, uint256 feeAmount);
 
     /// @notice denotes range position liquidation event
     /// @dev all range positions are liquidated and the current tokens inside the range are added in as token positions to the account

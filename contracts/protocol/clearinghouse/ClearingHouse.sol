@@ -50,6 +50,7 @@ contract ClearingHouse is
 
     error NotRageTradeFactory();
     error ZeroAmount();
+    error InvalidPoolId(uint32 poolId);
 
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
@@ -147,11 +148,15 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouseOwnerActions
-    function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
+    function withdrawProtocolFee(uint32[] calldata poolIds) external {
         uint256 totalProtocolFee;
-        for (uint256 i = 0; i < wrapperAddresses.length; i++) {
-            uint256 wrapperFee = IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
-            emit Account.ProtocolFeesWithdrawn(wrapperAddresses[i], wrapperFee);
+        for (uint256 i = 0; i < poolIds.length; i++) {
+            //check if the supplied address is a deployed vpoolwrapper
+            uint32 poolId = poolIds[i];
+            IVPoolWrapper poolWrapper = protocol.pools[poolId].vPoolWrapper;
+            if (address(poolWrapper).isZero()) revert InvalidPoolId(poolId);
+            uint256 wrapperFee = poolWrapper.collectAccruedProtocolFee();
+            emit Account.ProtocolFeesWithdrawn(poolId, wrapperFee);
             totalProtocolFee += wrapperFee;
         }
         protocol.settlementToken.safeTransfer(teamMultisig(), totalProtocolFee);
