@@ -7,9 +7,11 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { parseUnits } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
+  bytes32,
   getCreateAddressFor,
   parseTokenAmount,
   priceToSqrtPriceX96,
+  randomAddress,
   sqrtPriceX96ToTick,
   truncate,
 } from '@ragetrade/sdk';
@@ -17,6 +19,7 @@ import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
   AccountTest,
+  Account__factory,
   ClearingHouseTest,
   IERC20,
   IUniswapV3Pool,
@@ -28,6 +31,7 @@ import { IClearingHouseStructures } from '../../typechain-types/artifacts/contra
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 import { stealFunds } from '../helpers/steal-funds';
+import { ProtocolFeesWithdrawnEvent } from '../../typechain-types/artifacts/contracts/libraries/Account';
 
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -913,6 +917,44 @@ describe('Clearing House Library', () => {
         liquidityChangeParams.limitOrderType,
         liquidityChangeParams.liquidityDelta,
       );
+    });
+  });
+
+  describe('Withdraw Protocol Fee', () => {
+    let poolIds: string[];
+    before(() => {
+      poolIds = [truncate(vTokenAddress), truncate(vTokenAddress1)];
+    });
+    it('Invalid Pool Id', async () => {
+      const invalidPoolId = truncate(randomAddress());
+      const pools = [invalidPoolId, ...poolIds];
+      await expect(clearingHouseTest.withdrawProtocolFee(pools)).to.revertedWith(
+        `InvalidPoolId(${BigNumber.from(invalidPoolId).toNumber()})`,
+      );
+    });
+    it('Valid Pool Fee Withdrawal', async () => {
+      const txn = await clearingHouseTest.withdrawProtocolFee(poolIds);
+      const receipt = await txn.wait();
+      const eventList = receipt.logs
+        ?.map(log => {
+          try {
+            return {
+              ...log,
+              ...Account__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(log),
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter(event => event !== null)
+        .filter(event => event?.name === 'ProtocolFeesWithdrawn') as unknown as ProtocolFeesWithdrawnEvent[];
+
+      const event = eventList[0];
+      expect(event.args.poolId).to.eq(BigNumber.from(poolIds[0]).toNumber());
+      expect(event.args.feeAmount).to.eq(4000125);
+      const event1 = eventList[1];
+      expect(event1.args.poolId).to.eq(BigNumber.from(poolIds[1]).toNumber());
+      expect(event1.args.feeAmount).to.eq(0);
     });
   });
 
