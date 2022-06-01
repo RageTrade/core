@@ -187,11 +187,11 @@ contract AccountTest {
             int256 accountMarketValue
         )
     {
-        return accounts[accountId].liquidateLiquidityPositions(fixFee, protocol);
+        return accounts[accountId].liquidateLiquidityPositions(protocol);
     }
 
     function liquidateTokenPosition(uint256 accountId, address vToken) external {
-        accounts[accountId].liquidateTokenPosition(vToken.truncate(), fixFee, protocol);
+        accounts[accountId].liquidateTokenPosition(vToken.truncate(), protocol);
     }
 
     function removeLimitOrder(
