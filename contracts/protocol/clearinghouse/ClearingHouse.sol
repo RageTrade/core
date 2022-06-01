@@ -10,6 +10,7 @@ import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeC
 
 import { Account } from '../../libraries/Account.sol';
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
+import { BatchedLoop } from '../../libraries/BatchedLoop.sol';
 import { Protocol } from '../../libraries/Protocol.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
 
@@ -38,18 +39,22 @@ contract ClearingHouse is
     PausableUpgradeable, // contains storage
     Governable // contains storage
 {
-    using Account for Account.Info;
     using AddressHelper for address;
     using AddressHelper for IERC20;
     using AddressHelper for IVToken;
-    using Protocol for Protocol.Info;
     using SafeERC20 for IERC20;
     using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
 
+    using Account for Account.Info;
+    using BatchedLoop for BatchedLoop.Info;
+    using Protocol for Protocol.Info;
+
     error NotRageTradeFactory();
     error ZeroAmount();
+    error CannotPauseIfUnpauseInProgress();
+    error CannotUnpauseIfPauseInProgress();
 
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
@@ -89,6 +94,8 @@ contract ClearingHouse is
         assert(protocol.pools[poolId].vToken.isZero());
 
         protocol.pools[poolId] = poolInfo;
+        protocol.poolIds.push(poolId);
+
         emit PoolSettingsUpdated(poolId, poolInfo.settings);
     }
 
@@ -126,24 +133,30 @@ contract ClearingHouse is
         );
     }
 
-    function pause(uint32[] calldata allPoolIds) external onlyGovernanceOrTeamMultisig {
-        _pause();
+    function pause(uint256 numberOfPoolsToUpdateInThisTx) external onlyGovernanceOrTeamMultisig whenNotPaused {
+        if (unpauseLoop.isInProgress()) revert CannotPauseIfUnpauseInProgress();
 
-        // update funding state for all the pools, so that funding payment upto pause moment is recorded
-        for (uint256 i; i < allPoolIds.length; i++) {
-            uint32 poolId = allPoolIds[i];
-            protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: false });
-        }
+        bool completed = pauseLoop.iterate({
+            startAt: 0,
+            endBefore: protocol.poolIds.length,
+            batchSize: numberOfPoolsToUpdateInThisTx,
+            execute: _forEachPoolOnPause
+        });
+
+        if (completed) _pause();
     }
 
-    function unpause(uint32[] calldata allPoolIds) external onlyGovernanceOrTeamMultisig {
-        _unpause();
+    function unpause(uint256 numberOfPoolsToUpdateInThisTx) external onlyGovernanceOrTeamMultisig whenPaused {
+        if (pauseLoop.isInProgress()) revert CannotUnpauseIfPauseInProgress();
 
-        // update funding state for all the pools
-        for (uint256 i; i < allPoolIds.length; i++) {
-            // record the funding payment as zero for the entire duration for which clearing house was paused.
-            protocol.pools[allPoolIds[i]].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: true });
-        }
+        bool completed = unpauseLoop.iterate({
+            startAt: 0,
+            endBefore: protocol.poolIds.length,
+            batchSize: numberOfPoolsToUpdateInThisTx,
+            execute: _forEachPoolOnUnpause
+        });
+
+        if (completed) _unpause();
     }
 
     /// @inheritdoc IClearingHouseOwnerActions
@@ -527,5 +540,21 @@ contract ClearingHouse is
     /// @return fixFee amount of fixFee in notional units
     function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
         return 0;
+    }
+
+    /**
+        PRIVATE METHODS
+     */
+
+    function _forEachPoolOnPause(uint256 index) private {
+        uint32 poolId = protocol.poolIds[index];
+        // account for the funding payment upto this moment before pausing
+        protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: false });
+    }
+
+    function _forEachPoolOnUnpause(uint256 index) private {
+        uint32 poolId = protocol.poolIds[index];
+        // record the funding payment as zero for the entire duration for which clearing house was paused.
+        protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: true });
     }
 }
