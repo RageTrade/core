@@ -155,14 +155,13 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouseOwnerActions
-    function withdrawProtocolFee(address[] calldata wrapperAddresses) external {
-        uint256 totalProtocolFee;
-        for (uint256 i = 0; i < wrapperAddresses.length; i++) {
-            uint256 wrapperFee = IVPoolWrapper(wrapperAddresses[i]).collectAccruedProtocolFee();
-            emit Account.ProtocolFeesWithdrawn(wrapperAddresses[i], wrapperFee);
-            totalProtocolFee += wrapperFee;
-        }
-        protocol.settlementToken.safeTransfer(teamMultisig(), totalProtocolFee);
+    function withdrawProtocolFee(uint256 numberOfPoolsToUpdateInThisTx) external {
+        withdrawProtocolFeeLoop.iterate({
+            startAt: 0,
+            endBefore: protocol.poolIds.length,
+            batchSize: numberOfPoolsToUpdateInThisTx,
+            execute: _forEachPoolOnWithdrawProtocolFee
+        });
     }
 
     /**
@@ -551,5 +550,14 @@ contract ClearingHouse is
         uint32 poolId = protocol.poolIds[index];
         // record the funding payment as zero for the entire duration for which clearing house was paused.
         protocol.pools[poolId].vPoolWrapper.updateGlobalFundingState({ useZeroFundingRate: true });
+    }
+
+    function _forEachPoolOnWithdrawProtocolFee(uint256 index) private {
+        uint32 poolId = protocol.poolIds[index];
+        uint256 feeCollected = protocol.pools[poolId].vPoolWrapper.collectAccruedProtocolFee();
+        // if any protocol fee was collected then transfer to multisig
+        if (feeCollected != 0) {
+            protocol.settlementToken.safeTransfer(teamMultisig(), feeCollected);
+        }
     }
 }
