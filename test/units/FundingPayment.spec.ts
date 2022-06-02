@@ -18,7 +18,7 @@ describe('FundingPayment', () => {
   describe('#a', () => {
     it('rp=101 vp=100 dt=10', async () => {
       const a = await test.nextAX128(10, 20, toQ128(101), toQ128(100));
-      expect(a.gt(0)).to.be.true;
+      expect(a.gt(0)).to.be.false;
       expect(a).to.eq(
         getFundingRate(101, 100)
           .mul(100)
@@ -28,7 +28,7 @@ describe('FundingPayment', () => {
 
     it('rp=99 vp=100 dt=10', async () => {
       const a = await test.nextAX128(10, 20, toQ128(99), toQ128(100));
-      expect(a.gt(0)).to.be.false;
+      expect(a.gt(0)).to.be.true;
       expect(a).to.eq(
         getFundingRate(99, 100)
           .mul(100)
@@ -38,7 +38,7 @@ describe('FundingPayment', () => {
 
     it('rp=1.01 vp=1 dt=10', async () => {
       const a = await test.nextAX128(10, 20, toQ128(1.01), toQ128(1));
-      expect(a.gt(0)).to.be.true;
+      expect(a.gt(0)).to.be.false;
       expect(a).to.eq(
         getFundingRate(toQ128(1.01), toQ128(1))
           .mul(toQ128(1)) // vp
@@ -72,7 +72,7 @@ describe('FundingPayment', () => {
       });
 
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
-      expect(sumAX128).to.eq(realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).div(DAY));
+      expect(sumAX128).to.eq(virtualPrice.sub(realPrice).mul(virtualPrice).div(realPrice).div(DAY));
       expect(sumBX128).to.eq(Q128.mul(vTokenAmount).div(liquidity));
       expect(sumFpX128).to.eq(0);
       expect(timestampLast).to.eq(blockTimestamp);
@@ -91,7 +91,7 @@ describe('FundingPayment', () => {
       });
 
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
-      expect(sumAX128).to.eq(realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).div(DAY));
+      expect(sumAX128).to.eq(virtualPrice.sub(realPrice).mul(virtualPrice).div(realPrice).div(DAY));
       expect(sumBX128).to.eq(Q128.mul(vTokenAmount).div(liquidity));
       expect(sumFpX128).to.eq(0);
       expect(timestampLast).to.eq(blockTimestamp);
@@ -120,13 +120,13 @@ describe('FundingPayment', () => {
         virtualPrice,
       });
 
-      const a1 = realPrice
-        .sub(virtualPrice)
+      const a1 = virtualPrice
+        .sub(realPrice)
         .mul(virtualPrice)
         .div(realPrice)
         .mul(blockTimestamp2 - blockTimestamp1)
         .div(DAY);
-      const a2 = realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).mul(blockTimestamp1).div(DAY);
+      const a2 = virtualPrice.sub(realPrice).mul(virtualPrice).div(realPrice).mul(blockTimestamp1).div(DAY);
 
       const b1 = Q128.mul(vTokenAmount1).div(liquidity1);
       const b2 = Q128.mul(vTokenAmount2).div(liquidity2);
@@ -134,7 +134,7 @@ describe('FundingPayment', () => {
       const { sumAX128, sumBX128, sumFpX128, timestampLast } = await test.fpGlobal();
       expect(sumAX128).to.eq(a1.add(a2));
       expect(sumBX128).to.eq(b1.add(b2));
-      expect(sumFpX128).to.eq(a1.mul(b1).div(Q128));
+      expect(sumFpX128).to.eq(a1.mul(b1).div(Q128).sub(1));
       expect(timestampLast).to.eq(blockTimestamp2);
     });
 
@@ -161,13 +161,13 @@ describe('FundingPayment', () => {
         virtualPrice,
       });
 
-      const a1 = realPrice
-        .sub(virtualPrice)
+      const a1 = virtualPrice
+        .sub(realPrice)
         .mul(virtualPrice)
         .div(realPrice)
         .mul(blockTimestamp2 - blockTimestamp1)
         .div(DAY);
-      const a2 = realPrice.sub(virtualPrice).mul(virtualPrice).div(realPrice).mul(blockTimestamp1).div(DAY);
+      const a2 = virtualPrice.sub(realPrice).mul(virtualPrice).div(realPrice).mul(blockTimestamp1).div(DAY);
 
       const b1 = Q128.mul(vTokenAmount1).div(liquidity1);
       const b2 = Q128.mul(vTokenAmount2).div(liquidity2);
@@ -211,7 +211,7 @@ describe('FundingPayment', () => {
     realPriceX128 = BigNumber.from(realPriceX128);
     virtualPriceX128 = BigNumber.from(virtualPriceX128);
 
-    return Q128.mul(realPriceX128.sub(virtualPriceX128))
+    return Q128.mul(virtualPriceX128.sub(realPriceX128))
       .div(realPriceX128)
       .div(1 * 24 * 60 * 60);
   }

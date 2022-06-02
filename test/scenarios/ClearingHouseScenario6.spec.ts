@@ -1,3 +1,4 @@
+//ClearingHouseScenario6
 // Multiple Tick Cross TokenIn Input
 
 import { expect } from 'chai';
@@ -872,8 +873,8 @@ describe('Clearing House Scenario 6', () => {
       const expectedEndVQuoteBalance = -25000000000n;
 
       const expectedSumB = 1189490198145n;
-      const expectedSumA = 1484140n;
-      const expectedSumFp = 8778309n + 1n;
+      const expectedSumA = -1484140n;
+      const expectedSumFp = -8778310;
       const expectedSumFee = 2542858n;
 
       await updateRangeOrderAndCheck(
@@ -913,8 +914,8 @@ describe('Clearing House Scenario 6', () => {
       const expectedEndVQuoteBalance = -41990269073n - 1n;
 
       const expectedSumB = 1189490198145n;
-      const expectedSumA = 1607139n;
-      const expectedSumFp = 10241361;
+      const expectedSumA = -1607139n;
+      const expectedSumFp = -10241361;
       const expectedSumFee = 2542858;
 
       await updateRangeOrderAndCheck(
@@ -954,8 +955,8 @@ describe('Clearing House Scenario 6', () => {
       const expectedEndVQuoteBalance = -47653644907n - 2n;
 
       const expectedSumB = 1189490198145n;
-      const expectedSumA = 1730137n;
-      const expectedSumFp = 11704413n;
+      const expectedSumA = -1730137n;
+      const expectedSumFp = -11704413n;
       const expectedSumFee = 2542858;
 
       await updateRangeOrderAndCheck(
@@ -993,17 +994,17 @@ describe('Clearing House Scenario 6', () => {
 
       const swapTokenAmount = '-40057731774986100000';
       const expectedVTokenBalance = '-49027347957669700000';
-      const expectedVQuoteBalance = 102508793150n + 2n;
+      const expectedVQuoteBalance = 102508506306n + 2n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
       const expectedSumB = 5018049315957n + 2n;
-      const expectedSumA = 2345128n;
-      const expectedSumFp = 19019671n;
+      const expectedSumA = -2345128n;
+      const expectedSumFp = -19019671n;
       const expectedSumFee = 10541355n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 83362421145n + 3n;
-      const expectedFundingPayment = 143422n;
+      const expectedFundingPayment = -143422n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1043,16 +1044,16 @@ describe('Clearing House Scenario 6', () => {
       const expectedVTokenBalance = '-22018822048801500000';
 
       //TODO: Check
-      const expectedVQuoteBalance = 46464167468n + 2n;
+      const expectedVQuoteBalance = 46463181880n + 2n;
 
       const expectedSumB = 2822101072811n;
-      const expectedSumA = 3057735n;
-      const expectedSumFp = 54778676n;
+      const expectedSumA = -3057735n;
+      const expectedSumFp = -54778676n;
       const expectedSumFee = 15094779n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = -56044975053n - 1n;
-      const expectedFundingPayment = 349371n + 1n;
+      const expectedFundingPayment = -349372n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,

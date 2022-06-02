@@ -1,3 +1,4 @@
+//ClearingHouseScenario8
 //Partial Token Liquidation
 
 import { expect } from 'chai';
@@ -1113,7 +1114,7 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
 
       const netTokenPosition = expectedVTokenBalance;
 
-      const expectedVQuoteBalance = 103840612885n;
+      const expectedVQuoteBalance = 103837205961n;
 
       const startPrice = 2855.507317;
       const endPrice = 2893.541871;
