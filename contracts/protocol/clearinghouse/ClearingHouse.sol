@@ -156,7 +156,7 @@ contract ClearingHouse is
             IVPoolWrapper poolWrapper = protocol.pools[poolId].vPoolWrapper;
             if (address(poolWrapper).isZero()) revert InvalidPoolId(poolId);
             uint256 wrapperFee = poolWrapper.collectAccruedProtocolFee();
-            emit Account.ProtocolFeesWithdrawn(poolId, wrapperFee);
+            emit ProtocolFeesWithdrawn(poolId, wrapperFee);
             totalProtocolFee += wrapperFee;
         }
         protocol.settlementToken.safeTransfer(teamMultisig(), totalProtocolFee);

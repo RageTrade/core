@@ -21,17 +21,20 @@ import {
   AccountTest,
   Account__factory,
   ClearingHouseTest,
+  ClearingHouse__factory,
   IERC20,
   IUniswapV3Pool,
   OracleMock,
   RageTradeFactory,
   RealTokenMock,
 } from '../../typechain-types';
-import { IClearingHouseStructures } from '../../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
+import {
+  IClearingHouseStructures,
+  ProtocolFeesWithdrawnEvent,
+} from '../../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 import { stealFunds } from '../helpers/steal-funds';
-import { ProtocolFeesWithdrawnEvent } from '../../typechain-types/artifacts/contracts/libraries/Account';
 
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -940,7 +943,9 @@ describe('Clearing House Library', () => {
           try {
             return {
               ...log,
-              ...Account__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(log),
+              ...ClearingHouse__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(
+                log,
+              ),
             };
           } catch {
             return null;
