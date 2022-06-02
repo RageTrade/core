@@ -775,7 +775,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
     await network.provider.send('hardhat_setCode', ['0x0000000000000000000000000000000000000064', mockBytecode]);
 
     arbSysMock = await hre.ethers.getContractAt('ArbSysMock', '0x0000000000000000000000000000000000000064');
-    arbSysMock.setArbBlockNumber(1);
+    await arbSysMock.setArbBlockNumber(1);
   }
 
   async function getPoolSettings(vTokenAddress: string) {
