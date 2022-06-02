@@ -20,16 +20,9 @@ import { SafeCast } from './SafeCast.sol';
 import { SignedMath } from './SignedMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
+import { Block } from './Block.sol';
 
 import { SafeCast } from './SafeCast.sol';
-
-interface ArbSys {
-    /**
-     * @notice Get Arbitrum block number (distinct from L1 block number; Arbitrum genesis block has block number 0)
-     * @return block number as int
-     */
-    function arbBlockNumber() external view returns (uint256);
-}
 
 /// @title Protocol storage functions
 /// @dev This is used as main storage interface containing protocol info
@@ -73,15 +66,11 @@ library Protocol {
         uint256[100] _emptySlots;
     }
 
-    function getBlockNumber() internal view returns (uint32) {
-        return uint32(ArbSys(address(100)).arbBlockNumber());
-    }
-
     function updatePoolPriceCache(Protocol.Info storage protocol, uint32 poolId) internal {
-        uint32 curArbBlockNum = getBlockNumber();
+        uint32 blockNum = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == curArbBlockNum) {
+        if (poolPriceCache.updateBlockNum == blockNum) {
             return;
         }
 
@@ -99,7 +88,7 @@ library Protocol {
         }
         poolPriceCache.realPriceX128 = realPriceX128.toUint224();
         poolPriceCache.virtualPriceX128 = virtualPriceX128.toUint224();
-        poolPriceCache.updateBlockNum = curArbBlockNum;
+        poolPriceCache.updateBlockNum = blockNum;
     }
 
     function vPool(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
@@ -180,10 +169,10 @@ library Protocol {
         view
         returns (uint256 priceX128)
     {
-        uint32 curArbBlockNum = getBlockNumber();
+        uint32 blockNum = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == curArbBlockNum) {
+        if (poolPriceCache.updateBlockNum == blockNum) {
             return poolPriceCache.virtualPriceX128;
         } else {
             return protocol.getVirtualTwapPriceX128(poolId);
@@ -195,10 +184,10 @@ library Protocol {
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128)
     {
-        uint32 curArbBlockNum = getBlockNumber();
+        uint32 blockNum = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == curArbBlockNum) {
+        if (poolPriceCache.updateBlockNum == blockNum) {
             if (poolPriceCache.isDeviationBreached) {
                 return (poolPriceCache.realPriceX128, poolPriceCache.realPriceX128);
             } else {
@@ -214,10 +203,10 @@ library Protocol {
         view
         returns (uint256 priceX128)
     {
-        uint32 curArbBlockNum = getBlockNumber();
+        uint32 blockNum = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == curArbBlockNum) {
+        if (poolPriceCache.updateBlockNum == blockNum) {
             return poolPriceCache.realPriceX128;
         } else {
             return protocol.getRealTwapPriceX128(poolId);
