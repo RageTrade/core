@@ -263,7 +263,7 @@ contract ClearingHouse is
                 // ADD_MARGIN
                 (uint32 collateralId, int256 amount) = abi.decode(operations[i].data, (uint32, int256));
                 checkMargin = checkMargin || amount < 0;
-                _updateMargin(account, collateralId, amount, checkMargin);
+                _updateMargin(account, collateralId, amount, false);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
