@@ -54,4 +54,7 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
 
     /// @notice error to denote that keeper fee is negative or zero
     error KeeperFeeNotPositive(int256 keeperFee);
+
+    /// @notice error to denote that supplied pool id is invalid
+    error InvalidPoolId(uint32 poolId);
 }

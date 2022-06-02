@@ -50,7 +50,6 @@ contract ClearingHouse is
 
     error NotRageTradeFactory();
     error ZeroAmount();
-    error InvalidPoolId(uint32 poolId);
 
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
