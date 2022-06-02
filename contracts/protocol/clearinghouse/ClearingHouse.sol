@@ -51,11 +51,6 @@ contract ClearingHouse is
     using BatchedLoop for BatchedLoop.Info;
     using Protocol for Protocol.Info;
 
-    error NotRageTradeFactory();
-    error ZeroAmount();
-    error CannotPauseIfUnpauseInProgress();
-    error CannotUnpauseIfPauseInProgress();
-
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
         _;
