@@ -62,6 +62,8 @@ contract ClearingHouse is
 
     function initialize(
         address _rageTradeFactoryAddress,
+        address initialGovernance,
+        address initialTeamMultisig,
         IERC20 _defaultCollateralToken,
         IOracle _defaultCollateralTokenOracle,
         IInsuranceFund _insuranceFund,
@@ -78,7 +80,7 @@ contract ClearingHouse is
             CollateralSettings({ oracle: _defaultCollateralTokenOracle, twapDuration: 60, isAllowedForDeposit: true })
         );
 
-        __Governable_init();
+        __Governable_init(initialGovernance, initialTeamMultisig);
         __Pausable_init_unchained();
     }
 
