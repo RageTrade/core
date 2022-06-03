@@ -55,6 +55,7 @@ library VTokenPosition {
     /// @param position token position
     /// @param priceX128 price in Q128
     /// @param wrapper pool wrapper corresponding to position
+    /// @return value market value with 6 decimals
     function marketValue(
         VTokenPosition.Info storage position,
         uint256 priceX128,
@@ -98,6 +99,7 @@ library VTokenPosition {
     /// @notice returns the vQuoteIncrease due to unrealized funding payment for the trader position (+ve means receiving and -ve means paying)
     /// @param position token position
     /// @param wrapper pool wrapper corresponding to position
+    /// @return unrealizedFpBill funding to be realized (+ve means receive and -ve means pay)
     function unrealizedFundingPayment(VTokenPosition.Info storage position, IVPoolWrapper wrapper)
         internal
         view
