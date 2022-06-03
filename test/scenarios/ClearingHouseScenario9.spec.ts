@@ -628,7 +628,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       poolInitialSettings: {
         initialMarginRatioBps,
         maintainanceMarginRatioBps,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,

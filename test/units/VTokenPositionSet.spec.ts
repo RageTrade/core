@@ -87,7 +87,7 @@ describe('VTokenPositionSet Library', () => {
       poolInitialSettings: {
         initialMarginRatioBps: 2,
         maintainanceMarginRatioBps: 3,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration: 2,
         isAllowedForTrade: false,
         isCrossMargined: false,
@@ -123,7 +123,7 @@ describe('VTokenPositionSet Library', () => {
       poolInitialSettings: {
         initialMarginRatioBps: 2,
         maintainanceMarginRatioBps: 3,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration: 2,
         isAllowedForTrade: true,
         isCrossMargined: false,

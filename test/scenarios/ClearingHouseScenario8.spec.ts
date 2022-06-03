@@ -622,7 +622,7 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
       poolInitialSettings: {
         initialMarginRatioBps,
         maintainanceMarginRatioBps,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,
