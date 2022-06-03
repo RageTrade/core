@@ -572,7 +572,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
 
     const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
-    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
+    const _settlementTokenOracle = await (await hre.ethers.getContractFactory('SettlementTokenOracle')).deploy();
 
     const rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -581,6 +581,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
+      _settlementTokenOracle.address,
     );
 
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
