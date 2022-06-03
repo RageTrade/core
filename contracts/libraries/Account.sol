@@ -229,6 +229,9 @@ library Account {
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
     /// @param account account to liquidate
     /// @param protocol set of all constants and token addresses
+    /// @return keeperFee amount of liquidation fee paid to keeper
+    /// @return insuranceFundFee amount of liquidation fee paid to insurance fund
+    /// @return accountMarketValue account market value before liquidation
     function liquidateLiquidityPositions(Account.Info storage account, Protocol.Info storage protocol)
         external
         returns (
