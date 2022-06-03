@@ -52,6 +52,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     IVQuote public vQuote;
     IUniswapV3Pool public vPool;
 
+    uint24 constant PERC_10_1E6 = 100000;
+
     // fee paid to liquidity providers, in 1e6
     uint24 public liquidityFeePips;
     // fee paid to DAO treasury
@@ -71,6 +73,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     error NotGovernance();
     error NotUniswapV3Pool();
     error InvalidTicks(int24 tickLower, int24 tickUpper);
+    error InvalidSetting(bytes32 errorMessage);
 
     modifier onlyClearingHouse() {
         if (msg.sender != address(clearingHouse)) {
@@ -154,11 +157,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
      */
 
     function setLiquidityFee(uint24 liquidityFeePips_) external onlyGovernance {
+        if (liquidityFeePips_ > PERC_10_1E6) revert InvalidSetting('wrapper.liqFee');
         liquidityFeePips = liquidityFeePips_;
         emit LiquidityFeeUpdated(liquidityFeePips_);
     }
 
     function setProtocolFee(uint24 protocolFeePips_) external onlyGovernance {
+        if (protocolFeePips_ > PERC_10_1E6) revert InvalidSetting('wrapper.protFee');
         protocolFeePips = protocolFeePips_;
         emit ProtocolFeeUpdated(protocolFeePips_);
     }

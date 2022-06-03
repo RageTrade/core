@@ -51,6 +51,9 @@ contract ClearingHouse is
     using BatchedLoop for BatchedLoop.Info;
     using Protocol for Protocol.Info;
 
+    uint16 constant PERC_100_BPS = 10000; // 100% in basis points
+    uint16 constant PERC_10_1E5 = 10000; // 10% in base 1e5
+
     modifier onlyRageTradeFactory() {
         if (rageTradeFactoryAddress != msg.sender) revert NotRageTradeFactory();
         _;
@@ -102,11 +105,20 @@ contract ClearingHouse is
         external
         onlyGovernanceOrTeamMultisig
     {
+        if ((address(collateralSettings.oracle)).isZero()) revert InvalidSetting('cs.oracle');
+        if (collateralSettings.twapDuration > 1 days) revert InvalidSetting('cs.twap');
         _updateCollateralSettings(cToken, collateralSettings);
     }
 
     function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings) public onlyGovernanceOrTeamMultisig {
         protocol.pools[poolId].settings = newSettings;
+        if ((address(newSettings.oracle)).isZero()) revert InvalidSetting('ps.oracle');
+        if (newSettings.twapDuration < 5 minutes || newSettings.twapDuration > 1 days) revert InvalidSetting('ps.twap');
+        if (newSettings.initialMarginRatioBps > PERC_100_BPS) revert InvalidSetting('ps.im');
+        if (newSettings.maintainanceMarginRatioBps > PERC_100_BPS) revert InvalidSetting('ps.mm');
+        if (newSettings.maxVirtualPriceDeviationRatioBps > (PERC_100_BPS * 2) / 10)
+            revert InvalidSetting('ps.priceDev');
+
         emit PoolSettingsUpdated(poolId, newSettings);
     }
 
@@ -116,6 +128,20 @@ contract ClearingHouse is
         uint256 _minimumOrderNotional,
         uint256 _minRequiredMargin
     ) external onlyGovernanceOrTeamMultisig {
+        if (_liquidationParams.rangeLiquidationFeeFraction > PERC_10_1E5) revert InvalidSetting('ps.lp.rLiqFeeFrac');
+        if (_liquidationParams.tokenLiquidationFeeFraction > PERC_10_1E5) revert InvalidSetting('ps.lp.tLiqFeeFrac');
+        if (_liquidationParams.closeFactorMMThresholdBps > PERC_100_BPS) revert InvalidSetting('ps.lp.mmTh');
+        if (_liquidationParams.partialLiquidationCloseFactorBps > PERC_100_BPS)
+            revert InvalidSetting('ps.lp.partLiqFac');
+        if (_liquidationParams.insuranceFundFeeShareBps > PERC_100_BPS) revert InvalidSetting('ps.lp.ifShare');
+        if (_liquidationParams.liquidationSlippageSqrtToleranceBps > PERC_100_BPS / 10)
+            revert InvalidSetting('ps.lp.slipTh');
+        if (_liquidationParams.maxRangeLiquidationFees > 1000e6) revert InvalidSetting('ps.lp.rLiqFeeMax');
+        if (_liquidationParams.minNotionalLiquidatable > 1000e6) revert InvalidSetting('ps.lp.minNotLiq');
+        if (_removeLimitOrderFee > 1000e6) revert InvalidSetting('ps.lp.remLimFee');
+        if (_minimumOrderNotional > 1000e6) revert InvalidSetting('ps.lp.minOrdNot');
+        if (_minRequiredMargin > 1000e6) revert InvalidSetting('ps.lp.minReqMar');
+
         protocol.liquidationParams = _liquidationParams;
         protocol.removeLimitOrderFee = _removeLimitOrderFee;
         protocol.minimumOrderNotional = _minimumOrderNotional;
