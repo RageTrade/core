@@ -7,7 +7,7 @@ import { TimelockController } from '@openzeppelin/contracts/governance/TimelockC
 /// @title Timelock controller with a minimum delay override for certain functions
 contract TimelockControllerWithMinDelayOverride is TimelockController {
     uint256 private _minDelayOverridePlusOne;
-    mapping(bytes32 => uint256) private _minDelayOverridesPlusOne;
+    mapping(bytes32 => uint256) private _minDelayOverridePlusOneMapping;
 
     event MinDelayOverrideSet(address target, bytes4 selector, uint256 newMinDelay);
     event MinDelayOverrideUnset(address target, bytes4 selector);
@@ -24,18 +24,18 @@ contract TimelockControllerWithMinDelayOverride is TimelockController {
         uint256 minDelayOverride
     ) public {
         require(msg.sender == address(this), 'TimelockController: caller must be timelock');
-        _minDelayOverridesPlusOne[_getKey(target, selector)] = minDelayOverride + 1;
+        _minDelayOverridePlusOneMapping[_getKey(target, selector)] = minDelayOverride + 1;
         emit MinDelayOverrideSet(target, selector, minDelayOverride);
     }
 
     function unsetMinDelayOverride(address target, bytes4 selector) public {
         require(msg.sender == address(this), 'TimelockController: caller must be timelock');
-        delete _minDelayOverridesPlusOne[_getKey(target, selector)];
+        delete _minDelayOverridePlusOneMapping[_getKey(target, selector)];
         emit MinDelayOverrideUnset(target, selector);
     }
 
     function getMinDelayOverride(address target, bytes4 selector) external view returns (uint256 minDelayOverride) {
-        uint256 minDelayOverridePlusOne = _minDelayOverridesPlusOne[_getKey(target, selector)];
+        uint256 minDelayOverridePlusOne = _minDelayOverridePlusOneMapping[_getKey(target, selector)];
         require(minDelayOverridePlusOne > 0, 'TimelockController: minDelayOverride not set');
         return minDelayOverridePlusOne - 1;
     }
@@ -49,7 +49,7 @@ contract TimelockControllerWithMinDelayOverride is TimelockController {
         uint256 delay
     ) public virtual override onlyRole(PROPOSER_ROLE) {
         if (data.length >= 4) {
-            uint256 minDelayOverridePlusOne = _minDelayOverridesPlusOne[_getKey(target, _getSelector(data))];
+            uint256 minDelayOverridePlusOne = _minDelayOverridePlusOneMapping[_getKey(target, _getSelector(data))];
             if (minDelayOverridePlusOne != 0) {
                 _minDelayOverridePlusOne = minDelayOverridePlusOne; // SSTORE
             }

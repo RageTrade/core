@@ -103,7 +103,10 @@ contract ClearingHouse is
         _updateCollateralSettings(cToken, collateralSettings);
     }
 
-    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings) public onlyGovernanceOrTeamMultisig {
+    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings)
+        external
+        onlyGovernanceOrTeamMultisig
+    {
         protocol.pools[poolId].settings = newSettings;
         emit PoolSettingsUpdated(poolId, newSettings);
     }
