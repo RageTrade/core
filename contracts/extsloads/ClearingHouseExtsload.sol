@@ -8,10 +8,11 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IExtsload } from '../interfaces/IExtsload.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 
-import { Bytes32 } from '../libraries/Bytes32.sol';
+import { Bytes32Lib } from '../libraries/Bytes32Lib.sol';
 
 library ClearingHouseExtsload {
-    using Bytes32 for bytes32;
+    using Bytes32Lib for bytes32;
+    using Bytes32Lib for Bytes32Lib.Bytes32;
 
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
     bytes32 constant POOLS_MAPPING_SLOT = PROTOCOL_SLOT;
@@ -26,29 +27,17 @@ library ClearingHouseExtsload {
     function getPoolSettings(IClearingHouse clearingHouse, uint32 poolId)
         internal
         view
-        returns (
-            uint16 initialMarginRatioBps,
-            uint16 maintainanceMarginRatioBps,
-            uint16 maxVirtualPriceDeviationRatioBps,
-            uint32 twapDuration,
-            bool isAllowedForTrade,
-            bool isCrossMargined,
-            IOracle oracle
-        )
+        returns (IClearingHouse.PoolSettings memory settings)
     {
-        bytes32 result = clearingHouse.extsload(keyOfPoolSettings(poolId));
+        Bytes32Lib.Bytes32 memory result = clearingHouse.extsload(keyOfPoolSettings(poolId)).copyToMemory();
 
-        (initialMarginRatioBps, result) = result.extractUint16();
-        (maintainanceMarginRatioBps, result) = result.extractUint16();
-        (maxVirtualPriceDeviationRatioBps, result) = result.extractUint16();
-        (twapDuration, result) = result.extractUint32();
-        (isAllowedForTrade, result) = result.extractBool();
-        (isCrossMargined, result) = result.extractBool();
-        address oracle_;
-        (oracle_, result) = result.extractAddress();
-        assembly {
-            oracle := oracle_
-        }
+        settings.initialMarginRatioBps = result.popUint16();
+        settings.maintainanceMarginRatioBps = result.popUint16();
+        settings.maxVirtualPriceDeviationRatioBps = result.popUint16();
+        settings.twapDuration = result.popUint32();
+        settings.isAllowedForTrade = result.popBool();
+        settings.isCrossMargined = result.popBool();
+        settings.oracle = IOracle(result.popAddress());
     }
 
     function getTwapDuration(IClearingHouse clearingHouse, uint32 poolId) internal view returns (uint32 twapDuration) {
@@ -65,21 +54,18 @@ library ClearingHouseExtsload {
         arr[0] = keyOfVPool(poolId);
         arr[1] = keyOfPoolSettings(poolId);
         arr = clearingHouse.extsload(arr);
-        address vPool_;
-        (vPool_, ) = arr[0].extractAddress();
-        assembly {
-            vPool := vPool_
-        }
+
+        vPool = IUniswapV3Pool(arr[0].toAddress());
         twapDuration = uint32(arr[1].slice(0xB0, 0xD0));
     }
 
     // KEY GENERATORS
 
     function keyOfVPool(uint32 poolId) internal pure returns (bytes32) {
-        return Bytes32.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(1);
+        return Bytes32Lib.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(1);
     }
 
     function keyOfPoolSettings(uint32 poolId) internal pure returns (bytes32) {
-        return Bytes32.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(3);
+        return Bytes32Lib.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(3);
     }
 }
