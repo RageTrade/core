@@ -18,29 +18,19 @@ library Bytes32Lib {
     }
 
     function popAddress(Bytes32 memory input) internal pure returns (address value) {
-        uint256 temp;
-        (temp, input.data) = pop(input.data, 160);
-        assembly {
-            value := temp
-        }
+        (value, input.data) = popAddress(input.data);
     }
 
     function popUint16(Bytes32 memory input) internal pure returns (uint16 value) {
-        uint256 temp;
-        (temp, input.data) = pop(input.data, 16);
-        value = uint16(temp);
+        (value, input.data) = popUint16(input.data);
     }
 
     function popUint32(Bytes32 memory input) internal pure returns (uint32 value) {
-        uint256 temp;
-        (temp, input.data) = pop(input.data, 32);
-        value = uint32(temp);
+        (value, input.data) = popUint32(input.data);
     }
 
     function popBool(Bytes32 memory input) internal pure returns (bool value) {
-        uint256 temp;
-        (temp, input.data) = pop(input.data, 8);
-        value = temp != 0;
+        (value, input.data) = popBool(input.data);
     }
 
     function slice(
@@ -110,29 +100,45 @@ library Bytes32Lib {
         }
     }
 
-    function toAddress(bytes32 input) internal pure returns (address value) {
+    function popAddress(bytes32 input) internal pure returns (address value, bytes32 inputUpdated) {
         uint256 temp;
-        (temp, input) = pop(input, 160);
+        (temp, inputUpdated) = pop(input, 160);
         assembly {
             value := temp
         }
     }
 
-    function toUint16(bytes32 input) internal pure returns (uint16 value) {
+    function popUint16(bytes32 input) internal pure returns (uint16 value, bytes32 inputUpdated) {
         uint256 temp;
-        (temp, input) = pop(input, 16);
+        (temp, inputUpdated) = pop(input, 16);
         value = uint16(temp);
     }
 
-    function toUint32(bytes32 input) internal pure returns (uint32 value) {
+    function popUint32(bytes32 input) internal pure returns (uint32 value, bytes32 inputUpdated) {
         uint256 temp;
-        (temp, input) = pop(input, 32);
+        (temp, inputUpdated) = pop(input, 32);
         value = uint32(temp);
     }
 
-    function toBool(bytes32 input) internal pure returns (bool value) {
+    function popBool(bytes32 input) internal pure returns (bool value, bytes32 inputUpdated) {
         uint256 temp;
-        (temp, input) = pop(input, 8);
+        (temp, inputUpdated) = pop(input, 8);
         value = temp != 0;
+    }
+
+    function toAddress(bytes32 input) internal pure returns (address value) {
+        (value, ) = popAddress(input);
+    }
+
+    function toUint16(bytes32 input) internal pure returns (uint16 value) {
+        (value, ) = popUint16(input);
+    }
+
+    function toUint32(bytes32 input) internal pure returns (uint32 value) {
+        (value, ) = popUint32(input);
+    }
+
+    function toBool(bytes32 input) internal pure returns (bool value) {
+        (value, ) = popBool(input);
     }
 }

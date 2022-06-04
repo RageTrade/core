@@ -28,4 +28,20 @@ contract Bytes32LibTest {
     function pop(bytes32 input, uint256 bits) public pure returns (uint256 value, bytes32 inputUpdated) {
         return Bytes32Lib.pop(input, bits);
     }
+
+    function popAddress(bytes32 input) public pure returns (address value, bytes32 inputUpdated) {
+        (value, inputUpdated) = Bytes32Lib.popAddress(input);
+    }
+
+    function popUint16(bytes32 input) public pure returns (uint16 value, bytes32 inputUpdated) {
+        (value, inputUpdated) = Bytes32Lib.popUint16(input);
+    }
+
+    function popUint32(bytes32 input) public pure returns (uint32 value, bytes32 inputUpdated) {
+        (value, inputUpdated) = Bytes32Lib.popUint32(input);
+    }
+
+    function popBool(bytes32 input) public pure returns (bool value, bytes32 inputUpdated) {
+        (value, inputUpdated) = Bytes32Lib.popBool(input);
+    }
 }
