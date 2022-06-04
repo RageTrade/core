@@ -11,14 +11,57 @@ import { IOracle } from '../interfaces/IOracle.sol';
 import { WordHelper } from '../libraries/WordHelper.sol';
 
 library ClearingHouseExtsload {
+    // Terminology:
+    // SLOT is a storage location value which can be sloaded, typed in bytes32.
+    // OFFSET is an slot offset value which should not be sloaded, henced typed in uint256.
+
     using WordHelper for bytes32;
     using WordHelper for WordHelper.Word;
 
+    // SLOT GENERATORS
+
+    // PROTOCOL_STRUCT
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
-    bytes32 constant POOLS_MAPPING_SLOT = PROTOCOL_SLOT;
+    uint256 constant PROTOCOL_POOLS_MAPPING_OFFSET = 0;
+    uint256 constant PROTOCOL_COLLATERALS_MAPPING_OFFSET = 1;
+    uint256 constant PROTOCOL_SETTLEMENT_TOKEN_OFFSET = 2;
+    uint256 constant PROTOCOL_VQUOTE_OFFSET = 3;
+    uint256 constant PROTOCOL_LIQUIDATION_PARAMS_STRUCT_OFFSET = 4;
+    uint256 constant PROTOCOL_MINIMUM_REQUIRED_MARGIN_OFFSET = 5;
+    uint256 constant PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET = 6;
+    uint256 constant PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET = 7;
+
+    // PROTOCOL_STRUCT -> POOLS_MAPPING -> POOL_STRUCT
+    uint256 constant POOL_VTOKEN_OFFSET = 0;
+    uint256 constant POOL_VPOOL_OFFSET = 1;
+    uint256 constant POOL_VPOOLWRAPPER_OFFSET = 2;
+    uint256 constant POOL_SETTINGS_STRUCT_OFFSET = 3;
+
+    function poolStructSlot(uint32 poolId) internal pure returns (bytes32) {
+        return
+            WordHelper.keccak256Two({
+                mappingSlot: PROTOCOL_SLOT.offset(PROTOCOL_POOLS_MAPPING_OFFSET),
+                paddedKey: WordHelper.fromUint(poolId)
+            });
+    }
+
+    // PROTOCOL_STRUCT -> COLLATERALS_MAPPING -> COLLATERAL_STRUCT
+    uint256 constant COLLATERAL_TOKEN_OFFSET = 0;
+    uint256 constant COLLATERAL_SETTINGS_ORACLE_OFFSET = 1;
+    uint256 constant COLLATERAL_SETTINGS_TWAPDURATION_ISALLOWEDDEPOSIT_OFFSET = 2;
+
+    function collateralStructSlot(uint32 collateralId) internal pure returns (bytes32) {
+        return
+            WordHelper.keccak256Two({
+                mappingSlot: PROTOCOL_SLOT.offset(PROTOCOL_COLLATERALS_MAPPING_OFFSET),
+                paddedKey: WordHelper.fromUint(collateralId)
+            });
+    }
+
+    // GETTERS
 
     function getVPool(IClearingHouse clearingHouse, uint32 poolId) internal view returns (IUniswapV3Pool vPool) {
-        bytes32 result = clearingHouse.extsload(keyOfVPool(poolId));
+        bytes32 result = clearingHouse.extsload(poolStructSlot(poolId).offset(POOL_VPOOL_OFFSET));
         assembly {
             vPool := result
         }
@@ -29,7 +72,8 @@ library ClearingHouseExtsload {
         view
         returns (IClearingHouse.PoolSettings memory settings)
     {
-        WordHelper.Word memory result = clearingHouse.extsload(keyOfPoolSettings(poolId)).copyToMemory();
+        bytes32 SETTINGS_SLOT = poolStructSlot(poolId).offset(POOL_SETTINGS_STRUCT_OFFSET);
+        WordHelper.Word memory result = clearingHouse.extsload(SETTINGS_SLOT).copyToMemory();
 
         settings.initialMarginRatioBps = result.popUint16();
         settings.maintainanceMarginRatioBps = result.popUint16();
@@ -41,7 +85,7 @@ library ClearingHouseExtsload {
     }
 
     function getTwapDuration(IClearingHouse clearingHouse, uint32 poolId) internal view returns (uint32 twapDuration) {
-        bytes32 result = clearingHouse.extsload(keyOfPoolSettings(poolId));
+        bytes32 result = clearingHouse.extsload(poolStructSlot(poolId).offset(POOL_SETTINGS_STRUCT_OFFSET));
         twapDuration = uint32(result.slice(0x30, 0x50));
     }
 
@@ -51,21 +95,13 @@ library ClearingHouseExtsload {
         returns (IUniswapV3Pool vPool, uint32 twapDuration)
     {
         bytes32[] memory arr = new bytes32[](2);
-        arr[0] = keyOfVPool(poolId);
-        arr[1] = keyOfPoolSettings(poolId);
+
+        bytes32 POOL_SLOT = poolStructSlot(poolId);
+        arr[0] = POOL_SLOT.offset(POOL_VPOOL_OFFSET); // vPool
+        arr[1] = POOL_SLOT.offset(POOL_SETTINGS_STRUCT_OFFSET); // settings
         arr = clearingHouse.extsload(arr);
 
         vPool = IUniswapV3Pool(arr[0].toAddress());
         twapDuration = uint32(arr[1].slice(0xB0, 0xD0));
-    }
-
-    // KEY GENERATORS
-
-    function keyOfVPool(uint32 poolId) internal pure returns (bytes32) {
-        return WordHelper.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(1);
-    }
-
-    function keyOfPoolSettings(uint32 poolId) internal pure returns (bytes32) {
-        return WordHelper.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(3);
     }
 }
