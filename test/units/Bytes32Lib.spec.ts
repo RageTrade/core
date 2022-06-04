@@ -4,13 +4,12 @@ import { hexlify, hexZeroPad, keccak256 } from 'ethers/lib/utils';
 import hre from 'hardhat';
 
 import { bytes32 } from '@ragetrade/sdk';
+import { Bytes32LibTest } from '../../typechain-types/artifacts/contracts/test/Bytes32Test.sol/Bytes32LibTest';
 
-import { Bytes32Test } from '../../typechain-types/artifacts/contracts/test/Bytes32Test';
-
-describe('Bytes32', () => {
-  let test: Bytes32Test;
+describe('Bytes32Lib', () => {
+  let test: Bytes32LibTest;
   before(async () => {
-    test = await (await hre.ethers.getContractFactory('Bytes32Test')).deploy();
+    test = await (await hre.ethers.getContractFactory('Bytes32LibTest')).deploy();
   });
 
   describe('#slice', () => {
@@ -26,17 +25,16 @@ describe('Bytes32', () => {
 
   describe('#slice', () => {
     it('keccak256One', async () => {
-      const val = hexZeroPad(BigNumber.from(0).toHexString(), 32);
+      const val = hexZeroPad(BigNumber.from(1234).toHexString(), 32);
       const result = await test.keccak256One(val);
 
       expect(result).to.eq(hexlify(keccak256(val)));
     });
   });
 
-  describe('#extract', () => {
+  describe('#pop', () => {
     it('works', async () => {
-      const { value, inputUpdated } = await test.extract(bytes32('0xffff'), 8);
-      console.log(value, inputUpdated);
+      const { value, inputUpdated } = await test.pop(bytes32('0xffff'), 8);
 
       expect(value).to.eq(255);
       expect(inputUpdated).to.eq(bytes32('0xff'));

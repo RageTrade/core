@@ -34,7 +34,6 @@ contract ClearingHouseExtsloadTest {
         returns (IUniswapV3Pool vPool, uint32 twapDuration)
     {
         (vPool, twapDuration) = ClearingHouseExtsload.getVPoolAndTwapDuration(clearingHouse, poolId);
-        clearingHouse.getPoolInfo(poolId);
     }
 
     function getVPool(IClearingHouse clearingHouse, uint32 poolId) public view returns (IUniswapV3Pool vPool) {
@@ -44,15 +43,7 @@ contract ClearingHouseExtsloadTest {
     function getPoolSettings(IClearingHouse clearingHouse, uint32 poolId)
         public
         view
-        returns (
-            uint16 initialMarginRatioBps,
-            uint16 maintainanceMarginRatioBps,
-            uint16 maxVirtualPriceDeviationRatioBps,
-            uint32 twapDuration,
-            bool isAllowedForTrade,
-            bool isCrossMargined,
-            IOracle oracle
-        )
+        returns (IClearingHouse.PoolSettings memory settings)
     {
         return ClearingHouseExtsload.getPoolSettings(clearingHouse, poolId);
     }
