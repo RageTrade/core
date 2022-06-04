@@ -18,7 +18,9 @@ library ClearingHouseExtsload {
     using WordHelper for bytes32;
     using WordHelper for WordHelper.Word;
 
-    // SLOT GENERATORS
+    /**
+     * SLOT GENERATORS
+     */
 
     // PROTOCOL_STRUCT
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
@@ -58,7 +60,9 @@ library ClearingHouseExtsload {
             });
     }
 
-    // GETTERS
+    /**
+     * GETTERS
+     */
 
     function getVPool(IClearingHouse clearingHouse, uint32 poolId) internal view returns (IUniswapV3Pool vPool) {
         bytes32 result = clearingHouse.extsload(poolStructSlot(poolId).offset(POOL_VPOOL_OFFSET));
@@ -103,5 +107,11 @@ library ClearingHouseExtsload {
 
         vPool = IUniswapV3Pool(arr[0].toAddress());
         twapDuration = uint32(arr[1].slice(0xB0, 0xD0));
+    }
+
+    function isPoolIdAvailable(IClearingHouse clearingHouse, uint32 poolId) internal view returns (bool) {
+        bytes32 VTOKEN_SLOT = poolStructSlot(poolId).offset(POOL_VTOKEN_OFFSET);
+        bytes32 result = clearingHouse.extsload(VTOKEN_SLOT);
+        return result == WordHelper.fromUint(0);
     }
 }

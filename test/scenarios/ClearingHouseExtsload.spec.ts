@@ -40,5 +40,15 @@ describe('Clearing House Extsload', () => {
       const poolInfo = await clearingHouse.getPoolInfo(truncate(vToken.address));
       expect(result.twapDuration).to.eq(poolInfo.settings.twapDuration);
     });
+
+    it('isPoolIdAvailable', async () => {
+      // an already created pool should not be available
+      const result1 = await test.isPoolIdAvailable(clearingHouse.address, truncate(vToken.address));
+      expect(result1).to.be.false;
+
+      // an created pool should not be available
+      const result2 = await test.isPoolIdAvailable(clearingHouse.address, 0x12345678);
+      expect(result2).to.be.true;
+    });
   });
 });
