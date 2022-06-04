@@ -2,39 +2,39 @@
 
 pragma solidity ^0.8.0;
 
-library Bytes32Lib {
-    struct Bytes32 {
+library WordHelper {
+    struct Word {
         bytes32 data;
     }
 
-    // struct Bytes32 methods
+    // struct Word methods
 
-    function copyToMemory(bytes32 data) internal pure returns (Bytes32 memory) {
-        return Bytes32(data);
+    function copyToMemory(bytes32 data) internal pure returns (Word memory) {
+        return Word(data);
     }
 
-    function pop(Bytes32 memory input, uint256 bits) internal pure returns (uint256 value) {
+    function pop(Word memory input, uint256 bits) internal pure returns (uint256 value) {
         (value, input.data) = pop(input.data, bits);
     }
 
-    function popAddress(Bytes32 memory input) internal pure returns (address value) {
+    function popAddress(Word memory input) internal pure returns (address value) {
         (value, input.data) = popAddress(input.data);
     }
 
-    function popUint16(Bytes32 memory input) internal pure returns (uint16 value) {
+    function popUint16(Word memory input) internal pure returns (uint16 value) {
         (value, input.data) = popUint16(input.data);
     }
 
-    function popUint32(Bytes32 memory input) internal pure returns (uint32 value) {
+    function popUint32(Word memory input) internal pure returns (uint32 value) {
         (value, input.data) = popUint32(input.data);
     }
 
-    function popBool(Bytes32 memory input) internal pure returns (bool value) {
+    function popBool(Word memory input) internal pure returns (bool value) {
         (value, input.data) = popBool(input.data);
     }
 
     function slice(
-        Bytes32 memory input,
+        Word memory input,
         uint256 start,
         uint256 end
     ) internal pure returns (uint256 val) {

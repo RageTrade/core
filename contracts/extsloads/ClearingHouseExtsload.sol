@@ -8,11 +8,11 @@ import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IExtsload } from '../interfaces/IExtsload.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
 
-import { Bytes32Lib } from '../libraries/Bytes32Lib.sol';
+import { WordHelper } from '../libraries/WordHelper.sol';
 
 library ClearingHouseExtsload {
-    using Bytes32Lib for bytes32;
-    using Bytes32Lib for Bytes32Lib.Bytes32;
+    using WordHelper for bytes32;
+    using WordHelper for WordHelper.Word;
 
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
     bytes32 constant POOLS_MAPPING_SLOT = PROTOCOL_SLOT;
@@ -29,7 +29,7 @@ library ClearingHouseExtsload {
         view
         returns (IClearingHouse.PoolSettings memory settings)
     {
-        Bytes32Lib.Bytes32 memory result = clearingHouse.extsload(keyOfPoolSettings(poolId)).copyToMemory();
+        WordHelper.Word memory result = clearingHouse.extsload(keyOfPoolSettings(poolId)).copyToMemory();
 
         settings.initialMarginRatioBps = result.popUint16();
         settings.maintainanceMarginRatioBps = result.popUint16();
@@ -62,10 +62,10 @@ library ClearingHouseExtsload {
     // KEY GENERATORS
 
     function keyOfVPool(uint32 poolId) internal pure returns (bytes32) {
-        return Bytes32Lib.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(1);
+        return WordHelper.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(1);
     }
 
     function keyOfPoolSettings(uint32 poolId) internal pure returns (bytes32) {
-        return Bytes32Lib.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(3);
+        return WordHelper.fromUint(poolId).keccak256Two(POOLS_MAPPING_SLOT).offset(3);
     }
 }
