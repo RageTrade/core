@@ -4,12 +4,15 @@ pragma solidity ^0.8.9;
 
 import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/FixedPoint128.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
+
+import { SafeCast } from './SafeCast.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 
 /// @title Funding payment functions
 /// @notice Funding Payment Logic used to distribute the FP bill paid by traders among the LPs in the liquidity range
 library FundingPayment {
     using FullMath for uint256;
+    using SafeCast for uint256;
     using SignedFullMath for int256;
 
     struct Info {
@@ -37,7 +40,8 @@ library FundingPayment {
         pure
         returns (int256 fundingRateX128)
     {
-        return (int256(realPriceX128) - int256(virtualPriceX128)).mulDiv(FixedPoint128.Q128, realPriceX128) / 1 days;
+        int256 priceDeltaX128 = realPriceX128.toInt256() - virtualPriceX128.toInt256();
+        return priceDeltaX128.mulDiv(FixedPoint128.Q128, realPriceX128) / 1 days;
     }
 
     /// @notice Used to update the state of the funding payment whenever a trade takes place
