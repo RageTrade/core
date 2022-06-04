@@ -317,10 +317,12 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         bytes calldata
     ) external virtual onlyUniswapV3Pool {
         if (amount0Delta > 0) {
+            // uniswap v3 pool token0 is always vToken (ensured in RageTradeFactory._isIVTokenAddressGood)
             IVToken(vPool.token0()).mint(address(vPool), uint256(amount0Delta));
         }
         if (amount1Delta > 0) {
-            IVToken(vPool.token1()).mint(address(vPool), uint256(amount1Delta));
+            // uniswap v3 pool token1 is always vQuote (ensured in RageTradeFactory._isIVTokenAddressGood)
+            IVQuote(vPool.token1()).mint(address(vPool), uint256(amount1Delta));
         }
     }
 
