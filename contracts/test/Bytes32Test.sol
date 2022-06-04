@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import { Bytes32 } from '../libraries/Bytes32.sol';
+import { Bytes32Lib } from '../libraries/Bytes32Lib.sol';
 
-contract Bytes32Test {
+contract Bytes32LibTest {
     function keccak256One(bytes32 input) public pure returns (bytes32 result) {
-        return Bytes32.keccak256One(input);
+        return Bytes32Lib.keccak256One(input);
     }
 
     function keccak256Two(bytes32 input1, bytes32 input2) public pure returns (bytes32 result) {
-        return Bytes32.keccak256Two(input1, input2);
+        return Bytes32Lib.keccak256Two(input1, input2);
     }
 
     function slice(
@@ -18,14 +18,14 @@ contract Bytes32Test {
         uint256 start,
         uint256 end
     ) public pure returns (uint256 val) {
-        return Bytes32.slice(input, start, end);
+        return Bytes32Lib.slice(input, start, end);
     }
 
     function offset(bytes32 key, uint256 offset_) public pure returns (bytes32) {
-        return Bytes32.offset(key, offset_);
+        return Bytes32Lib.offset(key, offset_);
     }
 
-    function extract(bytes32 input, uint256 bits) public pure returns (uint256 value, bytes32 inputUpdated) {
-        return Bytes32.extract(input, bits);
+    function pop(bytes32 input, uint256 bits) public pure returns (uint256 value, bytes32 inputUpdated) {
+        return Bytes32Lib.pop(input, bits);
     }
 }
