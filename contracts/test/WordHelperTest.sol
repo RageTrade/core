@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import { Bytes32Lib } from '../libraries/Bytes32Lib.sol';
+import { WordHelper } from '../libraries/WordHelper.sol';
 
-contract Bytes32LibTest {
+contract WordHelperTest {
     function keccak256One(bytes32 input) public pure returns (bytes32 result) {
-        return Bytes32Lib.keccak256One(input);
+        return WordHelper.keccak256One(input);
     }
 
     function keccak256Two(bytes32 input1, bytes32 input2) public pure returns (bytes32 result) {
-        return Bytes32Lib.keccak256Two(input1, input2);
+        return WordHelper.keccak256Two(input1, input2);
     }
 
     function slice(
@@ -18,30 +18,30 @@ contract Bytes32LibTest {
         uint256 start,
         uint256 end
     ) public pure returns (uint256 val) {
-        return Bytes32Lib.slice(input, start, end);
+        return WordHelper.slice(input, start, end);
     }
 
     function offset(bytes32 key, uint256 offset_) public pure returns (bytes32) {
-        return Bytes32Lib.offset(key, offset_);
+        return WordHelper.offset(key, offset_);
     }
 
     function pop(bytes32 input, uint256 bits) public pure returns (uint256 value, bytes32 inputUpdated) {
-        return Bytes32Lib.pop(input, bits);
+        return WordHelper.pop(input, bits);
     }
 
     function popAddress(bytes32 input) public pure returns (address value, bytes32 inputUpdated) {
-        (value, inputUpdated) = Bytes32Lib.popAddress(input);
+        (value, inputUpdated) = WordHelper.popAddress(input);
     }
 
     function popUint16(bytes32 input) public pure returns (uint16 value, bytes32 inputUpdated) {
-        (value, inputUpdated) = Bytes32Lib.popUint16(input);
+        (value, inputUpdated) = WordHelper.popUint16(input);
     }
 
     function popUint32(bytes32 input) public pure returns (uint32 value, bytes32 inputUpdated) {
-        (value, inputUpdated) = Bytes32Lib.popUint32(input);
+        (value, inputUpdated) = WordHelper.popUint32(input);
     }
 
     function popBool(bytes32 input) public pure returns (bool value, bytes32 inputUpdated) {
-        (value, inputUpdated) = Bytes32Lib.popBool(input);
+        (value, inputUpdated) = WordHelper.popBool(input);
     }
 }
