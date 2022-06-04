@@ -16,6 +16,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 
 import { PriceMath } from './PriceMath.sol';
+import { SafeCast } from './SafeCast.sol';
 import { SignedMath } from './SignedMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
@@ -28,6 +29,7 @@ library Protocol {
     using PriceMath for uint256;
     using SignedMath for int256;
     using SignedFullMath for int256;
+    using SafeCast for uint256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
 
     using Protocol for Protocol.Info;
@@ -113,10 +115,11 @@ library Protocol {
         virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
 
         uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
-        if (
+        uint256 priceDeltaX128 = realPriceX128 > virtualPriceX128
+            ? realPriceX128 - virtualPriceX128
+            : virtualPriceX128 - realPriceX128;
+        if (priceDeltaX128 > realPriceX128.mulDiv(maxDeviationBps, 1e4)) {
             // if virtual price is too off from real price then screw that, we'll just use real price
-            (int256(realPriceX128) - int256(virtualPriceX128)).absUint() > realPriceX128.mulDiv(maxDeviationBps, 1e4)
-        ) {
             virtualPriceX128 = realPriceX128;
         }
         return (realPriceX128, virtualPriceX128);
