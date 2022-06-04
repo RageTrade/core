@@ -3,9 +3,11 @@
 pragma solidity ^0.8.9;
 
 import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
+
 import { IVToken } from '../../interfaces/IVToken.sol';
 
-contract VToken is ERC20, IVToken {
+contract VToken is ERC20, IVToken, Ownable {
     address public vPoolWrapper;
 
     uint8 immutable _decimals;
@@ -24,7 +26,7 @@ contract VToken is ERC20, IVToken {
 
     error Unauthorised();
 
-    function setVPoolWrapper(address _vPoolWrapper) external {
+    function setVPoolWrapper(address _vPoolWrapper) external onlyOwner {
         if (vPoolWrapper == address(0)) {
             vPoolWrapper = _vPoolWrapper;
         }
