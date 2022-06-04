@@ -41,13 +41,15 @@ library WordHelper {
         return slice(input.data, start, end);
     }
 
-    // primitive bytes32 methods
+    // primitive uint256 methods
 
     function fromUint(uint256 input) internal pure returns (bytes32 output) {
         assembly {
             output := input
         }
     }
+
+    // primitive bytes32 methods
 
     function keccak256One(bytes32 input) internal pure returns (bytes32 result) {
         assembly {
@@ -56,10 +58,10 @@ library WordHelper {
         }
     }
 
-    function keccak256Two(bytes32 input1, bytes32 input2) internal pure returns (bytes32 result) {
+    function keccak256Two(bytes32 paddedKey, bytes32 mappingSlot) internal pure returns (bytes32 result) {
         assembly {
-            mstore(0, input1)
-            mstore(0x20, input2)
+            mstore(0, paddedKey)
+            mstore(0x20, mappingSlot)
             result := keccak256(0, 0x40)
         }
     }
