@@ -32,6 +32,10 @@ contract ClearingHouseTest is ClearingHouse {
     using VTokenPositionSet for VTokenPosition.Set;
     using VTokenPosition for VTokenPosition.Info;
 
+    function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
+        return protocol.pools[poolId].vToken.isZero();
+    }
+
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
         return vToken.truncate();
     }

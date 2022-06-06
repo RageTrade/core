@@ -109,6 +109,9 @@ library ClearingHouseExtsload {
         twapDuration = uint32(arr[1].slice(0xB0, 0xD0));
     }
 
+    /// @notice Checks if a poolId is unused
+    /// @param poolId the id of the pool
+    /// @return true if the poolId is unused, false otherwise
     function isPoolIdAvailable(IClearingHouse clearingHouse, uint32 poolId) internal view returns (bool) {
         bytes32 VTOKEN_SLOT = poolStructSlot(poolId).offset(POOL_VTOKEN_OFFSET);
         bytes32 result = clearingHouse.extsload(VTOKEN_SLOT);
