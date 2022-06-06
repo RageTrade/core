@@ -94,6 +94,34 @@ describe('WordHelper.Word', () => {
       expect(result.inputUpdated).to.eq(bytes32('0x01020304050607080910111213141516171819202122232425262728'));
     });
 
+    it('popUint64', async () => {
+      const result = await test.popUint64(bytes32('0x1234567812345678'));
+
+      expect(result.value.toHexString()).to.eq('0x1234567812345678');
+      expect(result.inputUpdated).to.eq(bytes32(0));
+    });
+
+    it('popUint64 full', async () => {
+      const result = await test.popUint64('0x0102030405060708091011121314151617181920212223242526272829303132');
+
+      expect(result.value.toHexString()).to.eq('0x2526272829303132');
+      expect(result.inputUpdated).to.eq(bytes32('0x010203040506070809101112131415161718192021222324'));
+    });
+
+    it('popUint128', async () => {
+      const result = await test.popUint128(bytes32('0x12345678123456781234567812345678'));
+
+      expect(result.value.toHexString()).to.eq('0x12345678123456781234567812345678');
+      expect(result.inputUpdated).to.eq(bytes32(0));
+    });
+
+    it('popUint128 full', async () => {
+      const result = await test.popUint128('0x0102030405060708091011121314151617181920212223242526272829303132');
+
+      expect(result.value.toHexString()).to.eq('0x17181920212223242526272829303132');
+      expect(result.inputUpdated).to.eq(bytes32('0x01020304050607080910111213141516'));
+    });
+
     it('popBool', async () => {
       const result = await test.popBool(bytes32(1));
 

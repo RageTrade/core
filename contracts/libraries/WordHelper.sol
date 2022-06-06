@@ -29,6 +29,14 @@ library WordHelper {
         (value, input.data) = popUint32(input.data);
     }
 
+    function popUint64(Word memory input) internal pure returns (uint64 value) {
+        (value, input.data) = popUint64(input.data);
+    }
+
+    function popUint128(Word memory input) internal pure returns (uint128 value) {
+        (value, input.data) = popUint128(input.data);
+    }
+
     function popBool(Word memory input) internal pure returns (bool value) {
         (value, input.data) = popBool(input.data);
     }
@@ -122,6 +130,18 @@ library WordHelper {
         value = uint32(temp);
     }
 
+    function popUint64(bytes32 input) internal pure returns (uint64 value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = pop(input, 64);
+        value = uint64(temp);
+    }
+
+    function popUint128(bytes32 input) internal pure returns (uint128 value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = pop(input, 128);
+        value = uint128(temp);
+    }
+
     function popBool(bytes32 input) internal pure returns (bool value, bytes32 inputUpdated) {
         uint256 temp;
         (temp, inputUpdated) = pop(input, 8);
@@ -138,6 +158,14 @@ library WordHelper {
 
     function toUint32(bytes32 input) internal pure returns (uint32 value) {
         (value, ) = popUint32(input);
+    }
+
+    function toUint64(bytes32 input) internal pure returns (uint64 value) {
+        (value, ) = popUint64(input);
+    }
+
+    function toUint128(bytes32 input) internal pure returns (uint128 value) {
+        (value, ) = popUint128(input);
     }
 
     function toBool(bytes32 input) internal pure returns (bool value) {

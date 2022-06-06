@@ -41,6 +41,14 @@ contract WordHelperTest {
         (value, inputUpdated) = WordHelper.popUint32(input);
     }
 
+    function popUint64(bytes32 input) public pure returns (uint64 value, bytes32 inputUpdated) {
+        (value, inputUpdated) = WordHelper.popUint64(input);
+    }
+
+    function popUint128(bytes32 input) public pure returns (uint128 value, bytes32 inputUpdated) {
+        (value, inputUpdated) = WordHelper.popUint128(input);
+    }
+
     function popBool(bytes32 input) public pure returns (bool value, bytes32 inputUpdated) {
         (value, inputUpdated) = WordHelper.popBool(input);
     }
