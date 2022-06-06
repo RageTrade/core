@@ -6,22 +6,6 @@ import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 import { IExtsload } from '../IExtsload.sol';
 
 interface IClearingHouseView is IClearingHouseStructures, IExtsload {
-    /// @notice Gets details about account id
-    /// @param accountId the account id
-    /// @return owner address of the account creator
-    /// @return vQuoteBalance the vQuote balance of the account
-    /// @return collateralDeposits the collateral deposits of the account
-    /// @return tokenPositions the token positions of the account along with liquidity positions
-    function getAccountInfo(uint256 accountId)
-        external
-        view
-        returns (
-            address owner,
-            int256 vQuoteBalance,
-            CollateralDepositView[] memory collateralDeposits,
-            VTokenPositionView[] memory tokenPositions
-        );
-
     /// @notice Gets the market value and required margin of an account
     /// @dev This method can be used to check if an account is under water or not.
     ///     If accountMarketValue < requiredMargin then liquidation can take place.

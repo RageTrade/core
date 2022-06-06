@@ -67,6 +67,19 @@ contract ClearingHouseTest is ClearingHouse {
         return protocol.collaterals[collateralId];
     }
 
+    function getAccountInfo(uint256 accountId)
+        public
+        view
+        returns (
+            address owner,
+            int256 vQuoteBalance,
+            CollateralDepositView[] memory collateralDeposits,
+            VTokenPositionView[] memory tokenPositions
+        )
+    {
+        return accounts[accountId].getInfo(protocol);
+    }
+
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
         return vToken.truncate();
     }
