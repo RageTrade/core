@@ -187,10 +187,8 @@ library ClearingHouseExtsload {
      * PROTOCOL COLLATERALS MAPPING
      */
 
-    // PROTOCOL_STRUCT -> COLLATERALS_MAPPING -> COLLATERAL_STRUCT
     uint256 constant COLLATERAL_TOKEN_OFFSET = 0;
-    uint256 constant COLLATERAL_SETTINGS_ORACLE_OFFSET = 1;
-    uint256 constant COLLATERAL_SETTINGS_TWAPDURATION_ISALLOWEDDEPOSIT_OFFSET = 2;
+    uint256 constant COLLATERAL_SETTINGS_OFFSET = 1;
 
     function collateralStructSlot(uint32 collateralId) internal pure returns (bytes32) {
         return
@@ -198,5 +196,33 @@ library ClearingHouseExtsload {
                 mappingSlot: PROTOCOL_SLOT.offset(PROTOCOL_COLLATERALS_MAPPING_OFFSET),
                 paddedKey: WordHelper.fromUint(collateralId)
             });
+    }
+
+    function _decodeCollateralSettings(bytes32 data)
+        internal
+        pure
+        returns (IClearingHouse.CollateralSettings memory settings)
+    {
+        WordHelper.Word memory result = data.copyToMemory();
+        settings.oracle = IOracle(result.popAddress());
+        settings.twapDuration = result.popUint32();
+        settings.isAllowedForDeposit = result.popBool();
+    }
+
+    /// @notice Gets the info about a supported collateral in the protocol
+    /// @param collateralId the id of the collateral
+    /// @return collateral the Collateral struct
+    function getCollateralInfo(IClearingHouse clearingHouse, uint32 collateralId)
+        internal
+        view
+        returns (IClearingHouse.Collateral memory collateral)
+    {
+        bytes32[] memory arr = new bytes32[](2);
+        bytes32 COLLATERAL_STRUCT_SLOT = collateralStructSlot(collateralId);
+        arr[0] = COLLATERAL_STRUCT_SLOT; // COLLATERAL_TOKEN_OFFSET
+        arr[1] = COLLATERAL_STRUCT_SLOT.offset(COLLATERAL_SETTINGS_OFFSET);
+        arr = clearingHouse.extsload(arr);
+        collateral.token = IVToken(arr[0].toAddress());
+        collateral.settings = _decodeCollateralSettings(arr[1]);
     }
 }

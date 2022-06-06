@@ -30,7 +30,7 @@ describe('Clearing House Extsload', () => {
     test = await (await hre.ethers.getContractFactory('ClearingHouseExtsloadTest')).deploy();
   });
 
-  describe('pools', () => {
+  describe('protocol', () => {
     it('vPool', async () => {
       const result = await test.getVPool(clearingHouse.address, truncate(vToken.address));
       expect(result).to.eq(vPool.address);
@@ -78,6 +78,14 @@ describe('Clearing House Extsload', () => {
 
       const protocolSload = await clearingHouse.getProtocolInfo();
       expect(protocolExtsload).to.deep.eq(protocolSload);
+    });
+
+    it('getCollateralInfo', async () => {
+      const collateralExtsload = await test.getCollateralInfo(clearingHouse.address, truncate(settlementToken.address));
+      expect(collateralExtsload.token).to.eq(settlementToken.address);
+
+      const collateralSload = await clearingHouse.getCollateralInfo(truncate(settlementToken.address));
+      expect(collateralExtsload).to.deep.eq(collateralSload);
     });
   });
 });

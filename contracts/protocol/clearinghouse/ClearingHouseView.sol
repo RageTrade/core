@@ -2,15 +2,10 @@
 
 pragma solidity ^0.8.9;
 
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IClearingHouseView } from '../../interfaces/clearinghouse/IClearingHouseView.sol';
-import { IVQuote } from '../../interfaces/IVQuote.sol';
-import { IVToken } from '../../interfaces/IVToken.sol';
 
 import { Account } from '../../libraries/Account.sol';
-import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { Protocol } from '../../libraries/Protocol.sol';
 
 import { ClearingHouseStorage } from './ClearingHouseStorage.sol';
@@ -19,8 +14,6 @@ import { Extsload } from '../../utils/Extsload.sol';
 
 abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Extsload {
     using Account for Account.Info;
-    using AddressHelper for address;
-    using AddressHelper for IVToken;
     using Protocol for Protocol.Info;
 
     /// @inheritdoc IClearingHouseView
@@ -54,11 +47,6 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     /// @inheritdoc IClearingHouseView
     function getAccountNetTokenPosition(uint256 accountId, uint32 poolId) public view returns (int256 netPosition) {
         return accounts[accountId].getNetPosition(poolId, protocol);
-    }
-
-    /// @inheritdoc IClearingHouseView
-    function getCollateralInfo(uint32 collateralId) public view returns (Collateral memory) {
-        return protocol.collaterals[collateralId];
     }
 
     /// @inheritdoc IClearingHouseView
