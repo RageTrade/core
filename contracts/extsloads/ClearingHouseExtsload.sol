@@ -21,10 +21,9 @@ library ClearingHouseExtsload {
     using WordHelper for WordHelper.Word;
 
     /**
-     * SLOT GENERATORS
+     * PROTOCOL
      */
 
-    // PROTOCOL_STRUCT
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
     uint256 constant PROTOCOL_POOLS_MAPPING_OFFSET = 0;
     uint256 constant PROTOCOL_COLLATERALS_MAPPING_OFFSET = 1;
@@ -35,7 +34,10 @@ library ClearingHouseExtsload {
     uint256 constant PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET = 6;
     uint256 constant PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET = 7;
 
-    // PROTOCOL_STRUCT -> POOLS_MAPPING -> POOL_STRUCT
+    /**
+     * PROTOCOL POOLS MAPPING
+     */
+
     uint256 constant POOL_VTOKEN_OFFSET = 0;
     uint256 constant POOL_VPOOL_OFFSET = 1;
     uint256 constant POOL_VPOOLWRAPPER_OFFSET = 2;
@@ -49,22 +51,16 @@ library ClearingHouseExtsload {
             });
     }
 
-    // PROTOCOL_STRUCT -> COLLATERALS_MAPPING -> COLLATERAL_STRUCT
-    uint256 constant COLLATERAL_TOKEN_OFFSET = 0;
-    uint256 constant COLLATERAL_SETTINGS_ORACLE_OFFSET = 1;
-    uint256 constant COLLATERAL_SETTINGS_TWAPDURATION_ISALLOWEDDEPOSIT_OFFSET = 2;
-
-    function collateralStructSlot(uint32 collateralId) internal pure returns (bytes32) {
-        return
-            WordHelper.keccak256Two({
-                mappingSlot: PROTOCOL_SLOT.offset(PROTOCOL_COLLATERALS_MAPPING_OFFSET),
-                paddedKey: WordHelper.fromUint(collateralId)
-            });
+    function _decodePoolSettingsSlot(bytes32 data) internal pure returns (IClearingHouse.PoolSettings memory settings) {
+        WordHelper.Word memory result = data.copyToMemory();
+        settings.initialMarginRatioBps = result.popUint16();
+        settings.maintainanceMarginRatioBps = result.popUint16();
+        settings.maxVirtualPriceDeviationRatioBps = result.popUint16();
+        settings.twapDuration = result.popUint32();
+        settings.isAllowedForTrade = result.popBool();
+        settings.isCrossMargined = result.popBool();
+        settings.oracle = IOracle(result.popAddress());
     }
-
-    /**
-     * GETTERS
-     */
 
     /// @notice Gets the info about a supported pool in the protocol
     /// @param poolId the id of the pool
@@ -103,17 +99,6 @@ library ClearingHouseExtsload {
         return _decodePoolSettingsSlot(clearingHouse.extsload(SETTINGS_SLOT));
     }
 
-    function _decodePoolSettingsSlot(bytes32 data) internal pure returns (IClearingHouse.PoolSettings memory settings) {
-        WordHelper.Word memory result = data.copyToMemory();
-        settings.initialMarginRatioBps = result.popUint16();
-        settings.maintainanceMarginRatioBps = result.popUint16();
-        settings.maxVirtualPriceDeviationRatioBps = result.popUint16();
-        settings.twapDuration = result.popUint32();
-        settings.isAllowedForTrade = result.popBool();
-        settings.isCrossMargined = result.popBool();
-        settings.oracle = IOracle(result.popAddress());
-    }
-
     function getTwapDuration(IClearingHouse clearingHouse, uint32 poolId) internal view returns (uint32 twapDuration) {
         bytes32 result = clearingHouse.extsload(poolStructSlot(poolId).offset(POOL_SETTINGS_STRUCT_OFFSET));
         twapDuration = uint32(result.slice(0x30, 0x50));
@@ -142,5 +127,22 @@ library ClearingHouseExtsload {
         bytes32 VTOKEN_SLOT = poolStructSlot(poolId).offset(POOL_VTOKEN_OFFSET);
         bytes32 result = clearingHouse.extsload(VTOKEN_SLOT);
         return result == WordHelper.fromUint(0);
+    }
+
+    /**
+     * PROTOCOL COLLATERALS MAPPING
+     */
+
+    // PROTOCOL_STRUCT -> COLLATERALS_MAPPING -> COLLATERAL_STRUCT
+    uint256 constant COLLATERAL_TOKEN_OFFSET = 0;
+    uint256 constant COLLATERAL_SETTINGS_ORACLE_OFFSET = 1;
+    uint256 constant COLLATERAL_SETTINGS_TWAPDURATION_ISALLOWEDDEPOSIT_OFFSET = 2;
+
+    function collateralStructSlot(uint32 collateralId) internal pure returns (bytes32) {
+        return
+            WordHelper.keccak256Two({
+                mappingSlot: PROTOCOL_SLOT.offset(PROTOCOL_COLLATERALS_MAPPING_OFFSET),
+                paddedKey: WordHelper.fromUint(collateralId)
+            });
     }
 }
