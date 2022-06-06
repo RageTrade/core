@@ -21,6 +21,10 @@ library WordHelper {
         (value, input.data) = popAddress(input.data);
     }
 
+    function popUint8(Word memory input) internal pure returns (uint8 value) {
+        (value, input.data) = popUint8(input.data);
+    }
+
     function popUint16(Word memory input) internal pure returns (uint16 value) {
         (value, input.data) = popUint16(input.data);
     }
@@ -118,6 +122,12 @@ library WordHelper {
         }
     }
 
+    function popUint8(bytes32 input) internal pure returns (uint8 value, bytes32 inputUpdated) {
+        uint256 temp;
+        (temp, inputUpdated) = pop(input, 8);
+        value = uint8(temp);
+    }
+
     function popUint16(bytes32 input) internal pure returns (uint16 value, bytes32 inputUpdated) {
         uint256 temp;
         (temp, inputUpdated) = pop(input, 16);
@@ -150,6 +160,10 @@ library WordHelper {
 
     function toAddress(bytes32 input) internal pure returns (address value) {
         (value, ) = popAddress(input);
+    }
+
+    function toUint8(bytes32 input) internal pure returns (uint8 value) {
+        (value, ) = popUint8(input);
     }
 
     function toUint16(bytes32 input) internal pure returns (uint16 value) {

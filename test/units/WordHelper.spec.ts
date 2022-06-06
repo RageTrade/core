@@ -6,7 +6,7 @@ import hre from 'hardhat';
 import { bytes32 } from '@ragetrade/sdk';
 import { WordHelperTest } from '../../typechain-types/artifacts/contracts/test/WordHelperTest';
 
-describe('WordHelper.Word', () => {
+describe('WordHelper', () => {
   let test: WordHelperTest;
   before(async () => {
     test = await (await hre.ethers.getContractFactory('WordHelperTest')).deploy();
@@ -64,6 +64,20 @@ describe('WordHelper.Word', () => {
 
       expect(result.value).to.eq(getAddress('0x1314151617181920212223242526272829303132'));
       expect(result.inputUpdated).to.eq(bytes32('0x010203040506070809101112'));
+    });
+
+    it('popUint8', async () => {
+      const result = await test.popUint8(bytes32(0x12));
+
+      expect(result.value).to.eq(0x12);
+      expect(result.inputUpdated).to.eq(bytes32(0));
+    });
+
+    it('popUint8 full', async () => {
+      const result = await test.popUint8('0x0102030405060708091011121314151617181920212223242526272829303132');
+
+      expect(result.value).to.eq(0x32);
+      expect(result.inputUpdated).to.eq(bytes32('0x01020304050607080910111213141516171819202122232425262728293031'));
     });
 
     it('popUint16', async () => {
