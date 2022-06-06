@@ -168,6 +168,12 @@ library WordHelper {
         (value, ) = popUint128(input);
     }
 
+    function toUint256(bytes32 input) internal pure returns (uint256 value) {
+        assembly {
+            value := input
+        }
+    }
+
     function toBool(bytes32 input) internal pure returns (bool value) {
         (value, ) = popBool(input);
     }

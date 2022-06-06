@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.9;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { Account } from '../libraries/Account.sol';
 import { CollateralDeposit } from '../libraries/CollateralDeposit.sol';
 import { LiquidityPositionSet } from '../libraries/LiquidityPositionSet.sol';
@@ -15,6 +17,7 @@ import { Protocol } from '../libraries/Protocol.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IClearingHouseEnums } from '../interfaces/clearinghouse/IClearingHouseEnums.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { ClearingHouse } from '../protocol/clearinghouse/ClearingHouse.sol';
@@ -38,6 +41,26 @@ contract ClearingHouseTest is ClearingHouse {
 
     function getPoolInfo(uint32 poolId) public view returns (Pool memory) {
         return protocol.pools[poolId];
+    }
+
+    function getProtocolInfo()
+        public
+        view
+        returns (
+            IERC20 settlementToken,
+            IVQuote vQuote,
+            LiquidationParams memory liquidationParams,
+            uint256 minRequiredMargin,
+            uint256 removeLimitOrderFee,
+            uint256 minimumOrderNotional
+        )
+    {
+        settlementToken = protocol.settlementToken;
+        vQuote = protocol.vQuote;
+        liquidationParams = protocol.liquidationParams;
+        minRequiredMargin = protocol.minRequiredMargin;
+        removeLimitOrderFee = protocol.removeLimitOrderFee;
+        minimumOrderNotional = protocol.minimumOrderNotional;
     }
 
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {

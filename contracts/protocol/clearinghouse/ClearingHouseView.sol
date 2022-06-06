@@ -62,27 +62,6 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     /// @inheritdoc IClearingHouseView
-    function getProtocolInfo()
-        public
-        view
-        returns (
-            IERC20 settlementToken,
-            IVQuote vQuote,
-            LiquidationParams memory liquidationParams,
-            uint256 minRequiredMargin,
-            uint256 removeLimitOrderFee,
-            uint256 minimumOrderNotional
-        )
-    {
-        settlementToken = protocol.settlementToken;
-        vQuote = protocol.vQuote;
-        liquidationParams = protocol.liquidationParams;
-        minRequiredMargin = protocol.minRequiredMargin;
-        removeLimitOrderFee = protocol.removeLimitOrderFee;
-        minimumOrderNotional = protocol.minimumOrderNotional;
-    }
-
-    /// @inheritdoc IClearingHouseView
     function getRealTwapPriceX128(uint32 poolId) public view returns (uint256 realPriceX128) {
         realPriceX128 = protocol.getCachedRealTwapPriceX128(poolId);
     }

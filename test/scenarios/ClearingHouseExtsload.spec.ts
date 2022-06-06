@@ -3,7 +3,14 @@ import hre from 'hardhat';
 
 import { truncate } from '@ragetrade/sdk';
 
-import { ClearingHouseTest, IOracle, IUniswapV3Pool, IVPoolWrapper, IVToken } from '../../typechain-types';
+import {
+  ClearingHouseTest,
+  IOracle,
+  IUniswapV3Pool,
+  IVPoolWrapper,
+  IVToken,
+  SettlementTokenMock,
+} from '../../typechain-types';
 import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { vEthFixture } from '../fixtures/vETH';
 import { activateMainnetFork } from '../helpers/mainnet-fork';
@@ -11,6 +18,7 @@ import { activateMainnetFork } from '../helpers/mainnet-fork';
 describe('Clearing House Extsload', () => {
   let clearingHouse: ClearingHouseTest;
   let oracle: IOracle;
+  let settlementToken: SettlementTokenMock;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: IVPoolWrapper;
   let vToken: IVToken;
@@ -18,7 +26,7 @@ describe('Clearing House Extsload', () => {
 
   before(async () => {
     await activateMainnetFork();
-    ({ clearingHouse, vToken, vPool, vPoolWrapper, oracle } = await vEthFixture());
+    ({ clearingHouse, vToken, vPool, vPoolWrapper, oracle, settlementToken } = await vEthFixture());
     test = await (await hre.ethers.getContractFactory('ClearingHouseExtsloadTest')).deploy();
   });
 
@@ -54,7 +62,6 @@ describe('Clearing House Extsload', () => {
     });
 
     it('getPoolInfo', async () => {
-      // an already created pool should not be available
       const poolExtsload = await test.getPoolInfo(clearingHouse.address, truncate(vToken.address));
       expect(poolExtsload.vToken).to.eq(vToken.address);
       expect(poolExtsload.vPool).to.eq(vPool.address);
@@ -63,6 +70,14 @@ describe('Clearing House Extsload', () => {
 
       const poolSload = await clearingHouse.getPoolInfo(truncate(vToken.address));
       expect(poolExtsload).to.deep.eq(poolSload);
+    });
+
+    it('getProtocolInfo', async () => {
+      const protocolExtsload = await test.getProtocolInfo(clearingHouse.address);
+      expect(protocolExtsload.settlementToken).to.eq(settlementToken.address);
+
+      const protocolSload = await clearingHouse.getProtocolInfo();
+      expect(protocolExtsload).to.deep.eq(protocolSload);
     });
   });
 });

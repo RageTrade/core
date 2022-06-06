@@ -2,11 +2,14 @@
 
 pragma solidity ^0.8.0;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IExtsload } from '../interfaces/IExtsload.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
@@ -33,6 +36,57 @@ library ClearingHouseExtsload {
     uint256 constant PROTOCOL_MINIMUM_REQUIRED_MARGIN_OFFSET = 5;
     uint256 constant PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET = 6;
     uint256 constant PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET = 7;
+
+    function _decodeLiquidationParamsSlot(bytes32 data)
+        internal
+        pure
+        returns (IClearingHouse.LiquidationParams memory liquidationParams)
+    {
+        WordHelper.Word memory result = data.copyToMemory();
+        liquidationParams.rangeLiquidationFeeFraction = result.popUint16();
+        liquidationParams.tokenLiquidationFeeFraction = result.popUint16();
+        liquidationParams.closeFactorMMThresholdBps = result.popUint16();
+        liquidationParams.partialLiquidationCloseFactorBps = result.popUint16();
+        liquidationParams.insuranceFundFeeShareBps = result.popUint16();
+        liquidationParams.liquidationSlippageSqrtToleranceBps = result.popUint16();
+        liquidationParams.maxRangeLiquidationFees = result.popUint64();
+        liquidationParams.minNotionalLiquidatable = result.popUint64();
+    }
+
+    /// @notice Gets the protocol info, global protocol settings
+    /// @return settlementToken the token in which profit is settled
+    /// @return vQuote the vQuote token contract
+    /// @return liquidationParams the liquidation parameters
+    /// @return minRequiredMargin minimum required margin an account has to keep with non-zero netPosition
+    /// @return removeLimitOrderFee the fee charged for using removeLimitOrder service
+    /// @return minimumOrderNotional the minimum order notional
+    function getProtocolInfo(IClearingHouse clearingHouse)
+        internal
+        view
+        returns (
+            IERC20 settlementToken,
+            IVQuote vQuote,
+            IClearingHouse.LiquidationParams memory liquidationParams,
+            uint256 minRequiredMargin,
+            uint256 removeLimitOrderFee,
+            uint256 minimumOrderNotional
+        )
+    {
+        bytes32[] memory arr = new bytes32[](6);
+        arr[0] = PROTOCOL_SLOT.offset(PROTOCOL_SETTLEMENT_TOKEN_OFFSET);
+        arr[1] = PROTOCOL_SLOT.offset(PROTOCOL_VQUOTE_OFFSET);
+        arr[2] = PROTOCOL_SLOT.offset(PROTOCOL_LIQUIDATION_PARAMS_STRUCT_OFFSET);
+        arr[3] = PROTOCOL_SLOT.offset(PROTOCOL_MINIMUM_REQUIRED_MARGIN_OFFSET);
+        arr[4] = PROTOCOL_SLOT.offset(PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET);
+        arr[5] = PROTOCOL_SLOT.offset(PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET);
+        arr = clearingHouse.extsload(arr);
+        settlementToken = IERC20(arr[0].toAddress());
+        vQuote = IVQuote(arr[1].toAddress());
+        liquidationParams = _decodeLiquidationParamsSlot(arr[2]);
+        minRequiredMargin = arr[3].toUint256();
+        removeLimitOrderFee = arr[4].toUint256();
+        minimumOrderNotional = arr[5].toUint256();
+    }
 
     /**
      * PROTOCOL POOLS MAPPING
