@@ -36,6 +36,10 @@ contract ClearingHouseTest is ClearingHouse {
         return protocol.pools[poolId].vToken.isZero();
     }
 
+    function getPoolInfo(uint32 poolId) public view returns (Pool memory) {
+        return protocol.pools[poolId];
+    }
+
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
         return vToken.truncate();
     }

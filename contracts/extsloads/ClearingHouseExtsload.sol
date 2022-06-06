@@ -7,6 +7,8 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IExtsload } from '../interfaces/IExtsload.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
+import { IVToken } from '../interfaces/IVToken.sol';
 
 import { WordHelper } from '../libraries/WordHelper.sol';
 
@@ -64,6 +66,27 @@ library ClearingHouseExtsload {
      * GETTERS
      */
 
+    /// @notice Gets the info about a supported pool in the protocol
+    /// @param poolId the id of the pool
+    /// @return pool the Pool struct
+    function getPoolInfo(IClearingHouse clearingHouse, uint32 poolId)
+        internal
+        view
+        returns (IClearingHouse.Pool memory pool)
+    {
+        bytes32 POOL_SLOT = poolStructSlot(poolId);
+        bytes32[] memory arr = new bytes32[](4);
+        arr[0] = POOL_SLOT; // POOL_VTOKEN_OFFSET
+        arr[1] = POOL_SLOT.offset(POOL_VPOOL_OFFSET);
+        arr[2] = POOL_SLOT.offset(POOL_VPOOLWRAPPER_OFFSET);
+        arr[3] = POOL_SLOT.offset(POOL_SETTINGS_STRUCT_OFFSET);
+        arr = clearingHouse.extsload(arr);
+        pool.vToken = IVToken(arr[0].toAddress());
+        pool.vPool = IUniswapV3Pool(arr[1].toAddress());
+        pool.vPoolWrapper = IVPoolWrapper(arr[2].toAddress());
+        pool.settings = _decodePoolSettingsSlot(arr[3]);
+    }
+
     function getVPool(IClearingHouse clearingHouse, uint32 poolId) internal view returns (IUniswapV3Pool vPool) {
         bytes32 result = clearingHouse.extsload(poolStructSlot(poolId).offset(POOL_VPOOL_OFFSET));
         assembly {
@@ -74,11 +97,14 @@ library ClearingHouseExtsload {
     function getPoolSettings(IClearingHouse clearingHouse, uint32 poolId)
         internal
         view
-        returns (IClearingHouse.PoolSettings memory settings)
+        returns (IClearingHouse.PoolSettings memory)
     {
         bytes32 SETTINGS_SLOT = poolStructSlot(poolId).offset(POOL_SETTINGS_STRUCT_OFFSET);
-        WordHelper.Word memory result = clearingHouse.extsload(SETTINGS_SLOT).copyToMemory();
+        return _decodePoolSettingsSlot(clearingHouse.extsload(SETTINGS_SLOT));
+    }
 
+    function _decodePoolSettingsSlot(bytes32 data) internal pure returns (IClearingHouse.PoolSettings memory settings) {
+        WordHelper.Word memory result = data.copyToMemory();
         settings.initialMarginRatioBps = result.popUint16();
         settings.maintainanceMarginRatioBps = result.popUint16();
         settings.maxVirtualPriceDeviationRatioBps = result.popUint16();

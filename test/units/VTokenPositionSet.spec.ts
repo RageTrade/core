@@ -7,7 +7,7 @@ import { getCreateAddressFor, truncate } from '@ragetrade/sdk';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
-  ArbSysMock,
+  ClearingHouseTest,  ArbSysMock,
   ClearingHouse,
   ERC20,
   RageTradeFactory,
@@ -32,7 +32,7 @@ describe('VTokenPositionSet Library', () => {
   let rageTradeFactory: RageTradeFactory;
   let vQuote: VQuote;
   let VPoolWrapper: VPoolWrapper;
-  let arbSysFake: FakeContract<ArbSysMock>;
+  let clearingHouse: ClearingHouseTest;  let arbSysFake: FakeContract<ArbSysMock>;
   let arbBlockNum: number;
 
   let clearingHouse: ClearingHouse;
@@ -57,7 +57,7 @@ describe('VTokenPositionSet Library', () => {
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const clearingHouseLogic = await (
-      await hre.ethers.getContractFactory('ClearingHouse', {
+      await hre.ethers.getContractFactory('ClearingHouseTest', {
         libraries: {
           Account: accountLib.address,
         },
@@ -80,7 +80,7 @@ describe('VTokenPositionSet Library', () => {
       settlementTokenOracle.address,
     );
 
-    clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+    clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
     chSigner = await impersonateAccount(clearingHouse.address);
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
 

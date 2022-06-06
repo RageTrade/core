@@ -3,20 +3,22 @@ import hre from 'hardhat';
 
 import { truncate } from '@ragetrade/sdk';
 
-import { ClearingHouse, IUniswapV3Pool, IVToken } from '../../typechain-types';
+import { ClearingHouseTest, IOracle, IUniswapV3Pool, IVPoolWrapper, IVToken } from '../../typechain-types';
 import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { vEthFixture } from '../fixtures/vETH';
 import { activateMainnetFork } from '../helpers/mainnet-fork';
 
 describe('Clearing House Extsload', () => {
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
+  let oracle: IOracle;
   let vPool: IUniswapV3Pool;
+  let vPoolWrapper: IVPoolWrapper;
   let vToken: IVToken;
   let test: ClearingHouseExtsloadTest;
 
   before(async () => {
     await activateMainnetFork();
-    ({ clearingHouse, vToken, vPool } = await vEthFixture());
+    ({ clearingHouse, vToken, vPool, vPoolWrapper, oracle } = await vEthFixture());
     test = await (await hre.ethers.getContractFactory('ClearingHouseExtsloadTest')).deploy();
   });
 
@@ -49,6 +51,18 @@ describe('Clearing House Extsload', () => {
       // an created pool should not be available
       const result2 = await test.isPoolIdAvailable(clearingHouse.address, 0x12345678);
       expect(result2).to.be.true;
+    });
+
+    it('getPoolInfo', async () => {
+      // an already created pool should not be available
+      const poolExtsload = await test.getPoolInfo(clearingHouse.address, truncate(vToken.address));
+      expect(poolExtsload.vToken).to.eq(vToken.address);
+      expect(poolExtsload.vPool).to.eq(vPool.address);
+      expect(poolExtsload.vPoolWrapper).to.eq(vPoolWrapper.address);
+      expect(poolExtsload.settings.oracle).to.eq(oracle.address);
+
+      const poolSload = await clearingHouse.getPoolInfo(truncate(vToken.address));
+      expect(poolExtsload).to.deep.eq(poolSload);
     });
   });
 });
