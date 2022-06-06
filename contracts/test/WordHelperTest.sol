@@ -33,6 +33,10 @@ contract WordHelperTest {
         (value, inputUpdated) = WordHelper.popAddress(input);
     }
 
+    function popUint8(bytes32 input) public pure returns (uint8 value, bytes32 inputUpdated) {
+        (value, inputUpdated) = WordHelper.popUint8(input);
+    }
+
     function popUint16(bytes32 input) public pure returns (uint16 value, bytes32 inputUpdated) {
         (value, inputUpdated) = WordHelper.popUint16(input);
     }
