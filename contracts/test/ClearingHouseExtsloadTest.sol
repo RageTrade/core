@@ -2,11 +2,14 @@
 
 pragma solidity ^0.8.0;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IExtsload } from '../interfaces/IExtsload.sol';
 import { IOracle } from '../interfaces/IOracle.sol';
+import { IVQuote } from '../interfaces/IVQuote.sol';
 
 import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 
@@ -54,5 +57,20 @@ contract ClearingHouseExtsloadTest {
 
     function getPoolInfo(IClearingHouse clearingHouse, uint32 poolId) public view returns (IClearingHouse.Pool memory) {
         return ClearingHouseExtsload.getPoolInfo(clearingHouse, poolId);
+    }
+
+    function getProtocolInfo(IClearingHouse clearingHouse)
+        external
+        view
+        returns (
+            IERC20 settlementToken,
+            IVQuote vQuote,
+            IClearingHouse.LiquidationParams memory liquidationParams,
+            uint256 minRequiredMargin,
+            uint256 removeLimitOrderFee,
+            uint256 minimumOrderNotional
+        )
+    {
+        return ClearingHouseExtsload.getProtocolInfo(clearingHouse);
     }
 }
