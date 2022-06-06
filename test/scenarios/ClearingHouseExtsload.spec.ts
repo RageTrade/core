@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import hre from 'hardhat';
+import hre, { tracer } from 'hardhat';
 
 import { parseUsdc, truncate } from '@ragetrade/sdk';
 
