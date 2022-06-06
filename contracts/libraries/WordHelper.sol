@@ -45,7 +45,7 @@ library WordHelper {
         Word memory input,
         uint256 start,
         uint256 end
-    ) internal pure returns (uint256 val) {
+    ) internal pure returns (bytes32 val) {
         return slice(input.data, start, end);
     }
 
@@ -85,7 +85,7 @@ library WordHelper {
         bytes32 input,
         uint256 start,
         uint256 end
-    ) internal pure returns (uint256 val) {
+    ) internal pure returns (bytes32 val) {
         assembly {
             val := shl(start, input)
             val := shr(add(start, sub(256, end)), val)
