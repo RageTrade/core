@@ -11,7 +11,7 @@ import {
   ProxyAdmin__factory,
   VQuote__factory,
 } from '../typechain-types';
-import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/protocol/clearinghouse/ClearingHouse';
+import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/lens/ClearingHouseLens';
 import { waitConfirmations } from './network-info';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -60,6 +60,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
   }
 
+  // TODO: refactor this to a seperate deploy script
+  await deploy('ClearingHouseLens', {
+    from: deployer,
+    log: true,
+    args: [clearingHouseAddress],
+    waitConfirmations,
+  });
+
   execute(
     'ClearingHouse',
     { from: deployer, waitConfirmations },
@@ -98,8 +106,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       address: insuranceFundAddress,
     });
   }
+
   const collateralInfo: IClearingHouseStructures.CollateralStruct = await read(
-    'ClearingHouse',
+    'ClearingHouseLens',
     'getCollateralInfo',
     truncate(settlementToken.address),
   );

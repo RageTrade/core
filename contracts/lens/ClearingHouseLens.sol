@@ -53,4 +53,8 @@ contract ClearingHouseLens {
     function isPoolIdAvailable(uint32 poolId) external view returns (bool) {
         return clearingHouse.isPoolIdAvailable(poolId);
     }
+
+    function getCollateralInfo(uint32 collateralId) external view returns (IClearingHouse.Collateral memory) {
+        return clearingHouse.getCollateralInfo(collateralId);
+    }
 }
