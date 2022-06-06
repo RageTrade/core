@@ -5,7 +5,7 @@ import hre from 'hardhat';
 import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
 import { tickToSqrtPriceX96, truncate } from '@ragetrade/sdk';
 
-import { ClearingHouse, UniswapV3Pool, VPoolWrapper, VQuote, VTokenPositionSetTest2 } from '../../typechain-types';
+import { ClearingHouseTest, UniswapV3Pool, VPoolWrapper, VQuote, VTokenPositionSetTest2 } from '../../typechain-types';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { testSetup } from '../helpers/setup-general';
 
@@ -14,7 +14,7 @@ describe('Market Value and Required Margin', () => {
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   let vQuote: VQuote;
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
 

@@ -62,11 +62,6 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     }
 
     /// @inheritdoc IClearingHouseView
-    function getPoolInfo(uint32 poolId) public view returns (Pool memory) {
-        return protocol.pools[poolId];
-    }
-
-    /// @inheritdoc IClearingHouseView
     function getProtocolInfo()
         public
         view
