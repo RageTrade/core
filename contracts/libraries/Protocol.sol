@@ -39,6 +39,8 @@ library Protocol {
         mapping(uint32 => IClearingHouseStructures.Pool) pools;
         // collateralId => CollateralInfo
         mapping(uint32 => IClearingHouseStructures.Collateral) collaterals;
+        // iterable and increasing list of pools (used for admin functions)
+        uint32[] poolIds;
         // settlement token (default collateral)
         IERC20 settlementToken;
         // virtual quote token (sort of fake USDC), is always token1 in uniswap pools
