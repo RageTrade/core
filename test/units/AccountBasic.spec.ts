@@ -9,7 +9,7 @@ import { parseTokenAmount, truncate } from '@ragetrade/sdk';
 import {
   AccountTest,
   ArbSysMock,
-  ClearingHouse,
+  ClearingHouseTest,
   ERC20,
   OracleMock,
   RageTradeFactory,
@@ -30,7 +30,7 @@ describe('Account Library Test Basic', () => {
   let arbBlockNum: number;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
   let rageTradeFactory: RageTradeFactory;
 
   let test: AccountTest;

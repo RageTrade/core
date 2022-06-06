@@ -8,7 +8,7 @@ import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
   ArbSysMock,
-  ClearingHouse,
+  ClearingHouseTest,
   ERC20,
   RageTradeFactory,
   UniswapV3Pool,
@@ -35,7 +35,7 @@ describe('VTokenPositionSet Library', () => {
   let arbSysFake: FakeContract<ArbSysMock>;
   let arbBlockNum: number;
 
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
   let chSigner: SignerWithAddress;
@@ -57,7 +57,7 @@ describe('VTokenPositionSet Library', () => {
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const clearingHouseLogic = await (
-      await hre.ethers.getContractFactory('ClearingHouse', {
+      await hre.ethers.getContractFactory('ClearingHouseTest', {
         libraries: {
           Account: accountLib.address,
         },
@@ -80,7 +80,7 @@ describe('VTokenPositionSet Library', () => {
       settlementTokenOracle.address,
     );
 
-    clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+    clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
     chSigner = await impersonateAccount(clearingHouse.address);
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
 

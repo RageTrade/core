@@ -51,4 +51,8 @@ contract ClearingHouseExtsloadTest {
     function isPoolIdAvailable(IClearingHouse clearingHouse, uint32 poolId) public view returns (bool) {
         return ClearingHouseExtsload.isPoolIdAvailable(clearingHouse, poolId);
     }
+
+    function getPoolInfo(IClearingHouse clearingHouse, uint32 poolId) public view returns (IClearingHouse.Pool memory) {
+        return ClearingHouseExtsload.getPoolInfo(clearingHouse, poolId);
+    }
 }

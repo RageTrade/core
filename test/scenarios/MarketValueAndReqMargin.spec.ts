@@ -8,7 +8,7 @@ import { tickToSqrtPriceX96, truncate } from '@ragetrade/sdk';
 import {
   ArbSys,
   ArbSysMock,
-  ClearingHouse,
+  ClearingHouseTest,
   UniswapV3Pool,
   VPoolWrapper,
   VQuote,
@@ -24,7 +24,7 @@ describe('Market Value and Required Margin', () => {
   let arbBlockNum: number;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   let vQuote: VQuote;
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
 

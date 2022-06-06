@@ -53,11 +53,6 @@ interface IClearingHouseView is IClearingHouseStructures, IExtsload {
     /// @return collateral the Collateral struct
     function getCollateralInfo(uint32 collateralId) external view returns (Collateral memory);
 
-    /// @notice Gets the info about a supported pool in the protocol
-    /// @param poolId the id of the pool
-    /// @return pool the Pool struct
-    function getPoolInfo(uint32 poolId) external view returns (Pool memory);
-
     /// @notice Gets the protocol info, global protocol settings
     /// @return settlementToken the token in which profit is settled
     /// @return vQuote the vQuote token contract

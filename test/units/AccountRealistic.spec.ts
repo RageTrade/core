@@ -18,7 +18,7 @@ import {
 import {
   AccountTest,
   ArbSysMock,
-  ClearingHouse,
+  ClearingHouseTest,
   ERC20,
   OracleMock,
   RageTradeFactory,
@@ -41,7 +41,7 @@ describe('Account Library Test Realistic', () => {
 
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   // let constants: ConstantsStruct;
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
   let rageTradeFactory: RageTradeFactory;
 
   let test: AccountTest;

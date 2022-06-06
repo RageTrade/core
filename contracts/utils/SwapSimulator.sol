@@ -10,11 +10,13 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
+import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
 import { SwapMath } from '../libraries/SwapMath.sol';
 import { UniswapV3PoolHelper } from '../libraries/UniswapV3PoolHelper.sol';
 
 contract SwapSimulator {
+    using ClearingHouseExtsload for IClearingHouse;
     using SimulateSwap for IUniswapV3Pool;
 
     struct SwapStepAndState {
