@@ -159,30 +159,44 @@ library WordHelper {
     }
 
     function toAddress(bytes32 input) internal pure returns (address value) {
-        (value, ) = popAddress(input);
+        return address(toUint160(input));
     }
 
     function toUint8(bytes32 input) internal pure returns (uint8 value) {
-        (value, ) = popUint8(input);
+        return uint8(toUint256(input));
     }
 
     function toUint16(bytes32 input) internal pure returns (uint16 value) {
-        (value, ) = popUint16(input);
+        return uint16(toUint256(input));
     }
 
     function toUint32(bytes32 input) internal pure returns (uint32 value) {
-        (value, ) = popUint32(input);
+        return uint32(toUint256(input));
+    }
+
+    function toUint48(bytes32 input) internal pure returns (uint48 value) {
+        return uint48(toUint256(input));
     }
 
     function toUint64(bytes32 input) internal pure returns (uint64 value) {
-        (value, ) = popUint64(input);
+        return uint64(toUint256(input));
     }
 
     function toUint128(bytes32 input) internal pure returns (uint128 value) {
-        (value, ) = popUint128(input);
+        return uint128(toUint256(input));
+    }
+
+    function toUint160(bytes32 input) internal pure returns (uint160 value) {
+        return uint160(toUint256(input));
     }
 
     function toUint256(bytes32 input) internal pure returns (uint256 value) {
+        assembly {
+            value := input
+        }
+    }
+
+    function toInt256(bytes32 input) internal pure returns (int256 value) {
         assembly {
             value := input
         }
