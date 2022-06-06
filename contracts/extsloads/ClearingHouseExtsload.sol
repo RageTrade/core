@@ -155,7 +155,7 @@ library ClearingHouseExtsload {
 
     function getTwapDuration(IClearingHouse clearingHouse, uint32 poolId) internal view returns (uint32 twapDuration) {
         bytes32 result = clearingHouse.extsload(poolStructSlot(poolId).offset(POOL_SETTINGS_STRUCT_OFFSET));
-        twapDuration = uint32(result.slice(0x30, 0x50));
+        twapDuration = result.slice(0x30, 0x50).toUint32();
     }
 
     function getVPoolAndTwapDuration(IClearingHouse clearingHouse, uint32 poolId)
@@ -171,7 +171,7 @@ library ClearingHouseExtsload {
         arr = clearingHouse.extsload(arr);
 
         vPool = IUniswapV3Pool(arr[0].toAddress());
-        twapDuration = uint32(arr[1].slice(0xB0, 0xD0));
+        twapDuration = arr[1].slice(0xB0, 0xD0).toUint32();
     }
 
     /// @notice Checks if a poolId is unused

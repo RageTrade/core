@@ -17,7 +17,7 @@ contract WordHelperTest {
         bytes32 input,
         uint256 start,
         uint256 end
-    ) public pure returns (uint256 val) {
+    ) public pure returns (bytes32 val) {
         return WordHelper.slice(input, start, end);
     }
 
