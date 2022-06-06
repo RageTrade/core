@@ -2,11 +2,8 @@
 
 pragma solidity ^0.8.9;
 
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
 import { IClearingHouseStructures } from './IClearingHouseStructures.sol';
 import { IExtsload } from '../IExtsload.sol';
-import { IVQuote } from '../IVQuote.sol';
 
 interface IClearingHouseView is IClearingHouseStructures, IExtsload {
     /// @notice Gets details about account id
@@ -47,11 +44,6 @@ interface IClearingHouseView is IClearingHouseStructures, IExtsload {
     /// @param poolId the id of the pool (vETH, ... etc)
     /// @return netPosition the net position of the account
     function getAccountNetTokenPosition(uint256 accountId, uint32 poolId) external view returns (int256 netPosition);
-
-    /// @notice Gets the info about a supported collateral in the protocol
-    /// @param collateralId the id of the collateral
-    /// @return collateral the Collateral struct
-    function getCollateralInfo(uint32 collateralId) external view returns (Collateral memory);
 
     /// @notice Gets the real twap price from the respective oracle of the given poolId
     /// @param poolId the id of the pool

@@ -73,4 +73,12 @@ contract ClearingHouseExtsloadTest {
     {
         return ClearingHouseExtsload.getProtocolInfo(clearingHouse);
     }
+
+    function getCollateralInfo(IClearingHouse clearingHouse, uint32 collateralId)
+        external
+        view
+        returns (IClearingHouse.Collateral memory)
+    {
+        return ClearingHouseExtsload.getCollateralInfo(clearingHouse, collateralId);
+    }
 }

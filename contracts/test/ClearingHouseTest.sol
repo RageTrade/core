@@ -63,6 +63,10 @@ contract ClearingHouseTest is ClearingHouse {
         minimumOrderNotional = protocol.minimumOrderNotional;
     }
 
+    function getCollateralInfo(uint32 collateralId) public view returns (Collateral memory) {
+        return protocol.collaterals[collateralId];
+    }
+
     function getTruncatedTokenAddress(IVToken vToken) external pure returns (uint32) {
         return vToken.truncate();
     }
