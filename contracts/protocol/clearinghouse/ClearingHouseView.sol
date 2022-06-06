@@ -17,20 +17,6 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
     using Protocol for Protocol.Info;
 
     /// @inheritdoc IClearingHouseView
-    function getAccountInfo(uint256 accountId)
-        public
-        view
-        returns (
-            address owner,
-            int256 vQuoteBalance,
-            CollateralDepositView[] memory collateralDeposits,
-            VTokenPositionView[] memory tokenPositions
-        )
-    {
-        return accounts[accountId].getInfo(protocol);
-    }
-
-    /// @inheritdoc IClearingHouseView
     function getAccountMarketValueAndRequiredMargin(uint256 accountId, bool isInitialMargin)
         public
         view
