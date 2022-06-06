@@ -53,25 +53,6 @@ interface IClearingHouseView is IClearingHouseStructures, IExtsload {
     /// @return collateral the Collateral struct
     function getCollateralInfo(uint32 collateralId) external view returns (Collateral memory);
 
-    /// @notice Gets the protocol info, global protocol settings
-    /// @return settlementToken the token in which profit is settled
-    /// @return vQuote the vQuote token contract
-    /// @return liquidationParams the liquidation parameters
-    /// @return minRequiredMargin minimum required margin an account has to keep with non-zero netPosition
-    /// @return removeLimitOrderFee the fee charged for using removeLimitOrder service
-    /// @return minimumOrderNotional the minimum order notional
-    function getProtocolInfo()
-        external
-        view
-        returns (
-            IERC20 settlementToken,
-            IVQuote vQuote,
-            LiquidationParams memory liquidationParams,
-            uint256 minRequiredMargin,
-            uint256 removeLimitOrderFee,
-            uint256 minimumOrderNotional
-        );
-
     /// @notice Gets the real twap price from the respective oracle of the given poolId
     /// @param poolId the id of the pool
     /// @return realPriceX128 the real price of the pool
