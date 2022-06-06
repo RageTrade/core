@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { truncate } from '@ragetrade/sdk';
+import { parseUsdc, truncate } from '@ragetrade/sdk';
 
 import {
   ClearingHouseTest,
@@ -14,6 +14,7 @@ import {
 import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { vEthFixture } from '../fixtures/vETH';
 import { activateMainnetFork } from '../helpers/mainnet-fork';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('Clearing House Extsload', () => {
   let clearingHouse: ClearingHouseTest;
@@ -86,6 +87,151 @@ describe('Clearing House Extsload', () => {
 
       const collateralSload = await clearingHouse.getCollateralInfo(truncate(settlementToken.address));
       expect(collateralExtsload).to.deep.eq(collateralSload);
+    });
+  });
+
+  describe('account', () => {
+    let accountId: number;
+    let signer: SignerWithAddress;
+    before(async () => {
+      [signer] = await hre.ethers.getSigners();
+      await settlementToken.mint(signer.address, parseUsdc('1000000'));
+      accountId = (await clearingHouse.callStatic.createAccount()).toNumber();
+      await clearingHouse.createAccount();
+      await clearingHouse.updateMargin(accountId, truncate(settlementToken.address), parseUsdc('1000000'));
+      const { tick, sqrtPriceX96 } = await vPool.slot0();
+      const tickFloor = Math.floor(tick / 1000) * 1000;
+
+      await clearingHouse.updateRangeOrder(accountId, truncate(vToken.address), {
+        tickLower: tickFloor - 10000,
+        tickUpper: tickFloor + 10000,
+        liquidityDelta: 100000000000000,
+        sqrtPriceCurrent: sqrtPriceX96,
+        slippageToleranceBps: 10000,
+        closeTokenPosition: false,
+        limitOrderType: 0,
+        settleProfit: false,
+      });
+
+      await clearingHouse.swapToken(accountId, truncate(vToken.address), {
+        amount: parseUsdc('1'),
+        sqrtPriceLimit: sqrtPriceX96.mul(2),
+        isNotional: true,
+        isPartialAllowed: true,
+        settleProfit: false,
+      });
+    });
+
+    it('getAccountInfo', async () => {
+      await signer.sendTransaction(await test.populateTransaction.getAccountInfo(clearingHouse.address, accountId));
+      console.log(await test.getAccountInfo(clearingHouse.address, accountId));
+      const accountExtsload = await test.getAccountInfo(clearingHouse.address, accountId);
+
+      await signer.sendTransaction(await clearingHouse.populateTransaction.getAccountInfo(accountId));
+      console.log(await clearingHouse.getAccountInfo(accountId));
+      const accountSload = await clearingHouse.getAccountInfo(accountId);
+
+      expect(accountExtsload.owner).to.eq(accountSload.owner);
+      expect(accountExtsload.vQuoteBalance).to.deep.eq(accountSload.vQuoteBalance);
+
+      expect(accountExtsload.activeCollateralIds.length).to.eq(accountSload.collateralDeposits.length);
+      accountExtsload.activeCollateralIds.forEach((_, i) => {
+        expect(accountExtsload.activeCollateralIds[i]).to.eq(
+          Number(truncate(accountSload.collateralDeposits[i].collateral)),
+        );
+      });
+
+      expect(accountExtsload.activePoolIds.length).to.eq(accountSload.tokenPositions.length);
+      accountExtsload.activePoolIds.forEach((_, i) => {
+        expect(accountExtsload.activePoolIds[i]).to.eq(accountSload.tokenPositions[i].poolId);
+      });
+    });
+
+    it('getAccountInfo', async () => {
+      // await signer.sendTransaction(await test.populateTransaction.getAccountInfo(clearingHouse.address, accountId));
+      // console.log(await test.getAccountInfo(clearingHouse.address, accountId));
+      const accountExtsload = await test.getAccountInfo(clearingHouse.address, accountId);
+
+      // await signer.sendTransaction(await clearingHouse.populateTransaction.getAccountInfo(accountId));
+      console.log(await clearingHouse.getAccountInfo(accountId));
+      const accountSload = await clearingHouse.getAccountInfo(accountId);
+
+      expect(accountExtsload.owner).to.eq(accountSload.owner);
+      expect(accountExtsload.vQuoteBalance).to.deep.eq(accountSload.vQuoteBalance);
+
+      expect(accountExtsload.activeCollateralIds.length).to.eq(accountSload.collateralDeposits.length);
+      accountExtsload.activeCollateralIds.forEach((_, i) => {
+        expect(accountExtsload.activeCollateralIds[i]).to.eq(
+          Number(truncate(accountSload.collateralDeposits[i].collateral)),
+        );
+      });
+
+      expect(accountExtsload.activePoolIds.length).to.eq(accountSload.tokenPositions.length);
+      accountExtsload.activePoolIds.forEach((_, i) => {
+        expect(accountExtsload.activePoolIds[i]).to.eq(accountSload.tokenPositions[i].poolId);
+      });
+
+      // tracer.enabled = false;
+    });
+
+    it('getAccountCollateralInfo', async () => {
+      const collateralExtsload = await test.getAccountCollateralInfo(
+        clearingHouse.address,
+        accountId,
+        truncate(settlementToken.address),
+      );
+      const accountSload = await clearingHouse.getAccountInfo(accountId);
+
+      expect(collateralExtsload.collateral).to.eq(accountSload.collateralDeposits[0].collateral);
+      expect(collateralExtsload.balance).to.deep.eq(accountSload.collateralDeposits[0].balance);
+    });
+
+    it('getAccountCollateralBalance', async () => {
+      const balanceExtsload = await test.getAccountCollateralBalance(
+        clearingHouse.address,
+        accountId,
+        truncate(settlementToken.address),
+      );
+      const accountSload = await clearingHouse.getAccountInfo(accountId);
+
+      expect(balanceExtsload).to.deep.eq(accountSload.collateralDeposits[0].balance);
+    });
+
+    it('getAccountTokenPositionInfo', async () => {
+      const tokenPositionExtsload = await test.getAccountTokenPositionInfo(
+        clearingHouse.address,
+        accountId,
+        truncate(vToken.address),
+      );
+
+      const accountSload = await clearingHouse.getAccountInfo(accountId);
+
+      expect(tokenPositionExtsload.balance).to.deep.eq(accountSload.tokenPositions[0].balance);
+      expect(tokenPositionExtsload.netTraderPosition).to.deep.eq(accountSload.tokenPositions[0].netTraderPosition);
+      expect(tokenPositionExtsload.sumALastX128).to.deep.eq(accountSload.tokenPositions[0].sumALastX128);
+    });
+
+    it('getAccountPositionInfo', async () => {
+      const tokenPositionExtsload = await test.getAccountPositionInfo(
+        clearingHouse.address,
+        accountId,
+        truncate(vToken.address),
+      );
+
+      await signer.sendTransaction(
+        await test.populateTransaction.getAccountPositionInfo(
+          clearingHouse.address,
+          accountId,
+          truncate(vToken.address),
+        ),
+      );
+      console.log(tokenPositionExtsload);
+
+      const accountSload = await clearingHouse.getAccountInfo(accountId);
+
+      expect(tokenPositionExtsload.balance).to.deep.eq(accountSload.tokenPositions[0].balance);
+      expect(tokenPositionExtsload.netTraderPosition).to.deep.eq(accountSload.tokenPositions[0].netTraderPosition);
+      expect(tokenPositionExtsload.sumALastX128).to.deep.eq(accountSload.tokenPositions[0].sumALastX128);
     });
   });
 });

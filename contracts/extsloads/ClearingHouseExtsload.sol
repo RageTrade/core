@@ -14,6 +14,9 @@ import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
 import { WordHelper } from '../libraries/WordHelper.sol';
+import { Uint48Lib } from '../libraries/Uint48.sol';
+
+import 'hardhat/console.sol';
 
 library ClearingHouseExtsload {
     // Terminology:
@@ -22,6 +25,8 @@ library ClearingHouseExtsload {
 
     using WordHelper for bytes32;
     using WordHelper for WordHelper.Word;
+
+    bytes32 constant ZERO = bytes32(uint256(0));
 
     /**
      * PROTOCOL
@@ -224,5 +229,283 @@ library ClearingHouseExtsload {
         arr = clearingHouse.extsload(arr);
         collateral.token = IVToken(arr[0].toAddress());
         collateral.settings = _decodeCollateralSettings(arr[1]);
+    }
+
+    /**
+     * ACCOUNT MAPPING
+     */
+    bytes32 constant ACCOUNTS_MAPPING_SLOT = bytes32(uint256(209));
+    uint256 constant ACCOUNT_ID_OWNER_OFFSET = 0;
+    uint256 constant ACCOUNT_VTOKENPOSITIONS_ACTIVE_SET_OFFSET = 1;
+    uint256 constant ACCOUNT_VTOKENPOSITIONS_MAPPING_OFFSET = 2;
+    uint256 constant ACCOUNT_VQUOTE_BALANCE_OFFSET = 3;
+    uint256 constant ACCOUNT_COLLATERAL_ACTIVE_SET_OFFSET = 104;
+    uint256 constant ACCOUNT_COLLATERAL_MAPPING_OFFSET = 105;
+
+    // VTOKEN POSITION STRUCT
+    uint256 constant ACCOUNT_VTOKENPOSITION_BALANCE_OFFSET = 0;
+    uint256 constant ACCOUNT_VTOKENPOSITION_NET_TRADER_POSITION_OFFSET = 1;
+    uint256 constant ACCOUNT_VTOKENPOSITION_SUM_A_LAST_OFFSET = 2;
+    uint256 constant ACCOUNT_VTOKENPOSITION_LIQUIDITY_ACTIVE_OFFSET = 3;
+    uint256 constant ACCOUNT_VTOKENPOSITION_LIQUIDITY_MAPPING_OFFSET = 4;
+
+    // LIQUIDITY POSITION STRUCT
+    uint256 constant ACCOUNT_TP_LP_SLOT0_OFFSET = 0; // limit order type, tl, tu, liquidity
+    uint256 constant ACCOUNT_TP_LP_VTOKEN_AMOUNTIN_OFFSET = 1;
+    uint256 constant ACCOUNT_TP_LP_SUM_A_LAST_OFFSET = 2;
+    uint256 constant ACCOUNT_TP_LP_SUM_B_LAST_OFFSET = 3;
+    uint256 constant ACCOUNT_TP_LP_SUM_FP_LAST_OFFSET = 4;
+    uint256 constant ACCOUNT_TP_LP_SUM_FEE_LAST_OFFSET = 5;
+
+    function accountStructSlot(uint256 accountId) internal pure returns (bytes32) {
+        return
+            WordHelper.keccak256Two({ mappingSlot: ACCOUNTS_MAPPING_SLOT, paddedKey: WordHelper.fromUint(accountId) });
+    }
+
+    function accountCollateralStructSlot(bytes32 ACCOUNT_STRUCT_SLOT, uint32 collateralId)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            WordHelper.keccak256Two({
+                mappingSlot: ACCOUNT_STRUCT_SLOT.offset(ACCOUNT_COLLATERAL_MAPPING_OFFSET),
+                paddedKey: WordHelper.fromUint(collateralId)
+            });
+    }
+
+    function accountVTokenPositionStructSlot(bytes32 ACCOUNT_STRUCT_SLOT, uint32 poolId)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            WordHelper.keccak256Two({
+                mappingSlot: ACCOUNT_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITIONS_MAPPING_OFFSET),
+                paddedKey: WordHelper.fromUint(poolId)
+            });
+    }
+
+    function accountLiquidityPositionStructSlot(
+        bytes32 ACCOUNT_VTOKENPOSITION_STRUCT_SLOT,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal pure returns (bytes32) {
+        return
+            WordHelper.keccak256Two({
+                mappingSlot: ACCOUNT_VTOKENPOSITION_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITION_LIQUIDITY_MAPPING_OFFSET),
+                paddedKey: WordHelper.fromUint(Uint48Lib.concat(tickLower, tickUpper))
+            });
+    }
+
+    function getAccountInfo(IClearingHouse clearingHouse, uint256 accountId)
+        internal
+        view
+        returns (
+            address owner,
+            int256 vQuoteBalance,
+            uint32[] memory activeCollateralIds,
+            uint32[] memory activePoolIds
+        )
+    {
+        bytes32[] memory arr = new bytes32[](4);
+        bytes32 ACCOUNT_SLOT = accountStructSlot(accountId);
+        arr[0] = ACCOUNT_SLOT; // ACCOUNT_ID_OWNER_OFFSET
+        arr[1] = ACCOUNT_SLOT.offset(ACCOUNT_VQUOTE_BALANCE_OFFSET);
+        arr[2] = ACCOUNT_SLOT.offset(ACCOUNT_COLLATERAL_ACTIVE_SET_OFFSET);
+        arr[3] = ACCOUNT_SLOT.offset(ACCOUNT_VTOKENPOSITIONS_ACTIVE_SET_OFFSET);
+
+        arr = clearingHouse.extsload(arr);
+
+        owner = arr[0].slice(0, 160).toAddress();
+        vQuoteBalance = arr[1].toInt256();
+        activeCollateralIds = convertToUint32Array(arr[2]);
+        activePoolIds = convertToUint32Array(arr[3]);
+    }
+
+    function getAccountCollateralInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 collateralId
+    ) internal view returns (IERC20 collateral, uint256 balance) {
+        bytes32[] memory arr = new bytes32[](2);
+        arr[0] = accountCollateralStructSlot(accountStructSlot(accountId), collateralId); // ACCOUNT_COLLATERAL_BALANCE_SLOT
+        arr[1] = collateralStructSlot(collateralId); // COLLATERAL_TOKEN_ADDRESS_SLOT
+
+        arr = clearingHouse.extsload(arr);
+
+        balance = arr[0].toUint256();
+        collateral = IERC20(arr[1].toAddress());
+    }
+
+    function getAccountCollateralBalance(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 collateralId
+    ) internal view returns (uint256 balance) {
+        bytes32 COLLATERAL_BALANCE_SLOT = accountCollateralStructSlot(accountStructSlot(accountId), collateralId);
+
+        balance = clearingHouse.extsload(COLLATERAL_BALANCE_SLOT).toUint256();
+    }
+
+    function getAccountTokenPositionInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId
+    )
+        internal
+        view
+        returns (
+            int256 balance,
+            int256 netTraderPosition,
+            int256 sumALastX128
+        )
+    {
+        bytes32 VTOKEN_POSITION_STRUCT_SLOT = accountVTokenPositionStructSlot(accountStructSlot(accountId), poolId);
+
+        bytes32[] memory arr = new bytes32[](3);
+        arr[0] = VTOKEN_POSITION_STRUCT_SLOT; // BALANCE
+        arr[1] = VTOKEN_POSITION_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITION_NET_TRADER_POSITION_OFFSET);
+        arr[2] = VTOKEN_POSITION_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITION_SUM_A_LAST_OFFSET);
+
+        arr = clearingHouse.extsload(arr);
+
+        balance = arr[0].toInt256();
+        netTraderPosition = arr[1].toInt256();
+        sumALastX128 = arr[2].toInt256();
+    }
+
+    struct TickRange {
+        int24 tickLower;
+        int24 tickUpper;
+    }
+
+    function getAccountPositionInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId
+    )
+        internal
+        view
+        returns (
+            int256 balance,
+            int256 netTraderPosition,
+            int256 sumALastX128,
+            TickRange[] memory activeTickRanges
+        )
+    {
+        bytes32 VTOKEN_POSITION_STRUCT_SLOT = accountVTokenPositionStructSlot(accountStructSlot(accountId), poolId);
+
+        bytes32[] memory arr = new bytes32[](4);
+        arr[0] = VTOKEN_POSITION_STRUCT_SLOT; // BALANCE
+        arr[1] = VTOKEN_POSITION_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITION_NET_TRADER_POSITION_OFFSET);
+        arr[2] = VTOKEN_POSITION_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITION_SUM_A_LAST_OFFSET);
+        arr[3] = VTOKEN_POSITION_STRUCT_SLOT.offset(ACCOUNT_VTOKENPOSITION_LIQUIDITY_ACTIVE_OFFSET);
+
+        arr = clearingHouse.extsload(arr);
+
+        balance = arr[0].toInt256();
+        netTraderPosition = arr[1].toInt256();
+        sumALastX128 = arr[2].toInt256();
+        activeTickRanges = convertToTickRangeArray(arr[3]);
+    }
+
+    function getAccountLiquidityPositionList(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId
+    ) internal view returns (TickRange[] memory activeTickRanges) {
+        return
+            convertToTickRangeArray(
+                clearingHouse.extsload(
+                    accountVTokenPositionStructSlot(accountStructSlot(accountId), poolId).offset(
+                        ACCOUNT_VTOKENPOSITION_LIQUIDITY_ACTIVE_OFFSET
+                    )
+                )
+            );
+    }
+
+    function getAccountLiquidityPositionInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId,
+        int24 tickLower,
+        int24 tickUpper
+    )
+        internal
+        view
+        returns (
+            uint8 limitOrderType,
+            uint128 liquidity,
+            int256 vTokenAmountIn,
+            int256 sumALastX128,
+            int256 sumBInsideLastX128,
+            int256 sumFpInsideLastX128,
+            uint256 sumFeeInsideLastX128
+        )
+    {
+        bytes32 LIQUIDITY_POSITION_STRUCT_SLOT = accountLiquidityPositionStructSlot(
+            accountVTokenPositionStructSlot(accountStructSlot(accountId), poolId),
+            tickLower,
+            tickUpper
+        );
+
+        bytes32[] memory arr = new bytes32[](6);
+        arr[0] = LIQUIDITY_POSITION_STRUCT_SLOT; // BALANCE
+        arr[1] = LIQUIDITY_POSITION_STRUCT_SLOT.offset(ACCOUNT_TP_LP_VTOKEN_AMOUNTIN_OFFSET);
+        arr[2] = LIQUIDITY_POSITION_STRUCT_SLOT.offset(ACCOUNT_TP_LP_SUM_A_LAST_OFFSET);
+        arr[3] = LIQUIDITY_POSITION_STRUCT_SLOT.offset(ACCOUNT_TP_LP_SUM_B_LAST_OFFSET);
+        arr[4] = LIQUIDITY_POSITION_STRUCT_SLOT.offset(ACCOUNT_TP_LP_SUM_FP_LAST_OFFSET);
+        arr[5] = LIQUIDITY_POSITION_STRUCT_SLOT.offset(ACCOUNT_TP_LP_SUM_FEE_LAST_OFFSET);
+
+        arr = clearingHouse.extsload(arr);
+
+        WordHelper.Word memory slot0 = arr[0].copyToMemory();
+        limitOrderType = slot0.popUint8();
+        slot0.pop(48); // discard 48 bits
+        liquidity = slot0.popUint128();
+        vTokenAmountIn = arr[1].toInt256();
+        sumALastX128 = arr[2].toInt256();
+        sumBInsideLastX128 = arr[3].toInt256();
+        sumFpInsideLastX128 = arr[4].toInt256();
+        sumFeeInsideLastX128 = arr[5].toUint256();
+    }
+
+    function convertToUint32Array(bytes32 active) internal pure returns (uint32[] memory activeArr) {
+        unchecked {
+            uint256 i = 8;
+            while (i > 0) {
+                bytes32 id = active.slice((i - 1) * 32, i * 32);
+                if (id == ZERO) {
+                    break;
+                }
+                i--;
+            }
+            activeArr = new uint32[](8 - i);
+            while (i < 8) {
+                activeArr[7 - i] = active.slice(i * 32, (i + 1) * 32).toUint32();
+                i++;
+            }
+        }
+    }
+
+    function convertToTickRangeArray(bytes32 active) internal pure returns (TickRange[] memory activeArr) {
+        unchecked {
+            uint256 i = 5;
+            while (i > 0) {
+                bytes32 id = active.slice((i - 1) * 48, i * 48);
+                if (id == ZERO) {
+                    break;
+                }
+                i--;
+            }
+            activeArr = new TickRange[](5 - i);
+            while (i < 5) {
+                (int24 tickLower, int24 tickUpper) = Uint48Lib.unconcat(active.slice(i * 48, (i + 1) * 48).toUint48());
+                activeArr[4 - i].tickLower = tickLower;
+                activeArr[4 - i].tickUpper = tickUpper;
+                i++;
+            }
+        }
     }
 }

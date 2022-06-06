@@ -23,7 +23,7 @@ describe('WordHelper', () => {
     });
   });
 
-  describe('#slice', () => {
+  describe('#keccak256', () => {
     it('keccak256One', async () => {
       const val = hexZeroPad(BigNumber.from(1234).toHexString(), 32);
       const result = await test.keccak256One(val);

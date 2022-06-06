@@ -81,4 +81,103 @@ contract ClearingHouseExtsloadTest {
     {
         return ClearingHouseExtsload.getCollateralInfo(clearingHouse, collateralId);
     }
+
+    function getAccountInfo(IClearingHouse clearingHouse, uint256 accountId)
+        external
+        view
+        returns (
+            address owner,
+            int256 vQuoteBalance,
+            uint32[] memory activeCollateralIds,
+            uint32[] memory activePoolIds
+        )
+    {
+        return ClearingHouseExtsload.getAccountInfo(clearingHouse, accountId);
+    }
+
+    function getAccountCollateralInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 collateralId
+    ) external view returns (IERC20 collateral, uint256 balance) {
+        return ClearingHouseExtsload.getAccountCollateralInfo(clearingHouse, accountId, collateralId);
+    }
+
+    function getAccountCollateralBalance(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 collateralId
+    ) external view returns (uint256 balance) {
+        return ClearingHouseExtsload.getAccountCollateralBalance(clearingHouse, accountId, collateralId);
+    }
+
+    function getAccountTokenPositionInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId
+    )
+        external
+        view
+        returns (
+            int256 balance,
+            int256 netTraderPosition,
+            int256 sumALastX128
+        )
+    {
+        return ClearingHouseExtsload.getAccountTokenPositionInfo(clearingHouse, accountId, poolId);
+    }
+
+    function getAccountPositionInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId
+    )
+        external
+        view
+        returns (
+            int256 balance,
+            int256 netTraderPosition,
+            int256 sumALastX128,
+            ClearingHouseExtsload.TickRange[] memory activeTickRanges
+        )
+    {
+        return ClearingHouseExtsload.getAccountPositionInfo(clearingHouse, accountId, poolId);
+    }
+
+    function getAccountLiquidityPositionList(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId
+    ) external view returns (ClearingHouseExtsload.TickRange[] memory activeTickRanges) {
+        return ClearingHouseExtsload.getAccountLiquidityPositionList(clearingHouse, accountId, poolId);
+    }
+
+    function getAccountLiquidityPositionInfo(
+        IClearingHouse clearingHouse,
+        uint256 accountId,
+        uint32 poolId,
+        int24 tickLower,
+        int24 tickUpper
+    )
+        external
+        view
+        returns (
+            uint8 limitOrderType,
+            uint128 liquidity,
+            int256 vTokenAmountIn,
+            int256 sumALastX128,
+            int256 sumBInsideLastX128,
+            int256 sumFpInsideLastX128,
+            uint256 sumFeeInsideLastX128
+        )
+    {
+        return
+            ClearingHouseExtsload.getAccountLiquidityPositionInfo(
+                clearingHouse,
+                accountId,
+                poolId,
+                tickLower,
+                tickUpper
+            );
+    }
 }
