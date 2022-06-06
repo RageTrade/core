@@ -86,9 +86,4 @@ interface IClearingHouseView is IClearingHouseStructures, IExtsload {
     /// @param poolId the id of the pool
     /// @return virtualPriceX128 the virtual price of the pool
     function getVirtualTwapPriceX128(uint32 poolId) external view returns (uint256 virtualPriceX128);
-
-    /// @notice Checks if a poolId is unused
-    /// @param poolId the id of the pool
-    /// @return true if the poolId is unused, false otherwise
-    function isPoolIdAvailable(uint32 poolId) external view returns (bool);
 }
