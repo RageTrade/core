@@ -14,12 +14,12 @@ describe('WordHelper.Word', () => {
 
   describe('#slice', () => {
     it('works', async () => {
-      expect(await test.slice(bytes32('0xff'), 0, 256)).to.eq(0xff);
-      expect(await test.slice(bytes32('0xff'), 0, 248)).to.eq(0);
-      expect(await test.slice(bytes32('0xff'), 248, 256)).to.eq(0xff);
-      expect(await test.slice(bytes32('0xff0000'), 0, 232)).to.eq(0);
-      expect(await test.slice(bytes32('0xff0000'), 232, 256)).to.eq(0xff0000);
-      expect(await test.slice(bytes32('0xff0000'), 232, 240)).to.eq(0xff);
+      expect(await test.slice(bytes32(0xff), 0, 256)).to.eq(bytes32(0xff));
+      expect(await test.slice(bytes32(0xff), 0, 248)).to.eq(bytes32(0));
+      expect(await test.slice(bytes32(0xff), 248, 256)).to.eq(bytes32(0xff));
+      expect(await test.slice(bytes32(0xff0000), 0, 232)).to.eq(bytes32(0));
+      expect(await test.slice(bytes32(0xff0000), 232, 256)).to.eq(bytes32(0xff0000));
+      expect(await test.slice(bytes32(0xff0000), 232, 240)).to.eq(bytes32(0xff));
     });
   });
 
