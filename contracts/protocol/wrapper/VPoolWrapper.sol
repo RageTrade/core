@@ -73,7 +73,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     error NotGovernance();
     error NotUniswapV3Pool();
     error InvalidTicks(int24 tickLower, int24 tickUpper);
-    error InvalidSetting(bytes32 errorMessage);
+    error InvalidSetting(uint256 errorCode);
 
     modifier onlyClearingHouse() {
         if (msg.sender != address(clearingHouse)) {
@@ -157,13 +157,13 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
      */
 
     function setLiquidityFee(uint24 liquidityFeePips_) external onlyGovernance {
-        if (liquidityFeePips_ > PERC_10_1E6) revert InvalidSetting('wrapper.liqFee');
+        if (liquidityFeePips_ > PERC_10_1E6) revert InvalidSetting(0x10);
         liquidityFeePips = liquidityFeePips_;
         emit LiquidityFeeUpdated(liquidityFeePips_);
     }
 
     function setProtocolFee(uint24 protocolFeePips_) external onlyGovernance {
-        if (protocolFeePips_ > PERC_10_1E6) revert InvalidSetting('wrapper.protFee');
+        if (protocolFeePips_ > PERC_10_1E6) revert InvalidSetting(0x20);
         protocolFeePips = protocolFeePips_;
         emit ProtocolFeeUpdated(protocolFeePips_);
     }
