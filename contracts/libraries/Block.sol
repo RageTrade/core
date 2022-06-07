@@ -10,8 +10,8 @@ interface ArbSys {
 
 /// @title Library for getting block number for the current chain
 library Block {
-    ///@notice Get block number
-    ///@return block number as uint32
+    /// @notice Get block number
+    /// @return block number as uint32
     function number() internal view returns (uint32) {
         uint256 chainId = block.chainid;
         if (chainId == 41161 || chainId == 421611 || chainId == 421612) {

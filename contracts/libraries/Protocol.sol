@@ -21,7 +21,6 @@ import { SignedMath } from './SignedMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
 import { Block } from './Block.sol';
-
 import { SafeCast } from './SafeCast.sol';
 
 /// @title Protocol storage functions
@@ -39,7 +38,7 @@ library Protocol {
     using Protocol for Protocol.Info;
 
     struct PriceCache {
-        uint32 updateBlockNum;
+        uint32 updateBlockNumber;
         uint224 virtualPriceX128;
         uint224 realPriceX128;
         bool isDeviationBreached;
@@ -67,10 +66,10 @@ library Protocol {
     }
 
     function updatePoolPriceCache(Protocol.Info storage protocol, uint32 poolId) internal {
-        uint32 blockNum = Block.number();
+        uint32 blockNumber = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == blockNum) {
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
             return;
         }
 
@@ -88,7 +87,7 @@ library Protocol {
         }
         poolPriceCache.realPriceX128 = realPriceX128.toUint224();
         poolPriceCache.virtualPriceX128 = virtualPriceX128.toUint224();
-        poolPriceCache.updateBlockNum = blockNum;
+        poolPriceCache.updateBlockNumber = blockNumber;
     }
 
     function vPool(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
@@ -169,10 +168,10 @@ library Protocol {
         view
         returns (uint256 priceX128)
     {
-        uint32 blockNum = Block.number();
+        uint32 blockNumber = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == blockNum) {
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
             return poolPriceCache.virtualPriceX128;
         } else {
             return protocol.getVirtualTwapPriceX128(poolId);
@@ -184,10 +183,10 @@ library Protocol {
         view
         returns (uint256 realPriceX128, uint256 virtualPriceX128)
     {
-        uint32 blockNum = Block.number();
+        uint32 blockNumber = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == blockNum) {
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
             if (poolPriceCache.isDeviationBreached) {
                 return (poolPriceCache.realPriceX128, poolPriceCache.realPriceX128);
             } else {
@@ -203,10 +202,10 @@ library Protocol {
         view
         returns (uint256 priceX128)
     {
-        uint32 blockNum = Block.number();
+        uint32 blockNumber = Block.number();
 
         PriceCache storage poolPriceCache = protocol.priceCache[poolId];
-        if (poolPriceCache.updateBlockNum == blockNum) {
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
             return poolPriceCache.realPriceX128;
         } else {
             return protocol.getRealTwapPriceX128(poolId);
