@@ -285,21 +285,24 @@ contract ClearingHouse is
     {
         results = new bytes[](operations.length);
 
-        Account.Info storage account = _getAccountAndCheckOwner(accountId);
+        Account.Info storage account = accounts[accountId];
 
+        bool checkOwner = false;
         bool checkProfit = false;
         bool checkMargin = false;
 
-        for (uint256 i = 0; i < operations.length; i++) {
+        for (uint256 i; i < operations.length; i++) {
             if (operations[i].operationType == MulticallOperationType.UPDATE_MARGIN) {
                 // ADD_MARGIN
                 (uint32 collateralId, int256 amount) = abi.decode(operations[i].data, (uint32, int256));
+                checkOwner = true;
                 checkMargin = checkMargin || amount < 0;
-                _updateMargin(account, collateralId, amount, checkMargin);
+                _updateMargin(account, collateralId, amount, false);
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_PROFIT) {
                 // UPDATE_PROFIT
                 int256 amount = abi.decode(operations[i].data, (int256));
                 _updateProfit(account, amount, false);
+                checkOwner = true;
                 if (amount < 0) {
                     checkProfit = true;
                     checkMargin = true;
@@ -309,6 +312,7 @@ contract ClearingHouse is
                 (uint32 poolId, SwapParams memory sp) = abi.decode(operations[i].data, (uint32, SwapParams));
                 (int256 vTokenAmountOut, int256 vQuoteAmountOut) = _swapToken(account, poolId, sp, false);
                 results[i] = abi.encode(vTokenAmountOut, vQuoteAmountOut);
+                checkOwner = true;
                 checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.UPDATE_RANGE_ORDER) {
                 // UPDATE_RANGE_ORDER
@@ -318,6 +322,7 @@ contract ClearingHouse is
                 );
                 (int256 vTokenAmountOut, int256 vQuoteAmountOut) = _updateRangeOrder(account, poolId, lcp, false);
                 results[i] = abi.encode(vTokenAmountOut, vQuoteAmountOut);
+                checkOwner = true;
                 checkMargin = true;
             } else if (operations[i].operationType == MulticallOperationType.REMOVE_LIMIT_ORDER) {
                 // REMOVE_LIMIT_ORDER
@@ -328,17 +333,19 @@ contract ClearingHouse is
                 _removeLimitOrder(accountId, poolId, tickLower, tickUpper);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS) {
                 // LIQUIDATE_LIQUIDITY_POSITIONS
-                _liquidateLiquidityPositions(accountId);
+                uint32 accountToLiquidate = abi.decode(operations[i].data, (uint32));
+                _liquidateLiquidityPositions(accountToLiquidate);
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_TOKEN_POSITION) {
                 // LIQUIDATE_TOKEN_POSITION
-                uint32 poolId = abi.decode(operations[i].data, (uint32));
-                results[i] = abi.encode(_liquidateTokenPosition(accountId, poolId));
+                (uint32 accountToLiquidate, uint32 poolId) = abi.decode(operations[i].data, (uint32, uint32));
+                results[i] = abi.encode(_liquidateTokenPosition(accountToLiquidate, poolId));
             } else {
                 revert InvalidMulticallOperationType(operations[i].operationType);
             }
         }
 
         // after all the operations are done, check the margin requirements
+        if (checkOwner) _getAccountAndCheckOwner(accountId);
         if (checkProfit) account.checkIfProfitAvailable(protocol);
         if (checkMargin) account.checkIfMarginAvailable(true, protocol);
 
