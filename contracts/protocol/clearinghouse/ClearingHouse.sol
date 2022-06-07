@@ -441,7 +441,6 @@ contract ClearingHouse is
         Account.Info storage account = accounts[accountId];
 
         (int256 keeperFee, int256 insuranceFundFee, int256 accountMarketValue) = account.liquidateLiquidityPositions(
-            0,
             protocol
         );
 
@@ -472,7 +471,7 @@ contract ClearingHouse is
 
         _checkPoolId(poolId);
         int256 insuranceFundFee;
-        (keeperFee, insuranceFundFee) = account.liquidateTokenPosition(poolId, 0, protocol);
+        (keeperFee, insuranceFundFee) = account.liquidateTokenPosition(poolId, protocol);
         if (keeperFee <= 0) revert KeeperFeeNotPositive(keeperFee);
         protocol.settlementToken.safeTransfer(msg.sender, uint256(keeperFee));
         _transferInsuranceFundFee(insuranceFundFee);
@@ -559,13 +558,6 @@ contract ClearingHouse is
         if (diff > (slippageToleranceBps * sqrtPriceToCheck) / 1e4) {
             revert SlippageBeyondTolerance();
         }
-    }
-
-    /// @notice Gets fix fee
-    /// @dev Allowed to be overriden for specific chain implementations
-    /// @return fixFee amount of fixFee in notional units
-    function _getFixFee(uint256) internal view virtual returns (uint256 fixFee) {
-        return 0;
     }
 
     /**
