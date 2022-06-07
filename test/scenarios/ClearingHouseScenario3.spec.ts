@@ -19,6 +19,7 @@ import {
 
 import {
   Account__factory,
+  ClearingHouseLens,
   ArbSysMock,
   ClearingHouseTest,
   IERC20,
@@ -50,6 +51,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
   let testContractAddress: string;
   let oracleAddress: string;
   let clearingHouseTest: ClearingHouseTest;
+  let clearingHouseLens: ClearingHouseLens;
   let arbSysMock: ArbSysMock;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
@@ -737,6 +739,9 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
     );
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+    clearingHouseLens = await (
+      await hre.ethers.getContractFactory('ClearingHouseLens')
+    ).deploy(clearingHouseTest.address);
 
     insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
@@ -777,7 +782,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
         isCrossMargined,
         oracle,
       },
-    } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
+    } = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
     return {
       initialMarginRatioBps,
       maintainanceMarginRatioBps,
@@ -837,7 +842,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.getProtocolInfo();
+      const protocol = await clearingHouseLens.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
@@ -907,20 +912,20 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const settings = await getPoolSettings(vTokenAddress);
       settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
-      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
+      expect((await clearingHouseLens.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
     });
 
     it('Add Token 2 Position Support - Pass', async () => {
       const settings = await getPoolSettings(vToken1Address);
       settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vToken1Address), settings);
-      expect((await clearingHouseTest.getPoolInfo(truncate(vToken1Address))).settings.isAllowedForTrade).to.be.true;
+      expect((await clearingHouseLens.getPoolInfo(truncate(vToken1Address))).settings.isAllowedForTrade).to.be.true;
     });
 
     it('AddVQuote Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(settlementToken.address, true);
       expect(
-        (await clearingHouseTest.getCollateralInfo(truncate(settlementToken.address))).settings.isAllowedForDeposit,
+        (await clearingHouseLens.getCollateralInfo(truncate(settlementToken.address))).settings.isAllowedForDeposit,
       ).to.be.true;
     });
   });
