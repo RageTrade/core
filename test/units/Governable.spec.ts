@@ -92,5 +92,16 @@ describe('Governable', () => {
       await governable.initiateGovernanceTransfer(signer3.address);
       expect(await governable.governancePending()).to.eq(signer3.address);
     });
+
+    it('can cancel transfer', async () => {
+      const { governable } = await governableFixture();
+      const [signer, signer2] = await hre.ethers.getSigners();
+
+      await governable.initiateGovernanceTransfer(signer2.address);
+      expect(await governable.governancePending()).to.eq(signer2.address);
+
+      await governable.initiateGovernanceTransfer(ethers.constants.AddressZero);
+      expect(await governable.governancePending()).to.eq(ethers.constants.AddressZero);
+    });
   });
 });

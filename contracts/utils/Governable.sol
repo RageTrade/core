@@ -82,8 +82,6 @@ abstract contract Governable is IGovernable, Initializable, ContextUpgradeable {
     /// @notice Initiates governance transfer to a new account (`newGovernancePending`).
     /// @param newGovernancePending the new governance address
     function initiateGovernanceTransfer(address newGovernancePending) external virtual onlyGovernance {
-        _ensureNonZero(newGovernancePending);
-
         emit GovernancePending(_governancePending, newGovernancePending);
         _governancePending = newGovernancePending;
     }
@@ -100,8 +98,6 @@ abstract contract Governable is IGovernable, Initializable, ContextUpgradeable {
     /// @notice Initiates teamMultisig transfer to a new account (`newTeamMultisigPending`).
     /// @param newTeamMultisigPending the new team multisig address
     function initiateTeamMultisigTransfer(address newTeamMultisigPending) external virtual onlyGovernance {
-        _ensureNonZero(newTeamMultisigPending);
-
         emit TeamMultisigPending(_teamMultisigPending, newTeamMultisigPending);
         _teamMultisigPending = newTeamMultisigPending;
     }
@@ -113,11 +109,5 @@ abstract contract Governable is IGovernable, Initializable, ContextUpgradeable {
         emit TeamMultisigTransferred(_teamMultisig, _teamMultisigPending);
         _teamMultisig = _teamMultisigPending;
         _teamMultisigPending = address(0);
-    }
-
-    /// @notice Ensures that the passed value is not zero address
-    /// @param value the value to check
-    function _ensureNonZero(address value) private pure {
-        if (value == address(0)) revert ZeroAddress();
     }
 }
