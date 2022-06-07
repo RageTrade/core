@@ -20,6 +20,8 @@ import { SafeCast } from './SafeCast.sol';
 import { SignedMath } from './SignedMath.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
 import { UniswapV3PoolHelper } from './UniswapV3PoolHelper.sol';
+import { Block } from './Block.sol';
+import { SafeCast } from './SafeCast.sol';
 
 /// @title Protocol storage functions
 /// @dev This is used as main storage interface containing protocol info
@@ -31,9 +33,16 @@ library Protocol {
     using SignedFullMath for int256;
     using SafeCast for uint256;
     using UniswapV3PoolHelper for IUniswapV3Pool;
+    using SafeCast for uint256;
 
     using Protocol for Protocol.Info;
 
+    struct PriceCache {
+        uint32 updateBlockNumber;
+        uint224 virtualPriceX128;
+        uint224 realPriceX128;
+        bool isDeviationBreached;
+    }
     struct Info {
         // poolId => PoolInfo
         mapping(uint32 => IClearingHouseStructures.Pool) pools;
@@ -50,8 +59,41 @@ library Protocol {
         uint256 minRequiredMargin;
         uint256 removeLimitOrderFee;
         uint256 minimumOrderNotional;
+        // price cache
+        mapping(uint32 => PriceCache) priceCache;
         // reserved for adding slots in future
         uint256[100] _emptySlots;
+    }
+
+    function updatePoolPriceCache(Protocol.Info storage protocol, uint32 poolId) internal {
+        uint32 blockNumber = Block.number();
+
+        PriceCache storage poolPriceCache = protocol.priceCache[poolId];
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
+            return;
+        }
+
+        uint256 realPriceX128 = protocol.getRealTwapPriceX128(poolId);
+        uint256 virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
+
+        // In case the price is breaching the Q224 limit, we do not cache it
+        uint256 Q224 = 1 << 224;
+        if (realPriceX128 >= Q224 || virtualPriceX128 >= Q224) {
+            return;
+        }
+
+        uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
+        if (
+            // if virtual price is too off from real price then screw that, we'll just use real price
+            (int256(realPriceX128) - int256(virtualPriceX128)).absUint() > realPriceX128.mulDiv(maxDeviationBps, 1e4)
+        ) {
+            poolPriceCache.isDeviationBreached = true;
+        } else {
+            poolPriceCache.isDeviationBreached = false;
+        }
+        poolPriceCache.realPriceX128 = realPriceX128.toUint224();
+        poolPriceCache.virtualPriceX128 = virtualPriceX128.toUint224();
+        poolPriceCache.updateBlockNumber = blockNumber;
     }
 
     function vPool(Protocol.Info storage protocol, uint32 poolId) internal view returns (IUniswapV3Pool) {
@@ -127,6 +169,55 @@ library Protocol {
         return (realPriceX128, virtualPriceX128);
     }
 
+    function getCachedVirtualTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
+        internal
+        view
+        returns (uint256 priceX128)
+    {
+        uint32 blockNumber = Block.number();
+
+        PriceCache storage poolPriceCache = protocol.priceCache[poolId];
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
+            return poolPriceCache.virtualPriceX128;
+        } else {
+            return protocol.getVirtualTwapPriceX128(poolId);
+        }
+    }
+
+    function getCachedTwapPricesWithDeviationCheck(Protocol.Info storage protocol, uint32 poolId)
+        internal
+        view
+        returns (uint256 realPriceX128, uint256 virtualPriceX128)
+    {
+        uint32 blockNumber = Block.number();
+
+        PriceCache storage poolPriceCache = protocol.priceCache[poolId];
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
+            if (poolPriceCache.isDeviationBreached) {
+                return (poolPriceCache.realPriceX128, poolPriceCache.realPriceX128);
+            } else {
+                return (poolPriceCache.realPriceX128, poolPriceCache.virtualPriceX128);
+            }
+        } else {
+            return protocol.getTwapPricesWithDeviationCheck(poolId);
+        }
+    }
+
+    function getCachedRealTwapPriceX128(Protocol.Info storage protocol, uint32 poolId)
+        internal
+        view
+        returns (uint256 priceX128)
+    {
+        uint32 blockNumber = Block.number();
+
+        PriceCache storage poolPriceCache = protocol.priceCache[poolId];
+        if (poolPriceCache.updateBlockNumber == blockNumber) {
+            return poolPriceCache.realPriceX128;
+        } else {
+            return protocol.getRealTwapPriceX128(poolId);
+        }
+    }
+
     function getMarginRatioBps(
         Protocol.Info storage protocol,
         uint32 poolId,
@@ -156,7 +247,7 @@ library Protocol {
         int256 vQuoteAmount
     ) internal view returns (uint256 notionalValue) {
         return
-            vTokenAmount.absUint().mulDiv(protocol.getVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
+            vTokenAmount.absUint().mulDiv(protocol.getCachedVirtualTwapPriceX128(poolId), FixedPoint128.Q128) +
             vQuoteAmount.absUint();
     }
 

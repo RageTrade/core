@@ -5,13 +5,23 @@ import hre from 'hardhat';
 import { FakeContract, MockContract, smock } from '@defi-wonderland/smock';
 import { tickToSqrtPriceX96, truncate } from '@ragetrade/sdk';
 
-import { ClearingHouse, UniswapV3Pool, VPoolWrapper, VQuote, VTokenPositionSetTest2 } from '../../typechain-types';
+import {
+  ArbSys,
+  ArbSysMock,
+  ClearingHouse,
+  UniswapV3Pool,
+  VPoolWrapper,
+  VQuote,
+  VTokenPositionSetTest2,
+} from '../../typechain-types';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { testSetup } from '../helpers/setup-general';
 
 describe('Market Value and Required Margin', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
+  let arbSysFake: FakeContract<ArbSysMock>;
+  let arbBlockNum: number;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   let vQuote: VQuote;
   let clearingHouse: ClearingHouse;
@@ -81,6 +91,11 @@ describe('Market Value and Required Margin', () => {
         address: vPoolAddress,
       },
     );
+
+    arbSysFake = await smock.fake<ArbSysMock>('ArbSysMock', { address: '0x0000000000000000000000000000000000000064' });
+    arbBlockNum = 1;
+    arbSysFake.arbBlockNumber.returns(arbBlockNum++);
+
     vPoolFake.observe.returns([[0, -194430 * 60], []]);
     const sqrtPriceX96 = tickToSqrtPriceX96(-194430);
     vPoolFake.slot0.returns([sqrtPriceX96, -194430, 0, 0, 0, 0, false]);
@@ -154,6 +169,8 @@ describe('Market Value and Required Margin', () => {
       const tick = -193170;
       const sqrtPriceX96 = tickToSqrtPriceX96(tick);
       vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
+      arbSysFake.arbBlockNumber.returns(arbBlockNum++);
+
       await matchNumbers(-8656594064, 26417987111, 13208993555);
     });
 
@@ -203,6 +220,7 @@ describe('Market Value and Required Margin', () => {
       vPoolFake.observe.returns([[0, tick * 60], []]);
       const sqrtPriceX96 = tickToSqrtPriceX96(tick);
       vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
+      arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
       await matchNumbers(-9383544194, 68587488054, 34293744027);
     });
@@ -253,6 +271,7 @@ describe('Market Value and Required Margin', () => {
       vPoolFake.observe.returns([[0, tick * 60], []]);
       const sqrtPriceX96 = tickToSqrtPriceX96(tick);
       vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
+      arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
       await matchNumbers(-68061639307, 73379953383, 36689976691);
     });
@@ -272,6 +291,7 @@ describe('Market Value and Required Margin', () => {
       vPoolFake.observe.returns([[0, tick * 60], []]);
       const sqrtPriceX96 = tickToSqrtPriceX96(tick);
       vPoolFake.slot0.returns([sqrtPriceX96, tick, 0, 0, 0, 0, false]);
+      arbSysFake.arbBlockNumber.returns(arbBlockNum++);
     });
     it('Scenario 1 - Full Range', async () => {
       vPoolWrapperFake.mint.returns([

@@ -337,6 +337,14 @@ library VTokenPositionSet {
         set.update(accountId, balanceAdjustments, poolId, protocol);
     }
 
+    function updateOpenPoolPrices(VTokenPosition.Set storage set, Protocol.Info storage protocol) internal {
+        for (uint8 i = 0; i < set.active.length; i++) {
+            uint32 poolId = set.active[i];
+            if (poolId == 0) break;
+            protocol.updatePoolPriceCache(poolId);
+        }
+    }
+
     /**
      *  Internal view methods
      */
@@ -356,7 +364,7 @@ library VTokenPositionSet {
             // IVToken vToken = protocol[poolId].vToken;
             VTokenPosition.Info storage position = set.positions[poolId];
 
-            (, uint256 virtualPriceX128) = protocol.getTwapPricesWithDeviationCheck(poolId);
+            (, uint256 virtualPriceX128) = protocol.getCachedTwapPricesWithDeviationCheck(poolId);
             uint160 virtualSqrtPriceX96 = virtualPriceX128.toSqrtPriceX96();
             //Value of token position for current vToken
             accountMarketValue += position.marketValue(poolId, virtualPriceX128, protocol);
@@ -403,7 +411,7 @@ library VTokenPositionSet {
     ) internal view returns (int256 longSideRisk, int256 shortSideRisk) {
         VTokenPosition.Info storage position = set.positions[poolId];
 
-        (, uint256 virtualPriceX128) = protocol.getTwapPricesWithDeviationCheck(poolId);
+        (, uint256 virtualPriceX128) = protocol.getCachedTwapPricesWithDeviationCheck(poolId);
         uint160 virtualSqrtPriceX96 = virtualPriceX128.toSqrtPriceX96();
 
         uint16 marginRatio = protocol.getMarginRatioBps(poolId, isInitialMargin);

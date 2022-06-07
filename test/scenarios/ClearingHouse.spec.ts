@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { config } from 'dotenv';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
+import hre, { network } from 'hardhat';
 
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { parseUnits } from '@ethersproject/units';
@@ -30,6 +30,7 @@ import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-f
 import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 import { stealFunds } from '../helpers/steal-funds';
 import { AccruedProtocolFeeCollectedEvent } from '../../typechain-types/artifacts/contracts/interfaces/IVPoolWrapper';
+import { ArbSysMock } from '../../typechain-types/artifacts/contracts/test/mocks/ArbSysMock';
 
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -45,6 +46,7 @@ describe('Clearing House Library', () => {
   let oracleAddress: string;
   // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
+  let arbSysMock: ArbSysMock;
   let vPool: IUniswapV3Pool;
 
   let signers: SignerWithAddress[];
@@ -266,6 +268,15 @@ describe('Clearing House Library', () => {
       twapDuration: 300,
       isAllowedForDeposit: false,
     });
+
+    arbSysMock = await (await hre.ethers.getContractFactory('ArbSysMock')).deploy();
+
+    const mockBytecode = await hre.ethers.provider.getCode(arbSysMock.address);
+
+    await network.provider.send('hardhat_setCode', ['0x0000000000000000000000000000000000000064', mockBytecode]);
+
+    arbSysMock = await hre.ethers.getContractAt('ArbSysMock', '0x0000000000000000000000000000000000000064');
+    await arbSysMock.setArbBlockNumber(1);
   });
 
   after(deactivateMainnetFork);

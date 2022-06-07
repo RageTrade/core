@@ -17,6 +17,7 @@ import {
 
 import {
   AccountTest,
+  ArbSysMock,
   ClearingHouse,
   ERC20,
   OracleMock,
@@ -35,6 +36,9 @@ import { testSetupToken, testSetupVQuote } from '../helpers/setup-general';
 describe('Account Library Test Realistic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
+  let arbSysFake: FakeContract<ArbSysMock>;
+  let arbBlockNum: number;
+
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   // let constants: ConstantsStruct;
   let clearingHouse: ClearingHouse;
@@ -70,6 +74,7 @@ describe('Account Library Test Realistic', () => {
     vPoolFake.slot0.returns(() => {
       return [sqrtPriceX96, tick, 0, 0, 0, 0, false];
     });
+    arbSysFake.arbBlockNumber.returns(arbBlockNum++);
   }
 
   async function changeVPoolWrapperFakePrice(price: number) {
@@ -318,6 +323,10 @@ describe('Account Library Test Realistic', () => {
         address: vPoolAddress,
       },
     );
+    arbSysFake = await smock.fake<ArbSysMock>('ArbSysMock', { address: '0x0000000000000000000000000000000000000064' });
+    arbBlockNum = 1;
+    arbSysFake.arbBlockNumber.returns(arbBlockNum++);
+
     vPoolFake.observe.returns([[0, 194430 * 60], []]);
 
     vPoolWrapperFake = await smock.fake<VPoolWrapper>('VPoolWrapper', {

@@ -88,7 +88,7 @@ library VTokenPosition {
         uint32 poolId,
         Protocol.Info storage protocol
     ) internal view returns (int256) {
-        uint256 priceX128 = protocol.getVirtualTwapPriceX128(poolId);
+        uint256 priceX128 = protocol.getCachedVirtualTwapPriceX128(poolId);
         return marketValue(position, poolId, priceX128, protocol);
     }
 
