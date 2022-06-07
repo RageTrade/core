@@ -27,6 +27,7 @@ abstract contract ClearingHouseStorage {
     // over an unbounded array in multiple txs
     BatchedLoop.Info internal pauseLoop;
     BatchedLoop.Info internal unpauseLoop;
+    BatchedLoop.Info internal withdrawProtocolFeeLoop;
 
     // reserved for adding slots in future
     uint256[100] private _emptySlots2;
