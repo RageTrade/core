@@ -38,6 +38,8 @@ abstract contract ClearingHouseDeployer is ProxyAdminDeployer {
                             IClearingHouseSystemActions.initialize,
                             (
                                 address(this), // RageTradeFactory
+                                msg.sender, // initialGovernance
+                                msg.sender, // initialTeamMultisig
                                 params.settlementToken,
                                 params.settlementTokenOracle,
                                 params.insuranceFund,
