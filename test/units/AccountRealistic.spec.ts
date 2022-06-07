@@ -16,7 +16,7 @@ import {
 } from '@ragetrade/sdk';
 
 import {
-  AccountTest,
+  AccountTest,ClearingHouseLens,
   ClearingHouseTest,  ArbSysMock,
   ERC20,
   OracleMock,

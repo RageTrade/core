@@ -8,6 +8,7 @@ import { parseTokenAmount, truncate } from '@ragetrade/sdk';
 
 import {
   AccountTest,
+  ClearingHouseLens,
   ClearingHouseTest,  ArbSysMock,
   ERC20,
   OracleMock,

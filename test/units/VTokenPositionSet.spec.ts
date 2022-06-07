@@ -8,6 +8,7 @@ import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
   ClearingHouseTest,  ArbSysMock,
+  ClearingHouseLens,
   ERC20,
   RageTradeFactory,
   UniswapV3Pool,
@@ -34,7 +35,6 @@ describe('VTokenPositionSet Library', () => {
   let clearingHouse: ClearingHouseTest;  let arbSysFake: FakeContract<ArbSysMock>;
   let arbBlockNum: number;
 
-  let clearingHouse: ClearingHouse;
   let clearingHouseLens: ClearingHouseLens;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
