@@ -438,7 +438,7 @@ library LiquidityPosition {
             .toInt256();
     }
 
-    /// @notice calculates the unrealised funding payment for the position
+    /// @notice returns vQuoteIncrease due to unrealised funding payment for the liquidity position (+ve means receiving and -ve means giving)
     /// @param position storage ref of the position to check
     /// @param sumAX128 the sumA value from the pool wrapper
     /// @param sumFpInsideX128 the sumFp in the position's range from the pool wrapper
