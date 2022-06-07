@@ -58,7 +58,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   const clearingHouseAddress = await read('RageTradeFactory', 'clearingHouse');
-  await save('ClearingHouse', { abi: ClearingHouse__factory.abi, address: clearingHouseAddress });
+  await save('ClearingHouse', { abi: clearingHouseLogic.abi, address: clearingHouseAddress });
   console.log('saved "ClearingHouse":', clearingHouseAddress);
   if (hre.network.config.chainId !== 31337) {
     await hre.tenderly.push({
