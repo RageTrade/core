@@ -299,7 +299,6 @@ contract ClearingHouse is
                     (uint32, int24, int24)
                 );
                 _removeLimitOrder(accountId, poolId, tickLower, tickUpper);
-                checkOwner = true;
             } else if (operations[i].operationType == MulticallOperationType.LIQUIDATE_LIQUIDITY_POSITIONS) {
                 // LIQUIDATE_LIQUIDITY_POSITIONS
                 uint32 accountToLiquidate = abi.decode(operations[i].data, (uint32));
