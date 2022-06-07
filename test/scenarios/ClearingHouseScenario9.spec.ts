@@ -1,3 +1,4 @@
+//ClearingHouseScenario9
 //Settle Profits
 
 import { expect } from 'chai';
@@ -1078,7 +1079,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       );
 
       expect(await clearingHouseTest.getAccountNetProfit(user1AccountNo)).to.eq(0n);
-      await checkDepositBalance(user1AccountNo, settlementToken.address, 1099855239921n);
+      await checkDepositBalance(user1AccountNo, settlementToken.address, 1099857999687n);
     });
 
     it('Timestamp And Oracle Update - 3000', async () => {
@@ -1107,7 +1108,7 @@ describe('Clearing House Scenario 9 (Settle Profit)', () => {
       );
 
       expect(await clearingHouseTest.getAccountNetProfit(user0AccountNo)).to.eq(0n);
-      await checkDepositBalance(user0AccountNo, settlementToken.address, 918070396505n);
+      await checkDepositBalance(user0AccountNo, settlementToken.address, 918065224384n);
     });
   });
 });

@@ -1,5 +1,4 @@
 //ClearingHouseScenario2
-
 import { expect } from 'chai';
 import { config } from 'dotenv';
 import { ContractReceipt, ContractTransaction, ethers } from 'ethers';
@@ -1098,8 +1097,8 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
       const tickUpper = 64400;
       const liquidityDelta = 250000000000n;
       const limitOrderType = 0;
-      const expectedEndToken1Balance = -501494329n - 1n;
-      const expectedEndVQuoteBalance = -117235394437n + 1n;
+      const expectedEndToken1Balance = -501494330n;
+      const expectedEndVQuoteBalance = -117236228833n - 105n;
 
       await updateRangeOrderAndCheck(
         user1,
@@ -1135,7 +1134,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
       const expectedVTokenBalance = '-4055086555447580000';
 
       //TODO: Check
-      const expectedVQuoteBalance = -102607084819n + 1n;
+      const expectedVQuoteBalance = -102607919215n - 105n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 14628309618n;
@@ -1175,7 +1174,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
       const liquidityDelta = 25000000000000000n;
       const limitOrderType = 0;
       const expectedEndToken2Balance = -25559097903887700000n;
-      const expectedEndVQuoteBalance = -192086890207n;
+      const expectedEndVQuoteBalance = -192087809083n - 106n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -1265,12 +1264,12 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
 
       const swapToken2Amount = '86016045393757900000';
       const expectedToken2Balance = '86016045393757900000';
-      const expectedVQuoteBalance = -823329583575n - 1n;
+      const expectedVQuoteBalance = -823329583576n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken2Amount;
-      const expectedVQuoteAmountOutWithFee = -327100676148n - 1n;
+      const expectedVQuoteAmountOutWithFee = -327100676149n;
       const expectedFundingPayment = 0n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1312,14 +1311,14 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
       const swapToken1Amount = '2304178420';
       const expectedToken1Balance = 3111413323n;
       //TODO:Check
-      const expectedVQuoteBalance = -2388731696396n;
+      const expectedVQuoteBalance = -2388728771958n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
 
       const expectedVQuoteAmountOutWithFee = -1565400650601n;
-      const expectedFundingPayment = -1462219n;
+      const expectedFundingPayment = 1462219n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1360,7 +1359,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
       const netTokenPosition = expectedVTokenBalance;
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedVQuoteBalance = 402080684535n;
+      const expectedVQuoteBalance = 402071520532n - 107n;
 
       const expectedKeeperFee = 50000000n;
       const expectedInsuranceFundFee = 50000000n;
@@ -1394,7 +1393,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
 
       const netTokenPosition = expectedVTokenBalance;
 
-      const expectedVQuoteBalance = 328899246861n;
+      const expectedVQuoteBalance = 328889490895n - 108n;
 
       const startPrice = 4003.754807;
       const endPrice = 4124.355;
@@ -1434,7 +1433,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
 
       const netTokenPosition1 = expectedToken1Balance;
 
-      const expectedVQuoteBalance = 14314332013n;
+      const expectedVQuoteBalance = 14300311999n - 108n;
 
       const startPrice1 = 73485.26641;
       const endPrice1 = 75706.35858;

@@ -1,3 +1,4 @@
+//ClearingHouseScenario5
 //Full Token Liquidation New
 
 import { expect } from 'chai';
@@ -42,7 +43,7 @@ const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 config();
 const { ALCHEMY_KEY } = process.env;
 
-describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liquidation Without Slippage Bound)', () => {
+describe('Clearing House Scenario 5 (Liquidation | Account Position | Full Liquidation Without Slippage Bound)', () => {
   let vQuoteAddress: string;
   let ownerAddress: string;
   let testContractAddress: string;
@@ -1075,6 +1076,11 @@ describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liqui
       const expectedVQuoteAmountOutWithFee = -1641020428175n + 10n;
       const expectedFundingPayment = 0n;
 
+      // console.log(
+      //   '1500 : funding accrued Acct[1]',
+      //   (await clearingHouseTest.getAccountTokenPositionFunding(user1AccountNo, vTokenAddress)).toBigInt(),
+      // );
+
       const swapTxn = await swapTokenAndCheck(
         user2,
         user2AccountNo,
@@ -1105,12 +1111,12 @@ describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liqui
       await oracle.setSqrtPriceX96(realSqrtPrice);
     });
 
-    it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -196750', async () => {
+    it('Acct[1] Underwater : Liquidate ETH Token Positions @ current tickETH = -196505', async () => {
       const expectedVTokenBalance = 0n;
 
       const netTokenPosition = expectedVTokenBalance;
 
-      const expectedVQuoteBalance = -52885280483n;
+      const expectedVQuoteBalance = -52888736259n;
 
       const startPrice = 2926.327712;
       const endPrice = 3005.511705;
@@ -1121,6 +1127,11 @@ describe('Clearing House Scenario 9 (Liquidation | Account Position | Full Liqui
       const liquidatorsettlementVTokenBalance = 4428083123n;
 
       // await logPoolPrice(vPool, vToken);
+
+      // console.log(
+      //   '2000 : funding accrued Acct[1]',
+      //   (await clearingHouseTest.getAccountTokenPositionFunding(user1AccountNo, vTokenAddress)).toBigInt(),
+      // );
 
       await liquidateTokenPosition(keeper, user1AccountNo, vTokenAddress);
       // await logPoolPrice(vPool, vToken);
