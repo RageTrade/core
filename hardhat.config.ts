@@ -11,21 +11,71 @@ import 'solidity-coverage';
 
 import { config } from 'dotenv';
 import { ethers } from 'ethers';
+import { Fragment } from 'ethers/lib/utils';
+import { readJsonSync, writeJsonSync } from 'fs-extra';
+import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { task } from 'hardhat/config';
+import nodePath from 'path';
+
+// this compile task override is needed to copy missing abi fragments to respective artifacts (note its not aval to typechain)
+task(TASK_COMPILE, 'Compiles the entire project, building all artifacts').setAction(async (taskArgs, _, runSuper) => {
+  const compileSolOutput = await runSuper(taskArgs);
+
+  copyEventErrorAbis(
+    [
+      'artifacts/contracts/libraries/Account.sol/Account.json',
+      'artifacts/contracts/libraries/CollateralDeposit.sol/CollateralDeposit.json',
+      'artifacts/contracts/libraries/LiquidityPosition.sol/LiquidityPosition.json',
+      'artifacts/contracts/libraries/LiquidityPositionSet.sol/LiquidityPositionSet.json',
+      'artifacts/contracts/libraries/VTokenPosition.sol/VTokenPosition.json',
+      'artifacts/contracts/libraries/VTokenPositionSet.sol/VTokenPositionSet.json',
+    ],
+    'artifacts/contracts/protocol/clearinghouse/ClearingHouse.sol/ClearingHouse.json',
+  );
+
+  copyEventErrorAbis(
+    [
+      'artifacts/contracts/libraries/AddressHelper.sol/AddressHelper.json',
+      'artifacts/contracts/libraries/FundingPayment.sol/FundingPayment.json',
+      'artifacts/contracts/libraries/SimulateSwap.sol/SimulateSwap.json',
+      'artifacts/contracts/libraries/PriceMath.sol/PriceMath.json',
+      'artifacts/contracts/libraries/SafeCast.sol/SafeCast.json',
+      'artifacts/contracts/libraries/UniswapV3PoolHelper.sol/UniswapV3PoolHelper.json',
+      'artifacts/@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol/TickMath.json',
+    ],
+    'artifacts/contracts/protocol/wrapper/VPoolWrapper.sol/VPoolWrapper.json',
+  );
+
+  function copyEventErrorAbis(froms: string[], to: string) {
+    for (const from of froms) {
+      copyEventErrorAbi(from, to);
+    }
+  }
+
+  function copyEventErrorAbi(from: string, to: string) {
+    const fromArtifact = readJsonSync(nodePath.resolve(__dirname, from));
+    const toArtifact = readJsonSync(nodePath.resolve(__dirname, to));
+    fromArtifact.abi.forEach((fromFragment: Fragment) => {
+      if (
+        // only copy error and event fragments
+        (fromFragment.type === 'error' || fromFragment.type === 'event') &&
+        // if fragment is already in the toArtifact, don't copy it
+        !toArtifact.abi.find(
+          ({ name, type }: Fragment) => name + '-' + type === fromFragment.name + '-' + fromFragment.type,
+        )
+      ) {
+        toArtifact.abi.push(fromFragment);
+      }
+    });
+
+    writeJsonSync(nodePath.resolve(__dirname, to), toArtifact, { spaces: 2 });
+  }
+
+  return compileSolOutput;
+});
 
 config();
 const { ALCHEMY_KEY } = process.env;
-
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task('accounts', 'Prints the list of accounts', async (args, hre) => {
-  const accounts = await hre.ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
-
 if (!process.env.ALCHEMY_KEY) {
   console.warn('PLEASE NOTE: The env var ALCHEMY_KEY is not set');
 }

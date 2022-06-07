@@ -30,11 +30,12 @@ import {
   VPoolWrapperMockRealistic,
   VQuote,
   VToken,
+  VTokenPositionSet__factory,
 } from '../../typechain-types';
 import {
   TokenPositionChangedEvent,
   TokenPositionFundingPaymentRealizedEvent,
-} from '../../typechain-types/artifacts/contracts/libraries/Account';
+} from '../../typechain-types/artifacts/contracts/libraries/VTokenPositionSet';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 import { stealFunds } from '../helpers/steal-funds';
@@ -253,7 +254,9 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
         try {
           return {
             ...log,
-            ...Account__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(log),
+            ...VTokenPositionSet__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(
+              log,
+            ),
           };
         } catch {
           return null;
@@ -280,7 +283,9 @@ describe('Clearing House Scenario 8 (Liquidation | Account Position | Partial Li
         try {
           return {
             ...log,
-            ...Account__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(log),
+            ...VTokenPositionSet__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(
+              log,
+            ),
           };
         } catch {
           return null;
