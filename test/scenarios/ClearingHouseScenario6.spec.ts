@@ -17,6 +17,7 @@ import {
 
 import {
   Account__factory,
+  ClearingHouseLens,
   ClearingHouseTest,
   IERC20,
   IUniswapV3Pool,
@@ -47,6 +48,7 @@ describe('Clearing House Scenario 6', () => {
   let oracleAddress: string;
   // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
+  let clearingHouseLens: ClearingHouseLens;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
@@ -517,7 +519,7 @@ describe('Clearing House Scenario 6', () => {
         isCrossMargined,
         oracle,
       },
-    } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
+    } = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
     return {
       initialMarginRatioBps,
       maintainanceMarginRatioBps,
@@ -589,6 +591,9 @@ describe('Clearing House Scenario 6', () => {
     vQuoteAddress = vQuote.address;
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+    clearingHouseLens = await (
+      await hre.ethers.getContractFactory('ClearingHouseLens')
+    ).deploy(clearingHouseTest.address);
 
     const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
 
@@ -689,7 +694,7 @@ describe('Clearing House Scenario 6', () => {
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseTest.getProtocolInfo();
+      const protocol = await clearingHouseLens.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       await vPoolWrapper.setFpGlobalLastTimestamp(0);
@@ -744,13 +749,13 @@ describe('Clearing House Scenario 6', () => {
       const settings = await getPoolSettings(vTokenAddress);
       settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
-      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
+      expect((await clearingHouseLens.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
     });
 
     it('AddVQuote Deposit Support  - Pass', async () => {
       // await clearingHouseTest.connect(admin).updateSupportedDeposits(settlementToken.address, true);
       expect(
-        (await clearingHouseTest.getCollateralInfo(truncate(settlementToken.address))).settings.isAllowedForDeposit,
+        (await clearingHouseLens.getCollateralInfo(truncate(settlementToken.address))).settings.isAllowedForDeposit,
       ).to.be.true;
     });
   });

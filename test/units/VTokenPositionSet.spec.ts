@@ -7,6 +7,7 @@ import { getCreateAddressFor, truncate } from '@ragetrade/sdk';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
+  ClearingHouseLens,
   ClearingHouseTest,
   ERC20,
   RageTradeFactory,
@@ -32,6 +33,7 @@ describe('VTokenPositionSet Library', () => {
   let vQuote: VQuote;
   let VPoolWrapper: VPoolWrapper;
   let clearingHouse: ClearingHouseTest;
+  let clearingHouseLens: ClearingHouseLens;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
   let chSigner: SignerWithAddress;
@@ -71,6 +73,8 @@ describe('VTokenPositionSet Library', () => {
     ).deploy(clearingHouseLogic.address, vPoolWrapperLogic.address, insuranceFundLogic.address, SETTLEMENT_TOKEN);
 
     clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+    clearingHouseLens = await (await hre.ethers.getContractFactory('ClearingHouseLens')).deploy(clearingHouse.address);
+
     chSigner = await impersonateAccount(clearingHouse.address);
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
 
@@ -350,10 +354,10 @@ describe('VTokenPositionSet Library', () => {
   });
 
   async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
-    const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+    const vTokenPoolObj = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
     await vTokenPositionSet.registerPool(vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouse.getPoolInfo(truncate(vTokenAddress1));
+    const vTokenPoolObj1 = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress1));
     await vTokenPositionSet.registerPool(vTokenPoolObj1);
 
     await vTokenPositionSet.setVQuoteAddress(vQuote.address);
