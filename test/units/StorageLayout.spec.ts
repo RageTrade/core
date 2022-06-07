@@ -22,10 +22,10 @@ describe('StorageLayout', () => {
 
     runTestCases([
       { label: 'protocol', slot: 100 },
-      { label: 'numAccounts', slot: 209 },
-      { label: 'accounts', slot: 210 },
-      { label: 'rageTradeFactoryAddress', slot: 211 },
-      { label: 'insuranceFund', slot: 212 },
+      { label: 'numAccounts', slot: 210 },
+      { label: 'accounts', slot: 211 },
+      { label: 'rageTradeFactoryAddress', slot: 212 },
+      { label: 'insuranceFund', slot: 213 },
       { label: '_paused', slot: 368 },
       { label: '_governance', slot: 418 },
       { label: '_teamMultisig', slot: 419 },
