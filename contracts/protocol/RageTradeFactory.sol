@@ -55,7 +55,7 @@ contract RageTradeFactory is
         address _vPoolWrapperLogicAddress,
         address insuranceFundLogicAddress,
         IERC20Metadata settlementToken,
-        SettlementTokenOracle settlementTokenOracle
+        IOracle settlementTokenOracle
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
         proxyAdmin = _deployProxyAdmin();
         proxyAdmin.transferOwnership(msg.sender);
