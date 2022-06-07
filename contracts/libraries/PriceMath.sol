@@ -15,8 +15,8 @@ library PriceMath {
     error IllegalSqrtPrice(uint160 sqrtPriceX96);
 
     /// @notice Computes the square of a sqrtPriceX96 value
-    /// @param sqrtPriceX96: input price in Q128 format
-    /// @return priceX128 : the square root of the input price in Q96 format
+    /// @param sqrtPriceX96: the square root of the input price in Q96 format
+    /// @return priceX128 : input price in Q128 format
     function toPriceX128(uint160 sqrtPriceX96) internal pure returns (uint256 priceX128) {
         if (sqrtPriceX96 < TickMath.MIN_SQRT_RATIO || sqrtPriceX96 >= TickMath.MAX_SQRT_RATIO) {
             revert IllegalSqrtPrice(sqrtPriceX96);
