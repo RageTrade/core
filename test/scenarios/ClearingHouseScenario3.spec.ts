@@ -1077,7 +1077,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const liquidityDelta = 250000000000n;
       const limitOrderType = 0;
       const expectedEndToken1Balance = -501494329n - 1n;
-      const expectedEndVQuoteBalance = -117235394437n + 1n;
+      const expectedEndVQuoteBalance = -117236228833n - 105n;
 
       await updateRangeOrderAndCheck(
         user1,
@@ -1113,7 +1113,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const expectedVTokenBalance = '-4055086555447580000';
 
       //TODO: Check
-      const expectedVQuoteBalance = -102607084819n + 1n;
+      const expectedVQuoteBalance = -102607919215n - 105n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 14628309618n;
@@ -1153,7 +1153,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const liquidityDelta = 25000000000000000n;
       const limitOrderType = 0;
       const expectedEndToken2Balance = -25559097903887700000n;
-      const expectedEndVQuoteBalance = -192086890207n;
+      const expectedEndVQuoteBalance = -192087809083n - 106n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -1243,7 +1243,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
 
       const swapToken2Amount = '86016045393757900000';
       const expectedToken2Balance = '86016045393757900000';
-      const expectedVQuoteBalance = -823329583575n - 1n;
+      const expectedVQuoteBalance = -823329583576n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
@@ -1290,14 +1290,14 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const swapToken1Amount = '3653445212';
       const expectedToken1Balance = 4460680115n;
       //TODO:Check
-      const expectedVQuoteBalance = -3432640828758n - 1n;
+      const expectedVQuoteBalance = -3432637904321n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
 
-      const expectedVQuoteAmountOutWithFee = -2609309782963n - 1n;
-      const expectedFundingPayment = -1462220n + 1n;
+      const expectedVQuoteAmountOutWithFee = -2609309782964n;
+      const expectedFundingPayment = 1462219n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1341,7 +1341,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const expectedVQuoteBalance = 409602595097n;
 
       const expectedKeeperFee = 50000000n;
-      const expectedInsuranceFundFee = -7471798455n;
+      const expectedInsuranceFundFee = -7481186779n;
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
 
       const feeDeductedFromLiquidatedAcct = 0n;
@@ -1379,13 +1379,13 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const netTokenPosition = expectedVTokenBalance;
 
       // adjustment = -77n
-      const expectedVQuoteBalance = 339709527101n;
+      const expectedVQuoteBalance = 339711883341n;
 
       const startPrice = 4003.754807;
       const endPrice = 4124.355;
 
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
-      const expectedInsuranceFundFee = -2222616275n;
+      const expectedInsuranceFundFee = -2225564479n;
 
       const liquidatorSettlementVTokenBalance = 1115753402n;
 
@@ -1419,13 +1419,13 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const netTokenPosition = expectedVTokenBalance;
 
       // adjustment = -77n
-      const expectedVQuoteBalance = 307278341651n;
+      const expectedVQuoteBalance = 307282582883n;
 
       const startPrice = 4124.443649;
       const endPrice = 4181.862274;
 
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
-      const expectedInsuranceFundFee = -1768497858n;
+      const expectedInsuranceFundFee = -1770413780n;
 
       const liquidatorSettlementVTokenBalance = 1621167669n;
 
@@ -1464,7 +1464,7 @@ describe('Clearing House Scenario 3 (Liquidation | Account Negative | Slippage B
       const endPrice1 = 83668.04751;
 
       const insuranceFundStartingBalance = await settlementToken.balanceOf(insuranceFund.address);
-      const expectedInsuranceFundFee = -10034873827n;
+      const expectedInsuranceFundFee = -10035345075n;
 
       const liquidatorSettlementVTokenBalance = 6437411978n;
 
