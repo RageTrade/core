@@ -157,4 +157,93 @@ describe('WordHelper', () => {
       expect(result.inputUpdated).to.eq(bytes32('0x01020304050607080910111213141516171819202122232425262728293031'));
     });
   });
+
+  describe('#convertToUint32Array', () => {
+    it('convertToUint32Array empty', async () => {
+      const result = await test.convertToUint32Array(bytes32(0));
+      expect(result.length).to.eq(0);
+    });
+
+    it('convertToUint32Array one', async () => {
+      const result = await test.convertToUint32Array(bytes32(0x12345678));
+      expect(result.length).to.eq(1);
+      expect(result[0]).to.eq(0x12345678);
+    });
+
+    it('convertToUint32Array two', async () => {
+      const result = await test.convertToUint32Array(bytes32('0x2222222211111111'));
+      expect(result.length).to.eq(2);
+      expect(result[0]).to.eq(0x11111111);
+      expect(result[1]).to.eq(0x22222222);
+    });
+
+    it('convertToUint32Array eight', async () => {
+      const result = await test.convertToUint32Array(
+        bytes32('0x8888888877777777666666665555555544444444333333332222222211111111'),
+      );
+      expect(result.length).to.eq(8);
+      expect(result[0]).to.eq(0x11111111);
+      expect(result[1]).to.eq(0x22222222);
+      expect(result[2]).to.eq(0x33333333);
+      expect(result[3]).to.eq(0x44444444);
+      expect(result[4]).to.eq(0x55555555);
+      expect(result[5]).to.eq(0x66666666);
+      expect(result[6]).to.eq(0x77777777);
+      expect(result[7]).to.eq(0x88888888);
+    });
+  });
+
+  describe.only('#convertToTickRangeArray', () => {
+    it('convertToTickRangeArray empty', async () => {
+      const result = await test.convertToTickRangeArray(bytes32(0));
+      expect(result.length).to.eq(0);
+    });
+
+    it('convertToTickRangeArray one positive', async () => {
+      const result = await test.convertToTickRangeArray(bytes32(0x011111022222));
+      expect(result.length).to.eq(1);
+      expect(result[0].tickLower).to.eq(0x011111);
+      expect(result[0].tickUpper).to.eq(0x022222);
+    });
+
+    it('convertToTickRangeArray two positive', async () => {
+      const result = await test.convertToTickRangeArray(bytes32('0x011111022222011111022222'));
+      expect(result.length).to.eq(2);
+      expect(result[0].tickLower).to.eq(0x011111);
+      expect(result[0].tickUpper).to.eq(0x022222);
+      expect(result[1].tickLower).to.eq(0x011111);
+      expect(result[1].tickUpper).to.eq(0x022222);
+    });
+
+    it('convertToTickRangeArray five positive', async () => {
+      const result = await test.convertToTickRangeArray(
+        bytes32('0x011111022222011111022222011111022222011111022222011111022222'),
+      );
+      expect(result.length).to.eq(5);
+      expect(result[0].tickLower).to.eq(0x011111);
+      expect(result[0].tickUpper).to.eq(0x022222);
+      expect(result[1].tickLower).to.eq(0x011111);
+      expect(result[1].tickUpper).to.eq(0x022222);
+      expect(result[2].tickLower).to.eq(0x011111);
+      expect(result[2].tickUpper).to.eq(0x022222);
+      expect(result[3].tickLower).to.eq(0x011111);
+      expect(result[3].tickUpper).to.eq(0x022222);
+      expect(result[4].tickLower).to.eq(0x011111);
+      expect(result[4].tickUpper).to.eq(0x022222);
+    });
+
+    it.skip('convertToTickRangeArray one negative', async () => {
+      const result = await test.convertToTickRangeArray(bytes32(0x111111022222));
+      expect(result.length).to.eq(1);
+      expect(result[0].tickLower).to.eq(-0x111111);
+      expect(result[0].tickUpper).to.eq(0x022222);
+    });
+
+    it.skip('convertToTickRangeArray one negative 2', async () => {
+      const result = await test.convertToTickRangeArray(bytes32(0x100000022222));
+      expect(result.length).to.eq(1);
+      expect(result[0].tickLower).to.eq(-0x100000);
+      expect(result[0].tickUpper).to.eq(0x022222);
+    });
+  });
 });

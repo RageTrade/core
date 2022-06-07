@@ -29,6 +29,9 @@ describe('Clearing House Extsload', () => {
     await activateMainnetFork();
     ({ clearingHouse, vToken, vPool, vPoolWrapper, oracle, settlementToken } = await vEthFixture());
     test = await (await hre.ethers.getContractFactory('ClearingHouseExtsloadTest')).deploy();
+
+    // hre.tracer.enabled = true;
+    // hre.tracer.sloads = true;
   });
 
   describe('protocol', () => {

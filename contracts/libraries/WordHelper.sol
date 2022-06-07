@@ -2,7 +2,15 @@
 
 pragma solidity ^0.8.0;
 
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+
+import { Uint48Lib } from '../libraries/Uint48.sol';
+
+import 'hardhat/console.sol';
+
 library WordHelper {
+    using WordHelper for bytes32;
+
     struct Word {
         bytes32 data;
     }
@@ -204,5 +212,57 @@ library WordHelper {
 
     function toBool(bytes32 input) internal pure returns (bool value) {
         (value, ) = popBool(input);
+    }
+
+    bytes32 constant ZERO = bytes32(uint256(0));
+
+    function convertToUint32Array(bytes32 active) internal pure returns (uint32[] memory activeArr) {
+        unchecked {
+            uint256 i = 8;
+            while (i > 0) {
+                bytes32 id = active.slice((i - 1) * 32, i * 32);
+                if (id == ZERO) {
+                    break;
+                }
+                i--;
+            }
+            activeArr = new uint32[](8 - i);
+            while (i < 8) {
+                activeArr[7 - i] = active.slice(i * 32, (i + 1) * 32).toUint32();
+                i++;
+            }
+        }
+    }
+
+    function convertToTickRangeArray(bytes32 active)
+        internal
+        view
+        returns (IClearingHouseStructures.TickRange[] memory activeArr)
+    {
+        unchecked {
+            uint256 i = 5;
+            while (i > 0) {
+                bytes32 id = active.slice((i - 1) * 48, i * 48);
+                if (id == ZERO) {
+                    break;
+                }
+                i--;
+            }
+            activeArr = new IClearingHouseStructures.TickRange[](5 - i);
+            while (i < 5) {
+                console.logBytes32(active);
+                console.logBytes32(active.slice(16 + i * 48, 16 + (i + 1) * 48));
+                console.log(active.slice(16 + i * 48, 16 + (i + 1) * 48).toUint48());
+                // 256 - 48 * 5 = 16
+                (int24 tickLower, int24 tickUpper) = Uint48Lib.unconcat(
+                    active.slice(16 + i * 48, 16 + (i + 1) * 48).toUint48()
+                );
+                console.logInt(tickLower);
+                console.logInt(tickUpper);
+                activeArr[4 - i].tickLower = tickLower;
+                activeArr[4 - i].tickUpper = tickUpper;
+                i++;
+            }
+        }
     }
 }

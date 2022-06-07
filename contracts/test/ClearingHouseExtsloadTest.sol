@@ -138,7 +138,7 @@ contract ClearingHouseExtsloadTest {
             int256 balance,
             int256 netTraderPosition,
             int256 sumALastX128,
-            ClearingHouseExtsload.TickRange[] memory activeTickRanges
+            IClearingHouse.TickRange[] memory activeTickRanges
         )
     {
         return ClearingHouseExtsload.getAccountPositionInfo(clearingHouse, accountId, poolId);
@@ -148,7 +148,7 @@ contract ClearingHouseExtsloadTest {
         IClearingHouse clearingHouse,
         uint256 accountId,
         uint32 poolId
-    ) external view returns (ClearingHouseExtsload.TickRange[] memory activeTickRanges) {
+    ) external view returns (IClearingHouse.TickRange[] memory activeTickRanges) {
         return ClearingHouseExtsload.getAccountLiquidityPositionList(clearingHouse, accountId, poolId);
     }
 
