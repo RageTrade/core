@@ -34,6 +34,10 @@ contract ClearingHouseLens {
         return clearingHouse.getProtocolInfo();
     }
 
+    function getPoolInfo(uint32 poolId) external view returns (IClearingHouse.Pool memory pool) {
+        return clearingHouse.getPoolInfo(poolId);
+    }
+
     function getVPool(uint32 poolId) external view returns (IUniswapV3Pool vPool) {
         return clearingHouse.getVPool(poolId);
     }
