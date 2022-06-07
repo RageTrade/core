@@ -8,6 +8,7 @@ import { tickToSqrtPriceX96, truncate } from '@ragetrade/sdk';
 import {
   ArbSys,
   ArbSysMock,
+  ClearingHouseLens,
   ClearingHouseTest,
   UniswapV3Pool,
   VPoolWrapper,
@@ -25,6 +26,7 @@ describe('Market Value and Required Margin', () => {
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   let vQuote: VQuote;
   let clearingHouse: ClearingHouseTest;
+  let clearingHouseLens: ClearingHouseLens;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
 
@@ -78,6 +80,7 @@ describe('Market Value and Required Margin', () => {
       vPoolAddress: vPoolAddress,
       vPoolWrapperAddress: vPoolWrapperAddress,
       clearingHouse,
+      clearingHouseLens,
       vQuote,
     } = await testSetup({
       initialMarginRatioBps: 2000,
@@ -112,7 +115,7 @@ describe('Market Value and Required Margin', () => {
     VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
     await VTokenPositionSet.init(vTokenAddress);
 
-    const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+    const vTokenPoolObj = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
     await VTokenPositionSet.registerPool(vTokenPoolObj);
 
     await VTokenPositionSet.setVQuoteAddress(vQuote.address);
@@ -282,7 +285,7 @@ describe('Market Value and Required Margin', () => {
       VTokenPositionSet = (await myContractFactory.deploy()) as unknown as MockContract<VTokenPositionSetTest2>;
       await VTokenPositionSet.init(vTokenAddress);
 
-      const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+      const vTokenPoolObj = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
       await VTokenPositionSet.registerPool(vTokenPoolObj);
 
       await VTokenPositionSet.setVQuoteAddress(vQuote.address);
