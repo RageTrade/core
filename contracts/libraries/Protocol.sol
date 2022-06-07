@@ -76,6 +76,12 @@ library Protocol {
         uint256 realPriceX128 = protocol.getRealTwapPriceX128(poolId);
         uint256 virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
 
+        // In case the price is breaching the Q224 limit, we do not cache it
+        uint256 Q224 = 1 << 224;
+        if (realPriceX128 >= Q224 || virtualPriceX128 >= Q224) {
+            return;
+        }
+
         uint16 maxDeviationBps = protocol.pools[poolId].settings.maxVirtualPriceDeviationRatioBps;
         if (
             // if virtual price is too off from real price then screw that, we'll just use real price
