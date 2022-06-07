@@ -13,8 +13,8 @@ import { IVQuote } from '../interfaces/IVQuote.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
-import { WordHelper } from '../libraries/WordHelper.sol';
 import { Uint48Lib } from '../libraries/Uint48.sol';
+import { WordHelper } from '../libraries/WordHelper.sol';
 
 import 'hardhat/console.sol';
 
@@ -25,8 +25,6 @@ library ClearingHouseExtsload {
 
     using WordHelper for bytes32;
     using WordHelper for WordHelper.Word;
-
-    bytes32 constant ZERO = bytes32(uint256(0));
 
     /**
      * PROTOCOL
@@ -319,8 +317,8 @@ library ClearingHouseExtsload {
 
         owner = arr[0].slice(0, 160).toAddress();
         vQuoteBalance = arr[1].toInt256();
-        activeCollateralIds = convertToUint32Array(arr[2]);
-        activePoolIds = convertToUint32Array(arr[3]);
+        activeCollateralIds = arr[2].convertToUint32Array();
+        activePoolIds = arr[3].convertToUint32Array();
     }
 
     function getAccountCollateralInfo(
@@ -375,11 +373,6 @@ library ClearingHouseExtsload {
         sumALastX128 = arr[2].toInt256();
     }
 
-    struct TickRange {
-        int24 tickLower;
-        int24 tickUpper;
-    }
-
     function getAccountPositionInfo(
         IClearingHouse clearingHouse,
         uint256 accountId,
@@ -391,7 +384,7 @@ library ClearingHouseExtsload {
             int256 balance,
             int256 netTraderPosition,
             int256 sumALastX128,
-            TickRange[] memory activeTickRanges
+            IClearingHouse.TickRange[] memory activeTickRanges
         )
     {
         bytes32 VTOKEN_POSITION_STRUCT_SLOT = accountVTokenPositionStructSlot(accountStructSlot(accountId), poolId);
@@ -407,22 +400,22 @@ library ClearingHouseExtsload {
         balance = arr[0].toInt256();
         netTraderPosition = arr[1].toInt256();
         sumALastX128 = arr[2].toInt256();
-        activeTickRanges = convertToTickRangeArray(arr[3]);
+        activeTickRanges = arr[3].convertToTickRangeArray();
     }
 
     function getAccountLiquidityPositionList(
         IClearingHouse clearingHouse,
         uint256 accountId,
         uint32 poolId
-    ) internal view returns (TickRange[] memory activeTickRanges) {
+    ) internal view returns (IClearingHouse.TickRange[] memory activeTickRanges) {
         return
-            convertToTickRangeArray(
-                clearingHouse.extsload(
+            clearingHouse
+                .extsload(
                     accountVTokenPositionStructSlot(accountStructSlot(accountId), poolId).offset(
                         ACCOUNT_VTOKENPOSITION_LIQUIDITY_ACTIVE_OFFSET
                     )
                 )
-            );
+                .convertToTickRangeArray();
     }
 
     function getAccountLiquidityPositionInfo(
@@ -469,43 +462,5 @@ library ClearingHouseExtsload {
         sumBInsideLastX128 = arr[3].toInt256();
         sumFpInsideLastX128 = arr[4].toInt256();
         sumFeeInsideLastX128 = arr[5].toUint256();
-    }
-
-    function convertToUint32Array(bytes32 active) internal pure returns (uint32[] memory activeArr) {
-        unchecked {
-            uint256 i = 8;
-            while (i > 0) {
-                bytes32 id = active.slice((i - 1) * 32, i * 32);
-                if (id == ZERO) {
-                    break;
-                }
-                i--;
-            }
-            activeArr = new uint32[](8 - i);
-            while (i < 8) {
-                activeArr[7 - i] = active.slice(i * 32, (i + 1) * 32).toUint32();
-                i++;
-            }
-        }
-    }
-
-    function convertToTickRangeArray(bytes32 active) internal pure returns (TickRange[] memory activeArr) {
-        unchecked {
-            uint256 i = 5;
-            while (i > 0) {
-                bytes32 id = active.slice((i - 1) * 48, i * 48);
-                if (id == ZERO) {
-                    break;
-                }
-                i--;
-            }
-            activeArr = new TickRange[](5 - i);
-            while (i < 5) {
-                (int24 tickLower, int24 tickUpper) = Uint48Lib.unconcat(active.slice(i * 48, (i + 1) * 48).toUint48());
-                activeArr[4 - i].tickLower = tickLower;
-                activeArr[4 - i].tickUpper = tickUpper;
-                i++;
-            }
-        }
     }
 }
