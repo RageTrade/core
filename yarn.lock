@@ -1471,9 +1471,9 @@
   resolved "https://registry.yarnpkg.com/@uniswap/v2-core/-/v2-core-1.0.1.tgz#af8f508bf183204779938969e2e54043e147d425"
   integrity sha512-MtybtkUPSyysqLY2U210NBDeCHX+ltHt3oADGdjqoThZaFRDKwM6k1Nb3F0A3hk5hwuQvytFWhrWHOEq6nVJ8Q==
 
-"@uniswap/v3-core-0.8-support@https://github.com/uniswap/v3-core.git#6562c52e8f75f0c10f9deaf44861847585fc8129":
-  version "1.0.1-solc-0.8"
-  resolved "https://github.com/uniswap/v3-core.git#6562c52e8f75f0c10f9deaf44861847585fc8129"
+"@uniswap/v3-core-0.8-support@https://github.com/uniswap/v3-core.git#d55e297b938e5b56fd1cf9fe668f5bd385be85b5":
+  version "1.0.2-solc-0.8-simulate"
+  resolved "https://github.com/uniswap/v3-core.git#d55e297b938e5b56fd1cf9fe668f5bd385be85b5"
 
 "@uniswap/v3-core@1.0.0":
   version "1.0.0"
