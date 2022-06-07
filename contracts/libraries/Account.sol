@@ -324,11 +324,7 @@ library Account {
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
     /// @param account account to liquidate
     /// @param protocol set of all constants and token addresses
-    function liquidateLiquidityPositions(
-        Account.Info storage account,
-        uint256 fixFee,
-        Protocol.Info storage protocol
-    )
+    function liquidateLiquidityPositions(Account.Info storage account, Protocol.Info storage protocol)
         external
         returns (
             int256 keeperFee,
@@ -353,7 +349,6 @@ library Account {
         (keeperFee, insuranceFundFee) = _computeLiquidationFees(
             accountMarketValue,
             notionalAmountClosed,
-            fixFee,
             true,
             protocol.liquidationParams
         );
@@ -372,7 +367,6 @@ library Account {
     function liquidateTokenPosition(
         Account.Info storage account,
         uint32 poolId,
-        uint256 fixFee,
         Protocol.Info storage protocol
     ) external returns (int256 keeperFee, int256 insuranceFundFee) {
         bool isPartialLiquidation;
@@ -455,7 +449,6 @@ library Account {
             (keeperFee, insuranceFundFee) = _computeLiquidationFees(
                 accountMarketValueFinal,
                 vQuoteAmountSwapped.absUint(),
-                fixFee,
                 false,
                 protocol.liquidationParams
             );
@@ -478,12 +471,12 @@ library Account {
         uint32 poolId,
         int24 tickLower,
         int24 tickUpper,
-        uint256 limitOrderFeeAndFixFee,
+        uint256 limitOrderFee,
         Protocol.Info storage protocol
     ) external {
         account.tokenPositions.removeLimitOrder(account.id, poolId, tickLower, tickUpper, protocol);
 
-        account._updateVQuoteBalance(-int256(limitOrderFeeAndFixFee));
+        account._updateVQuoteBalance(-int256(limitOrderFee));
     }
 
     /**
@@ -708,19 +701,17 @@ library Account {
      */
 
     /// @notice computes keeper fee and insurance fund fee in case of liquidity position liquidation
-    /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)+fixFee
-    /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee + fixFee
+    /// @dev keeperFee = liquidationFee*(1-insuranceFundFeeShare)
+    /// @dev insuranceFundFee = accountMarketValue - keeperFee (if accountMarketValue is not enough to cover the fees) else insurancFundFee = liquidationFee - keeperFee
     /// @param accountMarketValue market value of account
     /// @param notionalAmountClosed notional value of position closed
-    /// @param fixFee additional fixfee to be paid to the keeper
     /// @param isRangeLiquidation - true for range liquidation and false for token liquidation
-    /// @param liquidationParams parameters including fixFee, insuranceFundFeeShareBps
+    /// @param liquidationParams parameters including insuranceFundFeeShareBps
     /// @return keeperFee map of vTokens allowed on the platform
     /// @return insuranceFundFee poolwrapper for token
     function _computeLiquidationFees(
         int256 accountMarketValue,
         uint256 notionalAmountClosed,
-        uint256 fixFee,
         bool isRangeLiquidation,
         IClearingHouseStructures.LiquidationParams memory liquidationParams
     ) internal pure returns (int256 keeperFee, int256 insuranceFundFee) {
@@ -736,12 +727,11 @@ library Account {
 
         int256 liquidationFeeInt = liquidationFee.toInt256();
 
-        int256 fixFeeInt = int256(fixFee);
-        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4) + fixFeeInt;
-        if (accountMarketValue - fixFeeInt - liquidationFeeInt < 0) {
+        keeperFee = liquidationFeeInt.mulDiv(1e4 - liquidationParams.insuranceFundFeeShareBps, 1e4);
+        if (accountMarketValue - liquidationFeeInt < 0) {
             insuranceFundFee = accountMarketValue - keeperFee;
         } else {
-            insuranceFundFee = liquidationFeeInt - keeperFee + fixFeeInt;
+            insuranceFundFee = liquidationFeeInt - keeperFee;
         }
     }
 }
