@@ -110,7 +110,7 @@ contract ClearingHouseLens {
             int256 balance,
             int256 netTraderPosition,
             int256 sumALastX128,
-            ClearingHouseExtsload.TickRange[] memory activeTickRanges
+            IClearingHouse.TickRange[] memory activeTickRanges
         )
     {
         return clearingHouse.getAccountPositionInfo(accountId, poolId);
@@ -119,7 +119,7 @@ contract ClearingHouseLens {
     function getAccountLiquidityPositionList(uint256 accountId, uint32 poolId)
         external
         view
-        returns (ClearingHouseExtsload.TickRange[] memory activeTickRanges)
+        returns (IClearingHouse.TickRange[] memory activeTickRanges)
     {
         return clearingHouse.getAccountLiquidityPositionList(accountId, poolId);
     }

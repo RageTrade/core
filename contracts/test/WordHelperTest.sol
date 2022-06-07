@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
+
 import { WordHelper } from '../libraries/WordHelper.sol';
 
 contract WordHelperTest {
@@ -55,5 +57,17 @@ contract WordHelperTest {
 
     function popBool(bytes32 input) public pure returns (bool value, bytes32 inputUpdated) {
         (value, inputUpdated) = WordHelper.popBool(input);
+    }
+
+    function convertToUint32Array(bytes32 active) external pure returns (uint32[] memory activeArr) {
+        return WordHelper.convertToUint32Array(active);
+    }
+
+    function convertToTickRangeArray(bytes32 active)
+        external
+        view
+        returns (IClearingHouseStructures.TickRange[] memory activeArr)
+    {
+        return WordHelper.convertToTickRangeArray(active);
     }
 }
