@@ -226,6 +226,8 @@ library Account {
     /// @param account account to deposit balance into
     /// @param collateralId collateral id of the token
     /// @param amount amount of token to deposit or withdraw
+    /// @param protocol set of all constants and token addresses
+    /// @param checkMargin true to check if margin is available else false
     function updateMargin(
         Account.Info storage account,
         uint32 collateralId,
@@ -240,6 +242,7 @@ library Account {
     /// @param account account to remove profit from
     /// @param amount amount of profit(settlement token) to add/remove
     /// @param protocol set of all constants and token addresses
+    /// @param checkMargin true to check if margin is available else false
     function updateProfit(
         Account.Info storage account,
         int256 amount,
@@ -262,6 +265,9 @@ library Account {
     /// @param poolId id of the pool to swap tokens for
     /// @param swapParams parameters for the swap (Includes - amount, sqrtPriceLimit, isNotional, isPartialAllowed)
     /// @param protocol set of all constants and token addresses
+    /// @param checkMargin true to check if margin is available else false
+    /// @return vTokenAmountOut amount of vToken after swap (user receiving then +ve, user paying then -ve)
+    /// @return vQuoteAmountOut amount of vQuote after swap (user receiving then +ve, user paying then -ve)
     function swapToken(
         Account.Info storage account,
         uint32 poolId,
@@ -364,6 +370,8 @@ library Account {
     /// @param account account to liquidate
     /// @param poolId id of the pool to liquidate
     /// @param protocol set of all constants and token addresses
+    /// @return keeperFee amount of liquidation fee paid to keeper
+    /// @return insuranceFundFee amount of liquidation fee paid to insurance fund
     function liquidateTokenPosition(
         Account.Info storage account,
         uint32 poolId,
@@ -582,6 +590,7 @@ library Account {
     /// @param account account to remove profit from
     /// @param amount amount of profit(settlement token) to add/remove
     /// @param protocol set of all constants and token addresses
+    /// @param checkMargin true to check if margin is available else false
     function _updateProfit(
         Account.Info storage account,
         int256 amount,
@@ -602,6 +611,8 @@ library Account {
     /// @param account account to deposit balance into
     /// @param collateralId collateral id of the token
     /// @param amount amount of token to deposit or withdraw
+    /// @param protocol set of all constants and token addresses
+    /// @param checkMargin true to check if margin is available else false
     function _updateMargin(
         Account.Info storage account,
         uint32 collateralId,
@@ -622,6 +633,7 @@ library Account {
     /// @notice updates the vQuote balance for 'account' by 'amount'
     /// @param account pointer to 'account' struct
     /// @param amount amount of balance to update
+    /// @return balanceAdjustments vToken and vQuote balance changes of the account
     function _updateVQuoteBalance(Account.Info storage account, int256 amount)
         internal
         returns (IClearingHouseStructures.BalanceAdjustments memory balanceAdjustments)
