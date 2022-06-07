@@ -17,6 +17,7 @@ import {
 
 import {
   Account__factory,
+  ArbSysMock,
   ClearingHouseTest,
   IERC20,
   InsuranceFund,
@@ -48,6 +49,8 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
   let oracleAddress: string;
   // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
+  let arbSysMock: ArbSysMock;
+
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
@@ -120,6 +123,7 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
     const absoluteTimestamp = timestampIncrease + 100 + initialBlockTimestamp;
     await vPoolWrapper.setBlockTimestamp(absoluteTimestamp);
     await vPoolWrapper1.setBlockTimestamp(absoluteTimestamp);
+    await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
 
     await network.provider.send('evm_setNextBlockTimestamp', [absoluteTimestamp]);
     expect(await vPoolWrapper.blockTimestamp()).to.eq(absoluteTimestamp);
@@ -763,6 +767,15 @@ describe('Clearing House Scenario 2 (Liquidation | Account Position | Slippage B
 
     const block = await hre.ethers.provider.getBlock('latest');
     initialBlockTimestamp = block.timestamp;
+
+    arbSysMock = await (await hre.ethers.getContractFactory('ArbSysMock')).deploy();
+
+    const mockBytecode = await hre.ethers.provider.getCode(arbSysMock.address);
+
+    await network.provider.send('hardhat_setCode', ['0x0000000000000000000000000000000000000064', mockBytecode]);
+
+    arbSysMock = await hre.ethers.getContractAt('ArbSysMock', '0x0000000000000000000000000000000000000064');
+    await arbSysMock.setArbBlockNumber(1);
   }
 
   async function getPoolSettings(vTokenAddress: string) {

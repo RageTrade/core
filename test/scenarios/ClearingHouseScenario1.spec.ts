@@ -16,6 +16,7 @@ import {
 
 import {
   Account__factory,
+  ArbSysMock,
   ClearingHouseTest,
   IERC20,
   IUniswapV3Pool,
@@ -46,6 +47,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
   let oracleAddress: string;
   // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
+  let arbSysMock: ArbSysMock;
   let vPool: IUniswapV3Pool;
   let vPoolWrapper: VPoolWrapperMockRealistic;
   let vToken: VToken;
@@ -667,6 +669,14 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       twapDuration: 300,
       isAllowedForDeposit: true,
     });
+    arbSysMock = await (await hre.ethers.getContractFactory('ArbSysMock')).deploy();
+
+    const mockBytecode = await hre.ethers.provider.getCode(arbSysMock.address);
+
+    await network.provider.send('hardhat_setCode', ['0x0000000000000000000000000000000000000064', mockBytecode]);
+
+    arbSysMock = await hre.ethers.getContractAt('ArbSysMock', '0x0000000000000000000000000000000000000064');
+    await arbSysMock.setArbBlockNumber(1);
   });
 
   after(deactivateMainnetFork);
@@ -763,6 +773,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
   describe('#Scenario', async () => {
     it('Timestamp And Oracle Update - 0', async () => {
       await vPoolWrapper.setBlockTimestamp(0);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
+
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(0);
@@ -811,6 +823,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     it('Timestamp and Oracle Update - 600', async () => {
       const timestampIncrease = 600;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2150.63617866738, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -863,6 +876,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
     it('Timestamp and Oracle Update - 1200', async () => {
       const timestampIncrease = 1200;
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
@@ -931,6 +945,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 1900;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2127.10998824933, vQuote, vToken);
       await await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -997,6 +1012,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 2600;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1062,6 +1078,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 3300;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1126,6 +1143,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 4100;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2101.73847049388, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1191,6 +1209,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 4500;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2161.41574705594, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1255,6 +1274,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 4600;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2141.33749022076, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1322,6 +1342,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 5300;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2053.95251980329, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1385,6 +1406,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 5800;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2001.24061387234, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1436,6 +1458,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 6200;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(2001.24061387234, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1489,6 +1512,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 6300;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(1991.25998215442, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1538,6 +1562,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 7200;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(1942.0979282388, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);
@@ -1585,6 +1610,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const timestampIncrease = 7600;
       await network.provider.send('evm_setNextBlockTimestamp', [initialBlockTimestamp + timestampIncrease]);
       await vPoolWrapper.setBlockTimestamp(timestampIncrease);
+      await arbSysMock.setArbBlockNumber((await arbSysMock.arbBlockNumber()).add(1));
       const realSqrtPrice = await priceToSqrtPriceX96(1915.09933823398, vQuote, vToken);
       await oracle.setSqrtPriceX96(realSqrtPrice);
       expect(await vPoolWrapper.blockTimestamp()).to.eq(timestampIncrease);

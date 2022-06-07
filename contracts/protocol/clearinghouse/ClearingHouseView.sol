@@ -89,12 +89,12 @@ abstract contract ClearingHouseView is IClearingHouse, ClearingHouseStorage, Ext
 
     /// @inheritdoc IClearingHouseView
     function getRealTwapPriceX128(uint32 poolId) public view returns (uint256 realPriceX128) {
-        realPriceX128 = protocol.getRealTwapPriceX128(poolId);
+        realPriceX128 = protocol.getCachedRealTwapPriceX128(poolId);
     }
 
     /// @inheritdoc IClearingHouseView
     function getVirtualTwapPriceX128(uint32 poolId) public view returns (uint256 virtualPriceX128) {
-        virtualPriceX128 = protocol.getVirtualTwapPriceX128(poolId);
+        virtualPriceX128 = protocol.getCachedVirtualTwapPriceX128(poolId);
     }
 
     /// @inheritdoc IClearingHouseView
