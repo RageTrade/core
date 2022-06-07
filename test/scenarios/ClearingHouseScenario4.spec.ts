@@ -606,7 +606,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       poolInitialSettings: {
         initialMarginRatioBps,
         maintainanceMarginRatioBps,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,

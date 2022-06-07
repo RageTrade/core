@@ -487,7 +487,7 @@ describe('Clearing House Scenario 6', () => {
       poolInitialSettings: {
         initialMarginRatioBps,
         maintainanceMarginRatioBps,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,

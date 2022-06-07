@@ -135,7 +135,7 @@ describe('Clearing House Library', () => {
       poolInitialSettings: {
         initialMarginRatioBps,
         maintainanceMarginRatioBps,
-        maxVirtualPriceDeviationRatioBps: 10000,
+        maxVirtualPriceDeviationRatioBps: 2000,
         twapDuration,
         isAllowedForTrade: false,
         isCrossMargined: false,
@@ -219,7 +219,7 @@ describe('Clearing House Library', () => {
       rageTradeFactory,
       2000,
       1000,
-      1,
+      300,
       await priceToSqrtPriceX96(4000, 6, 18),
       // .div(60 * 10 ** 6),
     );
@@ -236,7 +236,7 @@ describe('Clearing House Library', () => {
       rageTradeFactory,
       2000,
       1000,
-      1,
+      300,
       await priceToSqrtPriceX96(4000, 6, 18),
       // .div(60 * 10 ** 6),
     );
