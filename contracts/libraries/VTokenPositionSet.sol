@@ -404,6 +404,10 @@ library VTokenPositionSet {
         accountMarketValue += set.vQuoteBalance;
     }
 
+    /// @notice gets information about the token and liquidity positions for all the pools
+    /// @param set VTokenPositionSet
+    /// @return vQuoteBalance vQuote balance for the token position
+    /// @return vTokenPositions array of vToken position
     function getInfo(VTokenPosition.Set storage set)
         internal
         view
@@ -457,6 +461,11 @@ library VTokenPositionSet {
         return (longSideRisk, shortSideRisk);
     }
 
+    /// @notice gets the net position for the given poolId
+    /// @param set VTokenPositionSet
+    /// @param poolId id of the rage trade pool
+    /// @param protocol platform constants
+    /// @return netPosition net position of the account for the pool
     function getNetPosition(
         VTokenPosition.Set storage set,
         uint32 poolId,

@@ -229,6 +229,9 @@ library Account {
     /// @dev insurance fund covers the remaining fee if the account market value is not enough
     /// @param account account to liquidate
     /// @param protocol set of all constants and token addresses
+    /// @return keeperFee amount of liquidation fee paid to keeper
+    /// @return insuranceFundFee amount of liquidation fee paid to insurance fund
+    /// @return accountMarketValue account market value before liquidation
     function liquidateLiquidityPositions(Account.Info storage account, Protocol.Info storage protocol)
         external
         returns (
@@ -441,6 +444,13 @@ library Account {
         _checkIfProfitAvailable(account, protocol);
     }
 
+    /// @notice gets information about all the collateral and positions in the account
+    /// @param account ref to the account state
+    /// @param protocol ref to the protocol state
+    /// @return owner of the account
+    /// @return vQuoteBalance amount of vQuote in the account
+    /// @return collateralDeposits list of all the collateral amounts
+    /// @return tokenPositions list of all the token and liquidity positions
     function getInfo(Account.Info storage account, Protocol.Info storage protocol)
         external
         view
@@ -456,6 +466,11 @@ library Account {
         (vQuoteBalance, tokenPositions) = account.tokenPositions.getInfo();
     }
 
+    /// @notice gets the net position of the account for a given pool
+    /// @param account ref to the account state
+    /// @param poolId id of the pool
+    /// @param protocol ref to the protocol state
+    /// @return netPosition net position of the account for the pool
     function getNetPosition(
         Account.Info storage account,
         uint32 poolId,
@@ -472,6 +487,9 @@ library Account {
         account.tokenPositions.updateOpenPoolPrices(protocol);
     }
 
+    /// @notice settles profit or loss for the account
+    /// @param account ref to the account state
+    /// @param protocol ref to the protocol state
     function _settleProfit(Account.Info storage account, Protocol.Info storage protocol) internal {
         int256 profits = account._getAccountPositionProfits(protocol);
         uint32 settlementCollateralId = AddressHelper.truncate(protocol.settlementToken);
@@ -562,6 +580,9 @@ library Account {
      *  Internal view methods
      */
 
+    /// @notice ensures that the account has enough margin to cover the required margin
+    /// @param account ref to the account state
+    /// @param protocol ref to the protocol state
     function _checkIfMarginAvailable(
         Account.Info storage account,
         bool isInitialMargin,
@@ -575,11 +596,17 @@ library Account {
             revert InvalidTransactionNotEnoughMargin(accountMarketValue, totalRequiredMargin);
     }
 
+    /// @notice ensures that the account has non negative profit
+    /// @param account ref to the account state
+    /// @param protocol ref to the protocol state
     function _checkIfProfitAvailable(Account.Info storage account, Protocol.Info storage protocol) internal view {
         int256 totalPositionValue = account._getAccountPositionProfits(protocol);
         if (totalPositionValue < 0) revert InvalidTransactionNotEnoughProfit(totalPositionValue);
     }
 
+    /// @notice gets the amount of account's position profits
+    /// @param account ref to the account state
+    /// @param protocol ref to the protocol state
     function _getAccountPositionProfits(Account.Info storage account, Protocol.Info storage protocol)
         internal
         view
@@ -588,8 +615,8 @@ library Account {
         accountPositionProfits = account.tokenPositions.getAccountMarketValue(protocol);
     }
 
-    /// @notice returns market value for the account based on current market conditions
-    /// @param account account to check
+    /// @notice gets market value for the account based on current market conditions
+    /// @param account ref to the account state
     /// @param protocol set of all constants and token addresses
     /// @return accountMarketValue total market value of all the positions (token ) and deposits
     function _getAccountValue(Account.Info storage account, Protocol.Info storage protocol)
@@ -602,6 +629,12 @@ library Account {
         return (accountMarketValue);
     }
 
+    /// @notice gets market value and req margin for the account based on current market conditions
+    /// @param account ref to the account state
+    /// @param isInitialMargin true to use initialMarginFactor and false to use maintainance margin factor for calcualtion of required margin
+    /// @param protocol set of all constants and token addresses
+    /// @return accountMarketValue total market value of all the positions (token) and deposits
+    /// @return totalRequiredMargin total required margin for the account
     function _getAccountValueAndRequiredMargin(
         Account.Info storage account,
         bool isInitialMargin,
