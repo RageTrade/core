@@ -122,6 +122,11 @@ library LiquidityPosition {
      *  Internal methods
      */
 
+    /// @notice initializes a new LiquidityPosition.Info struct
+    /// @dev Reverts if the position is already initialized
+    /// @param position storage pointer of the position to initialize
+    /// @param tickLower lower tick of the range
+    /// @param tickUpper upper tick of the range
     function initialize(
         LiquidityPosition.Info storage position,
         int24 tickLower,
@@ -135,6 +140,13 @@ library LiquidityPosition {
         position.tickUpper = tickUpper;
     }
 
+    /// @notice changes liquidity for a position, informs pool wrapper and does necessary bookkeeping
+    /// @param position storage ref of the position to update
+    /// @param accountId serial number of the account, used to emit event
+    /// @param poolId id of the pool for which position was updated
+    /// @param liquidityDelta change in liquidity value
+    /// @param balanceAdjustments memory ref to the balance adjustments struct
+    /// @param protocol ref to the protocol state
     function liquidityChange(
         LiquidityPosition.Info storage position,
         uint256 accountId,
@@ -149,6 +161,7 @@ library LiquidityPosition {
         IVPoolWrapper wrapper = protocol.vPoolWrapper(poolId);
         IVPoolWrapper.WrapperValuesInside memory wrapperValuesInside;
 
+        // calls wrapper to mint/burn liquidity
         if (liquidityDelta > 0) {
             uint256 vTokenPrincipal_;
             uint256 vQuotePrincipal_;
@@ -171,13 +184,15 @@ library LiquidityPosition {
             vQuotePrincipal = -vQuotePrincipal_.toInt256();
         }
 
+        // calculate funding payment and liquidity fees then update checkpoints
         position.update(accountId, poolId, wrapperValuesInside, balanceAdjustments);
 
+        // adjust in the token acounts
         balanceAdjustments.vQuoteIncrease -= vQuotePrincipal;
         balanceAdjustments.vTokenIncrease -= vTokenPrincipal;
 
+        // emit the event
         uint160 sqrtPriceCurrent = protocol.vPool(poolId).sqrtPriceCurrent();
-
         emitLiquidityChangeEvent(
             position,
             accountId,
@@ -188,6 +203,7 @@ library LiquidityPosition {
             -vQuotePrincipal
         );
 
+        // update trader position increase
         int256 vTokenAmountCurrent;
         {
             (vTokenAmountCurrent, ) = position.vTokenAmountsInRange(sqrtPriceCurrent, false);
@@ -216,6 +232,14 @@ library LiquidityPosition {
         }
     }
 
+    /// @notice updates the position with latest checkpoints, and realises fees and fp
+    /// @dev fees and funding payment are not immediately adjusted in token balance state,
+    ///     balanceAdjustments struct is used to pass the necessary values to caller.
+    /// @param position storage ref of the position to update
+    /// @param accountId serial number of the account, used to emit event
+    /// @param poolId id of the pool for which position was updated
+    /// @param wrapperValuesInside range checkpoint values from the wrapper
+    /// @param balanceAdjustments memory ref to the balance adjustments struct
     function update(
         LiquidityPosition.Info storage position,
         uint256 accountId,
@@ -263,6 +287,9 @@ library LiquidityPosition {
      *  Internal view methods
      */
 
+    /// @notice ensures that limit order removal is valid, else reverts
+    /// @param info storage ref of the position to check
+    /// @param currentTick current tick in the pool
     function checkValidLimitOrderRemoval(LiquidityPosition.Info storage info, int24 currentTick) internal view {
         if (
             !((currentTick >= info.tickUpper &&
@@ -274,11 +301,18 @@ library LiquidityPosition {
         }
     }
 
+    /// @notice checks if the position is initialized
+    /// @param info storage ref of the position to check
+    /// @return true if the position is initialized
     function isInitialized(LiquidityPosition.Info storage info) internal view returns (bool) {
         return info.tickLower != 0 || info.tickUpper != 0;
     }
 
-    function longSideRisk(LiquidityPosition.Info storage position, uint160 valuationPriceX96)
+    /// @notice calculates the long side risk for the position
+    /// @param position storage ref of the position to check
+    /// @param valuationSqrtPriceX96 valuation sqrt price in x96
+    /// @return long side risk
+    function longSideRisk(LiquidityPosition.Info storage position, uint160 valuationSqrtPriceX96)
         internal
         view
         returns (uint256)
@@ -287,11 +321,11 @@ library LiquidityPosition {
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
         uint256 longPositionExecutionPriceX128;
         {
-            uint160 sqrtPriceUpperMinX96 = valuationPriceX96 <= sqrtPriceUpperX96
-                ? valuationPriceX96
+            uint160 sqrtPriceUpperMinX96 = valuationSqrtPriceX96 <= sqrtPriceUpperX96
+                ? valuationSqrtPriceX96
                 : sqrtPriceUpperX96;
-            uint160 sqrtPriceLowerMinX96 = valuationPriceX96 <= sqrtPriceLowerX96
-                ? valuationPriceX96
+            uint160 sqrtPriceLowerMinX96 = valuationSqrtPriceX96 <= sqrtPriceLowerX96
+                ? valuationSqrtPriceX96
                 : sqrtPriceLowerX96;
             longPositionExecutionPriceX128 = uint256(sqrtPriceLowerMinX96).mulDiv(sqrtPriceUpperMinX96, 1 << 64);
         }
@@ -315,6 +349,11 @@ library LiquidityPosition {
         return maxNetLongPosition.mulDiv(longPositionExecutionPriceX128, FixedPoint128.Q128);
     }
 
+    /// @notice calculates the market value for the position using a provided price
+    /// @param position storage ref of the position to check
+    /// @param valuationSqrtPriceX96 valuation sqrt price to be used
+    /// @param wrapper address of the pool wrapper
+    /// @return marketValue_ the market value of the position
     function marketValue(
         LiquidityPosition.Info storage position,
         uint160 valuationSqrtPriceX96,
@@ -337,6 +376,9 @@ library LiquidityPosition {
         );
     }
 
+    /// @notice calculates the max net position for the position
+    /// @param position storage ref of the position to check
+    /// @return maxNetPosition the max net position of the position
     function maxNetPosition(LiquidityPosition.Info storage position) internal view returns (uint256) {
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
@@ -351,6 +393,10 @@ library LiquidityPosition {
                 uint256(-1 * position.vTokenAmountIn);
     }
 
+    /// @notice calculates the current net position for the position
+    /// @param position storage ref of the position to check
+    /// @param sqrtPriceCurrent the current sqrt price, used to calculate net position
+    /// @return netTokenPosition the current net position of the position
     function netPosition(LiquidityPosition.Info storage position, uint160 sqrtPriceCurrent)
         internal
         view
@@ -361,6 +407,12 @@ library LiquidityPosition {
         netTokenPosition = (vTokenAmountCurrent - position.vTokenAmountIn);
     }
 
+    /// @notice calculates the current virtual token amounts for the position
+    /// @param position storage ref of the position to check
+    /// @param sqrtPriceCurrent the current sqrt price, used to calculate virtual token amounts
+    /// @param roundUp whether to round up the token amounts, purpose to charge user more and give less
+    /// @return vTokenAmount the current vToken amount
+    /// @return vQuoteAmount the current vQuote amount
     function vTokenAmountsInRange(
         LiquidityPosition.Info storage position,
         uint160 sqrtPriceCurrent,
@@ -386,11 +438,17 @@ library LiquidityPosition {
             .toInt256();
     }
 
+    /// @notice returns vQuoteIncrease due to unrealised funding payment for the liquidity position (+ve means receiving and -ve means giving)
+    /// @param position storage ref of the position to check
+    /// @param sumAX128 the sumA value from the pool wrapper
+    /// @param sumFpInsideX128 the sumFp in the position's range from the pool wrapper
+    /// @return vQuoteIncrease the amount of vQuote that should be added to the account's vQuote balance
     function unrealizedFundingPayment(
         LiquidityPosition.Info storage position,
         int256 sumAX128,
         int256 sumFpInsideX128
     ) internal view returns (int256 vQuoteIncrease) {
+        // subtract the bill from the account's vQuote balance
         vQuoteIncrease = -FundingPayment.bill(
             sumAX128,
             sumFpInsideX128,
@@ -401,6 +459,10 @@ library LiquidityPosition {
         );
     }
 
+    /// @notice calculates the unrealised lp fees for the position
+    /// @param position storage ref of the position to check
+    /// @param sumFeeInsideX128 the global sumFee in the position's range from the pool wrapper
+    /// @return vQuoteIncrease the amount of vQuote that should be added to the account's vQuote balance
     function unrealizedFees(LiquidityPosition.Info storage position, uint256 sumFeeInsideX128)
         internal
         view
