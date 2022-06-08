@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.4;
 
 /// @title Uint48 length 5 array functions
 /// @dev Fits in one storage slot
