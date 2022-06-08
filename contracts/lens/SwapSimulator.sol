@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.4;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
