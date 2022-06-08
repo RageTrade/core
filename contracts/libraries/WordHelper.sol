@@ -234,7 +234,7 @@ library WordHelper {
 
     function convertToTickRangeArray(bytes32 active)
         internal
-        view
+        pure
         returns (IClearingHouseStructures.TickRange[] memory activeArr)
     {
         unchecked {
