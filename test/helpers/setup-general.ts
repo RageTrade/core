@@ -29,7 +29,7 @@ export async function testSetup({
 
   const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
   const clearingHouseLogic = await (
-    await hre.ethers.getContractFactory('ClearingHouse', {
+    await hre.ethers.getContractFactory('ClearingHouseTest', {
       libraries: {
         Account: accountLib.address,
       },
@@ -52,7 +52,10 @@ export async function testSetup({
     settlementTokenOracle.address,
   );
 
-  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+  const clearingHouseLens = await (
+    await hre.ethers.getContractFactory('ClearingHouseLens')
+  ).deploy(clearingHouse.address);
 
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
@@ -114,6 +117,7 @@ export async function testSetup({
     oracle,
     clearingHouse,
     clearingHouseLogic,
+    clearingHouseLens,
     rageTradeFactory,
     vPoolAddress,
     vTokenAddress,
@@ -143,7 +147,7 @@ export async function testSetupVQuote(signer?: SignerWithAddress) {
 
   const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
   const clearingHouseLogic = await (
-    await hre.ethers.getContractFactory('ClearingHouse', {
+    await hre.ethers.getContractFactory('ClearingHouseTest', {
       libraries: {
         Account: accountLib.address,
       },
@@ -167,7 +171,10 @@ export async function testSetupVQuote(signer?: SignerWithAddress) {
   );
 
   const oracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
-  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+  const clearingHouseLens = await (
+    await hre.ethers.getContractFactory('ClearingHouseLens')
+  ).deploy(clearingHouse.address);
 
   const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouse.insuranceFund());
 
@@ -178,6 +185,7 @@ export async function testSetupVQuote(signer?: SignerWithAddress) {
     settlementToken,
     vQuote,
     clearingHouse,
+    clearingHouseLens,
     rageTradeFactory,
     insuranceFund,
     oracle,

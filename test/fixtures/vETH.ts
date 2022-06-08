@@ -13,7 +13,17 @@ export const vEthFixture = deployments.createFixture(async hre => {
     'RageTradeFactory',
     rageTradeDeployments.RageTradeFactory.address,
   );
-  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', rageTradeDeployments.ClearingHouse.address);
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', rageTradeDeployments.ClearingHouse.address);
+  const proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', await rageTradeFactory.proxyAdmin());
+  const cht = await (
+    await hre.ethers.getContractFactory('ClearingHouseTest', {
+      libraries: {
+        Account: rageTradeDeployments.AccountLibrary.address,
+      },
+    })
+  ).deploy();
+  await proxyAdmin.upgrade(clearingHouse.address, cht.address);
+
   // @ts-ignore
   hre.tracer.nameTags['ClearingHouse'] = clearingHouse.address;
   const settlementToken = await hre.ethers.getContractAt(

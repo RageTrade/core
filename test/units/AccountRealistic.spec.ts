@@ -18,7 +18,8 @@ import {
 import {
   AccountTest,
   ArbSysMock,
-  ClearingHouse,
+  ClearingHouseLens,
+  ClearingHouseTest,
   ERC20,
   OracleMock,
   RageTradeFactory,
@@ -41,7 +42,8 @@ describe('Account Library Test Realistic', () => {
 
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
   // let constants: ConstantsStruct;
-  let clearingHouse: ClearingHouse;
+  let clearingHouse: ClearingHouseTest;
+  let clearingHouseLens: ClearingHouseLens;
   let rageTradeFactory: RageTradeFactory;
 
   let test: AccountTest;
@@ -282,7 +284,8 @@ describe('Account Library Test Realistic', () => {
     ({
       settlementToken,
       vQuote,
-      clearingHouse: clearingHouse,
+      clearingHouse,
+      clearingHouseLens,
       rageTradeFactory,
       oracle: settlementTokenOracle,
     } = await testSetupVQuote());
@@ -369,10 +372,10 @@ describe('Account Library Test Realistic', () => {
       settlementToken.address,
     );
 
-    const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
+    const vTokenPoolObj = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
     await test.registerPool(vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouse.getPoolInfo(truncate(vTokenAddress1));
+    const vTokenPoolObj1 = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress1));
     await test.registerPool(vTokenPoolObj1);
 
     await test.setVQuoteAddress(vQuote.address);
