@@ -4,17 +4,20 @@ pragma solidity ^0.8.9;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
+import { Simulate as SimulateUniswap } from '@uniswap/v3-core-0.8-support/contracts/libraries/Simulate.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
 import { IVToken } from '../interfaces/IVToken.sol';
 
+import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
 import { SwapMath } from '../libraries/SwapMath.sol';
 import { UniswapV3PoolHelper } from '../libraries/UniswapV3PoolHelper.sol';
 
 contract SwapSimulator {
+    using ClearingHouseExtsload for IClearingHouse;
     using SimulateSwap for IUniswapV3Pool;
 
     struct SwapStepAndState {
@@ -24,6 +27,7 @@ contract SwapSimulator {
 
     SwapStepAndState[] _steps;
 
+    /// @notice Simulate Swap with detailed tick cross info
     function simulateSwap(
         IClearingHouse clearingHouse,
         uint32 poolId,
@@ -104,5 +108,62 @@ contract SwapSimulator {
     ) internal {
         // for reading
         _steps.push(SwapStepAndState({ state: state, step: step }));
+    }
+
+    /// @notice Simulate Swap with only swap amounts
+    function simulateSwapView(
+        IClearingHouse clearingHouse,
+        uint32 poolId,
+        int256 amount,
+        uint160 sqrtPriceLimitX96,
+        bool isNotional
+    ) public view returns (IVPoolWrapper.SwapResult memory swapResult) {
+        IClearingHouseStructures.Pool memory poolInfo = clearingHouse.getPoolInfo(poolId);
+
+        swapResult = _simulateSwapView(
+            poolInfo.vPool,
+            poolInfo.vPoolWrapper.liquidityFeePips(),
+            poolInfo.vPoolWrapper.protocolFeePips(),
+            amount < 0,
+            isNotional ? amount : -amount,
+            sqrtPriceLimitX96
+        );
+    }
+
+    function _simulateSwapView(
+        IUniswapV3Pool vPool,
+        uint24 liquidityFeePips,
+        uint24 protocolFeePips,
+        bool swapVTokenForVQuote, // zeroForOne
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96
+    ) internal view returns (IVPoolWrapper.SwapResult memory swapResult) {
+        if (sqrtPriceLimitX96 == 0) {
+            sqrtPriceLimitX96 = swapVTokenForVQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+        }
+
+        swapResult.amountSpecified = amountSpecified;
+        bool exactIn = amountSpecified >= 0;
+        uint24 uniswapFeePips = vPool.fee();
+
+        SwapMath.beforeSwap(
+            exactIn,
+            swapVTokenForVQuote,
+            uniswapFeePips,
+            liquidityFeePips,
+            protocolFeePips,
+            swapResult
+        );
+
+        // simulate swap and update our tick states
+
+        (swapResult.vTokenIn, swapResult.vQuoteIn) = SimulateUniswap.simulateSwap(
+            vPool,
+            swapVTokenForVQuote,
+            amountSpecified,
+            sqrtPriceLimitX96
+        );
+
+        SwapMath.afterSwap(exactIn, swapVTokenForVQuote, uniswapFeePips, liquidityFeePips, protocolFeePips, swapResult);
     }
 }
