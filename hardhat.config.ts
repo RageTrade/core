@@ -128,11 +128,12 @@ export default {
   solidity: {
     compilers: [
       {
-        version: '0.8.13',
+        version: '0.8.14',
         settings: {
+          viaIR: true,
           optimizer: {
             enabled: true,
-            runs: 833,
+            runs: 4999,
           },
           outputSelection: {
             '*': {

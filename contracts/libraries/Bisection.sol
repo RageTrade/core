@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.4;
 
 /// @title Bisection Method
 /// @notice https://en.wikipedia.org/wiki/Bisection_method
