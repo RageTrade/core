@@ -126,12 +126,7 @@ describe('Clearing House Extsload', () => {
     });
 
     it('getAccountInfo', async () => {
-      await signer.sendTransaction(await test.populateTransaction.getAccountInfo(clearingHouse.address, accountId));
-      console.log(await test.getAccountInfo(clearingHouse.address, accountId));
       const accountExtsload = await test.getAccountInfo(clearingHouse.address, accountId);
-
-      await signer.sendTransaction(await clearingHouse.populateTransaction.getAccountInfo(accountId));
-      console.log(await clearingHouse.getAccountInfo(accountId));
       const accountSload = await clearingHouse.getAccountInfo(accountId);
 
       expect(accountExtsload.owner).to.eq(accountSload.owner);
@@ -151,12 +146,7 @@ describe('Clearing House Extsload', () => {
     });
 
     it('getAccountInfo', async () => {
-      // await signer.sendTransaction(await test.populateTransaction.getAccountInfo(clearingHouse.address, accountId));
-      // console.log(await test.getAccountInfo(clearingHouse.address, accountId));
       const accountExtsload = await test.getAccountInfo(clearingHouse.address, accountId);
-
-      // await signer.sendTransaction(await clearingHouse.populateTransaction.getAccountInfo(accountId));
-      console.log(await clearingHouse.getAccountInfo(accountId));
       const accountSload = await clearingHouse.getAccountInfo(accountId);
 
       expect(accountExtsload.owner).to.eq(accountSload.owner);
@@ -206,7 +196,6 @@ describe('Clearing House Extsload', () => {
         accountId,
         truncate(vToken.address),
       );
-
       const accountSload = await clearingHouse.getAccountInfo(accountId);
 
       expect(tokenPositionExtsload.balance).to.deep.eq(accountSload.tokenPositions[0].balance);
@@ -220,16 +209,6 @@ describe('Clearing House Extsload', () => {
         accountId,
         truncate(vToken.address),
       );
-
-      await signer.sendTransaction(
-        await test.populateTransaction.getAccountPositionInfo(
-          clearingHouse.address,
-          accountId,
-          truncate(vToken.address),
-        ),
-      );
-      console.log(tokenPositionExtsload);
-
       const accountSload = await clearingHouse.getAccountInfo(accountId);
 
       expect(tokenPositionExtsload.balance).to.deep.eq(accountSload.tokenPositions[0].balance);
