@@ -6,8 +6,6 @@ import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingH
 
 import { Uint48Lib } from '../libraries/Uint48.sol';
 
-import 'hardhat/console.sol';
-
 library WordHelper {
     using WordHelper for bytes32;
 

@@ -16,8 +16,6 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { Uint48Lib } from '../libraries/Uint48.sol';
 import { WordHelper } from '../libraries/WordHelper.sol';
 
-import 'hardhat/console.sol';
-
 library ClearingHouseExtsload {
     // Terminology:
     // SLOT is a storage location value which can be sloaded, typed in bytes32.

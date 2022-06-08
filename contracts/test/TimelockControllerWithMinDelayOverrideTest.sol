@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 
 import { TimelockControllerWithMinDelayOverride } from '../utils/TimelockControllerWithMinDelayOverride.sol';
 
-import 'hardhat/console.sol';
-
 contract TimelockControllerWithMinDelayOverrideTest is TimelockControllerWithMinDelayOverride {
     constructor(
         uint256 minDelay,
