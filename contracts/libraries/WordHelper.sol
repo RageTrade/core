@@ -250,15 +250,10 @@ library WordHelper {
             }
             activeArr = new IClearingHouseStructures.TickRange[](5 - i);
             while (i < 5) {
-                console.logBytes32(active);
-                console.logBytes32(active.slice(16 + i * 48, 16 + (i + 1) * 48));
-                console.log(active.slice(16 + i * 48, 16 + (i + 1) * 48).toUint48());
                 // 256 - 48 * 5 = 16
                 (int24 tickLower, int24 tickUpper) = Uint48Lib.unconcat(
                     active.slice(16 + i * 48, 16 + (i + 1) * 48).toUint48()
                 );
-                console.logInt(tickLower);
-                console.logInt(tickUpper);
                 activeArr[4 - i].tickLower = tickLower;
                 activeArr[4 - i].tickUpper = tickUpper;
                 i++;
