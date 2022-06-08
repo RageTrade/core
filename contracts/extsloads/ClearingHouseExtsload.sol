@@ -33,12 +33,12 @@ library ClearingHouseExtsload {
     bytes32 constant PROTOCOL_SLOT = bytes32(uint256(100));
     uint256 constant PROTOCOL_POOLS_MAPPING_OFFSET = 0;
     uint256 constant PROTOCOL_COLLATERALS_MAPPING_OFFSET = 1;
-    uint256 constant PROTOCOL_SETTLEMENT_TOKEN_OFFSET = 2;
-    uint256 constant PROTOCOL_VQUOTE_OFFSET = 3;
-    uint256 constant PROTOCOL_LIQUIDATION_PARAMS_STRUCT_OFFSET = 4;
-    uint256 constant PROTOCOL_MINIMUM_REQUIRED_MARGIN_OFFSET = 5;
-    uint256 constant PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET = 6;
-    uint256 constant PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET = 7;
+    uint256 constant PROTOCOL_SETTLEMENT_TOKEN_OFFSET = 3;
+    uint256 constant PROTOCOL_VQUOTE_OFFSET = 4;
+    uint256 constant PROTOCOL_LIQUIDATION_PARAMS_STRUCT_OFFSET = 5;
+    uint256 constant PROTOCOL_MINIMUM_REQUIRED_MARGIN_OFFSET = 6;
+    uint256 constant PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET = 7;
+    uint256 constant PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET = 8;
 
     function _decodeLiquidationParamsSlot(bytes32 data)
         internal
@@ -232,7 +232,7 @@ library ClearingHouseExtsload {
     /**
      * ACCOUNT MAPPING
      */
-    bytes32 constant ACCOUNTS_MAPPING_SLOT = bytes32(uint256(209));
+    bytes32 constant ACCOUNTS_MAPPING_SLOT = bytes32(uint256(211));
     uint256 constant ACCOUNT_ID_OWNER_OFFSET = 0;
     uint256 constant ACCOUNT_VTOKENPOSITIONS_ACTIVE_SET_OFFSET = 1;
     uint256 constant ACCOUNT_VTOKENPOSITIONS_MAPPING_OFFSET = 2;
@@ -462,5 +462,120 @@ library ClearingHouseExtsload {
         sumBInsideLastX128 = arr[3].toInt256();
         sumFpInsideLastX128 = arr[4].toInt256();
         sumFeeInsideLastX128 = arr[5].toUint256();
+    }
+
+    function _getProtocolSlot() internal pure returns (bytes32) {
+        return PROTOCOL_SLOT;
+    }
+
+    function _getProtocolOffsets()
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            PROTOCOL_POOLS_MAPPING_OFFSET,
+            PROTOCOL_COLLATERALS_MAPPING_OFFSET,
+            PROTOCOL_SETTLEMENT_TOKEN_OFFSET,
+            PROTOCOL_VQUOTE_OFFSET,
+            PROTOCOL_LIQUIDATION_PARAMS_STRUCT_OFFSET,
+            PROTOCOL_MINIMUM_REQUIRED_MARGIN_OFFSET,
+            PROTOCOL_REMOVE_LIMIT_ORDER_FEE_OFFSET,
+            PROTOCOL_MINIMUM_ORDER_NOTIONAL_OFFSET
+        );
+    }
+
+    function _getPoolOffsets()
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (POOL_VTOKEN_OFFSET, POOL_VPOOL_OFFSET, POOL_VPOOLWRAPPER_OFFSET, POOL_SETTINGS_STRUCT_OFFSET);
+    }
+
+    function _getCollateralOffsets() internal pure returns (uint256, uint256) {
+        return (COLLATERAL_TOKEN_OFFSET, COLLATERAL_SETTINGS_OFFSET);
+    }
+
+    function _getAccountsMappingSlot() internal pure returns (bytes32) {
+        return ACCOUNTS_MAPPING_SLOT;
+    }
+
+    function _getAccountOffsets()
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            ACCOUNT_ID_OWNER_OFFSET,
+            ACCOUNT_VTOKENPOSITIONS_ACTIVE_SET_OFFSET,
+            ACCOUNT_VTOKENPOSITIONS_MAPPING_OFFSET,
+            ACCOUNT_VQUOTE_BALANCE_OFFSET,
+            ACCOUNT_COLLATERAL_ACTIVE_SET_OFFSET,
+            ACCOUNT_COLLATERAL_MAPPING_OFFSET
+        );
+    }
+
+    function _getVTokenPositionOffsets()
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            ACCOUNT_VTOKENPOSITION_BALANCE_OFFSET,
+            ACCOUNT_VTOKENPOSITION_NET_TRADER_POSITION_OFFSET,
+            ACCOUNT_VTOKENPOSITION_SUM_A_LAST_OFFSET,
+            ACCOUNT_VTOKENPOSITION_LIQUIDITY_ACTIVE_OFFSET,
+            ACCOUNT_VTOKENPOSITION_LIQUIDITY_MAPPING_OFFSET
+        );
+    }
+
+    function _getLiquidityPositionOffsets()
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            ACCOUNT_TP_LP_SLOT0_OFFSET,
+            ACCOUNT_TP_LP_VTOKEN_AMOUNTIN_OFFSET,
+            ACCOUNT_TP_LP_SUM_A_LAST_OFFSET,
+            ACCOUNT_TP_LP_SUM_B_LAST_OFFSET,
+            ACCOUNT_TP_LP_SUM_FP_LAST_OFFSET,
+            ACCOUNT_TP_LP_SUM_FEE_LAST_OFFSET
+        );
     }
 }

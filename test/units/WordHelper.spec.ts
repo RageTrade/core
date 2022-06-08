@@ -193,7 +193,7 @@ describe('WordHelper', () => {
     });
   });
 
-  describe.only('#convertToTickRangeArray', () => {
+  describe('#convertToTickRangeArray', () => {
     it('convertToTickRangeArray empty', async () => {
       const result = await test.convertToTickRangeArray(bytes32(0));
       expect(result.length).to.eq(0);

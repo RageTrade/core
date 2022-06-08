@@ -180,4 +180,90 @@ contract ClearingHouseExtsloadTest {
                 tickUpper
             );
     }
+
+    function getProtocolSlot() external pure returns (bytes32) {
+        return ClearingHouseExtsload._getProtocolSlot();
+    }
+
+    function getProtocolOffsets()
+        external
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return ClearingHouseExtsload._getProtocolOffsets();
+    }
+
+    function getPoolOffsets()
+        external
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return ClearingHouseExtsload._getPoolOffsets();
+    }
+
+    function getCollateralOffsets() external pure returns (uint256, uint256) {
+        return ClearingHouseExtsload._getCollateralOffsets();
+    }
+
+    function getAccountsMappingSlot() external pure returns (bytes32) {
+        return ClearingHouseExtsload._getAccountsMappingSlot();
+    }
+
+    function getAccountOffsets()
+        external
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return ClearingHouseExtsload._getAccountOffsets();
+    }
+
+    function getVTokenPositionOffsets()
+        external
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return ClearingHouseExtsload._getVTokenPositionOffsets();
+    }
+
+    function getLiquidityPositionOffsets()
+        external
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return ClearingHouseExtsload._getLiquidityPositionOffsets();
+    }
 }

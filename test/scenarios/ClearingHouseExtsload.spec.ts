@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { parseUsdc, truncate } from '@ragetrade/sdk';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { bytes32, parseUsdc, truncate } from '@ragetrade/sdk';
 
 import {
   ClearingHouseTest,
@@ -14,7 +15,7 @@ import {
 import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { vEthFixture } from '../fixtures/vETH';
 import { activateMainnetFork } from '../helpers/mainnet-fork';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { getEntryFromStorage, getStorageLayout, StorageEntry } from '../helpers/get-storage-layout';
 
 describe('Clearing House Extsload', () => {
   let clearingHouse: ClearingHouseTest;
@@ -214,6 +215,26 @@ describe('Clearing House Extsload', () => {
       expect(tokenPositionExtsload.balance).to.deep.eq(accountSload.tokenPositions[0].balance);
       expect(tokenPositionExtsload.netTraderPosition).to.deep.eq(accountSload.tokenPositions[0].netTraderPosition);
       expect(tokenPositionExtsload.sumALastX128).to.deep.eq(accountSload.tokenPositions[0].sumALastX128);
+    });
+  });
+
+  let storage: StorageEntry[];
+  describe('#slots', () => {
+    const sourceName = 'contracts/protocol/clearinghouse/ClearingHouse.sol';
+    const contractName = 'ClearingHouse';
+
+    before(async () => {
+      ({ storage } = await getStorageLayout(sourceName, contractName));
+    });
+
+    it('protocol slot', async () => {
+      const protocolEntry = getEntryFromStorage(storage, 'protocol');
+      expect(await test.getProtocolSlot()).to.eq(bytes32(protocolEntry.slot));
+    });
+
+    it('account slot', async () => {
+      const accountsEntry = getEntryFromStorage(storage, 'accounts');
+      expect(await test.getAccountsMappingSlot()).to.eq(bytes32(accountsEntry.slot));
     });
   });
 });
