@@ -566,8 +566,10 @@ describe('PoolWrapper', () => {
       await expect(vPoolWrapper.connect(stranger).setProtocolFee(123)).to.be.revertedWith('NotGovernance()');
     });
 
-    it('setProtocolFee owner check', async () => {
-      await expect(vPoolWrapper.connect(stranger).setFundingRateOverride(123)).to.be.revertedWith('NotGovernance()');
+    it('setFundingRateOverride owner check', async () => {
+      await expect(vPoolWrapper.connect(stranger).setFundingRateOverride(123)).to.be.revertedWith(
+        'NotGovernanceOrTeamMultisig()',
+      );
     });
   });
 

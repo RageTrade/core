@@ -105,17 +105,14 @@ contract ClearingHouse is
 
     function updateCollateralSettings(IERC20 cToken, CollateralSettings memory collateralSettings)
         external
-        onlyGovernanceOrTeamMultisig
+        onlyGovernance
     {
         if ((address(collateralSettings.oracle)).isZero()) revert InvalidSetting(0x10);
         if (collateralSettings.twapDuration > 1 days) revert InvalidSetting(0x11);
         _updateCollateralSettings(cToken, collateralSettings);
     }
 
-    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings)
-        external
-        onlyGovernanceOrTeamMultisig
-    {
+    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings) external onlyGovernance {
         protocol.pools[poolId].settings = newSettings;
         if ((address(newSettings.oracle)).isZero()) revert InvalidSetting(0x20);
         if (newSettings.twapDuration < 5 minutes || newSettings.twapDuration > 1 days) revert InvalidSetting(0x21);
@@ -131,7 +128,7 @@ contract ClearingHouse is
         uint256 _removeLimitOrderFee,
         uint256 _minimumOrderNotional,
         uint256 _minRequiredMargin
-    ) external onlyGovernanceOrTeamMultisig {
+    ) external onlyGovernance {
         if (_liquidationParams.rangeLiquidationFeeFraction > PERC_10_1E5) revert InvalidSetting(0x30);
         if (_liquidationParams.tokenLiquidationFeeFraction > PERC_10_1E5) revert InvalidSetting(0x31);
         if (_liquidationParams.closeFactorMMThresholdBps > PERC_100_BPS) revert InvalidSetting(0x32);
