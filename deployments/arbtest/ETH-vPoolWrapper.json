@@ -1,6 +1,17 @@
 {
-  "address": "0xe80eD95cf4BFB8d1D15280902f0e900F3459Ec99",
+  "address": "0x13Ff6f6E98534c251dBeAbCB32325eB2093C1570",
   "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "errorCode",
+          "type": "uint256"
+        }
+      ],
+      "name": "InvalidSetting",
+      "type": "error"
+    },
     {
       "inputs": [
         {
@@ -36,6 +47,11 @@
     {
       "inputs": [],
       "name": "NotGovernance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NotGovernanceOrTeamMultisig",
       "type": "error"
     },
     {
@@ -576,7 +592,7 @@
         {
           "components": [
             {
-              "internalType": "contract IClearingHouse",
+              "internalType": "address",
               "name": "clearingHouse",
               "type": "address"
             },
