@@ -15,7 +15,7 @@
     "size": "hardhat size-contracts",
     "test": "TS_NODE_SKIP_IGNORE=true hardhat test",
     "typechain": "hardhat typechain",
-    "postinstall": "patch-package --patch-dir .patches"
+    "patch-package": "patch-package --patch-dir .patches"
   },
   "resolutions": {
     "solidity-coverage/@solidity-parser/parser": "^0.14.0"
