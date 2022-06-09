@@ -1,3 +1,5 @@
+import { parseUsdc } from '@ragetrade/sdk';
+import { parseUnits } from 'ethers/lib/utils';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -12,32 +14,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const { settlementTokenAddress } = getNetworkInfo(hre.network.config.chainId);
+  const { SETTLEMENT_TOKEN_ADDRESS } = getNetworkInfo(hre.network.config.chainId);
 
-  if (settlementTokenAddress === undefined) {
-    const deployment = await deploy('SettlementToken', {
+  // if SETTLEMENT_TOKEN_ADDRESS is not provided, then deploy a dummy ERC20 contract
+  if (SETTLEMENT_TOKEN_ADDRESS === undefined) {
+    await deploy('SettlementToken', {
       contract: 'SettlementTokenMock',
       from: deployer,
       log: true,
       waitConfirmations,
     });
 
+    // mint dummy tokens to the deployer
     await execute(
       'SettlementToken',
       { from: deployer, waitConfirmations },
       'mint',
       deployer,
-      hre.ethers.BigNumber.from(10).pow(8),
+      parseUnits('1000000000', 6),
     );
-
-    if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
-      await hre.tenderly.push({
-        name: 'SettlementTokenMock',
-        address: deployment.address,
-      });
-    }
   } else {
-    await save('SettlementToken', { abi: IERC20Metadata__factory.abi, address: settlementTokenAddress });
+    await save('SettlementToken', { abi: IERC20Metadata__factory.abi, address: SETTLEMENT_TOKEN_ADDRESS });
   }
 };
 

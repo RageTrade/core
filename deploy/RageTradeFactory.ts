@@ -27,7 +27,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const settlementToken = await get('SettlementToken');
   const settlementTokenOracle = await get('SettlementTokenOracle');
 
-  const deployment = await deploy('RageTradeFactory', {
+  // deploy RageTradeFactory and save it to the deployments
+  await deploy('RageTradeFactory', {
     from: deployer,
     log: true,
     args: [
@@ -38,36 +39,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       settlementTokenOracle.address,
     ],
     waitConfirmations,
+    estimateGasExtra: 1000000, // provide extra gas than estimated
   });
 
-  if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'RageTradeFactory',
-      address: deployment.address,
-    });
-  }
-
+  // vQuote is deployed in RageTradeFactory constructor
   const vQuoteAddress = await read('RageTradeFactory', 'vQuote');
   await save('VQuote', { abi: VQuote__factory.abi, address: vQuoteAddress });
   console.log('saved "VQuote":', vQuoteAddress);
-  if (hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'VQuote',
-      address: vQuoteAddress,
-    });
-  }
 
+  // clearing house is deployed in RageTradeFactory constructor
   const clearingHouseAddress = await read('RageTradeFactory', 'clearingHouse');
   await save('ClearingHouse', { abi: clearingHouseLogic.abi, address: clearingHouseAddress });
   console.log('saved "ClearingHouse":', clearingHouseAddress);
-  if (hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'TransparentUpgradeableProxy',
-      address: clearingHouseAddress,
-    });
-  }
 
-  // TODO: refactor this to a seperate deploy script
+  // deploy ClearingHouseLens and save it to the deployments
   await deploy('ClearingHouseLens', {
     from: deployer,
     log: true,
@@ -75,6 +60,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     waitConfirmations,
   });
 
+  // initialize protocol settings
   execute(
     'ClearingHouse',
     { from: deployer, waitConfirmations },
@@ -86,7 +72,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       maxRangeLiquidationFees: 100000000,
       closeFactorMMThresholdBps: 7500,
       partialLiquidationCloseFactorBps: 5000,
-      liquidationSlippageSqrtToleranceBps: 150,
+      liquidationSlippageSqrtToleranceBps: 150, // sqrt
       minNotionalLiquidatable: 100000000,
     },
     parseUnits('10', 6), // removeLimitOrderFee
@@ -97,22 +83,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const proxyAdminAddress = await read('RageTradeFactory', 'proxyAdmin');
   await save('ProxyAdmin', { abi: ProxyAdmin__factory.abi, address: proxyAdminAddress });
   console.log('saved "ProxyAdmin":', proxyAdminAddress);
-  if (hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'ProxyAdmin',
-      address: proxyAdminAddress,
-    });
-  }
 
   const insuranceFundAddress = await read('ClearingHouse', 'insuranceFund');
   await save('InsuranceFund', { abi: InsuranceFund__factory.abi, address: insuranceFundAddress });
   console.log('saved "InsuranceFund":', insuranceFundAddress);
-  if (hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'TransparentUpgradeableProxy',
-      address: insuranceFundAddress,
-    });
-  }
 
   const collateralInfo: IClearingHouseStructures.CollateralStruct = await read(
     'ClearingHouseLens',
@@ -121,12 +95,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
   await save('SettlementTokenOracle', { abi: IOracle__factory.abi, address: collateralInfo.settings.oracle });
   console.log('saved "SettlementTokenOracle":', collateralInfo.settings.oracle);
-  if (hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'SettlementTokenOracle',
-      address: collateralInfo.settings.oracle,
-    });
-  }
 };
 
 export default func;

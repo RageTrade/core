@@ -11,10 +11,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
   const accountLibrary = await get('AccountLibrary');
-  const { clearingHouseContractName } = getNetworkInfo(hre.network.config.chainId);
 
-  const deployment = await deploy('ClearingHouseLogic', {
-    contract: clearingHouseContractName,
+  await deploy('ClearingHouseLogic', {
+    contract: 'ClearingHouse',
     from: deployer,
     log: true,
     libraries: {
@@ -22,16 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     waitConfirmations,
   });
-
-  if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: clearingHouseContractName,
-      address: deployment.address,
-      libraries: {
-        Account: accountLibrary.address,
-      },
-    });
-  }
 };
 
 export default func;
