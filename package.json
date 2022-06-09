@@ -25,7 +25,8 @@
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@uniswap/v3-core-0.8-support": "https://github.com/uniswap/v3-core.git#d55e297b938e5b56fd1cf9fe668f5bd385be85b5",
-    "@uniswap/v3-periphery": "^1.4.0"
+    "@uniswap/v3-periphery": "^1.4.0",
+    "patch-package": "^6.4.7"
   },
   "devDependencies": {
     "@134dd3v/prettier-plugin-solidity": "^1.0.0-beta.18",
@@ -55,7 +56,6 @@
     "hardhat-deploy": "^0.10.5",
     "hardhat-gas-reporter": "^1.0.8",
     "hardhat-tracer": "^1.1.0-rc.3",
-    "patch-package": "^6.4.7",
     "prettier": "^2.5.1",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.7.0",
