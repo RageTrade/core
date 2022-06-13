@@ -87,19 +87,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const insuranceFundAddress = await read('ClearingHouse', 'insuranceFund');
   await save('InsuranceFund', { abi: InsuranceFund__factory.abi, address: insuranceFundAddress });
   console.log('saved "InsuranceFund":', insuranceFundAddress);
-
-  const collateralInfo: IClearingHouseStructures.CollateralStruct = await read(
-    'ClearingHouseLens',
-    'getCollateralInfo',
-    truncate(settlementToken.address),
-  );
-  await save('SettlementTokenOracle', { abi: IOracle__factory.abi, address: collateralInfo.settings.oracle });
-  console.log('saved "SettlementTokenOracle":', collateralInfo.settings.oracle);
 };
 
 export default func;
 
-func.tags = ['RageTradeFactory'];
+func.tags = ['RageTradeFactory', 'VQuote', 'ClearingHouse', 'ClearingHouseLens', 'ProxyAdmin', 'InsuranceFund'];
 func.dependencies = [
   'ClearingHouseLogic',
   'VPoolWrapperLogic',
