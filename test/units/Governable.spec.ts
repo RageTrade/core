@@ -32,7 +32,7 @@ describe('Governable', () => {
       expect(await governable.teamMultisig()).to.eq(signer.address);
     });
 
-    it('initiates teamMultisig transfer', async () => {
+    it('initiates teamMultisig transfer by governance', async () => {
       const { governable } = await governableFixture();
       const [signer, otherSigner] = await hre.ethers.getSigners();
       await governable.initiateTeamMultisigTransfer(otherSigner.address);
@@ -44,6 +44,25 @@ describe('Governable', () => {
       // does not change ownership variables
       expect(await governable.governance()).to.eq(signer.address);
       expect(await governable.teamMultisig()).to.eq(signer.address);
+    });
+
+    it('initiates teamMultisig transfer by team multisig address', async () => {
+      const { governable } = await governableFixture();
+      const [signer, teamMultisig, otherAccount] = await hre.ethers.getSigners();
+
+      // first making team multisig owner
+      await governable.initiateTeamMultisigTransfer(teamMultisig.address);
+      await governable.connect(teamMultisig).acceptTeamMultisigTransfer();
+
+      // does not change ownership variables
+      expect(await governable.governance()).to.eq(signer.address);
+      expect(await governable.teamMultisig()).to.eq(teamMultisig.address);
+
+      await governable.connect(teamMultisig).initiateTeamMultisigTransfer(otherAccount.address);
+
+      // sets pending variables
+      expect(await governable.governancePending()).to.eq(ethers.constants.AddressZero);
+      expect(await governable.teamMultisigPending()).to.eq(otherAccount.address);
     });
 
     it('accepts governance transfer', async () => {

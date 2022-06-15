@@ -97,7 +97,11 @@ abstract contract Governable is IGovernable, Initializable, ContextUpgradeable {
 
     /// @notice Initiates teamMultisig transfer to a new account (`newTeamMultisigPending`).
     /// @param newTeamMultisigPending the new team multisig address
-    function initiateTeamMultisigTransfer(address newTeamMultisigPending) external virtual onlyGovernance {
+    function initiateTeamMultisigTransfer(address newTeamMultisigPending)
+        external
+        virtual
+        onlyGovernanceOrTeamMultisig
+    {
         emit TeamMultisigPending(_teamMultisigPending, newTeamMultisigPending);
         _teamMultisigPending = newTeamMultisigPending;
     }
