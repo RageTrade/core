@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@134dd3v/prettier-plugin-solidity": "^1.0.0-beta.18",
+    "@anders-t/ethers-ledger": "^1.0.4",
     "@defi-wonderland/smock": "^2.0.7",
     "@ethersproject/experimental": "^5.4.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",

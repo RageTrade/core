@@ -75,12 +75,21 @@ task(TASK_COMPILE, 'Compiles the entire project, building all artifacts').setAct
 });
 
 config();
-const { ALCHEMY_KEY } = process.env;
-if (!process.env.ALCHEMY_KEY) {
+const {
+  ALCHEMY_KEY,
+  ETHERSCAN_KEY,
+  PRIVATE_KEY,
+  REPORT_GAS,
+  COINMARKETCAP,
+  LEDGER_ADDRESS,
+  TENDERLY_PROJECT,
+  TENDERLY_USERNAME,
+} = process.env;
+if (!ALCHEMY_KEY) {
   console.warn('PLEASE NOTE: The env var ALCHEMY_KEY is not set');
 }
 
-const pk = process.env.PRIVATE_KEY || ethers.utils.hexlify(ethers.utils.randomBytes(32));
+const pk = PRIVATE_KEY || ethers.utils.hexlify(ethers.utils.randomBytes(32));
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -160,7 +169,7 @@ export default {
   },
   etherscan: {
     // https://info.etherscan.com/api-keys/
-    apiKey: process.env.ETHERSCAN_KEY,
+    apiKey: ETHERSCAN_KEY,
   },
   mocha: {
     timeout: 100000,
@@ -168,20 +177,23 @@ export default {
   gasReporter: {
     currency: 'USD',
     gasPrice: 100,
-    enabled: !!process.env.REPORT_GAS, // REPORT_GAS=true yarn test
-    coinmarketcap: process.env.COINMARKETCAP, // https://coinmarketcap.com/api/pricing/
+    enabled: !!REPORT_GAS, // REPORT_GAS=true yarn test
+    coinmarketcap: COINMARKETCAP, // https://coinmarketcap.com/api/pricing/
   },
   contractSizer: {
     strict: true,
     except: ['contracts/test/*', 'console.sol'],
   },
   namedAccounts: {
-    deployer: {
-      default: 0,
-    },
+    deployer:
+      LEDGER_ADDRESS !== undefined
+        ? `ledger://${LEDGER_ADDRESS}`
+        : {
+            default: 0,
+          },
   },
   tenderly: {
-    project: process.env.TENDERLY_PROJECT,
-    username: process.env.TENDERLY_USERNAME,
+    project: TENDERLY_PROJECT,
+    username: TENDERLY_USERNAME,
   },
 };
