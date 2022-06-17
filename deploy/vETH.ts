@@ -71,7 +71,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       initialMarginRatioBps: 2000,
       maintainanceMarginRatioBps: 1000,
       maxVirtualPriceDeviationRatioBps: 1000, // 10%
-      twapDuration: 300,
+      twapDuration: 900,
       isAllowedForTrade: true,
       isCrossMargined: true,
       oracle: ethIndexOracleDeployment.address, // using deployed oracle address here
