@@ -120,7 +120,7 @@ export default {
       accounts: [pk],
     },
     arbmain: {
-      url: `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      url: `https://arb1.arbitrum.io/rpc`,
       accounts: [pk],
     },
     arbtest: {
