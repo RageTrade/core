@@ -122,6 +122,7 @@ export default {
     arbmain: {
       url: `https://arb1.arbitrum.io/rpc`,
       accounts: [pk],
+      chainId: 42161,
     },
     arbtest: {
       url: `https://rinkeby.arbitrum.io/rpc`,
