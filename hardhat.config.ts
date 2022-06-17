@@ -185,12 +185,11 @@ export default {
     except: ['contracts/test/*', 'console.sol'],
   },
   namedAccounts: {
-    deployer:
-      LEDGER_ADDRESS !== undefined
-        ? `ledger://${LEDGER_ADDRESS}`
-        : {
-            default: 0,
-          },
+    deployer: LEDGER_ADDRESS
+      ? `ledger://${LEDGER_ADDRESS}`
+      : {
+          default: 0,
+        },
   },
   tenderly: {
     project: TENDERLY_PROJECT,
