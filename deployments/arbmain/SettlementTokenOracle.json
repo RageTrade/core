@@ -1,0 +1,60 @@
+{
+  "address": "0x56922b9b783d2517D0963572827Eb4Ae5CC5EdDc",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "getTwapPriceX128",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "priceX128",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd238393bedf679f9bc28bb8e5fdfb7fc92f012be4654ed853792ea14a62d3d19",
+  "receipt": {
+    "to": null,
+    "from": "0xab9769CD4028541EE351CeC203a24BF3b873b403",
+    "contractAddress": "0x56922b9b783d2517D0963572827Eb4Ae5CC5EdDc",
+    "transactionIndex": 0,
+    "gasUsed": "1027959",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xbbee1cd2f7bf5507c61feec7b2cb99c8abf7720cc0db1dfe88596c0a13afd97a",
+    "transactionHash": "0xd238393bedf679f9bc28bb8e5fdfb7fc92f012be4654ed853792ea14a62d3d19",
+    "logs": [],
+    "blockNumber": 14904340,
+    "cumulativeGasUsed": "303919",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "e57f996027e70c38f3149e5d14eb0907",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.14+commit.80d49f37\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"name\":\"getTwapPriceX128\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"priceX128\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/oracles/SettlementTokenOracle.sol\":\"SettlementTokenOracle\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":4999},\"remappings\":[],\"viaIR\":true},\"sources\":{\"contracts/interfaces/IOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity >=0.5.0;\\n\\ninterface IOracle {\\n    function getTwapPriceX128(uint32 twapDuration) external view returns (uint256 priceX128);\\n}\\n\",\"keccak256\":\"0x0b868e6dbb5dbbe067f65dda1a2c405a124142dbd936deeb4cc995ceb9ab232e\",\"license\":\"MIT\"},\"contracts/oracles/SettlementTokenOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity >=0.5.0;\\n\\nimport { IOracle } from '../interfaces/IOracle.sol';\\n\\ncontract SettlementTokenOracle is IOracle {\\n    function getTwapPriceX128(uint32) external pure returns (uint256 priceX128) {\\n        priceX128 = 1 << 128;\\n    }\\n}\\n\",\"keccak256\":\"0x3d9dcdaa468ed0adf2da1b60ae2e4c6dc7b474879c08e56f513ac962220539e7\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608080604052346100155760b6908161001b8239f35b600080fdfe6080806040526004361015601257600080fd5b600090813560e01c63dd86c10114602857600080fd5b34607c5760207ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc360112607c5760043563ffffffff811603607c578070010000000000000000000000000000000060209252f35b5080fdfea2646970667358221220bd81cd24a40737663bfe18cce64c6e37a6e93e9e9779801c3315d748e6a9db0064736f6c634300080e0033",
+  "deployedBytecode": "0x6080806040526004361015601257600080fd5b600090813560e01c63dd86c10114602857600080fd5b34607c5760207ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc360112607c5760043563ffffffff811603607c578070010000000000000000000000000000000060209252f35b5080fdfea2646970667358221220bd81cd24a40737663bfe18cce64c6e37a6e93e9e9779801c3315d748e6a9db0064736f6c634300080e0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
