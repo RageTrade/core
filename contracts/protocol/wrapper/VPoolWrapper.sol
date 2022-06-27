@@ -112,7 +112,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
      */
 
     function initialize(InitializeVPoolWrapperParams calldata params) external initializer {
-        clearingHouse = IClearingHouse(params.clearingHouse);
+        clearingHouse = params.clearingHouse;
         vToken = params.vToken;
         vQuote = params.vQuote;
         vPool = params.vPool;

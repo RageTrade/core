@@ -6,6 +6,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { SafeCast } from '@uniswap/v3-core-0.8-support/contracts/libraries/SafeCast.sol';
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 
+import { Account } from './Account.sol';
 import { AddressHelper } from './AddressHelper.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
 import { LiquidityPositionSet } from './LiquidityPositionSet.sol';
@@ -38,34 +39,6 @@ library VTokenPositionSet {
     error VPS_IncorrectUpdate();
     error VPS_DeactivationFailed(uint32 poolId);
     error VPS_TokenInactive(uint32 poolId);
-
-    /// @notice denotes token position change
-    /// @param accountId serial number of the account
-    /// @param poolId truncated address of vtoken whose position was taken
-    /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @param vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
-    /// @param sqrtPriceX96Start shows the sqrtPriceX96 at the start of trade execution, can be 0 if not on v3Pool
-    /// @param sqrtPriceX96End shows the sqrtPriceX96 at the end of trade execution, can be 0 if not on v3Pool
-    event TokenPositionChanged(
-        uint256 indexed accountId,
-        uint32 indexed poolId,
-        int256 vTokenAmountOut,
-        int256 vQuoteAmountOut,
-        uint160 sqrtPriceX96Start,
-        uint160 sqrtPriceX96End
-    );
-
-    /// @notice denotes funding payment for a range / token position
-    /// @param accountId serial number of the account
-    /// @param poolId address of token for which funding was paid
-    /// @param amount amount of funding paid (negative) or received (positive)
-    /// @param sumALastX128 val of sum of the term A in funding payment math, when op took place
-    event TokenPositionFundingPaymentRealized(
-        uint256 indexed accountId,
-        uint32 indexed poolId,
-        int256 amount,
-        int256 sumALastX128
-    );
 
     /**
      *  Internal methods
@@ -154,7 +127,7 @@ library VTokenPositionSet {
 
         position.sumALastX128 = extrapolatedSumAX128;
 
-        emit TokenPositionFundingPaymentRealized(accountId, poolId, fundingPayment, extrapolatedSumAX128);
+        emit Account.TokenPositionFundingPaymentRealized(accountId, poolId, fundingPayment, extrapolatedSumAX128);
     }
 
     /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount
@@ -240,7 +213,7 @@ library VTokenPositionSet {
 
         set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        emit TokenPositionChanged(
+        emit Account.TokenPositionChanged(
             accountId,
             poolId,
             vTokenAmountOut,
@@ -379,7 +352,7 @@ library VTokenPositionSet {
     /// @notice returns account market value of active positions
     /// @param set VTokenPositionSet
     /// @param protocol platform constants
-    /// @return accountMarketValue - value of all active positions
+    /// @return accountMarketValue
     function getAccountMarketValue(VTokenPosition.Set storage set, Protocol.Info storage protocol)
         internal
         view
@@ -527,7 +500,7 @@ library VTokenPositionSet {
     /// @notice returns true if range position is active for 'vToken'
     /// @param set VTokenPositionSet
     /// @param poolId poolId of the vToken
-    /// @return isRangeActive - True if the range position is active
+    /// @return isRangeActive
     function isTokenRangeActive(VTokenPosition.Set storage set, uint32 poolId) internal returns (bool isRangeActive) {
         VTokenPosition.Info storage vTokenPosition = set.getTokenPosition(poolId, false);
         isRangeActive = !vTokenPosition.liquidityPositions.isEmpty();

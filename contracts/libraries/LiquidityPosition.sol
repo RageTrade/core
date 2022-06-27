@@ -11,6 +11,7 @@ import { FixedPoint128 } from '@uniswap/v3-core-0.8-support/contracts/libraries/
 import { FullMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/FullMath.sol';
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 
+import { Account } from './Account.sol';
 import { PriceMath } from './PriceMath.sol';
 import { Protocol } from './Protocol.sol';
 import { SignedFullMath } from './SignedFullMath.sol';
@@ -60,63 +61,6 @@ library LiquidityPosition {
 
     error LP_AlreadyInitialized();
     error LP_IneligibleLimitOrderRemoval();
-
-    /// @notice denotes liquidity add/remove
-    /// @param accountId serial number of the account
-    /// @param poolId address of token whose position was taken
-    /// @param tickLower lower tick of the range updated
-    /// @param tickUpper upper tick of the range updated
-    /// @param liquidityDelta change in liquidity value
-    /// @param limitOrderType the type of range position
-    /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    /// @param vQuoteAmountOut amount of vQuote tokens that account received (positive) or paid (negative)
-    event LiquidityChanged(
-        uint256 indexed accountId,
-        uint32 indexed poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidityDelta,
-        IClearingHouseEnums.LimitOrderType limitOrderType,
-        int256 vTokenAmountOut,
-        int256 vQuoteAmountOut,
-        uint160 sqrtPriceX96
-    );
-
-    /// @param accountId serial number of the account
-    /// @param poolId address of token for which funding was paid
-    /// @param tickLower lower tick of the range for which funding was paid
-    /// @param tickUpper upper tick of the range for which funding was paid
-    /// @param amount amount of funding paid (negative) or received (positive)
-    /// @param sumALastX128 val of sum of the term A in funding payment math, when op took place
-    /// @param sumBInsideLastX128 val of sum of the term B in funding payment math, when op took place
-    /// @param sumFpInsideLastX128 val of sum of the term Fp in funding payment math, when op took place
-    /// @param sumFeeInsideLastX128 val of sum of the term Fee in wrapper, when op took place
-    event LiquidityPositionFundingPaymentRealized(
-        uint256 indexed accountId,
-        uint32 indexed poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        int256 amount,
-        int256 sumALastX128,
-        int256 sumBInsideLastX128,
-        int256 sumFpInsideLastX128,
-        uint256 sumFeeInsideLastX128
-    );
-
-    /// @notice denotes fee payment for a range / token position
-    /// @dev for a token position tickLower = tickUpper = 0
-    /// @param accountId serial number of the account
-    /// @param poolId address of token for which fee was paid
-    /// @param tickLower lower tick of the range for which fee was paid
-    /// @param tickUpper upper tick of the range for which fee was paid
-    /// @param amount amount of fee paid (negative) or received (positive)
-    event LiquidityPositionEarningsRealized(
-        uint256 indexed accountId,
-        uint32 indexed poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        int256 amount
-    );
 
     /**
      *  Internal methods
@@ -238,7 +182,7 @@ library LiquidityPosition {
         position.sumFpInsideLastX128 = wrapperValuesInside.sumFpInsideX128;
         position.sumFeeInsideLastX128 = wrapperValuesInside.sumFeeInsideX128;
 
-        emit LiquidityPositionFundingPaymentRealized(
+        emit Account.LiquidityPositionFundingPaymentRealized(
             accountId,
             poolId,
             position.tickLower,
@@ -250,7 +194,7 @@ library LiquidityPosition {
             wrapperValuesInside.sumFeeInsideX128
         );
 
-        emit LiquidityPositionEarningsRealized(
+        emit Account.LiquidityPositionEarningsRealized(
             accountId,
             poolId,
             position.tickLower,
@@ -421,7 +365,7 @@ library LiquidityPosition {
         int256 vTokenAmountOut,
         int256 vQuoteAmountOut
     ) internal {
-        emit LiquidityChanged(
+        emit Account.LiquidityChanged(
             accountId,
             poolId,
             position.tickLower,

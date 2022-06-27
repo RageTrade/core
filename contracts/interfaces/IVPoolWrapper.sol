@@ -6,10 +6,11 @@ import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interface
 
 import { IVQuote } from './IVQuote.sol';
 import { IVToken } from './IVToken.sol';
+import { IClearingHouse } from './IClearingHouse.sol';
 
 interface IVPoolWrapper {
     struct InitializeVPoolWrapperParams {
-        address clearingHouse; // address of clearing house contract (proxy)
+        IClearingHouse clearingHouse; // address of clearing house contract (proxy)
         IVToken vToken; // address of vToken contract
         IVQuote vQuote; // address of vQuote contract
         IUniswapV3Pool vPool; // address of Uniswap V3 Pool contract, created using vToken and vQuote

@@ -26,12 +26,12 @@ contract InsuranceFund is IInsuranceFund, Initializable, ERC20Upgradeable {
     /// @param symbol "iSettlementToken"
     function initialize(
         IERC20 _settlementToken,
-        address _clearingHouse,
+        IClearingHouse _clearingHouse,
         string calldata name,
         string calldata symbol
     ) external initializer {
         settlementToken = _settlementToken;
-        clearingHouse = IClearingHouse(_clearingHouse);
+        clearingHouse = _clearingHouse;
         __ERC20_init(name, symbol);
     }
 

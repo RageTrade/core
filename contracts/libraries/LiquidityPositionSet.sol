@@ -2,10 +2,11 @@
 
 pragma solidity ^0.8.9;
 
+import { Account } from './Account.sol';
 import { LiquidityPosition } from './LiquidityPosition.sol';
-import { Protocol } from './Protocol.sol';
 import { Uint48Lib } from './Uint48.sol';
 import { Uint48L5ArrayLib } from './Uint48L5Array.sol';
+import { Protocol } from './Protocol.sol';
 
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
 import { IVPoolWrapper } from '../interfaces/IVPoolWrapper.sol';
@@ -22,20 +23,6 @@ library LiquidityPositionSet {
     error LPS_IllegalTicks(int24 tickLower, int24 tickUpper);
     error LPS_DeactivationFailed(int24 tickLower, int24 tickUpper, uint256 liquidity);
     error LPS_InactiveRange();
-
-    /// @notice denotes token position change due to liquidity add/remove
-    /// @param accountId serial number of the account
-    /// @param poolId address of token whose position was taken
-    /// @param tickLower lower tick of the range updated
-    /// @param tickUpper upper tick of the range updated
-    /// @param vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
-    event TokenPositionChangedDueToLiquidityChanged(
-        uint256 indexed accountId,
-        uint32 indexed poolId,
-        int24 tickLower,
-        int24 tickUpper,
-        int256 vTokenAmountOut
-    );
 
     /**
      *  Internal methods
@@ -103,7 +90,7 @@ library LiquidityPositionSet {
     ) internal {
         position.liquidityChange(accountId, poolId, liquidity, balanceAdjustments, protocol);
 
-        emit TokenPositionChangedDueToLiquidityChanged(
+        emit Account.TokenPositionChangedDueToLiquidityChanged(
             accountId,
             poolId,
             position.tickLower,
