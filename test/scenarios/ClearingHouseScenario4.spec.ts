@@ -1,4 +1,3 @@
-//ClearingHouseScenario4
 // Partial Swaps TRUE
 
 import { expect } from 'chai';
@@ -1072,7 +1071,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const liquidityDelta = 250000000000n;
       const limitOrderType = 0;
       const expectedEndToken1Balance = -501494330n;
-      const expectedEndVQuoteBalance = -117236228833n - 105n;
+      const expectedEndVQuoteBalance = -117235394437n + 1n;
 
       await updateRangeOrderAndCheck(
         user1,
@@ -1108,7 +1107,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const expectedVTokenBalance = '-4055086555447580000';
 
       //TODO: Check
-      const expectedVQuoteBalance = -102607919215n - 105n;
+      const expectedVQuoteBalance = -102607084819n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 14628309618n;
@@ -1148,7 +1147,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const liquidityDelta = 25000000000000000n;
       const limitOrderType = 0;
       const expectedEndToken2Balance = -25559097903887700000n;
-      const expectedEndVQuoteBalance = -192087809083n - 106n;
+      const expectedEndVQuoteBalance = -192086890207n;
 
       const expectedSumALast = 0n;
       const expectedSumBLast = 0n;
@@ -1271,7 +1270,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
       const swapToken2Amount = '86016045393757900000';
       const expectedToken2Balance = '86016045393757900000';
-      const expectedVQuoteBalance = -823329583576n;
+      const expectedVQuoteBalance = -823329583575n - 1n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
@@ -1323,7 +1322,7 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const expectedTokenAmountOut = swapToken1Amount;
 
       const expectedVQuoteAmountOutWithFee = -1062695253698n - 1n;
-      const expectedFundingPayment = 1462219n;
+      const expectedFundingPayment = -1462219n;
 
       const truncatedAddress = await clearingHouseTest.getTruncatedTokenAddress(vToken1Address);
       const swapParams = {
@@ -1344,13 +1343,13 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
 
       const swapToken1Amount = 1603821958n - 1n;
       const expectedToken1Balance = 2411056861n - 1n;
-      const expectedVQuoteBalance = -1886023375056n;
+      const expectedVQuoteBalance = -1886026299492n - 2n;
       const sqrtPriceThreshold = await priceToSqrtPriceX96(69901.5224104205, vQuote, vToken1);
 
       const expectedTokenAmountOut = swapToken1Amount;
 
       const expectedVQuoteAmountOutWithFee = -1062695253698n - 1n;
-      const expectedFundingPayment = 1462219n;
+      const expectedFundingPayment = -1462219n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1389,13 +1388,13 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const swapToken1Amount = '699333360';
 
       const expectedToken1Balance = 3110390220n;
-      const expectedVQuoteBalance = -2387970968086n;
+      const expectedVQuoteBalance = -2387983641896n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
       const expectedVQuoteAmountOutWithFee = -501952467716n;
-      const expectedFundingPayment = 4874686n;
+      const expectedFundingPayment = -4874686n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1439,13 +1438,13 @@ describe('Clearing House Scenario 4 (Partial Swaps & Notional Swaps)', () => {
       const swapToken1Amount = -700410531n - 1n;
 
       const expectedToken1Balance = 2409979689n - 1n;
-      const expectedVQuoteBalance = -1886762368558n;
+      const expectedVQuoteBalance = -1886790907994;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
 
       const expectedTokenAmountOut = swapToken1Amount;
       const expectedVQuoteAmountOutWithFee = 501200666715n;
-      const expectedFundingPayment = 7932813n;
+      const expectedFundingPayment = -7932813n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,

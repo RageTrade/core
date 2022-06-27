@@ -1,4 +1,3 @@
-//ClearingHouseScenario7
 //PositionNotional Threshold New
 
 import { expect } from 'chai';
@@ -1111,7 +1110,7 @@ describe('Clearing House Scenario 7 (Liquidation | Account Positive | Account Va
 
       const netTokenPosition = expectedVTokenBalance;
 
-      const expectedVQuoteBalance = -44605532n;
+      const expectedVQuoteBalance = -44604687n - 1n;
 
       const startPrice = 4885.260806;
       const endPrice = 4885.320506;

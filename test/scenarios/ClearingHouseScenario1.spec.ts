@@ -1,4 +1,3 @@
-//ClearingHouseScenario1
 import { expect } from 'chai';
 import { config } from 'dotenv';
 import { ContractReceipt, ContractTransaction, ethers } from 'ethers';
@@ -398,12 +397,6 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
         expectedSumFeeLast,
       );
     }
-  }
-
-  async function checkFundingRateAndTwapPrice(expectedFundingRate: BigNumberish, expectedTwapPrice: BigNumberish) {
-    const { fundingRateX128, virtualPriceX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
-    expect(fundingRateX128.mul(10n ** 16n).div(1n << 128n)).to.eq(expectedFundingRate);
-    expect(virtualPriceX128.mul(10n ** 18n).div(1n << 128n)).to.eq(expectedTwapPrice);
   }
 
   async function checkGlobalParams(
@@ -881,13 +874,13 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedSumFeeLast = 0n;
 
       const expectedTick199820SumB = 1189490198145n;
-      const expectedTick199820SumA = -1484140n;
-      const expectedTick199820SumFp = -8778310n;
+      const expectedTick199820SumA = 1484140n;
+      const expectedTick199820SumFp = 8778310n;
       const expectedTick199820SumFee = 2542858n;
 
       const expectedTick200310SumB = 1189490198145n;
-      const expectedTick200310SumA = -1484140n;
-      const expectedTick200310SumFp = -8778310n;
+      const expectedTick200310SumA = 1484140n;
+      const expectedTick200310SumFp = 8778310n;
       const expectedTick200310SumFee = 2542858n;
 
       await updateRangeOrderAndCheck(
@@ -939,29 +932,27 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -199700;
       const endTick = -199820;
 
-      const swapTokenAmount = '-9841461389424950000';
-      const expectedVTokenBalance = '-18811077572108550000';
-      const expectedVQuoteBalance = 39913136476n;
+      const swapTokenAmount = '-9841461389446900000';
+      const expectedVTokenBalance = '-18811077572130500000';
+      const expectedVQuoteBalance = 39913423321n - 1n;
 
       // const expectedSumB = ((2494598646n*(1n<<128n))/(10n**13n))+1n;
-      const expectedSumB = 2494598646459n;
-      const expectedSumA = -2345128n;
-      const expectedSumFp = -19019671n;
+      const expectedSumB = 2494598646462n;
+      const expectedSumA = 2345128n;
+      const expectedSumFp = 19019671n;
       const expectedSumFee = 5300982n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = -1484140n;
-      const expectedTickSumFp = -8778310n;
+      const expectedTickSumA = 1484140n;
+      const expectedTickSumFp = 8778310n;
       const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 20767051316n;
-      const expectedFundingPayment = -143422n;
+      const expectedFundingPayment = 143421n + 1n;
 
       const expectedAccount1UnrealizedFunding = 0n;
       const expectedAccount1UnrealizedFee = 0n;
-
-      vPool.slot0();
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1005,25 +996,25 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -199820;
       const endTick = -200050;
 
-      const swapTokenAmount = '-24716106800948400000';
-      const expectedVTokenBalance = '-43527184373056950000';
+      const swapTokenAmount = '-24716106801005000000';
+      const expectedVTokenBalance = '-43527184373135500000';
 
       //TODO: Check
-      const expectedVQuoteBalance = 91163172707n;
+      const expectedVQuoteBalance = 91163779610n - 1n;
 
-      const expectedSumB = 5018049315950n;
-      const expectedSumA = -3195846n;
-      const expectedSumFp = -40241668;
+      const expectedSumB = 5018049315957n + 1n;
+      const expectedSumA = 3195846n;
+      const expectedSumFp = 40241668n;
       const expectedSumFee = 10541355n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 51250196260n;
-      const expectedFundingPayment = -160029n;
+      const expectedFundingPayment = 160028n + 1n;
 
-      const expectedTickSumB = 1305108448319n;
-      const expectedTickSumA = -3195846n;
-      const expectedTickSumFp = -11102790n;
-      const expectedTickSumFee = 2758124n;
+      const expectedTickSumB = 1305108448316n + 3n;
+      const expectedTickSumA = 3195846n;
+      const expectedTickSumFp = 11102790n;
+      const expectedTickSumFee = 2758123n + 1n;
 
       const expectedAccount1UnrealizedFunding = 0n;
       const expectedAccount1UnrealizedFee = 11810983n;
@@ -1070,26 +1061,26 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -200050;
       const endTick = -199820;
 
-      const swapTokenAmount = '24716106800948400000';
-      const expectedVTokenBalance = '-18811077572108550000';
+      const swapTokenAmount = '24716106801005000000';
+      const expectedVTokenBalance = '-18811077572130500000';
 
-      const expectedVQuoteBalance = 39758633008n;
+      const expectedVQuoteBalance = 39759963661n - 3n;
 
-      const expectedSumB = 2494598646459n;
-      const expectedSumA = -4027221n;
-      const expectedSumFp = -81960507n;
-      const expectedSumFee = 15781729n;
+      const expectedSumB = 2494598646462n;
+      const expectedSumA = 4027221n;
+      const expectedSumFp = 81960507n;
+      const expectedSumFee = 15781728n + 1n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = -4027221n;
-      const expectedTickSumFp = -60007363n;
-      const expectedTickSumFee = 13023605n;
+      const expectedTickSumA = 4027221n;
+      const expectedTickSumFp = 60007362n + 1n;
+      const expectedTickSumFee = 13023604n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedVQuoteAmountOutWithFee = -51404177825n;
-      const expectedFundingPayment = -361874n;
+      const expectedVQuoteAmountOutWithFee = -51404177823n - 2n;
+      const expectedFundingPayment = 361873n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
       const expectedAccount1UnrealizedFee = 23621967n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1135,26 +1126,26 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       //TODO: Check
       const endTick = -199540 - 1;
 
-      const swapTokenAmount = '22871896768910600000';
-      const expectedVTokenBalance = '4060819196802050000';
+      const swapTokenAmount = '22871896768962800000';
+      const expectedVTokenBalance = '4060819196832300000';
 
-      const expectedVQuoteBalance = -9038703719n;
+      const expectedVQuoteBalance = -9037007285n - 4n;
 
-      const expectedSumB = -538518542227n;
-      const expectedSumA = -4999470n;
-      const expectedSumFp = -106214218n;
+      const expectedSumB = -538518542231n;
+      const expectedSumA = 4999470n;
+      const expectedSumFp = 106214217n + 1n;
       const expectedSumFee = 22243187n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedVQuoteAmountOutWithFee = -48797153837n;
-      const expectedFundingPayment = -182890n;
+      const expectedVQuoteAmountOutWithFee = -48797153836n - 1n;
+      const expectedFundingPayment = 182889n + 1n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = -4027221n;
-      const expectedTickSumFp = -60007363n;
-      const expectedTickSumFee = 13023605n;
+      const expectedTickSumA = 4027221n;
+      const expectedTickSumFp = 60007362n + 1n;
+      const expectedTickSumFee = 13023604n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
       const expectedAccount1UnrealizedFee = 23621967n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1199,26 +1190,26 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -199540 - 1;
       const endTick = -199820;
 
-      const swapTokenAmount = '-22871896768910600000';
-      const expectedVTokenBalance = '-18811077572108550000';
+      const swapTokenAmount = '-22871896768962800000';
+      const expectedVTokenBalance = '-18811077572130500000';
 
-      const expectedVQuoteBalance = 39612302268n;
+      const expectedVQuoteBalance = 39613949988n - 4n;
 
-      const expectedSumB = 2494598646459n;
-      const expectedSumA = -5599294n;
-      const expectedSumFp = -102984059n;
-      const expectedSumFee = 28704646n;
+      const expectedSumB = 2494598646462n;
+      const expectedSumA = 5599294n;
+      const expectedSumFp = 102984058n + 1n;
+      const expectedSumFee = 28704645n + 1n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = -4027221n;
-      const expectedTickSumFp = -60007363n;
-      const expectedTickSumFee = 13023605n;
+      const expectedTickSumA = 4027221n;
+      const expectedTickSumFp = 60007362n + 1n;
+      const expectedTickSumFee = 13023604n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedVQuoteAmountOutWithFee = 48650981630n;
-      const expectedFundingPayment = 24357n;
+      const expectedVQuoteAmountOutWithFee = 48650981631n - 1n;
+      const expectedFundingPayment = -24358n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
       const expectedAccount1UnrealizedFee = 23621967n;
 
       const swapTxn = await swapTokenAndCheck(
@@ -1263,30 +1254,28 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -199820;
       const endTick = -200050;
 
-      const swapTokenAmount = '-24716106800948400000';
+      const swapTokenAmount = '-24716106801005000000';
       //TODO: Correction in finquant test cases
-      const expectedVTokenBalance = '-43527184373056950000';
+      const expectedVTokenBalance = '-43527184373135500000';
 
-      const expectedVQuoteBalance = 90862472131n;
+      const expectedVQuoteBalance = 90864172645n - 4n;
 
-      const expectedSumB = 5018049315950n;
-      const expectedSumA = -5739622n;
-      const expectedSumFp = -106484700n;
-      const expectedSumFee = 33945019n;
+      const expectedSumB = 5018049315957n + 1n;
+      const expectedSumA = 5739622n;
+      const expectedSumFp = 106484699n + 1n;
+      const expectedSumFee = 33945018n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 51250196260n;
-      const expectedFundingPayment = -26397n;
+      const expectedFundingPayment = 26396n + 1n;
 
-      const expectedTickSumB = 1305108448319n;
-      const expectedTickSumA = -5739622n;
-      const expectedTickSumFp = -26108494n;
-      const expectedTickSumFee = 15681041n;
+      const expectedTickSumB = 1305108448316n + 3n;
+      const expectedTickSumA = 5739622n;
+      const expectedTickSumFp = 26108494n;
+      const expectedTickSumFee = 15681040n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 47285n;
+      const expectedAccount1UnrealizedFunding = -47285n + 1n;
       const expectedAccount1UnrealizedFee = 35432951n;
-
-      await checkFundingRateAndTwapPrice(-65570404, 2140124361);
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1330,26 +1319,26 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -200050;
       const endTick = -200310;
 
-      const swapTokenAmount = '-28284342105520800000';
-      const expectedVTokenBalance = '-71811526478577750000';
-      const expectedVQuoteBalance = 148091862835n;
+      const swapTokenAmount = '-28284342105582900000';
+      const expectedVTokenBalance = '-71811526478718400000';
+      const expectedVQuoteBalance = 148094287097n - 4n;
 
-      const expectedSumB = 7905807594268n;
-      const expectedSumA = -6570998n;
-      const expectedSumFp = -148203539n;
-      const expectedSumFee = 39796807n;
+      const expectedSumB = 7905807594282n + 1n;
+      const expectedSumA = 6570998n;
+      const expectedSumFp = 148203538n + 1n;
+      const expectedSumFee = 39796806n + 1n;
 
       const expectedTickSumB = 1189490198145n;
-      const expectedTickSumA = -1484140n;
-      const expectedTickSumFp = -8778310n;
+      const expectedTickSumA = 1484140n;
+      const expectedTickSumFp = 8778310n;
       const expectedTickSumFee = 2542858n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 57229752578n;
-      const expectedFundingPayment = -361874n;
+      const expectedFundingPayment = 361873n + 1n;
 
-      const expectedAccount1UnrealizedFunding = 94569n;
-      const expectedAccount1UnrealizedFee = 48621968n;
+      const expectedAccount1UnrealizedFunding = -94570n + 2n;
+      const expectedAccount1UnrealizedFee = 48621967n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1395,15 +1384,15 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const liquidityDelta = -22538439850760800n;
       const limitOrderType = 0;
       const expectedEndVTokenBalance = 12196020739034000000n;
-      const expectedEndVQuoteBalance = -24951212897n;
+      const expectedEndVQuoteBalance = -24951543167n + 1n;
 
-      const expectedSumALast = -7149598n;
-      const expectedSumBLast = 7905807594264n;
-      const expectedSumFpLast = -148203539n;
-      const expectedSumFeeLast = 39796806n;
+      // const expectedSumALast = 6570998n;
+      // const expectedSumBLast = -115618250170n;
+      // const expectedSumFpLast = 32327135n;
+      // const expectedSumFeeLast = 21572907n;
 
-      const expectedAccount1UnrealizedFunding = 165135n;
-      const expectedAccount1UnrealizedFee = 48621968n;
+      const expectedAccount1UnrealizedFunding = -165134n;
+      const expectedAccount1UnrealizedFee = 48621967n + 1n;
 
       await checkUnrealizedFundingPaymentAndFee(
         user1AccountNo,
@@ -1444,14 +1433,14 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -200310;
       const endTick = -200460;
 
-      const swapTokenAmount = '-12692319513505300000';
-      const expectedVTokenBalance = '-84503845992083050000';
-      const expectedVQuoteBalance = 173251320867n;
+      const swapTokenAmount = '-12692319513534700000';
+      const expectedVTokenBalance = '-84503845992253100000';
+      const expectedVQuoteBalance = 173255240934n - 4n;
 
-      const expectedSumB = 9588977681545n;
-      const expectedSumA = -7612477n;
-      const expectedSumFp = -230540893n;
-      const expectedSumFee = 43138397n;
+      const expectedSumB = 9588977681563n;
+      const expectedSumA = 7612477n;
+      const expectedSumFp = 230540892n + 1n;
+      const expectedSumFee = 43138396n + 1n;
 
       const expectedTickSumB = 0n;
       const expectedTickSumA = 0n;
@@ -1459,8 +1448,8 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const expectedTickSumFee = 0n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedVQuoteAmountOutWithFee = 25160205934n;
-      const expectedFundingPayment = -747902n;
+      const expectedVQuoteAmountOutWithFee = 25160205935n;
+      const expectedFundingPayment = 747901n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1497,20 +1486,18 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -200460;
       const endTick = -200610;
 
-      const swapTokenAmount = '-12787864980316700000';
-      const expectedVTokenBalance = '-97291710972399750000';
-      const expectedVQuoteBalance = 198223443177n;
+      const swapTokenAmount = '-12787864980350100000';
+      const expectedVTokenBalance = '-97291710972603200000';
+      const expectedVQuoteBalance = 198227557862n - 4n;
 
-      const expectedSumB = 11284818366308;
-      const expectedSumA = -7727632n;
-      const expectedSumFp = -241583016n;
-      const expectedSumFee = 46455020n;
+      const expectedSumB = 11284818366330n;
+      const expectedSumA = 7727632n;
+      const expectedSumFp = 241583015n + 1n;
+      const expectedSumFee = 46455018n + 2n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 24972219619n;
-      const expectedFundingPayment = -97309n;
-
-      await checkFundingRateAndTwapPrice(-57858805, 1990264551);
+      const expectedFundingPayment = 97308n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1546,18 +1533,18 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -200610;
       const endTick = -200750;
 
-      const swapTokenAmount = '-12022178314007500000';
-      const expectedVTokenBalance = '-109313889286407250000';
-      const expectedVQuoteBalance = 221361498609n;
+      const swapTokenAmount = '-12022178314034100000';
+      const expectedVTokenBalance = '-109313889286637300000';
+      const expectedVQuoteBalance = 221367579949n - 4n;
 
-      const expectedSumB = 12879118832863;
-      const expectedSumA = -8738332n;
-      const expectedSumFp = -355638732n;
-      const expectedSumFee = 49528173n;
+      const expectedSumB = 12879118832888n + 1n;
+      const expectedSumA = 8738332n;
+      const expectedSumFp = 355638731n + 1n;
+      const expectedSumFee = 49528172n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
-      const expectedVQuoteAmountOutWithFee = 23139038759n;
-      const expectedFundingPayment = -983327n;
+      const expectedVQuoteAmountOutWithFee = 23139038760n;
+      const expectedFundingPayment = 983326n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,
@@ -1593,18 +1580,18 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
       const startTick = -200750;
       const endTick = -200800;
 
-      const swapTokenAmount = '-4314069685086510000';
-      const expectedVTokenBalance = '-113627958971493760000';
-      const expectedVQuoteBalance = 229585783469n;
+      const swapTokenAmount = '-4314069685093700000';
+      const expectedVTokenBalance = '-113627958971731000000';
+      const expectedVQuoteBalance = 229592833231n - 4n;
 
-      const expectedSumB = 13451221752320n;
-      const expectedSumA = -9181288n;
-      const expectedSumFp = -412687504n;
-      const expectedSumFee = 50620525n;
+      const expectedSumB = 13451221752347n + 1n;
+      const expectedSumA = 9181288n;
+      const expectedSumFp = 412687502n + 2n;
+      const expectedSumFee = 50620524n + 1n;
 
       const expectedTokenAmountOut = swapTokenAmount;
       const expectedVQuoteAmountOutWithFee = 8224769071n;
-      const expectedFundingPayment = -484211n;
+      const expectedFundingPayment = 484210n + 1n;
 
       const swapTxn = await swapTokenAndCheck(
         user2,

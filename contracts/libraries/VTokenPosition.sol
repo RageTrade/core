@@ -95,7 +95,7 @@ library VTokenPosition {
         return position.balance > 0 ? RISK_SIDE.LONG : RISK_SIDE.SHORT;
     }
 
-    /// @notice returns the vQuoteIncrease due to unrealized funding payment for the trader position (+ve means receiving and -ve means paying)
+    /// @notice returns the unrealized funding payment for the trader position
     /// @param position token position
     /// @param wrapper pool wrapper corresponding to position
     function unrealizedFundingPayment(VTokenPosition.Info storage position, IVPoolWrapper wrapper)
@@ -104,12 +104,12 @@ library VTokenPosition {
         returns (int256)
     {
         int256 extrapolatedSumAX128 = wrapper.getExtrapolatedSumAX128();
-        int256 vQuoteIncrease = -FundingPayment.bill(
+        int256 unrealizedFpBill = -FundingPayment.bill(
             extrapolatedSumAX128,
             position.sumALastX128,
             position.netTraderPosition
         );
-        return vQuoteIncrease;
+        return unrealizedFpBill;
     }
 
     function getNetPosition(

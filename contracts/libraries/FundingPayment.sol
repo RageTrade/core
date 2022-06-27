@@ -40,7 +40,7 @@ library FundingPayment {
         pure
         returns (int256 fundingRateX128)
     {
-        int256 priceDeltaX128 = virtualPriceX128.toInt256() - realPriceX128.toInt256();
+        int256 priceDeltaX128 = realPriceX128.toInt256() - virtualPriceX128.toInt256();
         return priceDeltaX128.mulDiv(FixedPoint128.Q128, realPriceX128) / 1 days;
     }
 
