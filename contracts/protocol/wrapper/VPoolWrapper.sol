@@ -71,7 +71,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     error NotClearingHouse();
     error NotGovernance();
-    error NotGovernanceOrTeamMultisig();
     error NotUniswapV3Pool();
     error InvalidTicks(int24 tickLower, int24 tickUpper);
     error InvalidSetting(uint256 errorCode);
@@ -86,13 +85,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     modifier onlyGovernance() {
         if (msg.sender != clearingHouse.governance()) {
             revert NotGovernance();
-        }
-        _;
-    }
-
-    modifier onlyGovernanceOrTeamMultisig() {
-        if (msg.sender != clearingHouse.governance() && msg.sender != clearingHouse.teamMultisig()) {
-            revert NotGovernanceOrTeamMultisig();
         }
         _;
     }
@@ -179,7 +171,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         emit ProtocolFeeUpdated(protocolFeePips_);
     }
 
-    function setFundingRateOverride(int256 fundingRateOverrideX128_) external onlyGovernanceOrTeamMultisig {
+    function setFundingRateOverride(int256 fundingRateOverrideX128_) external onlyGovernance {
         fundingRateOverrideX128 = fundingRateOverrideX128_;
         emit FundingRateOverrideUpdated(fundingRateOverrideX128_);
     }
