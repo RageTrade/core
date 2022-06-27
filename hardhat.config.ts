@@ -115,7 +115,6 @@ export default {
   },
   contractSizer: {
     strict: true,
-    except: ['contracts/test/*', 'console.sol'],
   },
   namedAccounts: {
     deployer: {
