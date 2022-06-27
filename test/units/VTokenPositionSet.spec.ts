@@ -1,13 +1,12 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 
-import { FakeContract, smock } from '@defi-wonderland/smock';
+import { smock } from '@defi-wonderland/smock';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getCreateAddressFor, truncate } from '@ragetrade/sdk';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
-  ArbSysMock,
   ClearingHouse,
   ERC20,
   RageTradeFactory,
@@ -32,9 +31,6 @@ describe('VTokenPositionSet Library', () => {
   let rageTradeFactory: RageTradeFactory;
   let vQuote: VQuote;
   let VPoolWrapper: VPoolWrapper;
-  let arbSysFake: FakeContract<ArbSysMock>;
-  let arbBlockNum: number;
-
   let clearingHouse: ClearingHouse;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
@@ -122,9 +118,6 @@ describe('VTokenPositionSet Library', () => {
         address: vPoolAddress,
       },
     );
-    arbSysFake = await smock.fake<ArbSysMock>('ArbSysMock', { address: '0x0000000000000000000000000000000000000064' });
-    arbBlockNum = 1;
-    arbSysFake.arbBlockNumber.returns(arbBlockNum++);
     await VPoolWrapper.connect(chSigner).mint(-10, 10, 10000000000000, { gasPrice: 0 });
 
     await rageTradeFactory.initializePool({

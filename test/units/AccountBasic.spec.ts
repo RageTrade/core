@@ -8,7 +8,6 @@ import { parseTokenAmount, truncate } from '@ragetrade/sdk';
 
 import {
   AccountTest,
-  ArbSysMock,
   ClearingHouse,
   ERC20,
   OracleMock,
@@ -26,8 +25,6 @@ describe('Account Library Test Basic', () => {
   let VTokenPositionSet: MockContract<VTokenPositionSetTest2>;
   let vPoolFake: FakeContract<UniswapV3Pool>;
   let vPoolWrapperFake: FakeContract<VPoolWrapper>;
-  let arbSysFake: FakeContract<ArbSysMock>;
-  let arbBlockNum: number;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
   let clearingHouse: ClearingHouse;
@@ -140,10 +137,6 @@ describe('Account Library Test Basic', () => {
       },
     });
     test = await factory.deploy();
-
-    arbSysFake = await smock.fake<ArbSysMock>('ArbSysMock', { address: '0x0000000000000000000000000000000000000064' });
-    arbBlockNum = 1;
-    arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
     vPoolWrapperFake.swap.returns((input: any) => {
       if (input.amountSpecified.gt(0) === input.swapVTokenForVQuote) {
@@ -309,8 +302,6 @@ describe('Account Library Test Basic', () => {
       });
       it('Remove Failure - Inside Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
-
         vPoolFake.slot0.returns([0, 194500, 0, 0, 0, 0, false]);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
@@ -320,7 +311,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Failure - Below Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
         vPoolFake.slot0.returns([0, 193500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
@@ -329,7 +319,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Failure - Above Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
         vPoolFake.slot0.returns([0, 195500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
@@ -359,7 +348,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Failure - Inside Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
         vPoolFake.slot0.returns([0, 194500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
@@ -368,7 +356,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Failure - Above Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
         vPoolFake.slot0.returns([0, 195500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
@@ -377,7 +364,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Success - Below Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
         vPoolFake.slot0.returns([0, 193500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0);
         await checkVTokenBalance(vTokenAddress, 0);
@@ -408,7 +394,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Failure - Inside Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 194500 * 60], []]);
         vPoolFake.slot0.returns([0, 194500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
@@ -417,7 +402,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Failure - Below Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
         vPoolFake.slot0.returns([0, 193500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
           'IneligibleLimitOrderRemoval()',
@@ -426,7 +410,6 @@ describe('Account Library Test Basic', () => {
       it('Remove Success - Above Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
         vPoolFake.slot0.returns([0, 195500, 0, 0, 0, 0, false]);
-        arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
         test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0);
         await checkVTokenBalance(vTokenAddress, 0);

@@ -2,8 +2,6 @@ import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { deployments } from 'hardhat';
 
 import { priceToTick, sqrtPriceX96ToPrice, tickToNearestInitializableTick, truncate } from '@ragetrade/sdk';
-import { smock } from '@defi-wonderland/smock';
-import { ArbSysMock } from '../../typechain-types';
 
 export const vEthFixture = deployments.createFixture(async hre => {
   const rageTradeDeployments = await deployments.fixture('vETH');
@@ -20,12 +18,6 @@ export const vEthFixture = deployments.createFixture(async hre => {
     'SettlementTokenMock',
     rageTradeDeployments.SettlementToken.address,
   );
-  // ArbSys
-  let arbSysFake = await smock.fake<ArbSysMock>('ArbSysMock', {
-    address: '0x0000000000000000000000000000000000000064',
-  });
-  let arbBlockNum = 1;
-  arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
   // vETH pool
   const vToken = await hre.ethers.getContractAt('VToken', rageTradeDeployments['ETH-vToken'].address);
