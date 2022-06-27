@@ -25,13 +25,11 @@ library PriceMath {
         priceX128 = _toPriceX128(sqrtPriceX96);
     }
 
-    /// @notice computes the square of a sqrtPriceX96 value
-    /// @param sqrtPriceX96: input price in Q128 format
     function _toPriceX128(uint160 sqrtPriceX96) private pure returns (uint256 priceX128) {
         priceX128 = uint256(sqrtPriceX96).mulDiv(sqrtPriceX96, 1 << 64);
     }
 
-    /// @notice computes the square root of a priceX128 value
+    /// @notice Computes the square root of a priceX128 value
     /// @param priceX128: input price in Q128 format
     /// @return sqrtPriceX96 : the square root of the input price in Q96 format
     function toSqrtPriceX96(uint256 priceX128) internal pure returns (uint160 sqrtPriceX96) {
