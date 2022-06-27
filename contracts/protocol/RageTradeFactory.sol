@@ -44,6 +44,7 @@ contract RageTradeFactory is
 
     IVQuote public immutable vQuote;
     IClearingHouse public immutable clearingHouse;
+    // IInsuranceFund public insuranceFund; // stored in ClearingHouse, replacable from there
 
     event PoolInitialized(IUniswapV3Pool vPool, IVToken vToken, IVPoolWrapper vPoolWrapper);
 

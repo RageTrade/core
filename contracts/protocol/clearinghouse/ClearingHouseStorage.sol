@@ -8,6 +8,7 @@ import { Protocol } from '../../libraries/Protocol.sol';
 
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
 import { IOracle } from '../../interfaces/IOracle.sol';
+import { IOracle } from '../../interfaces/IOracle.sol';
 
 abstract contract ClearingHouseStorage {
     // rest slots reserved for any states from inheritance in future

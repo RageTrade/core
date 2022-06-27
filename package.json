@@ -48,7 +48,6 @@
     "ethers": "^5.6.2",
     "hardhat": "^2.9.2",
     "hardhat-contract-sizer": "^2.5.0",
-    "hardhat-dependency-compiler": "^1.1.2",
     "hardhat-deploy": "^0.10.5",
     "hardhat-gas-reporter": "^1.0.8",
     "hardhat-tracer": "^1.1.0-rc.3",

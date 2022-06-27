@@ -3,7 +3,6 @@ import '@nomiclabs/hardhat-waffle';
 import '@protodev-rage/hardhat-tenderly';
 import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
-import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import 'hardhat-gas-reporter';
 import 'hardhat-tracer';
@@ -99,12 +98,6 @@ export default {
     externalArtifacts: [
       'node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json',
       'node_modules/@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3PoolDeployer.sol/IUniswapV3PoolDeployer.json',
-    ],
-  },
-  dependencyCompiler: {
-    paths: [
-      '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol',
-      '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol',
     ],
   },
   etherscan: {

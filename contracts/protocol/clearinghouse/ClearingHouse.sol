@@ -112,10 +112,7 @@ contract ClearingHouse is
         _updateCollateralSettings(cToken, collateralSettings);
     }
 
-    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings)
-        external
-        onlyGovernanceOrTeamMultisig
-    {
+    function updatePoolSettings(uint32 poolId, PoolSettings calldata newSettings) public onlyGovernanceOrTeamMultisig {
         protocol.pools[poolId].settings = newSettings;
         if ((address(newSettings.oracle)).isZero()) revert InvalidSetting(0x20);
         if (newSettings.twapDuration < 5 minutes || newSettings.twapDuration > 1 days) revert InvalidSetting(0x21);
