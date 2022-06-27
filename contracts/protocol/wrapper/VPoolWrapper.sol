@@ -130,11 +130,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function collectAccruedProtocolFee() external onlyClearingHouse returns (uint256 accruedProtocolFeeLast) {
-        // check for underflow (to skip if accruedProtocolFee is 0)
-        if (accruedProtocolFee != 0) {
-            accruedProtocolFeeLast = accruedProtocolFee - 1;
-            accruedProtocolFee = 1;
-        }
+        accruedProtocolFeeLast = accruedProtocolFee - 1;
+        accruedProtocolFee = 1;
         emit AccruedProtocolFeeCollected(accruedProtocolFeeLast);
     }
 

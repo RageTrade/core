@@ -12,7 +12,6 @@ import {
   priceToSqrtPriceX96,
   sqrtPriceX96ToTick,
   truncate,
-  VPoolWrapper__factory,
 } from '@ragetrade/sdk';
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
@@ -29,7 +28,6 @@ import { IClearingHouseStructures } from '../../typechain-types/artifacts/contra
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 import { SETTLEMENT_TOKEN } from '../helpers/real-constants';
 import { stealFunds } from '../helpers/steal-funds';
-import { AccruedProtocolFeeCollectedEvent } from '../../typechain-types/artifacts/contracts/interfaces/IVPoolWrapper';
 
 const whaleFosettlementToken = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503';
 
@@ -931,32 +929,6 @@ describe('Clearing House Library', () => {
         liquidityChangeParams.limitOrderType,
         liquidityChangeParams.liquidityDelta,
       );
-    });
-  });
-
-  describe('Withdraw Protocol Fee', () => {
-    it('Valid Pool Fee Withdrawal', async () => {
-      const txn = await clearingHouseTest.withdrawProtocolFee(0);
-      const receipt = await txn.wait();
-      const eventList = receipt.logs
-        ?.map(log => {
-          try {
-            return {
-              ...log,
-              ...VPoolWrapper__factory.connect(ethers.constants.AddressZero, hre.ethers.provider).interface.parseLog(
-                log,
-              ),
-            };
-          } catch {
-            return null;
-          }
-        })
-        .filter(event => event !== null)
-        .filter(
-          event => event?.name === 'AccruedProtocolFeeCollected',
-        ) as unknown as AccruedProtocolFeeCollectedEvent[];
-
-      expect(eventList.length).to.eq(2);
     });
   });
 
