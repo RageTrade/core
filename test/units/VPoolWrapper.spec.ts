@@ -529,16 +529,10 @@ describe('PoolWrapper', () => {
     });
 
     it('should use fundingRateOverrideX128 in getFundingRate() when fundingRateOverrideX128 is not null', async () => {
-      await vPoolWrapper.setFundingRateOverride(100);
+      await vPoolWrapper.setFundingRateOverride(ethers.constants.MaxInt256.sub(1));
 
       const { fundingRateX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
-      expect(fundingRateX128).to.eq(100); // since fundingRateOverrideX128 != MaxInt256
-    });
-
-    it('should not allow fundingRateOverrideX128 to be updated if it is more than 100% per hour', async () => {
-      await expect(vPoolWrapper.setFundingRateOverride(ethers.constants.MaxInt256.sub(1))).to.revertedWith(
-        'InvalidSetting(48)',
-      );
+      expect(fundingRateX128).to.eq(ethers.constants.MaxInt256.sub(1)); // since fundingRateOverrideX128 != MaxInt256
     });
   });
 

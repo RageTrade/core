@@ -180,12 +180,6 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     function setFundingRateOverride(int256 fundingRateOverrideX128_) external onlyGovernanceOrTeamMultisig {
-        uint256 fundingRateOverrideX128Abs = fundingRateOverrideX128_.absUint();
-        // ensure that funding rate magnitude is < 100% APR
-        if (
-            fundingRateOverrideX128_ != FUNDING_RATE_OVERRIDE_NULL_VALUE &&
-            fundingRateOverrideX128Abs > FixedPoint128.Q128 / (365 days)
-        ) revert InvalidSetting(0x30);
         fundingRateOverrideX128 = fundingRateOverrideX128_;
         emit FundingRateOverrideUpdated(fundingRateOverrideX128_);
     }
