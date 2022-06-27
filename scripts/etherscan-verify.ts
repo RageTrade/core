@@ -1,6 +1,8 @@
+import { ethers } from 'ethers';
 import hre, { deployments, getNamedAccounts } from 'hardhat';
 import { Deployment } from 'hardhat-deploy/types';
 
+import { getNetworkInfo } from '../deploy/network-info';
 import { ClearingHouse__factory, VPoolWrapper__factory } from '../typechain-types';
 
 async function main() {
@@ -47,7 +49,10 @@ async function main() {
   });
   await hreVerify('ClearingHouseLens', { constructorArguments: [clearingHouse.address] });
 
-  await hreVerify('ETH-IndexOracle');
+  const { CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE } = getNetworkInfo(hre.network.config.chainId);
+  await hreVerify('ETH-IndexOracle', {
+    constructorArguments: [CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE ?? ethers.constants.AddressZero, 18, 6],
+  });
   const ethVPool = await hreVerify('ETH-vPool');
   const ethVToken = await hreVerify('ETH-vToken', { constructorArguments: ['Virtual Ether (Rage Trade)', 'vETH', 18] });
   await hreVerify('ETH-vPoolWrapper', {
