@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity =0.8.14;
+pragma solidity ^0.8.9;
 
 import { Account } from '../../libraries/Account.sol';
 import { BatchedLoop } from '../../libraries/BatchedLoop.sol';

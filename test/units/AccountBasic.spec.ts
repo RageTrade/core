@@ -316,30 +316,27 @@ describe('Account Library Test Basic', () => {
 
         vPoolFake.slot0.returns([0, 194500, 0, 0, 0, 0, false]);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
       it('Remove Failure - Below Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
         vPoolFake.slot0.returns([0, 193500, 0, 0, 0, 0, false]);
         arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
       it('Remove Failure - Above Range (No Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
         vPoolFake.slot0.returns([0, 195500, 0, 0, 0, 0, false]);
         arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
     });
     describe('Lower limit order', () => {
@@ -367,20 +364,18 @@ describe('Account Library Test Basic', () => {
         vPoolFake.slot0.returns([0, 194500, 0, 0, 0, 0, false]);
         arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
       it('Remove Failure - Above Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
         vPoolFake.slot0.returns([0, 195500, 0, 0, 0, 0, false]);
         arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
       it('Remove Success - Below Range (Lower Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
@@ -418,20 +413,18 @@ describe('Account Library Test Basic', () => {
         vPoolFake.slot0.returns([0, 194500, 0, 0, 0, 0, false]);
         arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
       it('Remove Failure - Below Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 193500 * 60], []]);
         vPoolFake.slot0.returns([0, 193500, 0, 0, 0, 0, false]);
         arbSysFake.arbBlockNumber.returns(arbBlockNum++);
 
-        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.reverted;
-        // revertedWith(
-        //   'IneligibleLimitOrderRemoval()',
-        // );
+        await expect(test.removeLimitOrder(0, vTokenAddress, 194000, 195000, 0)).to.be.revertedWith(
+          'IneligibleLimitOrderRemoval()',
+        );
       });
       it('Remove Success - Above Range (Upper Limit)', async () => {
         vPoolFake.observe.returns([[0, 195500 * 60], []]);
