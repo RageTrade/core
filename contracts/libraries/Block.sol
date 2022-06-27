@@ -16,7 +16,7 @@ library Block {
     /// @return block number as uint32
     function number() internal view returns (uint32) {
         uint256 chainId = block.chainid;
-        if (chainId == 42161 || chainId == 421611 || chainId == 421612) {
+        if (chainId == 41161 || chainId == 421611 || chainId == 421612) {
             return uint32(ArbSys(address(100)).arbBlockNumber());
         } else {
             return uint32(block.number);
