@@ -74,7 +74,7 @@ export async function setupClearingHouse({
   // clearing house logic
   const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
   const clearingHouseLogic = await (
-    await hre.ethers.getContractFactory('ClearingHouseTest', {
+    await hre.ethers.getContractFactory('ClearingHouse', {
       libraries: {
         Account: accountLib.address,
       },
@@ -110,7 +110,7 @@ export async function setupClearingHouse({
   const vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
   hre.tracer.nameTags[vQuote.address] = 'vQuote';
 
-  const clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
+  const clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
   hre.tracer.nameTags[clearingHouse.address] = 'clearingHouse';
 
   const proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', await rageTradeFactory.proxyAdmin());

@@ -26,7 +26,6 @@ import { IVToken } from '../interfaces/IVToken.sol';
 import { AddressHelper } from '../libraries/AddressHelper.sol';
 import { PriceMath } from '../libraries/PriceMath.sol';
 
-import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 import { SettlementTokenOracle } from '../oracles/SettlementTokenOracle.sol';
 import { Governable } from '../utils/Governable.sol';
 
@@ -41,7 +40,6 @@ contract RageTradeFactory is
     VTokenDeployer
 {
     using AddressHelper for address;
-    using ClearingHouseExtsload for IClearingHouse;
     using PriceMath for uint256;
 
     IVQuote public immutable vQuote;

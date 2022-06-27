@@ -18,7 +18,6 @@ import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
   AccountTest,
-  ClearingHouseLens,
   ClearingHouseTest,
   IERC20,
   IUniswapV3Pool,
@@ -48,7 +47,6 @@ describe('Clearing House Library', () => {
   // let constants: ConstantsStruct;
   let clearingHouseTest: ClearingHouseTest;
   let arbSysMock: ArbSysMock;
-  let clearingHouseLens: ClearingHouseLens;
   let vPool: IUniswapV3Pool;
 
   let signers: SignerWithAddress[];
@@ -209,9 +207,6 @@ describe('Clearing House Library', () => {
     );
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
-    clearingHouseLens = await (
-      await hre.ethers.getContractFactory('ClearingHouseLens')
-    ).deploy(clearingHouseTest.address);
 
     const insuranceFund = await hre.ethers.getContractAt('InsuranceFund', await clearingHouseTest.insuranceFund());
     hre.tracer.nameTags[insuranceFund.address] = 'insuranceFund';
@@ -310,7 +305,7 @@ describe('Clearing House Library', () => {
         minRequiredMargin,
       );
 
-      const protocol = await clearingHouseLens.getProtocolInfo();
+      const protocol = await clearingHouseTest.getProtocolInfo();
       const curPaused = await clearingHouseTest.paused();
 
       expect(protocol.minRequiredMargin).eq(minRequiredMargin);
@@ -365,11 +360,11 @@ describe('Clearing House Library', () => {
 
   describe('#TokenSupport', () => {
     before(async () => {
-      expect((await clearingHouseLens.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.false;
-      expect((await clearingHouseLens.getCollateralInfo(truncate(realToken.address))).settings.isAllowedForDeposit).to
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.false;
+      expect((await clearingHouseTest.getCollateralInfo(truncate(realToken.address))).settings.isAllowedForDeposit).to
         .be.false;
-      expect((await clearingHouseLens.getPoolInfo(truncate(vQuoteAddress))).settings.isAllowedForTrade).to.be.false;
-      expect((await clearingHouseLens.getPoolInfo(truncate(settlementToken.address))).settings.isAllowedForTrade).to.be
+      expect((await clearingHouseTest.getPoolInfo(truncate(vQuoteAddress))).settings.isAllowedForTrade).to.be.false;
+      expect((await clearingHouseTest.getPoolInfo(truncate(settlementToken.address))).settings.isAllowedForTrade).to.be
         .false;
       // expect(await clearingHouseTest.supportedVTokens(vQuoteAddress)).to.be.false;
       // expect(await clearingHouseTest.supportedDeposits(settlementToken.address)).to.be.false;
@@ -385,7 +380,7 @@ describe('Clearing House Library', () => {
       const settings = await getPoolSettings(vTokenAddress);
       settings.isAllowedForTrade = true;
       await clearingHouseTest.connect(admin).updatePoolSettings(truncate(vTokenAddress), settings);
-      expect((await clearingHouseLens.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
+      expect((await clearingHouseTest.getPoolInfo(truncate(vTokenAddress))).settings.isAllowedForTrade).to.be.true;
     });
     it('Add Token Deposit Support - Fail - Unauthorized', async () => {
       const { settings } = await getCollateralSettings(realToken.address);
@@ -583,13 +578,9 @@ describe('Clearing House Library', () => {
         parseTokenAmount('1000000', 6),
       );
 
-      const accountInfo = await clearingHouseLens.getAccountInfo(user1AccountNo);
-      const collateral0 = await clearingHouseLens.getAccountCollateralInfo(
-        user1AccountNo,
-        accountInfo.activeCollateralIds[0],
-      );
-      expect(collateral0.collateral.toLowerCase()).to.eq(settlementToken.address);
-      expect(collateral0.balance).to.eq(parseTokenAmount('1000000', 6));
+      const accountInfo = await clearingHouseTest.getAccountInfo(user1AccountNo);
+      expect(accountInfo.collateralDeposits[0].collateral.toLowerCase()).to.eq(settlementToken.address);
+      expect(accountInfo.collateralDeposits[0].balance).to.eq(parseTokenAmount('1000000', 6));
     });
   });
   describe('#Withdraw', () => {
@@ -1063,7 +1054,7 @@ describe('Clearing House Library', () => {
         isCrossMargined,
         oracle,
       },
-    } = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
+    } = await clearingHouseTest.getPoolInfo(truncate(vTokenAddress));
     return {
       initialMarginRatioBps,
       maintainanceMarginRatioBps,
@@ -1079,14 +1070,14 @@ describe('Clearing House Library', () => {
     let {
       token,
       settings: { oracle, twapDuration, isAllowedForDeposit },
-    } = await clearingHouseLens.getCollateralInfo(truncate(vTokenAddress));
+    } = await clearingHouseTest.getCollateralInfo(truncate(vTokenAddress));
     return { token, settings: { oracle, twapDuration, isAllowedForDeposit } };
   }
 
   async function getPoolsSumA(poolIds: string[]) {
     return await Promise.all(
       poolIds.map(async poolId => {
-        const { vPoolWrapper } = await clearingHouseLens.getPoolInfo(poolId);
+        const { vPoolWrapper } = await clearingHouseTest.getPoolInfo(poolId);
         const wrapper = await hre.ethers.getContractAt('VPoolWrapper', vPoolWrapper);
         return await wrapper.getSumAX128();
       }),

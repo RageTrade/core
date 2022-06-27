@@ -9,8 +9,7 @@ import { parseTokenAmount, truncate } from '@ragetrade/sdk';
 import {
   AccountTest,
   ArbSysMock,
-  ClearingHouseLens,
-  ClearingHouseTest,
+  ClearingHouse,
   ERC20,
   OracleMock,
   RageTradeFactory,
@@ -31,8 +30,7 @@ describe('Account Library Test Basic', () => {
   let arbBlockNum: number;
   // let constants: ConstantsStruct;
   let vTokenAddress: string;
-  let clearingHouse: ClearingHouseTest;
-  let clearingHouseLens: ClearingHouseLens;
+  let clearingHouse: ClearingHouse;
   let rageTradeFactory: RageTradeFactory;
 
   let test: AccountTest;
@@ -102,7 +100,6 @@ describe('Account Library Test Basic', () => {
       settlementToken,
       vQuote,
       clearingHouse,
-      clearingHouseLens,
       rageTradeFactory,
       oracle: settlementTokenOracle,
     } = await testSetupVQuote());
@@ -225,10 +222,10 @@ describe('Account Library Test Basic', () => {
       settlementToken.address,
     );
 
-    const poolObj = await clearingHouseLens.getPoolInfo(truncate(vQuote.address));
+    const poolObj = await clearingHouse.getPoolInfo(truncate(vQuote.address));
     await test.registerPool(poolObj);
 
-    const poolObj2 = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
+    const poolObj2 = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
     await test.registerPool(poolObj2);
 
     await test.setVQuoteAddress(vQuote.address);

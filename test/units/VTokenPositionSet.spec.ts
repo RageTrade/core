@@ -8,8 +8,7 @@ import { ADDRESS_ZERO } from '@uniswap/v3-sdk';
 
 import {
   ArbSysMock,
-  ClearingHouseLens,
-  ClearingHouseTest,
+  ClearingHouse,
   ERC20,
   RageTradeFactory,
   UniswapV3Pool,
@@ -36,8 +35,7 @@ describe('VTokenPositionSet Library', () => {
   let arbSysFake: FakeContract<ArbSysMock>;
   let arbBlockNum: number;
 
-  let clearingHouse: ClearingHouseTest;
-  let clearingHouseLens: ClearingHouseLens;
+  let clearingHouse: ClearingHouse;
   // let constants: ConstantsStruct;
   let signers: SignerWithAddress[];
   let chSigner: SignerWithAddress;
@@ -59,7 +57,7 @@ describe('VTokenPositionSet Library', () => {
 
     const accountLib = await (await hre.ethers.getContractFactory('Account')).deploy();
     const clearingHouseLogic = await (
-      await hre.ethers.getContractFactory('ClearingHouseTest', {
+      await hre.ethers.getContractFactory('ClearingHouse', {
         libraries: {
           Account: accountLib.address,
         },
@@ -82,9 +80,7 @@ describe('VTokenPositionSet Library', () => {
       settlementTokenOracle.address,
     );
 
-    clearingHouse = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());
-    clearingHouseLens = await (await hre.ethers.getContractFactory('ClearingHouseLens')).deploy(clearingHouse.address);
-
+    clearingHouse = await hre.ethers.getContractAt('ClearingHouse', await rageTradeFactory.clearingHouse());
     chSigner = await impersonateAccount(clearingHouse.address);
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
 
@@ -367,10 +363,10 @@ describe('VTokenPositionSet Library', () => {
   });
 
   async function setConstants(vTokenPositionSet: VTokenPositionSetTest) {
-    const vTokenPoolObj = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress));
+    const vTokenPoolObj = await clearingHouse.getPoolInfo(truncate(vTokenAddress));
     await vTokenPositionSet.registerPool(vTokenPoolObj);
 
-    const vTokenPoolObj1 = await clearingHouseLens.getPoolInfo(truncate(vTokenAddress1));
+    const vTokenPoolObj1 = await clearingHouse.getPoolInfo(truncate(vTokenAddress1));
     await vTokenPositionSet.registerPool(vTokenPoolObj1);
 
     await vTokenPositionSet.setVQuoteAddress(vQuote.address);

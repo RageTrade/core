@@ -98,11 +98,6 @@ interface IClearingHouseStructures is IClearingHouseEnums {
         bool settleProfit; // whether to settle profit against USDC margin
     }
 
-    struct TickRange {
-        int24 tickLower;
-        int24 tickUpper;
-    }
-
     struct VTokenPositionView {
         uint32 poolId; // id of the pool of which this token position is for
         int256 balance; // vTokenLong - vTokenShort
