@@ -212,7 +212,6 @@ library SwapMath {
 
     /// @notice Applies the fees in the amount, based on sign of the amount
     /// @param amount amount to which fees are to be applied
-    /// @param fees fees to be applied
     /// @param includeFeeEnum procedure to apply the fee
     /// @return amountAfterFees amount after applying fees
     function includeFees(

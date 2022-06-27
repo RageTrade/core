@@ -77,7 +77,7 @@ contract TimelockControllerWithMinDelayOverride is TimelockController {
 
     function _getKey(address target, bytes4 selector) internal pure returns (bytes32 c) {
         assembly {
-            // store target in the last 20 bytes and selector in the 4 bytes before
+            // store a in the last 20 bytes and b in the 4 bytes before
             c := xor(target, selector)
         }
     }

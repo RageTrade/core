@@ -132,7 +132,6 @@ library VTokenPositionSet {
 
     /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param poolId id of the rage trade pool
     /// @param swapParams parameters for swap
     /// @param protocol platform constants
@@ -151,7 +150,6 @@ library VTokenPositionSet {
     /// @notice swaps tokens (Long and Short) with input in token amount
     /// @dev activates inactive vToe
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param poolId id of the rage trade pool
     /// @param vTokenAmount amount of the token
     /// @param protocol platform constants
@@ -183,7 +181,6 @@ library VTokenPositionSet {
 
     /// @notice swaps tokens (Long and Short) with input in token amount / vQuote amount
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param poolId id of the rage trade pool
     /// @param swapParams parameters for swap
     /// @param wrapper VPoolWrapper to override the set wrapper
@@ -225,7 +222,6 @@ library VTokenPositionSet {
 
     /// @notice function to liquidate all liquidity positions
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param protocol platform constants
     /// @return notionalAmountClosed - value of net token position coming out (in notional) of all the ranges closed
     function liquidateLiquidityPositions(
@@ -243,7 +239,6 @@ library VTokenPositionSet {
 
     /// @notice function to liquidate liquidity positions for a particular token
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param poolId id of the rage trade pool
     /// @param protocol platform constants
     /// @return notionalAmountClosed - value of net token position coming out (in notional) of all the ranges closed
@@ -270,7 +265,6 @@ library VTokenPositionSet {
 
     /// @notice function for liquidity add/remove
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param poolId id of the rage trade pool
     /// @param liquidityChangeParams includes tickLower, tickUpper, liquidityDelta, limitOrderType
     /// @return vTokenAmountOut amount of tokens that account received (positive) or paid (negative)
@@ -306,7 +300,6 @@ library VTokenPositionSet {
     /// @notice function to remove an eligible limit order
     /// @dev checks whether the current price is on the correct side of the range based on the type of limit order (None, Low, High)
     /// @param set VTokenPositionSet
-    /// @param accountId account identifier, used for emitting event
     /// @param poolId id of the rage trade pool
     /// @param tickLower lower tick index for the range
     /// @param tickUpper upper tick index for the range
