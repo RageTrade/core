@@ -54,8 +54,7 @@ contract RageTradeFactory is
         address clearingHouseLogicAddress,
         address _vPoolWrapperLogicAddress,
         address insuranceFundLogicAddress,
-        IERC20Metadata settlementToken,
-        IOracle settlementTokenOracle
+        IERC20Metadata settlementToken
     ) VPoolWrapperDeployer(_vPoolWrapperLogicAddress) {
         proxyAdmin = _deployProxyAdmin();
         proxyAdmin.transferOwnership(msg.sender);
@@ -65,6 +64,8 @@ contract RageTradeFactory is
 
         // deploys InsuranceFund proxy
         IInsuranceFund insuranceFund = _deployProxyForInsuranceFund(insuranceFundLogicAddress);
+
+        SettlementTokenOracle settlementTokenOracle = new SettlementTokenOracle();
 
         // deploys a proxy for ClearingHouse, and initialize it as well
         clearingHouse = _deployProxyForClearingHouseAndInitialize(

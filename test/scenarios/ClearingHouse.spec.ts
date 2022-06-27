@@ -192,7 +192,7 @@ describe('Clearing House Library', () => {
 
     const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
-    const _settlementTokenOracle = await (await hre.ethers.getContractFactory('SettlementTokenOracle')).deploy();
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     const rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -201,7 +201,6 @@ describe('Clearing House Library', () => {
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
-      _settlementTokenOracle.address,
     );
 
     clearingHouseTest = await hre.ethers.getContractAt('ClearingHouseTest', await rageTradeFactory.clearingHouse());

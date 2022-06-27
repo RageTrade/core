@@ -575,7 +575,7 @@ describe('Clearing House Scenario 6', () => {
 
     const insuranceFundLogic = await (await hre.ethers.getContractFactory('InsuranceFund')).deploy();
 
-    const _settlementTokenOracle = await (await hre.ethers.getContractFactory('SettlementTokenOracle')).deploy();
+    const nativeOracle = await (await hre.ethers.getContractFactory('OracleMock')).deploy();
 
     const rageTradeFactory = await (
       await hre.ethers.getContractFactory('RageTradeFactory')
@@ -584,7 +584,6 @@ describe('Clearing House Scenario 6', () => {
       vPoolWrapperLogic.address,
       insuranceFundLogic.address,
       settlementToken.address,
-      _settlementTokenOracle.address,
     );
 
     vQuote = await hre.ethers.getContractAt('VQuote', await rageTradeFactory.vQuote());
