@@ -424,24 +424,16 @@ describe('Clearing House Library', () => {
     });
 
     it('Pause', async () => {
-      // partial pause should not do pause
-      const tx1 = await clearingHouseTest.pause(1);
-      const curPaused1 = await clearingHouseTest.paused();
-      expect(curPaused1).to.be.false;
+      const tx = await clearingHouseTest.pause(poolIds);
 
-      // perform remaining pause
-      const tx2 = await clearingHouseTest.pause(0);
-      const curPaused2 = await clearingHouseTest.paused();
-      expect(curPaused2).to.be.true;
+      const curPaused = await clearingHouseTest.paused();
+      expect(curPaused).to.be.true;
 
       // checks if the funding payment state updated event is emitted for all the pools
-      const rc1 = await tx1.wait();
-      const rc2 = await tx2.wait();
-      expect(
-        [...(rc1.events ?? []), ...(rc2.events ?? [])]?.filter(
-          val => (val.topics[0] as string) === fundingPaymentStateUpdatedTopicHash,
-        ).length,
-      ).to.eq(poolIds.length);
+      const rc = await tx.wait();
+      expect(rc.events?.filter(val => (val.topics[0] as string) === fundingPaymentStateUpdatedTopicHash).length).to.eq(
+        poolIds.length,
+      );
 
       poolsSumAValueAfterPause = await getPoolsSumA(poolIds);
     });
@@ -508,24 +500,16 @@ describe('Clearing House Library', () => {
     });
 
     it('UnPause', async () => {
-      // partial unpause should not do unpause
-      const tx1 = await clearingHouseTest.unpause(1);
-      const curPaused1 = await clearingHouseTest.paused();
-      expect(curPaused1).to.be.true;
+      const tx = await clearingHouseTest.unpause([truncate(vTokenAddress), truncate(vTokenAddress1)]);
+      const curPaused = await clearingHouseTest.paused();
 
-      // perform remaining unpause
-      const tx2 = await clearingHouseTest.unpause(0);
-      const curPaused2 = await clearingHouseTest.paused();
-      expect(curPaused2).to.be.false;
+      expect(curPaused).to.be.false;
 
       // checks if the funding payment state updated event is emitted for all the pools
-      const rc1 = await tx1.wait();
-      const rc2 = await tx2.wait();
-      expect(
-        [...(rc1.events ?? []), ...(rc2.events ?? [])]?.filter(
-          val => (val.topics[0] as string) === fundingPaymentStateUpdatedTopicHash,
-        ).length,
-      ).to.eq(poolIds.length);
+      const rc = await tx.wait();
+      expect(rc.events?.filter(val => (val.topics[0] as string) === fundingPaymentStateUpdatedTopicHash).length).to.eq(
+        poolIds.length,
+      );
 
       // some time is elapsed between test cases but still sumA should stay the same
       const poolsSumAValueAfterUnpause = await getPoolsSumA(poolIds);

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.9;
 
 import { Account } from '../../libraries/Account.sol';
-import { BatchedLoop } from '../../libraries/BatchedLoop.sol';
 import { Protocol } from '../../libraries/Protocol.sol';
 
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
@@ -22,11 +21,6 @@ abstract contract ClearingHouseStorage {
 
     address public rageTradeFactoryAddress;
     IInsuranceFund public insuranceFund;
-
-    // progress index, used for performing for loop
-    // over an unbounded array in multiple txs
-    BatchedLoop.Info internal pauseLoop;
-    BatchedLoop.Info internal unpauseLoop;
 
     // reserved for adding slots in future
     uint256[100] private _emptySlots2;

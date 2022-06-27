@@ -21,11 +21,17 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
     /// @param collateralId address of token
     error CollateralNotAllowedForUse(uint32 collateralId);
 
-    /// @notice error to denote unpause is in progress, hence cannot pause
-    error CannotPauseIfUnpauseInProgress();
+    /// @notice error to denote usage of uninitialized pool
+    /// @param poolId unitialized truncated address supplied
+    error PoolDoesNotExist(uint32 poolId);
 
-    /// @notice error to denote pause is in progress, hence cannot unpause
-    error CannotUnpauseIfPauseInProgress();
+    /// @notice error to denote usage of unsupported pool
+    /// @param poolId address of token
+    error PoolNotAllowedForTrade(uint32 poolId);
+
+    /// @notice error to denote low notional value of txn
+    /// @param notionalValue notional value of txn
+    error LowNotionalValue(uint256 notionalValue);
 
     /// @notice error to denote incorrect address is supplied while updating collateral settings
     /// @param incorrectAddress incorrect address of collateral token
@@ -43,27 +49,9 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
     /// @param multicallOperationType is the value that is out of bounds
     error InvalidMulticallOperationType(MulticallOperationType multicallOperationType);
 
-    /// @notice error to denote that keeper fee is negative or zero
-    error KeeperFeeNotPositive(int256 keeperFee);
-
-    /// @notice error to denote low notional value of txn
-    /// @param notionalValue notional value of txn
-    error LowNotionalValue(uint256 notionalValue);
-
-    /// @notice error to denote that caller is not ragetrade factory
-    error NotRageTradeFactory();
-
-    /// @notice error to denote usage of uninitialized pool
-    /// @param poolId unitialized truncated address supplied
-    error PoolDoesNotExist(uint32 poolId);
-
-    /// @notice error to denote usage of unsupported pool
-    /// @param poolId address of token
-    error PoolNotAllowedForTrade(uint32 poolId);
-
     /// @notice error to denote slippage of txn beyond set threshold
     error SlippageBeyondTolerance();
 
-    /// @notice error to denote that zero amount is passed and it's prohibited
-    error ZeroAmount();
+    /// @notice error to denote that keeper fee is negative or zero
+    error KeeperFeeNotPositive(int256 keeperFee);
 }
