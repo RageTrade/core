@@ -66,7 +66,4 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
 
     /// @notice error to denote that zero amount is passed and it's prohibited
     error ZeroAmount();
-
-    /// @notice error to denote an invalid setting for parameters
-    error InvalidSetting(uint256 errorCode);
 }
