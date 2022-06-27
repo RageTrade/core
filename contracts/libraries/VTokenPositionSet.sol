@@ -296,7 +296,7 @@ library VTokenPositionSet {
 
         set.update(accountId, balanceAdjustments, poolId, protocol);
 
-        if (liquidityChangeParams.closeTokenPosition && balanceAdjustments.traderPositionIncrease != 0) {
+        if (liquidityChangeParams.closeTokenPosition) {
             set.swapTokenAmount(accountId, poolId, -balanceAdjustments.traderPositionIncrease, protocol);
         }
 
