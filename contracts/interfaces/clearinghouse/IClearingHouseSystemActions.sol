@@ -20,8 +20,6 @@ interface IClearingHouseSystemActions is IClearingHouseStructures {
     /// @param vQuote address of vQuote
     function initialize(
         address rageTradeFactoryAddress,
-        address initialGovernance,
-        address initialTeamMultisig,
         IERC20 defaultCollateralToken,
         IOracle defaultCollateralTokenOracle,
         IInsuranceFund insuranceFund,

@@ -5,17 +5,9 @@ pragma solidity ^0.8.9;
 interface IGovernable {
     function governance() external view returns (address);
 
-    function governancePending() external view returns (address);
-
     function teamMultisig() external view returns (address);
 
-    function teamMultisigPending() external view returns (address);
+    function transferGovernance(address newGovernance) external;
 
-    function initiateGovernanceTransfer(address newGovernancePending) external;
-
-    function acceptGovernanceTransfer() external;
-
-    function initiateTeamMultisigTransfer(address newTeamMultisigPending) external;
-
-    function acceptTeamMultisigTransfer() external;
+    function transferTeamMultisig(address newTeamMultisig) external;
 }

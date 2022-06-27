@@ -77,6 +77,8 @@ contract RageTradeFactory is
                 vQuote
             )
         );
+        clearingHouse.transferGovernance(msg.sender);
+        clearingHouse.transferTeamMultisig(msg.sender);
 
         _initializeInsuranceFund(insuranceFund, settlementToken, clearingHouse);
     }
