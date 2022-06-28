@@ -74,6 +74,13 @@ async function main() {
 
   await hreVerify('SwapSimulator');
 
+  const { governanceContract, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
+  const proposers = governanceContract ? [governanceContract] : [];
+  const executors = governanceContract ? [governanceContract] : [];
+  await hreVerify('TimelockController', {
+    constructorArguments: [timelockMinDelay ?? 172800, proposers, executors],
+  });
+
   // helper method that verify a contract and returns the deployment
   async function hreVerify(label: string, taskArguments: any = {}): Promise<Deployment> {
     console.log('verifying:', label);
