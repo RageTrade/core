@@ -13,15 +13,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { governanceContract, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
 
+  const governanceAddressProvided = governanceContract && isAddress(governanceContract);
+  if (governanceAddressProvided) {
+    console.log('Governance address provided', governanceContract);
+  } else {
+    console.log('Governance address not provided');
+  }
+
+  const proposers = governanceAddressProvided ? [governanceContract] : [];
+  const executors = governanceAddressProvided ? [governanceContract] : [];
+
   await deploy('TimelockController', {
     contract: 'TimelockControllerWithMinDelayOverride',
     from: deployer,
     log: true,
-    args: [timelockMinDelay ?? 2 * 24 * 3600, [], []],
+    args: [timelockMinDelay ?? 2 * 24 * 3600, proposers, executors],
     waitConfirmations,
   });
 
-  if (governanceContract && isAddress(governanceContract)) {
+  if (governanceAddressProvided) {
     const TIMELOCK_ADMIN_ROLE = await read('TimelockController', 'TIMELOCK_ADMIN_ROLE');
 
     // make the governance contract the admin of Timelock
