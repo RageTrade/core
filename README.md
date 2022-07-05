@@ -9,7 +9,7 @@ This repository contains the core smart contracts for the Rage Trade Protocol.
 
 ## Bug Bounty
 
-> Coming soon
+This repository is subject to the Rage Trade Bug Bounty program, per the terms defined [here](./BUG_BOUNTY.md).
 
 ## Scripts:
 
