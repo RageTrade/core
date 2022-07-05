@@ -56,11 +56,15 @@ contracts
 │       ├── IClearingHouseStructures.sol (GPL-2.0-or-later)
 │       ├── IClearingHouseSystemActions.sol (GPL-2.0-or-later)
 │       └── IClearingHouseView.sol (GPL-2.0-or-later)
+├── lens
+│   ├── ClearingHouseLens.sol (MIT)
+│   └── SwapSimulator.sol (BUSL-1.1)
 ├── libraries
 │   ├── Account.sol (BUSL-1.1)
 │   ├── AddressHelper.sol (MIT)
+│   ├── BatchedLoop.sol (MIT)
 │   ├── Bisection.sol (MIT)
-│   ├── Bytes32.sol (MIT)
+│   ├── Block.sol (MIT)
 │   ├── CollateralDeposit.sol (GPL-2.0-or-later)
 │   ├── FundingPayment.sol (GPL-2.0-or-later)
 │   ├── GoodAddressDeployer.sol (MIT)
@@ -81,6 +85,7 @@ contracts
 │   ├── UniswapV3PoolHelper.sol (GPL-2.0-or-later)
 │   ├── VTokenPosition.sol (BUSL-1.1)
 │   └── VTokenPositionSet.sol (BUSL-1.1)
+│   └── WordHelper.sol (MIT)
 ├── oracles
 │   ├── ChainlinkOracle.sol (GPL-2.0-or-later)
 │   └── SettlementTokenOracle.sol (GPL-2.0-or-later)
@@ -107,10 +112,7 @@ contracts
     ├── Extsload.sol (MIT)
     ├── Governable.sol (MIT)
     ├── Multicall.sol (GPL-2.0-or-later)
-    ├── ProxyAdmin.sol (MIT)
     ├── ProxyAdminDeployer.sol (MIT)
-    ├── SwapSimulator.sol (BUSL-1.1)
     ├── TimelockControllerWithMinDelayOverride.sol (MIT)
-    ├── TransparentUpgradeableProxy.sol (MIT)
     └── constants.sol (MIT)
 ```
