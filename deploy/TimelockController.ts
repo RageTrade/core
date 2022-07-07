@@ -11,17 +11,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const { governanceContract, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
+  const { multisigAddress, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
 
-  const governanceAddressProvided = governanceContract && isAddress(governanceContract);
-  if (governanceAddressProvided) {
-    console.log('Governance address provided', governanceContract);
+  const isMultisigAddressProvided = multisigAddress && isAddress(multisigAddress);
+  if (isMultisigAddressProvided) {
+    console.log('Multisig address provided', multisigAddress);
   } else {
-    console.log('Governance address not provided');
+    console.log('Multisig address not provided');
   }
 
-  const proposers = governanceAddressProvided ? [governanceContract] : [];
-  const executors = governanceAddressProvided ? [governanceContract] : [];
+  const proposers = isMultisigAddressProvided ? [multisigAddress] : [];
+  const executors = isMultisigAddressProvided ? [multisigAddress] : [];
 
   await deploy('TimelockController', {
     contract: 'TimelockControllerWithMinDelayOverride',
@@ -31,11 +31,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     waitConfirmations,
   });
 
-  if (governanceAddressProvided) {
+  if (isMultisigAddressProvided) {
     const TIMELOCK_ADMIN_ROLE = await read('TimelockController', 'TIMELOCK_ADMIN_ROLE');
 
     // make the governance contract the admin of Timelock
-    await execute('TimelockController', { from: deployer }, 'grantRole', TIMELOCK_ADMIN_ROLE, governanceContract);
+    await execute('TimelockController', { from: deployer }, 'grantRole', TIMELOCK_ADMIN_ROLE, multisigAddress);
 
     // renounce admin control from deployer
     await execute('TimelockController', { from: deployer }, 'renounceRole', TIMELOCK_ADMIN_ROLE, deployer);

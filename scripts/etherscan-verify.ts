@@ -74,9 +74,9 @@ async function main() {
 
   await hreVerify('SwapSimulator');
 
-  const { governanceContract, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
-  const proposers = governanceContract ? [governanceContract] : [];
-  const executors = governanceContract ? [governanceContract] : [];
+  const { multisigAddress, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
+  const proposers = multisigAddress ? [multisigAddress] : [];
+  const executors = multisigAddress ? [multisigAddress] : [];
   await hreVerify('TimelockController', {
     constructorArguments: [timelockMinDelay ?? 172800, proposers, executors],
   });

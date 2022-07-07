@@ -22,7 +22,8 @@ export const vEthFixture = deployments.createFixture(async hre => {
       },
     })
   ).deploy();
-  await proxyAdmin.upgrade(clearingHouse.address, cht.address);
+  const impl = await proxyAdmin.getProxyImplementation(clearingHouse.address);
+  await hre.network.provider.send('hardhat_setCode', [impl, await hre.ethers.provider.getCode(cht.address)]);
 
   // @ts-ignore
   hre.tracer.nameTags['ClearingHouse'] = clearingHouse.address;

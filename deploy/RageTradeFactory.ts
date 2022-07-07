@@ -2,17 +2,8 @@ import { parseUnits } from 'ethers/lib/utils';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-import { truncate } from '@ragetrade/sdk';
-
-import {
-  ClearingHouse__factory,
-  InsuranceFund__factory,
-  IOracle__factory,
-  ProxyAdmin__factory,
-  VQuote__factory,
-} from '../typechain-types';
-import { IClearingHouseStructures } from '../typechain-types/artifacts/contracts/lens/ClearingHouseLens';
-import { waitConfirmations } from './network-info';
+import { InsuranceFund__factory, ProxyAdmin__factory, VQuote__factory } from '../typechain-types';
+import { getNetworkInfo, waitConfirmations } from './network-info';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {
@@ -87,6 +78,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const insuranceFundAddress = await read('ClearingHouse', 'insuranceFund');
   await save('InsuranceFund', { abi: InsuranceFund__factory.abi, address: insuranceFundAddress });
   console.log('saved "InsuranceFund":', insuranceFundAddress);
+
+  // transfer governance to timelock
+  const timelock = await get('TimelockController');
+  await execute(
+    'RageTradeFactory',
+    { from: deployer, waitConfirmations },
+    'initiateGovernanceTransfer',
+    timelock.address,
+  );
+  await execute('ClearingHouse', { from: deployer, waitConfirmations }, 'initiateGovernanceTransfer', timelock.address);
+  await execute('ProxyAdmin', { from: deployer, waitConfirmations }, 'transferOwnership', timelock.address);
+
+  // transfer teamMultisig to multisig address
+  const { multisigAddress } = getNetworkInfo(hre.network.config.chainId);
+  await execute(
+    'RageTradeFactory',
+    { from: deployer, waitConfirmations },
+    'initiateTeamMultisigTransfer',
+    multisigAddress,
+  );
+  await execute(
+    'ClearingHouse',
+    { from: deployer, waitConfirmations },
+    'initiateTeamMultisigTransfer',
+    multisigAddress,
+  );
 };
 
 export default func;
@@ -98,4 +115,5 @@ func.dependencies = [
   'InsuranceFundLogic',
   'SettlementToken',
   'SettlementTokenOracle',
+  'TimelockController',
 ];
