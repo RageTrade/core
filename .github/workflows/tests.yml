@@ -7,7 +7,7 @@ on:
     branches: ['*']
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     environment: CI
     steps:
@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: 16
       - run: yarn install --frozen-lockfile
+      - run: yarn patch-package
       - run: yarn compile
       - run: yarn test
         env:
@@ -33,6 +34,7 @@ jobs:
         with:
           node-version: 16
       - run: yarn install --frozen-lockfile
+      - run: yarn patch-package
       - run: yarn format
   deploy:
     runs-on: ubuntu-latest
@@ -44,6 +46,7 @@ jobs:
         with:
           node-version: 16
       - run: yarn install --frozen-lockfile
+      - run: yarn patch-package
       - run: yarn compile
       - run: yarn deploy
         env:

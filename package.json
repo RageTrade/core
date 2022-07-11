@@ -1,6 +1,6 @@
 {
   "name": "@ragetrade/core",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "repository": "https://github.com/ragetrade/core",
   "license": "MIT",
   "scripts": {
@@ -8,14 +8,13 @@
     "compile": "hardhat compile",
     "coverage": "hardhat coverage --testfiles \"test/registry/*.ts\"",
     "deploy": "TS_NODE_SKIP_IGNORE=true hardhat deploy",
-    "etherscan": "hardhat etherscan-verify",
-    "etherscan:arbtest": "TS_NODE_SKIP_IGNORE=true hardhat run ./scripts/etherscan-verify.ts --network arbtest",
+    "verify": "TS_NODE_SKIP_IGNORE=true hardhat run ./scripts/etherscan-verify.ts",
     "format": "prettier --check contracts deploy test",
     "format:fix": "prettier --write contracts deploy test",
     "size": "hardhat size-contracts",
     "test": "TS_NODE_SKIP_IGNORE=true hardhat test",
     "typechain": "hardhat typechain",
-    "postinstall": "patch-package --patch-dir .patches"
+    "patch-package": "patch-package --patch-dir .patches"
   },
   "resolutions": {
     "solidity-coverage/@solidity-parser/parser": "^0.14.0"
@@ -29,6 +28,7 @@
   },
   "devDependencies": {
     "@134dd3v/prettier-plugin-solidity": "^1.0.0-beta.18",
+    "@anders-t/ethers-ledger": "^1.0.4",
     "@defi-wonderland/smock": "^2.0.7",
     "@ethersproject/experimental": "^5.4.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",

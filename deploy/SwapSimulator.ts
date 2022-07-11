@@ -10,19 +10,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const deployment = await deploy('SwapSimulator', {
-    contract: 'SwapSimulator',
+  await deploy('SwapSimulator', {
     from: deployer,
     log: true,
     waitConfirmations,
   });
-
-  if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'SwapSimulator',
-      address: deployment.address,
-    });
-  }
 };
 
 export default func;

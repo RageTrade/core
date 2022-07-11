@@ -19,40 +19,45 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     getNamedAccounts,
   } = hre;
 
-  let alreadyDeployed = false;
-
+  // checks if pool for ETH was already deployed
+  let isAlreadyDeployed = false;
   try {
     await get('ETH-vToken');
-    alreadyDeployed = true;
+    isAlreadyDeployed = true;
   } catch (e) {
     console.log((e as Error).message);
   }
 
-  if (!alreadyDeployed) {
+  if (isAlreadyDeployed) {
+    console.log('vETH already setup, hence skipping deployment');
+  } else {
     const { deployer } = await getNamedAccounts();
 
     let ethIndexOracleDeployment;
-    const { CHAINLINK_ETH_USD_ORACLE, FlagsInterface } = getNetworkInfo(hre.network.config.chainId);
+    const { CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE } = getNetworkInfo(hre.network.config.chainId);
 
+    // uses chainlink oracle if provided, else uses OracleMock
     if (CHAINLINK_ETH_USD_ORACLE) {
       ethIndexOracleDeployment = await deploy('ETH-IndexOracle', {
         contract: 'ChainlinkOracle',
-        args: [CHAINLINK_ETH_USD_ORACLE, FlagsInterface ?? ethers.constants.AddressZero, 18, 6],
+        args: [CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE ?? ethers.constants.AddressZero, 18, 6],
         from: deployer,
         log: true,
         waitConfirmations,
       });
     } else {
+      console.log('CHAINLINK_ETH_USD_ORACLE not provided, using OracleMock as IndexOracle');
       ethIndexOracleDeployment = await deploy('ETH-IndexOracle', {
         contract: 'OracleMock',
         from: deployer,
         log: true,
       });
+      // setting initial price as 2000 ETH-USD for the index oracle
       await execute(
         'ETH-IndexOracle',
         { from: deployer, waitConfirmations },
         'setPriceX128',
-        await priceToPriceX128(3000, 6, 18),
+        await priceToPriceX128(2000, 6, 18),
       );
     }
 
@@ -66,10 +71,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       initialMarginRatioBps: 2000,
       maintainanceMarginRatioBps: 1000,
       maxVirtualPriceDeviationRatioBps: 1000, // 10%
-      twapDuration: 300,
+      twapDuration: 900,
       isAllowedForTrade: true,
       isCrossMargined: true,
-      oracle: ethIndexOracleDeployment.address,
+      oracle: ethIndexOracleDeployment.address, // using deployed oracle address here
     };
 
     const params: RageTradeFactory.InitializePoolParamsStruct = {
@@ -82,41 +87,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const tx = await execute('RageTradeFactory', { from: deployer, waitConfirmations }, 'initializePool', params);
 
-    const poolInitializedLog = tx.events?.find(
-      event => event?.event === 'PoolInitialized',
-    ) as unknown as PoolInitializedEvent;
-    if (!poolInitializedLog) {
-      throw new Error('PoolInitialized log not found');
+    const event = tx.events?.find(event => event?.event === 'PoolInitialized') as unknown as PoolInitializedEvent;
+    if (!event) {
+      throw new Error('The event RageTradeFactory.PoolInitialized does not seem to be emitted');
     }
 
-    await save('ETH-vToken', { abi: VToken__factory.abi, address: poolInitializedLog.args.vToken });
-    console.log('saved "ETH-vToken":', poolInitializedLog.args.vToken);
-    if (hre.network.config.chainId !== 31337) {
-      await hre.tenderly.push({
-        name: 'VToken',
-        address: poolInitializedLog.args.vToken,
-      });
-    }
-    await save('ETH-vPool', {
-      abi: IUniswapV3Pool__factory.abi,
-      address: poolInitializedLog.args.vPool,
-    });
-    console.log('saved "ETH-vPool":', poolInitializedLog.args.vPool);
-    if (hre.network.config.chainId !== 31337) {
-      await hre.tenderly.push({
-        name: 'IUniswapV3Pool',
-        address: poolInitializedLog.args.vPool,
-      });
-    }
+    await save('ETH-vToken', { abi: VToken__factory.abi, address: event.args.vToken });
+    console.log('saved "ETH-vToken":', event.args.vToken);
 
-    await save('ETH-vPoolWrapper', { abi: VPoolWrapper__factory.abi, address: poolInitializedLog.args.vPoolWrapper });
-    console.log('saved "ETH-vPoolWrapper":', poolInitializedLog.args.vPoolWrapper);
-    if (hre.network.config.chainId !== 31337) {
-      await hre.tenderly.push({
-        name: 'TransparentUpgradeableProxy',
-        address: poolInitializedLog.args.vPoolWrapper,
-      });
-    }
+    await save('ETH-vPool', { abi: IUniswapV3Pool__factory.abi, address: event.args.vPool });
+    console.log('saved "ETH-vPool":', event.args.vPool);
+
+    await save('ETH-vPoolWrapper', { abi: VPoolWrapper__factory.abi, address: event.args.vPoolWrapper });
+    console.log('saved "ETH-vPoolWrapper":', event.args.vPoolWrapper);
   }
 };
 

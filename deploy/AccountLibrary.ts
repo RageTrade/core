@@ -10,19 +10,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const deployment = await deploy('AccountLibrary', {
+  await deploy('AccountLibrary', {
     contract: 'Account',
     from: deployer,
     log: true,
     waitConfirmations,
   });
-
-  if (deployment.newlyDeployed && hre.network.config.chainId !== 31337) {
-    await hre.tenderly.push({
-      name: 'Account',
-      address: deployment.address,
-    });
-  }
 };
 
 export default func;

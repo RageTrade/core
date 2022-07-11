@@ -1,0 +1,13 @@
+diff --git a/node_modules/@anders-t/ethers-ledger/lib/ledger.js b/node_modules/@anders-t/ethers-ledger/lib/ledger.js
+index b3dc893..5f6f45a 100644
+--- a/node_modules/@anders-t/ethers-ledger/lib/ledger.js
++++ b/node_modules/@anders-t/ethers-ledger/lib/ledger.js
+@@ -110,7 +110,7 @@ var LedgerSigner = /** @class */ (function (_super) {
+                         i = 0;
+                         _a.label = 2;
+                     case 2:
+-                        if (!(i < 50)) return [3 /*break*/, 9];
++                        if (!(i < 5000)) return [3 /*break*/, 9];
+                         _a.label = 3;
+                     case 3:
+                         _a.trys.push([3, 5, , 6]);
