@@ -26,5 +26,7 @@ typechain-types
 # misc
 .prettierrc
 .solcover.js
+audits
+BUG_BOUNTY.md
 CONTRIBUTING.md
 tsconfig.json
