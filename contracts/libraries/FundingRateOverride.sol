@@ -61,8 +61,17 @@ library FundingRateOverride {
         // ORACLE mode: if the slot is set to an address, then query override value from the address
         address oracle = unpackOracleAddress(data);
         if (oracle != address(0)) {
-            (, int256 fundingRateD8, , , ) = AggregatorV3Interface(oracle).latestRoundData();
-            return (true, (fundingRateD8 << 128) / 10**8);
+            try AggregatorV3Interface(oracle).latestRoundData() returns (
+                uint80,
+                int256 fundingRateD8,
+                uint256,
+                uint256,
+                uint80
+            ) {
+                return (true, (fundingRateD8 << 128) / 10**8);
+            } catch {
+                return (false, 0);
+            }
         }
 
         // VALUE mode: use the value in the data slot
@@ -73,19 +82,19 @@ library FundingRateOverride {
     /// @dev Packed into bytes32 as: <bytes20 oracleAddress><bytes12 PREFIX>.
     /// @param oracleAddress The address to pack.
     /// @return data The packed address.
-    function packOracleAddress(address oracleAddress) private pure returns (bytes32 data) {
+    function packOracleAddress(address oracleAddress) internal pure returns (bytes32 data) {
         if (oracleAddress == address(0)) revert InvalidFundingRateOracle(oracleAddress);
         assembly {
-            data := or(shr(PREFIX, 160), shl(oracleAddress, 96))
+            data := or(shr(160, PREFIX), shl(96, oracleAddress))
         }
     }
 
     /// @notice Packs the int256 into the data.
     /// @param fundingRateOverrideX128 The funding rate override to pack.
     /// @return data The funding rate override variable data.
-    function packInt256(int256 fundingRateOverrideX128) private pure returns (bytes32 data) {
+    function packInt256(int256 fundingRateOverrideX128) internal pure returns (bytes32 data) {
         assembly {
-            fundingRateOverrideX128 := data
+            data := fundingRateOverrideX128
         }
         // ensure the value being packed does not collide with Address or NULL_VALUE
         if (fundingRateOverrideX128 == type(int256).max || unpackOracleAddress(data) != address(0)) {
@@ -96,7 +105,7 @@ library FundingRateOverride {
     /// @notice Unpacks the slot into address.
     /// @param data The funding rate override variable.
     /// @return oracleAddress The address if it is packed with the PREFIX, else returns address(0).
-    function unpackOracleAddress(bytes32 data) private pure returns (address oracleAddress) {
+    function unpackOracleAddress(bytes32 data) internal pure returns (address oracleAddress) {
         assembly {
             if eq(PREFIX, shl(160, data)) {
                 oracleAddress := shr(96, data)
@@ -105,9 +114,10 @@ library FundingRateOverride {
     }
 
     /// @notice Unpacks the slot into int256.
+    /// @dev Does not have sanity checks, null check and unpackOracleAddress should already be tried.
     /// @param data The funding rate override variable.
     /// @return fundingRateOverrideX128 bytes32 parsed into int256.
-    function unpackInt256(bytes32 data) private pure returns (int256 fundingRateOverrideX128) {
+    function unpackInt256(bytes32 data) internal pure returns (int256 fundingRateOverrideX128) {
         assembly {
             fundingRateOverrideX128 := data
         }
