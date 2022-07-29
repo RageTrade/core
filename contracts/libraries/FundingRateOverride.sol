@@ -26,14 +26,23 @@ library FundingRateOverride {
     /// @param fundingRateOverrideData the new funding rate override data
     event FundingRateOverrideUpdated(bytes32 fundingRateOverrideData);
 
+    /// @notice Updates state to not use any funding rate override.
+    /// @param info the funding rate override state
     function setNull(FundingRateOverride.Info storage info) internal {
         info.set(NULL_VALUE);
     }
 
+    /// @notice Updates state to use a chainlink oracle for funding rates
+    /// @dev The oracle must provide hourly funding rates in D8 format
+    /// @param info the funding rate override state
+    /// @param oracle the address of the oracle contract
     function setOracle(FundingRateOverride.Info storage info, AggregatorV3Interface oracle) internal {
         info.set(packOracleAddress(address(oracle))); // reverts if zero address
     }
 
+    /// @notice Sets a constant value for funding rate
+    /// @param info the funding rate override state
+    /// @param fundingRateOverrideX128 The value of funding rate per sec in X128 format
     function setValueX128(FundingRateOverride.Info storage info, int256 fundingRateOverrideX128) internal {
         info.set(packInt256(fundingRateOverrideX128)); // reverts if invalid
     }
@@ -46,11 +55,11 @@ library FundingRateOverride {
     /// @notice Get the funding rate override.
     /// @param info The info to get the funding rate override.
     /// @return success Whether the funding rate override was successfully retrieved.
-    /// @return fundingRateOverrideX128 The funding rate override.
+    /// @return fundingRateX128 The funding rate override.
     function getValueX128(FundingRateOverride.Info storage info)
         internal
         view
-        returns (bool success, int256 fundingRateOverrideX128)
+        returns (bool success, int256 fundingRateX128)
     {
         // NULL mode: if the data is set to NULL value, then no funding rate override
         bytes32 data = info.data;
@@ -68,7 +77,8 @@ library FundingRateOverride {
                 uint256,
                 uint80
             ) {
-                return (true, (fundingRateD8 << 128) / 10**8);
+                // the oracle gives hourly funding rates in D8, we need to convert to X128 per secs
+                return (true, (fundingRateD8 << 128) / 1 hours / 10**8);
             } catch {
                 return (false, 0);
             }

@@ -138,9 +138,9 @@ describe('FundingRateOverride', () => {
   describe('#getValueX128', () => {
     it('works in NULL mode', async () => {
       await test.setNull();
-      const { success, fundingRateOverrideX128 } = await test.getValueX128();
+      const { success, fundingRateX128 } = await test.getValueX128();
       expect(success).to.be.false;
-      expect(fundingRateOverrideX128).to.equal(0);
+      expect(fundingRateX128).to.equal(0);
     });
 
     it('works in ORACLE mode', async () => {
@@ -148,9 +148,9 @@ describe('FundingRateOverride', () => {
       chainlinkContract.latestRoundData.returns([1, parseUnits('0.5', 8), 1, 1, 1]);
       await test.setOracle(chainlinkContract.address);
 
-      const { success, fundingRateOverrideX128 } = await test.getValueX128();
+      const { success, fundingRateX128 } = await test.getValueX128();
       expect(success).to.be.true;
-      expect(fundingRateOverrideX128).to.eq(toQ128(0.5));
+      expect(fundingRateX128).to.eq(toQ128(0.5).div(3600));
     });
 
     it('handles failure in ORACLE mode', async () => {
@@ -158,18 +158,18 @@ describe('FundingRateOverride', () => {
       chainlinkContract.latestRoundData.reverts();
       await test.setOracle(chainlinkContract.address);
 
-      const { success, fundingRateOverrideX128 } = await test.getValueX128();
+      const { success, fundingRateX128 } = await test.getValueX128();
       expect(success).to.be.false;
-      expect(fundingRateOverrideX128).to.eq(0);
+      expect(fundingRateX128).to.eq(0);
     });
 
     it('works in VALUE mode', async () => {
       const valueX128 = toQ128(0.25);
       await test.setValueX128(valueX128);
 
-      const { success, fundingRateOverrideX128 } = await test.getValueX128();
+      const { success, fundingRateX128 } = await test.getValueX128();
       expect(success).to.be.true;
-      expect(fundingRateOverrideX128).to.eq(valueX128);
+      expect(fundingRateX128).to.eq(valueX128);
     });
   });
 });

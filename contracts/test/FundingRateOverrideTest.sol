@@ -38,7 +38,7 @@ contract FundingRateOverrideTest {
         fundingRateOverride.set(data);
     }
 
-    function getValueX128() external view returns (bool success, int256 fundingRateOverrideX128) {
+    function getValueX128() external view returns (bool success, int256 fundingRateX128) {
         return fundingRateOverride.getValueX128();
     }
 
