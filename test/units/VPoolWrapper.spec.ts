@@ -2,14 +2,22 @@ import { expect } from 'chai';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 
-import { MockContract } from '@defi-wonderland/smock';
+import { MockContract, smock } from '@defi-wonderland/smock';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { parseUnits } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { initializableTick, maxLiquidityForAmounts, priceToTick, Q128, tickToPrice, toQ128 } from '@ragetrade/sdk';
+import {
+  bytes32,
+  initializableTick,
+  maxLiquidityForAmounts,
+  priceToTick,
+  Q128,
+  tickToPrice,
+  toQ128,
+} from '@ragetrade/sdk';
 
-import { UniswapV3Pool, VPoolWrapperMock2, VQuote, VToken } from '../../typechain-types';
+import { AggregatorV3Interface, UniswapV3Pool, VPoolWrapperMock2, VQuote, VToken } from '../../typechain-types';
 import { TransferEvent } from '../../typechain-types/artifacts/@openzeppelin/contracts/token/ERC20/IERC20';
 import { SwapEvent } from '../../typechain-types/artifacts/contracts/protocol/wrapper/VPoolWrapper';
 import { setupWrapper } from '../helpers/setup-wrapper';
@@ -520,25 +528,37 @@ describe('PoolWrapper', () => {
     });
   });
 
-  describe('#fundingRateOverrideX128', () => {
-    it('should use actual prices in getFundingRate() when fundingRateOverrideX128 is null', async () => {
-      await vPoolWrapper.setFundingRateOverride(ethers.constants.MaxInt256);
+  describe('#fundingRateOverride', () => {
+    before(async () => {
+      ({ vPoolWrapper, vPool, vQuote, vToken } = await setupWrapper({
+        rPriceInitial: 1,
+        vPriceInitial: 1,
+      }));
+    });
 
-      const { fundingRateX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
+    it('should use actual prices in getFundingRate() when fundingRateOverride is null', async () => {
+      await vPoolWrapper.unsetFundingRateOverride();
+
+      const [fundingRateX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
       expect(fundingRateX128).to.eq(0); // because real and virtual twap are equal
     });
 
     it('should use fundingRateOverrideX128 in getFundingRate() when fundingRateOverrideX128 is not null', async () => {
-      await vPoolWrapper.setFundingRateOverride(100);
+      await vPoolWrapper['setFundingRateOverride(int256)'](100);
 
-      const { fundingRateX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
+      const [fundingRateX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
       expect(fundingRateX128).to.eq(100); // since fundingRateOverrideX128 != MaxInt256
     });
 
-    it('should not allow fundingRateOverrideX128 to be updated if it is more than 100% per hour', async () => {
-      await expect(vPoolWrapper.setFundingRateOverride(ethers.constants.MaxInt256.sub(1))).to.revertedWith(
-        'InvalidSetting(48)',
-      );
+    it('should use funding rate from oracle', async () => {
+      const chainlinkContract = await smock.fake<AggregatorV3Interface>('AggregatorV3Interface');
+      const hourlyFR = parseUnits('0.01', 8).div(100); // 0.24% per day, 87% per year
+      chainlinkContract.latestRoundData.returns([1, hourlyFR, 1, 1, 1]);
+
+      await vPoolWrapper['setFundingRateOverride(address)'](chainlinkContract.address);
+
+      const [fundingRateX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
+      expect(fundingRateX128).to.eq(hourlyFR.shl(128).div(3600e8));
     });
   });
 
@@ -560,8 +580,9 @@ describe('PoolWrapper', () => {
     });
 
     it('fundingRateOverrideX128', async () => {
-      await vPoolWrapper.connect(owner).setFundingRateOverride(124);
-      expect(await vPoolWrapper.fundingRateOverrideX128()).to.eq(124);
+      await vPoolWrapper.connect(owner)['setFundingRateOverride(int256)'](124);
+      const fundingRateOverrideData = await vPoolWrapper.fundingRateOverride();
+      expect(fundingRateOverrideData).to.eq(bytes32(124));
     });
 
     it('setLiquidityFee owner check', async () => {
@@ -572,8 +593,14 @@ describe('PoolWrapper', () => {
       await expect(vPoolWrapper.connect(stranger).setProtocolFee(123)).to.be.revertedWith('NotGovernance()');
     });
 
-    it('setFundingRateOverride owner check', async () => {
-      await expect(vPoolWrapper.connect(stranger).setFundingRateOverride(123)).to.be.revertedWith(
+    it('setFundingRateOverride(address) owner check', async () => {
+      await expect(
+        vPoolWrapper.connect(stranger)['setFundingRateOverride(address)'](stranger.address),
+      ).to.be.revertedWith('NotGovernanceOrTeamMultisig()');
+    });
+
+    it('setFundingRateOverride(int256) owner check', async () => {
+      await expect(vPoolWrapper.connect(stranger)['setFundingRateOverride(int256)'](123)).to.be.revertedWith(
         'NotGovernanceOrTeamMultisig()',
       );
     });

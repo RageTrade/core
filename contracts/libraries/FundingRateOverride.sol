@@ -78,7 +78,7 @@ library FundingRateOverride {
                 uint80
             ) {
                 // the oracle gives hourly funding rates in D8, we need to convert to X128 per secs
-                return (true, (fundingRateD8 << 128) / 1 hours / 10**8);
+                return (true, (fundingRateD8 << 128) / 3600e8); // divide by 10**8 and 1 hours
             } catch {
                 return (false, 0);
             }

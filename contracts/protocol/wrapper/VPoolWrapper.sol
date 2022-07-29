@@ -182,14 +182,20 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         emit ProtocolFeeUpdated(protocolFeePips_);
     }
 
+    /// @notice Updates state to not use any funding rate override.
     function unsetFundingRateOverride() external onlyGovernanceOrTeamMultisig {
         fundingRateOverride.setNull();
     }
 
-    function setFundingRateOverride(AggregatorV3Interface oracle) external onlyGovernanceOrTeamMultisig {
-        fundingRateOverride.setOracle(oracle);
+    /// @notice Updates state to use a chainlink oracle for funding rates
+    /// @dev The oracle must provide hourly funding rates in D8 format
+    /// @param chainlinkOracle The address of the chainlink oracle
+    function setFundingRateOverride(AggregatorV3Interface chainlinkOracle) external onlyGovernanceOrTeamMultisig {
+        fundingRateOverride.setOracle(chainlinkOracle);
     }
 
+    /// @notice Sets a constant value for funding rate
+    /// @param fundingRateOverrideX128 The value of funding rate per sec in X128 format
     function setFundingRateOverride(int256 fundingRateOverrideX128) external onlyGovernanceOrTeamMultisig {
         fundingRateOverride.setValueX128(fundingRateOverrideX128);
     }
