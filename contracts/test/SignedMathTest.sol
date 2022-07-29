@@ -26,4 +26,8 @@ contract SignedMathTest {
     function extractSign(int256 a) external pure returns (uint256 _a, bool) {
         return SignedMath.extractSign(a);
     }
+
+    function bound(int256 val, uint256 absoluteCap) external pure returns (int256) {
+        return SignedMath.bound(val, absoluteCap);
+    }
 }
