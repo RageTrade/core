@@ -550,6 +550,14 @@ describe('PoolWrapper', () => {
       expect(fundingRateX128).to.eq(100); // since fundingRateOverrideX128 != MaxInt256
     });
 
+    it('should use bound funding rate fundingRateOverrideX128 to be updated if it is more than 100% annually', async () => {
+      // setting FR to a huge value
+      await vPoolWrapper['setFundingRateOverride(int256)'](toQ128(1000));
+
+      const [fundingRateX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
+      expect(fundingRateX128).to.eq(toQ128(1).div(365 * 24 * 3600));
+    });
+
     it('should use funding rate from oracle', async () => {
       const chainlinkContract = await smock.fake<AggregatorV3Interface>('AggregatorV3Interface');
       const hourlyFR = parseUnits('0.01', 8).div(100); // 0.24% per day, 87% per year
@@ -559,6 +567,17 @@ describe('PoolWrapper', () => {
 
       const [fundingRateX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
       expect(fundingRateX128).to.eq(hourlyFR.shl(128).div(3600e8));
+    });
+
+    it('should use funding rate from oracle bounded by 100% annualized', async () => {
+      const chainlinkContract = await smock.fake<AggregatorV3Interface>('AggregatorV3Interface');
+      const hourlyFR = parseUnits('0.02', 8).div(100); // 0.48% per day, 175% per year
+      chainlinkContract.latestRoundData.returns([1, hourlyFR, 1, 1, 1]);
+
+      await vPoolWrapper['setFundingRateOverride(address)'](chainlinkContract.address);
+
+      const [fundingRateX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
+      expect(fundingRateX128).to.eq(toQ128(1).div(365 * 24 * 3600));
     });
   });
 

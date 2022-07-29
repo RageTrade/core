@@ -382,6 +382,9 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             fundingRateX128 = FundingPayment.getFundingRate(realPriceX128, virtualPriceX128);
         }
 
+        // ensure that abs(funding rate) < 100% APR
+        fundingRateX128 = fundingRateX128.bound(FixedPoint128.Q128 / (365 days));
+
         return (fundingRateX128, virtualPriceX128);
     }
 
