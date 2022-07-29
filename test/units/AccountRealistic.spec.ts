@@ -667,8 +667,8 @@ describe('Account Library Test Realistic', () => {
 
       const priceCurrentX128 = await priceToNearestPriceX128(price, vQuote, vToken);
       const notionalAmountClosed = vQuoteAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-      let fee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
-      fee = fee.gt(liquidationParams.maxRangeLiquidationFees)
+      let fee = notionalAmountClosed.mul(await liquidationParams.rangeLiquidationFeeFraction).div(1e5);
+      fee = fee.gt(await liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : fee;
       const feeHalf = fee.div(2);
@@ -707,8 +707,8 @@ describe('Account Library Test Realistic', () => {
       const priceCurrentX128 = await priceToNearestPriceX128(price, vQuote, vToken);
 
       const notionalAmountClosed = vQuoteAmount.add(vTokenAmount.mul(priceCurrentX128).div(1n << 128n));
-      let fee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
-      fee = fee.gt(liquidationParams.maxRangeLiquidationFees)
+      let fee = notionalAmountClosed.mul(await liquidationParams.rangeLiquidationFeeFraction).div(1e5);
+      fee = fee.gt(await liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : fee;
       const feeHalf = fee.div(2);
@@ -780,8 +780,8 @@ describe('Account Library Test Realistic', () => {
       );
 
       await test.liquidateLiquidityPositions(0);
-      let liquidationFee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
-      liquidationFee = liquidationFee.gt(liquidationParams.maxRangeLiquidationFees)
+      let liquidationFee = notionalAmountClosed.mul(await liquidationParams.rangeLiquidationFeeFraction).div(1e5);
+      liquidationFee = liquidationFee.gt(await liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : liquidationFee;
       const expectedKeeperFee = liquidationFee
@@ -818,8 +818,8 @@ describe('Account Library Test Realistic', () => {
 
       await test.liquidateLiquidityPositions(0);
 
-      let liquidationFee = notionalAmountClosed.mul(liquidationParams.rangeLiquidationFeeFraction).div(1e5);
-      liquidationFee = liquidationFee.gt(liquidationParams.maxRangeLiquidationFees)
+      let liquidationFee = notionalAmountClosed.mul(await liquidationParams.rangeLiquidationFeeFraction).div(1e5);
+      liquidationFee = liquidationFee.gt(await liquidationParams.maxRangeLiquidationFees)
         ? BigNumber.from(liquidationParams.maxRangeLiquidationFees)
         : liquidationFee;
       const expectedKeeperFee = liquidationFee
