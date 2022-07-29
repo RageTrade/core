@@ -8,9 +8,9 @@ import {
   ClearingHouseTest,
   IOracle,
   IUniswapV3Pool,
-  IVPoolWrapper,
   IVToken,
   SettlementTokenMock,
+  VPoolWrapper,
 } from '../../typechain-types';
 import { ClearingHouseExtsloadTest } from '../../typechain-types/artifacts/contracts/test/ClearingHouseExtsloadTest';
 import { vEthFixture } from '../fixtures/vETH';
@@ -22,7 +22,7 @@ describe('Clearing House Extsload', () => {
   let oracle: IOracle;
   let settlementToken: SettlementTokenMock;
   let vPool: IUniswapV3Pool;
-  let vPoolWrapper: IVPoolWrapper;
+  let vPoolWrapper: VPoolWrapper;
   let vToken: IVToken;
   let test: ClearingHouseExtsloadTest;
 
