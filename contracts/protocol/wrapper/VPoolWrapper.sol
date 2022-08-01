@@ -177,6 +177,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
 
     /// @notice Updates state to not use any funding rate override.
     function unsetFundingRateOverride() external onlyGovernanceOrTeamMultisig {
+        _updateGlobalFundingState({ useZeroFundingRate: true });
         fundingRateOverride.setNull();
     }
 
@@ -184,12 +185,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @dev The oracle must provide hourly funding rates in D8 format
     /// @param chainlinkOracle The address of the chainlink oracle
     function setFundingRateOverride(AggregatorV3Interface chainlinkOracle) external onlyGovernanceOrTeamMultisig {
+        _updateGlobalFundingState({ useZeroFundingRate: true });
         fundingRateOverride.setOracle(chainlinkOracle);
     }
 
     /// @notice Sets a constant value for funding rate
     /// @param fundingRateOverrideX128 The value of funding rate per sec in X128 format
     function setFundingRateOverride(int256 fundingRateOverrideX128) external onlyGovernanceOrTeamMultisig {
+        _updateGlobalFundingState({ useZeroFundingRate: true });
         fundingRateOverride.setValueX128(fundingRateOverrideX128);
     }
 
