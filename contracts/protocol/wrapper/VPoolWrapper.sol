@@ -155,15 +155,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @notice Update the global funding state, from clearing house
     /// @dev Done when clearing house is paused or unpaused, to prevent funding payments from being received
     ///     or paid when clearing house is in paused mode.
-    function updateGlobalFundingState(bool useZeroFundingRate) public onlyClearingHouse {
-        (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
-        fpGlobal.update({
-            vTokenAmount: 0,
-            liquidity: 1,
-            blockTimestamp: _blockTimestamp(),
-            virtualPriceX128: virtualPriceX128,
-            fundingRateX128: useZeroFundingRate ? int256(0) : fundingRateX128
-        });
+    function updateGlobalFundingState(bool useZeroFundingRate) external onlyClearingHouse {
+        _updateGlobalFundingState(useZeroFundingRate);
     }
 
     /**
@@ -293,7 +286,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {
         // records the funding payment for last updated timestamp to blockTimestamp using current price difference
-        _updateGlobalFundingState();
+        _updateGlobalFundingState({ useZeroFundingRate: false });
 
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidity.toInt128(), vPool.tickCurrent());
 
@@ -324,7 +317,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {
         // records the funding payment for last updated timestamp to blockTimestamp using current price difference
-        _updateGlobalFundingState();
+        _updateGlobalFundingState({ useZeroFundingRate: false });
 
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, -liquidity.toInt128(), vPool.tickCurrent());
 
@@ -539,14 +532,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     /// @notice Update global funding payment, by getting prices from Clearing House
-    function _updateGlobalFundingState() internal {
+    function _updateGlobalFundingState(bool useZeroFundingRate) internal {
         (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
         fpGlobal.update({
             vTokenAmount: 0,
             liquidity: 1,
             blockTimestamp: _blockTimestamp(),
             virtualPriceX128: virtualPriceX128,
-            fundingRateX128: fundingRateX128
+            fundingRateX128: useZeroFundingRate ? int256(0) : fundingRateX128
         });
     }
 
