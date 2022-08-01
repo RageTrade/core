@@ -58,4 +58,17 @@ library SignedMath {
         if (a > b) c = a;
         else c = b;
     }
+
+    /// @notice if a int256 value is outside a range then give it's closest bound
+    /// @param val int256 value to bound
+    /// @param absoluteBound absolute cap of the range
+    function bound(int256 val, uint256 absoluteBound) internal pure returns (int256) {
+        int256 bound_ = int256(absoluteBound);
+        if (val > bound_) {
+            return bound_;
+        } else if (val < (bound_ = -bound_)) {
+            return bound_;
+        }
+        return val;
+    }
 }

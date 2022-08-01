@@ -66,10 +66,6 @@ interface IVPoolWrapper {
     /// @param protocolFeePips the new protocol fee ratio
     event ProtocolFeeUpdated(uint24 protocolFeePips);
 
-    /// @notice Emitted when funding rate override is updated
-    /// @param fundingRateOverrideX128 the new funding rate override value
-    event FundingRateOverrideUpdated(int256 fundingRateOverrideX128);
-
     function initialize(InitializeVPoolWrapperParams memory params) external;
 
     function vPool() external view returns (IUniswapV3Pool);

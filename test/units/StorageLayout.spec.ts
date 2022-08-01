@@ -51,7 +51,7 @@ describe('StorageLayout', () => {
       { label: 'accruedProtocolFee', slot: 4 },
       { label: 'fpGlobal', slot: 5 },
       { label: 'sumFeeGlobalX128', slot: 9 },
-      { label: 'fundingRateOverrideX128', slot: 10 },
+      { label: 'fundingRateOverride', slot: 10 },
       { label: 'ticksExtended', slot: 11 },
     ]);
   });
