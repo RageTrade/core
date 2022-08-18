@@ -48,4 +48,6 @@ interface IClearingHouseEvents is IClearingHouseStructures {
     );
 
     event AtomicSwapExecuted(uint256 atomicSwapId);
+
+    event AtomicSwapAllowanceUpdated(uint256 accountId, bool isAllowed);
 }

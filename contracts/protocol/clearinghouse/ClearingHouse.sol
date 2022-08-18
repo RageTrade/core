@@ -180,6 +180,18 @@ contract ClearingHouse is
         if (completed) _unpause();
     }
 
+    function allowAccountForAtomicSwap(uint256 accountId, bool isAllowed)
+        external
+        onlyGovernanceOrTeamMultisig
+        whenNotPaused
+    {
+        bool isAtomicSwapAllowed = accounts[accountId].isAtomicSwapAllowed;
+        if (isAtomicSwapAllowed != isAllowed) {
+            accounts[accountId].isAtomicSwapAllowed = isAllowed;
+            emit AtomicSwapAllowanceUpdated(accountId, isAllowed);
+        } else revert InvalidSetting(0x40);
+    }
+
     /// @inheritdoc IClearingHouseOwnerActions
     function withdrawProtocolFee(uint256 numberOfPoolsToUpdateInThisTx) external {
         withdrawProtocolFeeLoop.iterate({
