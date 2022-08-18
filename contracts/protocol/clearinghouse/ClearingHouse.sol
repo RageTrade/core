@@ -13,6 +13,7 @@ import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { BatchedLoop } from '../../libraries/BatchedLoop.sol';
 import { Protocol } from '../../libraries/Protocol.sol';
 import { SignedMath } from '../../libraries/SignedMath.sol';
+import { AtomicVTokenSwap } from '../../libraries/AtomicVTokenSwap.sol';
 
 import { IClearingHouse } from '../../interfaces/IClearingHouse.sol';
 import { IInsuranceFund } from '../../interfaces/IInsuranceFund.sol';
@@ -245,6 +246,56 @@ contract ClearingHouse is
         Account.Info storage account = _getAccountAndCheckOwner(accountId);
         _updateAccountPoolPrices(account);
         return _swapToken(account, poolId, swapParams, true);
+    }
+
+    function initiateAtomicSwapToken(
+        uint256 accountId,
+        uint256 receiverAccountId,
+        int256 vTokenAmount,
+        int256 vQuoteAmount,
+        uint32 poolId,
+        uint64 timelock
+    ) external whenNotPaused returns (uint256 atomicSwapId) {
+        Account.Info storage account = _getAccountAndCheckOwner(accountId);
+
+        atomicSwapId = numAtomicSwaps++;
+
+        if (atomicSwaps[atomicSwapId].senderAccountId != 0) revert();
+
+        //check if both accounts (sender and receiver) are whitelisted for atomic swaps
+        if (!account.isAtomicSwapAllowed || !accounts[receiverAccountId].isAtomicSwapAllowed) revert();
+
+        atomicSwaps[atomicSwapId] = AtomicVTokenSwap.Info(
+            accountId,
+            receiverAccountId,
+            vTokenAmount,
+            vQuoteAmount,
+            poolId,
+            timelock,
+            false
+        );
+    }
+
+    function executeAtomicSwapToken(uint256 atomicSwapId) external whenNotPaused {
+        AtomicVTokenSwap.Info memory swapInfo = atomicSwaps[atomicSwapId];
+        Account.Info storage receiverAccount = _getAccountAndCheckOwner(swapInfo.receiverAccountId);
+        Account.Info storage senderAccount = accounts[swapInfo.senderAccountId];
+        _updateAccountPoolPrices(senderAccount);
+        _updateAccountPoolPrices(receiverAccount);
+
+        // check timelock
+        if (block.timestamp > swapInfo.timelock) revert();
+
+        Account.atomicSwapToken(
+            senderAccount,
+            receiverAccount,
+            swapInfo.poolId,
+            swapInfo.vTokenAmount,
+            swapInfo.vQuoteAmount,
+            protocol
+        );
+
+        swapInfo.completed = true;
     }
 
     /// @inheritdoc IClearingHouseActions
