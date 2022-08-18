@@ -274,6 +274,16 @@ contract ClearingHouse is
             timelock,
             false
         );
+
+        emit AtomicSwapInitiated(
+            atomicSwapId,
+            accountId,
+            receiverAccountId,
+            vTokenAmount,
+            vQuoteAmount,
+            poolId,
+            timelock
+        );
     }
 
     function executeAtomicSwapToken(uint256 atomicSwapId) external whenNotPaused {
@@ -296,6 +306,8 @@ contract ClearingHouse is
         );
 
         swapInfo.completed = true;
+
+        emit AtomicSwapExecuted(atomicSwapId);
     }
 
     /// @inheritdoc IClearingHouseActions
