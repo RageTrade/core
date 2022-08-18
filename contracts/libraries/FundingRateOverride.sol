@@ -70,18 +70,7 @@ library FundingRateOverride {
         // ORACLE mode: if the slot is set to an address, then query override value from the address
         address oracle = unpackOracleAddress(data);
         if (oracle != address(0)) {
-            try AggregatorV3Interface(oracle).latestRoundData() returns (
-                uint80,
-                int256 fundingRateD8,
-                uint256,
-                uint256,
-                uint80
-            ) {
-                // the oracle gives hourly funding rates in D8, we need to convert to X128 per secs
-                return (true, (fundingRateD8 << 128) / 3600e8); // divide by 10**8 and 1 hours
-            } catch {
-                return (false, 0);
-            }
+            return getValueX128FromOracle(AggregatorV3Interface(oracle));
         }
 
         // VALUE mode: use the value in the data slot
@@ -130,6 +119,33 @@ library FundingRateOverride {
     function unpackInt256(bytes32 data) internal pure returns (int256 fundingRateOverrideX128) {
         assembly {
             fundingRateOverrideX128 := data
+        }
+    }
+
+    /// @notice Gets the funding rate override from the oracle contract.
+    /// @param oracle The address of the oracle contract.
+    /// @return success Whether the funding rate override was successfully retrieved.
+    /// @return fundingRateX128 The funding rate override.
+    function getValueX128FromOracle(AggregatorV3Interface oracle)
+        internal
+        view
+        returns (bool success, int256 fundingRateX128)
+    {
+        bytes4 selector = oracle.latestRoundData.selector;
+        assembly {
+            mstore(0, selector)
+            // only copy first two words of return data to the scratch space
+            // gas: pass all available gas
+            // address: oracle address
+            // argsOffset: use scratch space's starting
+            // argsSize: 4 bytes of selector
+            // retOffset: use scratch space's starting
+            // retSize: two words, i.e. 64 bytes of return data, rest ignore
+            success := staticcall(gas(), oracle, 0, 4, 0, 64)
+            if success {
+                let fundingRateD8 := mload(32) // we only need second word of return data
+                fundingRateX128 := sdiv(shl(128, fundingRateD8), 360000000000) // divide by 10**8 and 1 hours
+            }
         }
     }
 }
