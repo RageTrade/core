@@ -600,7 +600,7 @@ describe('PoolWrapper', () => {
 
     it('fundingRateOverrideX128', async () => {
       await vPoolWrapper.connect(owner)['setFundingRateOverride(int256)'](124);
-      const fundingRateOverrideData = await vPoolWrapper.fundingRateOverride();
+      const fundingRateOverrideData = await vPoolWrapper.getFundingRateOverride();
       expect(fundingRateOverrideData).to.eq(bytes32(124));
     });
 

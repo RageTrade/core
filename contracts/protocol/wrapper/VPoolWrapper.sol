@@ -68,7 +68,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128;
 
-    FundingRateOverride.Info public fundingRateOverride;
+    FundingRateOverride.Info internal fundingRateOverride;
 
     mapping(int24 => TickExtended.Info) public ticksExtended;
 
@@ -439,6 +439,10 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             wrapperValuesInside.sumFpInsideX128,
             wrapperValuesInside.sumFeeInsideX128
         ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
+    }
+
+    function getFundingRateOverride() public view returns (bytes32) {
+        return fundingRateOverride.data;
     }
 
     /**
