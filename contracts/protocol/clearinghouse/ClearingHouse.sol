@@ -260,10 +260,9 @@ contract ClearingHouse is
 
         atomicSwapId = numAtomicSwaps++;
 
-        if (atomicSwaps[atomicSwapId].senderAccountId != 0) revert();
-
         //check if both accounts (sender and receiver) are whitelisted for atomic swaps
-        if (!account.isAtomicSwapAllowed || !accounts[receiverAccountId].isAtomicSwapAllowed) revert();
+        if (!account.isAtomicSwapAllowed || !accounts[receiverAccountId].isAtomicSwapAllowed)
+            revert InvalidAtomicSwap();
 
         atomicSwaps[atomicSwapId] = AtomicVTokenSwap.Info(
             accountId,
@@ -294,7 +293,7 @@ contract ClearingHouse is
         _updateAccountPoolPrices(receiverAccount);
 
         // check timelock
-        if (block.timestamp > swapInfo.timelock) revert();
+        if (block.timestamp > swapInfo.timelock) revert TimelockBreached();
 
         Account.atomicSwapToken(
             senderAccount,
