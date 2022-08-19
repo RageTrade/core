@@ -69,4 +69,8 @@ interface IClearingHouseCustomErrors is IClearingHouseStructures {
 
     /// @notice error to denote an invalid setting for parameters
     error InvalidSetting(uint256 errorCode);
+
+    error TimelockBreached();
+
+    error InvalidAtomicSwap();
 }

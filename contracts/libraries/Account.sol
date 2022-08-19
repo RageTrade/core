@@ -47,6 +47,7 @@ library Account {
         address owner;
         VTokenPosition.Set tokenPositions;
         CollateralDeposit.Set collateralDeposits;
+        bool isAtomicSwapAllowed;
         uint256[100] _emptySlots; // reserved for adding variables when upgrading logic
     }
 
@@ -387,6 +388,36 @@ library Account {
         account.tokenPositions.removeLimitOrder(account.id, poolId, tickLower, tickUpper, protocol);
 
         account._updateVQuoteBalance(-int256(limitOrderFee));
+    }
+
+    /// @notice swaps 'vToken' of token amount equal to 'swapParams.amount'
+    /// @notice if vTokenAmount>0 then the swap is a long or close short and if vTokenAmount<0 then swap is a short or close long
+    /// @notice isNotional specifies whether the amount represents token amount (false) or vQuote amount(true)
+    /// @notice isPartialAllowed specifies whether to revert (false) or to execute a partial swap (true)
+    /// @notice sqrtPriceLimit threshold sqrt price which if crossed then revert or execute partial swap
+    function atomicSwapToken(
+        Account.Info storage senderAccount,
+        Account.Info storage receiverAccount,
+        uint32 poolId,
+        int256 vTokenAmount,
+        int256 vQuoteAmount,
+        Protocol.Info storage protocol
+    ) external {
+        // make a swap. vQuoteIn and vTokenAmountOut (in and out wrt uniswap).
+        // mints erc20 tokens in callback and send to the pool
+        IClearingHouseStructures.BalanceAdjustments memory senderBalanceAdjustments = IClearingHouseStructures
+            .BalanceAdjustments(vQuoteAmount, vTokenAmount, vTokenAmount);
+        IClearingHouseStructures.BalanceAdjustments memory receiverBalanceAdjustments = IClearingHouseStructures
+            .BalanceAdjustments(-vQuoteAmount, -vTokenAmount, -vTokenAmount);
+
+        senderAccount.tokenPositions.update(senderAccount.id, senderBalanceAdjustments, poolId, protocol);
+        receiverAccount.tokenPositions.update(receiverAccount.id, receiverBalanceAdjustments, poolId, protocol);
+
+        //TODO: check if there needs to be settleProfit
+
+        // after all the stuff, account should be above water
+        senderAccount._checkIfMarginAvailable(true, protocol);
+        receiverAccount._checkIfMarginAvailable(true, protocol);
     }
 
     /**

@@ -36,4 +36,18 @@ interface IClearingHouseEvents is IClearingHouseStructures {
     );
 
     event PausedUpdated(bool paused);
+
+    event AtomicSwapInitiated(
+        uint256 atomicSwapId,
+        uint256 senderAccountId,
+        uint256 receiverAccountId,
+        int256 vTokenAmount,
+        int256 vQuoteAmount,
+        uint32 poolId,
+        uint64 timelock
+    );
+
+    event AtomicSwapExecuted(uint256 atomicSwapId);
+
+    event AtomicSwapAllowanceUpdated(uint256 accountId, bool isAllowed);
 }
