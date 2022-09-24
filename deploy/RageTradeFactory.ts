@@ -54,7 +54,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // initialize protocol settings
   await execute(
     'ClearingHouse',
-    { from: deployer, waitConfirmations },
+    { from: deployer, waitConfirmations, log: true },
     'updateProtocolSettings',
     {
       rangeLiquidationFeeFraction: 1500,
@@ -83,24 +83,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const timelock = await get('TimelockController');
   await execute(
     'RageTradeFactory',
-    { from: deployer, waitConfirmations },
+    { from: deployer, waitConfirmations, log: true },
     'initiateGovernanceTransfer',
     timelock.address,
   );
-  await execute('ClearingHouse', { from: deployer, waitConfirmations }, 'initiateGovernanceTransfer', timelock.address);
-  await execute('ProxyAdmin', { from: deployer, waitConfirmations }, 'transferOwnership', timelock.address);
+  await execute(
+    'ClearingHouse',
+    { from: deployer, waitConfirmations, log: true },
+    'initiateGovernanceTransfer',
+    timelock.address,
+  );
+  await execute('ProxyAdmin', { from: deployer, waitConfirmations, log: true }, 'transferOwnership', timelock.address);
 
   // transfer teamMultisig to multisig address
-  const { multisigAddress } = getNetworkInfo(hre.network.config.chainId);
+  const { multisigAddress } = getNetworkInfo();
   await execute(
     'RageTradeFactory',
-    { from: deployer, waitConfirmations },
+    { from: deployer, waitConfirmations, log: true },
     'initiateTeamMultisigTransfer',
     multisigAddress,
   );
   await execute(
     'ClearingHouse',
-    { from: deployer, waitConfirmations },
+    { from: deployer, waitConfirmations, log: true },
     'initiateTeamMultisigTransfer',
     multisigAddress,
   );

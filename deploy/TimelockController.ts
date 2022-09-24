@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const { multisigAddress, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
+  const { multisigAddress, timelockMinDelay } = getNetworkInfo();
 
   const isMultisigAddressProvided = multisigAddress && isAddress(multisigAddress);
   if (isMultisigAddressProvided) {
@@ -35,10 +35,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const TIMELOCK_ADMIN_ROLE = await read('TimelockController', 'TIMELOCK_ADMIN_ROLE');
 
     // make the governance contract the admin of Timelock
-    await execute('TimelockController', { from: deployer }, 'grantRole', TIMELOCK_ADMIN_ROLE, multisigAddress);
+    await execute(
+      'TimelockController',
+      { from: deployer, log: true },
+      'grantRole',
+      TIMELOCK_ADMIN_ROLE,
+      multisigAddress,
+    );
 
     // renounce admin control from deployer
-    await execute('TimelockController', { from: deployer }, 'renounceRole', TIMELOCK_ADMIN_ROLE, deployer);
+    await execute('TimelockController', { from: deployer, log: true }, 'renounceRole', TIMELOCK_ADMIN_ROLE, deployer);
   }
 };
 

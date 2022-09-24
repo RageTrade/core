@@ -15,12 +15,6 @@ export interface NetworkInfo {
 export const UNISWAP_V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 export const UNISWAP_V3_DEFAULT_FEE_TIER = 500;
 
-export const rinkebyInfo: NetworkInfo = {
-  CHAINLINK_ETH_USD_ORACLE: '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e',
-  UNISWAP_V3_FACTORY_ADDRESS,
-  UNISWAP_V3_DEFAULT_FEE_TIER,
-};
-
 export const arbitrumMainnetInfo: NetworkInfo = {
   CHAINLINK_ETH_USD_ORACLE: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612', // https://docs.chain.link/docs/arbitrum-price-feeds/#Arbitrum%20Mainnet
   FLAGS_INTERFACE: '0x3C14e07Edd0dC67442FA96f1Ec6999c57E810a83', // https://docs.chain.link/docs/l2-sequencer-flag/#mainnet-contracts
@@ -47,10 +41,9 @@ export const hardhatNetworkInfo: NetworkInfo = {
   multisigAddress: '0x4ec0dda0430A54b4796109913545F715B2d89F34',
 };
 
-export function getNetworkInfo(chainId?: number): NetworkInfo {
+export function getNetworkInfo(): NetworkInfo {
+  const chainId = hre.network.config.chainId ?? 31337;
   switch (chainId) {
-    case 4:
-      return rinkebyInfo;
     case 42161:
       return arbitrumMainnetInfo;
     case 421611:
@@ -58,7 +51,7 @@ export function getNetworkInfo(chainId?: number): NetworkInfo {
     case 31337:
       return hardhatNetworkInfo;
     default:
-      throw new Error(`Chain ID ${chainId} is recognized, please add addresses to deploy/network-info.ts`);
+      throw new Error(`Chain ID ${chainId} is not recognized, please add addresses to deploy/network-info.ts`);
   }
 }
 
