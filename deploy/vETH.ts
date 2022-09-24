@@ -92,6 +92,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         waitConfirmations,
         estimateGasExtra: 10_000, // to account for dependency on prevBlockHash
         log: true,
+        gasLimit: 10_000_000,
       },
       'initializePool',
       params,

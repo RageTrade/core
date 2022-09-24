@@ -8,8 +8,8 @@ export interface NetworkInfo {
   SETTLEMENT_TOKEN_ADDRESS?: string;
   UNISWAP_V3_FACTORY_ADDRESS: string;
   UNISWAP_V3_DEFAULT_FEE_TIER: number;
-  multisigAddress?: string; // This becomes owner of Timelock contract
-  timelockMinDelay?: number;
+  multisigAddress: string; // This becomes owner of Timelock contract
+  timelockMinDelay: number;
 }
 
 export const UNISWAP_V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
@@ -35,10 +35,19 @@ export const arbitrumTestnetInfo: NetworkInfo = {
   timelockMinDelay: 5 * 60, // five minutes
 };
 
-export const hardhatNetworkInfo: NetworkInfo = {
+export const arbitrumGoerliInfo: NetworkInfo = {
+  SETTLEMENT_TOKEN_ADDRESS: '0xa94D611f3b0FDBb0a10CE03DC2af9F9eae23D838', // USDC Arbitrum Goerli
   UNISWAP_V3_FACTORY_ADDRESS,
   UNISWAP_V3_DEFAULT_FEE_TIER,
   multisigAddress: '0x4ec0dda0430A54b4796109913545F715B2d89F34',
+  timelockMinDelay: 5 * 60, // five minutes
+};
+
+export const hardhatNetworkInfo: NetworkInfo = {
+  UNISWAP_V3_FACTORY_ADDRESS: '0x4584E64B9cae7c86810a8a0A3c4469c4d164459f',
+  UNISWAP_V3_DEFAULT_FEE_TIER,
+  multisigAddress: '0x4ec0dda0430A54b4796109913545F715B2d89F34',
+  timelockMinDelay: 5 * 60, // five minutes
 };
 
 export function getNetworkInfo(): NetworkInfo {
@@ -48,6 +57,8 @@ export function getNetworkInfo(): NetworkInfo {
       return arbitrumMainnetInfo;
     case 421611:
       return arbitrumTestnetInfo;
+    case 421613:
+      return arbitrumGoerliInfo;
     case 31337:
       return hardhatNetworkInfo;
     default:
