@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     waitConfirmations,
   });
 
-  if (isMultisigAddressProvided) {
+  if (isMultisigAddressProvided && multisigAddress.toLowerCase() !== deployer.toLowerCase()) {
     const TIMELOCK_ADMIN_ROLE = await read('TimelockController', 'TIMELOCK_ADMIN_ROLE');
 
     // make the governance contract the admin of Timelock
