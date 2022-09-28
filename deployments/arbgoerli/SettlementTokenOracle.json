@@ -1,5 +1,5 @@
 {
-  "address": "0xd41d538590933aA68f06122354d3be7813020797",
+  "address": "0x37a0ebA317525E98FC76723C886f8922F7374C87",
   "abi": [
     {
       "inputs": [
@@ -21,25 +21,25 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0xe369e0f130f8e0465676d9b842e736d2cfde715d2b5503fd201cb66fdac13c39",
+  "transactionHash": "0xa7fe8d38b51923794c9c35081506ed1a2c276209582e21a3151f15e085ff58c3",
   "receipt": {
     "to": null,
     "from": "0x4ec0dda0430A54b4796109913545F715B2d89F34",
-    "contractAddress": "0xd41d538590933aA68f06122354d3be7813020797",
+    "contractAddress": "0x37a0ebA317525E98FC76723C886f8922F7374C87",
     "transactionIndex": 1,
     "gasUsed": "92537",
     "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    "blockHash": "0xcbb5557e786e84fec65e1f0459e7020caa527479cf4d5eb339fd384a7fd1a577",
-    "transactionHash": "0xe369e0f130f8e0465676d9b842e736d2cfde715d2b5503fd201cb66fdac13c39",
+    "blockHash": "0xc27cb5b291ac051aabc1379e394e4dcef78e9fabb9aa97492cfdbd8eff7aa740",
+    "transactionHash": "0xa7fe8d38b51923794c9c35081506ed1a2c276209582e21a3151f15e085ff58c3",
     "logs": [],
-    "blockNumber": 408330,
+    "blockNumber": 426775,
     "cumulativeGasUsed": "92537",
     "status": 1,
     "byzantium": true
   },
   "args": [],
   "numDeployments": 1,
-  "solcInputHash": "e2d022a5c828f2ed8f5d3781fb319748",
+  "solcInputHash": "118dfdf9347a297901d14939117b8e58",
   "metadata": "{\"compiler\":{\"version\":\"0.8.14+commit.80d49f37\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"name\":\"getTwapPriceX128\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"priceX128\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/oracles/SettlementTokenOracle.sol\":\"SettlementTokenOracle\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":4999},\"remappings\":[],\"viaIR\":true},\"sources\":{\"contracts/interfaces/IOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity >=0.5.0;\\n\\ninterface IOracle {\\n    function getTwapPriceX128(uint32 twapDuration) external view returns (uint256 priceX128);\\n}\\n\",\"keccak256\":\"0x0b868e6dbb5dbbe067f65dda1a2c405a124142dbd936deeb4cc995ceb9ab232e\",\"license\":\"MIT\"},\"contracts/oracles/SettlementTokenOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity >=0.5.0;\\n\\nimport { IOracle } from '../interfaces/IOracle.sol';\\n\\ncontract SettlementTokenOracle is IOracle {\\n    function getTwapPriceX128(uint32) external pure returns (uint256 priceX128) {\\n        priceX128 = 1 << 128;\\n    }\\n}\\n\",\"keccak256\":\"0x3d9dcdaa468ed0adf2da1b60ae2e4c6dc7b474879c08e56f513ac962220539e7\",\"license\":\"MIT\"}},\"version\":1}",
   "bytecode": "0x608080604052346100155760b6908161001b8239f35b600080fdfe6080806040526004361015601257600080fd5b600090813560e01c63dd86c10114602857600080fd5b34607c5760207ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc360112607c5760043563ffffffff811603607c578070010000000000000000000000000000000060209252f35b5080fdfea2646970667358221220bd81cd24a40737663bfe18cce64c6e37a6e93e9e9779801c3315d748e6a9db0064736f6c634300080e0033",
   "deployedBytecode": "0x6080806040526004361015601257600080fd5b600090813560e01c63dd86c10114602857600080fd5b34607c5760207ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc360112607c5760043563ffffffff811603607c578070010000000000000000000000000000000060209252f35b5080fdfea2646970667358221220bd81cd24a40737663bfe18cce64c6e37a6e93e9e9779801c3315d748e6a9db0064736f6c634300080e0033",

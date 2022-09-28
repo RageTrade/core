@@ -29,7 +29,7 @@ export const arbitrumTestnetInfo: NetworkInfo = {
 };
 
 export const arbitrumGoerliInfo: NetworkInfo = {
-  CHAINLINK_ETH_USD_ORACLE: '0xef54dB43b6b7a28A26041577716b1aD5F78f699E',
+  CHAINLINK_ETH_USD_ORACLE: '0xAB55677e97D211c260C84807293D8F7cf7ddDff9',
   SETTLEMENT_TOKEN_ADDRESS: '0xa94D611f3b0FDBb0a10CE03DC2af9F9eae23D838', // USDC Arbitrum Goerli
   multisigAddress: '0x4ec0dda0430A54b4796109913545F715B2d89F34',
   timelockMinDelay: 5 * 60, // five minutes
