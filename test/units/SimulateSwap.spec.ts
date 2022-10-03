@@ -10,7 +10,7 @@ import { IUniswapV3Pool, OracleMock, SimulateSwapTest } from '../../typechain-ty
 import { impersonateAccount, stopImpersonatingAccount } from '../helpers/impersonate-account';
 import { activateMainnetFork, deactivateMainnetFork } from '../helpers/mainnet-fork';
 
-const UNISWAP_REAL_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8';
+const UNISWAP_REAL_POOL = '0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640';
 const ACCOUNT = '0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0';
 const SWAP = {
   USDC_FOR_WETH: true,
@@ -59,11 +59,11 @@ describe('SimulateSwap', () => {
     },
     {
       zeroForOne: SWAP.WETH_FOR_USDC,
-      amountSpecified: parseEther('100'),
+      amountSpecified: parseUsdc('-1000'), // exact out
     },
     {
       zeroForOne: SWAP.WETH_FOR_USDC,
-      amountSpecified: parseEther('10000'),
+      amountSpecified: parseEther('100'),
     },
     {
       zeroForOne: SWAP.USDC_FOR_WETH,
@@ -71,17 +71,19 @@ describe('SimulateSwap', () => {
     },
     {
       zeroForOne: SWAP.USDC_FOR_WETH,
-      amountSpecified: parseUsdc('10,000,000'),
+      amountSpecified: parseEther('-1'), // exact out
     },
     {
       zeroForOne: SWAP.USDC_FOR_WETH,
-      amountSpecified: parseUsdc('50,000,000'),
+      amountSpecified: parseUsdc('10,000,000'),
     },
   ];
 
   describe('#amounts', () => {
     for (const { zeroForOne, amountSpecified } of testCases) {
-      it(`swap ${formatUnits(amountSpecified, zeroForOne ? 6 : 18)} ${zeroForOne ? 'USDC' : 'WETH'} for ${
+      it(`swap${amountSpecified.gt(0) ? ' ' + formatUnits(amountSpecified, zeroForOne ? 6 : 18) : ''} ${
+        zeroForOne ? 'USDC' : 'WETH'
+      } for${amountSpecified.lt(0) ? ' ' + formatUnits(amountSpecified.mul(-1), !zeroForOne ? 6 : 18) : ''} ${
         zeroForOne ? 'WETH' : 'USDC'
       }`, async () => {
         const sqrtPrice = await test.sqrtPrice();
@@ -98,6 +100,12 @@ describe('SimulateSwap', () => {
 
         expect(amount0_simulated).to.eq(amount0_actual);
         expect(amount1_simulated).to.eq(amount1_actual);
+
+        if (amountSpecified.gt(0) === zeroForOne) {
+          expect(amount0_simulated).to.eq(amountSpecified);
+        } else {
+          expect(amount1_simulated).to.eq(amountSpecified);
+        }
       });
     }
   });
@@ -108,7 +116,9 @@ describe('SimulateSwap', () => {
     });
 
     for (const { zeroForOne, amountSpecified } of testCases) {
-      it(`swap ${formatUnits(amountSpecified, zeroForOne ? 6 : 18)} ${zeroForOne ? 'USDC' : 'WETH'} for ${
+      it(`swap${amountSpecified.gt(0) ? ' ' + formatUnits(amountSpecified, zeroForOne ? 6 : 18) : ''} ${
+        zeroForOne ? 'USDC' : 'WETH'
+      } for${amountSpecified.lt(0) ? ' ' + formatUnits(amountSpecified.mul(-1), !zeroForOne ? 6 : 18) : ''} ${
         zeroForOne ? 'WETH' : 'USDC'
       }`, async () => {
         const fpGlobalBefore = await test.fpGlobal();
