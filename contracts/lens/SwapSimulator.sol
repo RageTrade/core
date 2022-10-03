@@ -92,7 +92,7 @@ contract SwapSimulator {
 
         (swapResult.vTokenIn, swapResult.vQuoteIn, , cache) = vPool.simulateSwap(
             swapVTokenForVQuote,
-            amountSpecified,
+            swapResult.amountSpecified,
             sqrtPriceLimitX96,
             onSwapStep
         );
@@ -160,7 +160,7 @@ contract SwapSimulator {
         (swapResult.vTokenIn, swapResult.vQuoteIn) = SimulateUniswap.simulateSwap(
             vPool,
             swapVTokenForVQuote,
-            amountSpecified,
+            swapResult.amountSpecified,
             sqrtPriceLimitX96
         );
 
