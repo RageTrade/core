@@ -91,11 +91,10 @@ contract SwapSimulator {
         }
 
         swapResult.amountSpecified = amountSpecified;
-        bool exactIn = amountSpecified >= 0;
         uint24 uniswapFeePips = vPool.fee();
 
         SwapMath.beforeSwap(
-            exactIn,
+            amountSpecified >= 0, // exactIn
             swapVTokenForVQuote,
             uniswapFeePips,
             liquidityFeePips,
@@ -112,7 +111,14 @@ contract SwapSimulator {
             _onSwapStep
         );
 
-        SwapMath.afterSwap(exactIn, swapVTokenForVQuote, uniswapFeePips, liquidityFeePips, protocolFeePips, swapResult);
+        SwapMath.afterSwap(
+            amountSpecified >= 0, // exactIn
+            swapVTokenForVQuote,
+            uniswapFeePips,
+            liquidityFeePips,
+            protocolFeePips,
+            swapResult
+        );
 
         swapResult.sqrtPriceX96Start = cache.sqrtPriceX96Start;
         swapResult.sqrtPriceX96End = state.sqrtPriceX96;
