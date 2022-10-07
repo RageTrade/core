@@ -1,6 +1,6 @@
 {
   "name": "@ragetrade/core",
-  "version": "1.0.4",
+  "version": "1.0.4-arbgoerli.3",
   "repository": "https://github.com/ragetrade/core",
   "license": "MIT",
   "scripts": {
@@ -54,7 +54,7 @@
     "hardhat-dependency-compiler": "^1.1.2",
     "hardhat-deploy": "^0.10.5",
     "hardhat-gas-reporter": "^1.0.8",
-    "hardhat-tracer": "^1.1.0-rc.3",
+    "hardhat-tracer": "^1.1.0-rc.9",
     "patch-package": "^6.4.7",
     "prettier": "^2.5.1",
     "solidity-coverage": "^0.7.20",

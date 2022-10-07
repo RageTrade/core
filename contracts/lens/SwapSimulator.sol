@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { TickMath } from '@uniswap/v3-core-0.8-support/contracts/libraries/TickMath.sol';
-import { Simulate as SimulateUniswap } from '@uniswap/v3-core-0.8-support/contracts/libraries/Simulate.sol';
 
 import { IClearingHouse } from '../interfaces/IClearingHouse.sol';
 import { IClearingHouseStructures } from '../interfaces/clearinghouse/IClearingHouseStructures.sol';
@@ -13,6 +12,7 @@ import { IVToken } from '../interfaces/IVToken.sol';
 
 import { ClearingHouseExtsload } from '../extsloads/ClearingHouseExtsload.sol';
 import { SimulateSwap } from '../libraries/SimulateSwap.sol';
+import { SimulateSwapUniswap } from '../libraries/SimulateSwapUniswap.sol';
 import { SwapMath } from '../libraries/SwapMath.sol';
 import { UniswapV3PoolHelper } from '../libraries/UniswapV3PoolHelper.sol';
 
@@ -186,12 +186,12 @@ contract SwapSimulator {
         );
 
         // simulate swap and ignore tick crosses
-        (swapResult.vTokenIn, swapResult.vQuoteIn) = SimulateUniswap.simulateSwap(
-            vPool,
-            swapVTokenForVQuote,
-            swapResult.amountSpecified,
-            sqrtPriceLimitX96
-        );
+        (
+            swapResult.vTokenIn,
+            swapResult.vQuoteIn,
+            swapResult.sqrtPriceX96Start,
+            swapResult.sqrtPriceX96End
+        ) = SimulateSwapUniswap.simulateSwap(vPool, swapVTokenForVQuote, swapResult.amountSpecified, sqrtPriceLimitX96);
 
         SwapMath.afterSwap(exactIn, swapVTokenForVQuote, uniswapFeePips, liquidityFeePips, protocolFeePips, swapResult);
     }

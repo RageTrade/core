@@ -14,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const { SETTLEMENT_TOKEN_ADDRESS } = getNetworkInfo(hre.network.config.chainId);
+  const { SETTLEMENT_TOKEN_ADDRESS } = getNetworkInfo();
 
   // if SETTLEMENT_TOKEN_ADDRESS is not provided, then deploy a dummy ERC20 contract
   if (SETTLEMENT_TOKEN_ADDRESS === undefined) {
@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // mint dummy tokens to the deployer
     await execute(
       'SettlementToken',
-      { from: deployer, waitConfirmations },
+      { from: deployer, waitConfirmations, log: true },
       'mint',
       deployer,
       parseUnits('1000000000', 6),

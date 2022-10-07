@@ -49,7 +49,7 @@ async function main() {
   });
   await hreVerify('ClearingHouseLens', { constructorArguments: [clearingHouse.address] });
 
-  const { CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE } = getNetworkInfo(hre.network.config.chainId);
+  const { CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE } = getNetworkInfo();
   await hreVerify('ETH-IndexOracle', {
     constructorArguments: [CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE ?? ethers.constants.AddressZero, 18, 6],
   });
@@ -74,7 +74,7 @@ async function main() {
 
   await hreVerify('SwapSimulator');
 
-  const { multisigAddress, timelockMinDelay } = getNetworkInfo(hre.network.config.chainId);
+  const { multisigAddress, timelockMinDelay } = getNetworkInfo();
   const proposers = multisigAddress ? [multisigAddress] : [];
   const executors = multisigAddress ? [multisigAddress] : [];
   await hreVerify('TimelockController', {

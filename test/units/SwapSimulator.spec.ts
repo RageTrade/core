@@ -65,9 +65,7 @@ describe('SwapSimulator', () => {
     );
 
     expect(simulatorSwapResult).to.deep.eq(vPoolWrapperSwapResult);
-
-    expect(simulatorSwapViewResult.vTokenIn).to.eq(vPoolWrapperSwapResult.vTokenIn);
-    expect(simulatorSwapViewResult.vQuoteIn).to.eq(vPoolWrapperSwapResult.vQuoteIn);
+    expect(simulatorSwapViewResult).to.deep.eq(vPoolWrapperSwapResult);
 
     // when asked to charge 1 ETH, trader should be debited by that exactly and get whatever ETH
     expect(simulatorSwapResult.vTokenIn).to.eq(parseEther('1'));
@@ -96,9 +94,7 @@ describe('SwapSimulator', () => {
     );
 
     expect(simulatorSwapResult).to.deep.eq(vPoolWrapperSwapResult);
-
-    expect(simulatorSwapViewResult.vTokenIn).to.eq(vPoolWrapperSwapResult.vTokenIn);
-    expect(simulatorSwapViewResult.vQuoteIn).to.eq(vPoolWrapperSwapResult.vQuoteIn);
+    expect(simulatorSwapViewResult).to.deep.eq(vPoolWrapperSwapResult);
 
     // when asked to charge 2000 USDC, trader should be debited by that exactly and get whatever ETH it is
     expect(simulatorSwapResult.vQuoteIn).to.eq(parseUsdc('2000'));
@@ -127,9 +123,7 @@ describe('SwapSimulator', () => {
     );
 
     expect(simulatorSwapResult).to.deep.eq(vPoolWrapperSwapResult);
-
-    expect(simulatorSwapViewResult.vTokenIn).to.eq(vPoolWrapperSwapResult.vTokenIn);
-    expect(simulatorSwapViewResult.vQuoteIn).to.eq(vPoolWrapperSwapResult.vQuoteIn);
+    expect(simulatorSwapViewResult).to.deep.eq(vPoolWrapperSwapResult);
 
     // when asked for 1 ETH output, trader should get that exactly and be charged whatever USDC it is
     expect(simulatorSwapResult.vTokenIn.isNegative()).to.be.true;
@@ -159,9 +153,7 @@ describe('SwapSimulator', () => {
     );
 
     expect(simulatorSwapResult).to.deep.eq(vPoolWrapperSwapResult);
-
-    expect(simulatorSwapViewResult.vTokenIn).to.eq(vPoolWrapperSwapResult.vTokenIn);
-    expect(simulatorSwapViewResult.vQuoteIn).to.eq(vPoolWrapperSwapResult.vQuoteIn);
+    expect(simulatorSwapViewResult).to.deep.eq(vPoolWrapperSwapResult);
 
     expect(simulatorSwapResult.vQuoteIn.isNegative()).to.be.true;
     expect(simulatorSwapResult.vQuoteIn.mul(-1)).to.eq(parseUsdc('2000'));

@@ -34,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
 
     let ethIndexOracleDeployment;
-    const { CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE } = getNetworkInfo(hre.network.config.chainId);
+    const { CHAINLINK_ETH_USD_ORACLE, FLAGS_INTERFACE } = getNetworkInfo();
 
     // uses chainlink oracle if provided, else uses OracleMock
     if (CHAINLINK_ETH_USD_ORACLE) {
@@ -55,7 +55,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       // setting initial price as 2000 ETH-USD for the index oracle
       await execute(
         'ETH-IndexOracle',
-        { from: deployer, waitConfirmations },
+        { from: deployer, waitConfirmations, log: true },
         'setPriceX128',
         await priceToPriceX128(2000, 6, 18),
       );
@@ -85,7 +85,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       slotsToInitialize: 100,
     };
 
-    const tx = await execute('RageTradeFactory', { from: deployer, waitConfirmations }, 'initializePool', params);
+    const tx = await execute(
+      'RageTradeFactory',
+      {
+        from: deployer,
+        waitConfirmations,
+        estimateGasExtra: 10_000, // to account for dependency on prevBlockHash
+        log: true,
+        gasLimit: 10_000_000,
+      },
+      'initializePool',
+      params,
+    );
 
     const event = tx.events?.find(event => event?.event === 'PoolInitialized') as unknown as PoolInitializedEvent;
     if (!event) {
