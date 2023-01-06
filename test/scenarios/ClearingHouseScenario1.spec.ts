@@ -411,7 +411,7 @@ describe('Clearing House Scenario 1 (Base swaps and liquidity changes)', () => {
   }
 
   async function checkFundingRateAndTwapPrice(expectedFundingRate: BigNumberish, expectedTwapPrice: BigNumberish) {
-    const { fundingRateX128, virtualPriceX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice();
+    const [fundingRateX128, virtualPriceX128] = await vPoolWrapper.getFundingRateAndVirtualPrice();
     expect(fundingRateX128.mul(10n ** 16n).div(1n << 128n)).to.eq(expectedFundingRate);
     expect(virtualPriceX128.mul(10n ** 18n).div(1n << 128n)).to.eq(expectedTwapPrice);
   }

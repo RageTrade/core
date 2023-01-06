@@ -4,6 +4,8 @@ pragma solidity =0.8.14;
 
 import { Initializable } from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
+import { AggregatorV3Interface } from '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
+
 import { IUniswapV3Pool } from '@uniswap/v3-core-0.8-support/contracts/interfaces/IUniswapV3Pool.sol';
 import { IUniswapV3MintCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import { IUniswapV3SwapCallback } from '@uniswap/v3-core-0.8-support/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
@@ -20,6 +22,7 @@ import { IClearingHouseStructures } from '../../interfaces/clearinghouse/ICleari
 
 import { AddressHelper } from '../../libraries/AddressHelper.sol';
 import { FundingPayment } from '../../libraries/FundingPayment.sol';
+import { FundingRateOverride } from '../../libraries/FundingRateOverride.sol';
 import { SimulateSwap } from '../../libraries/SimulateSwap.sol';
 import { TickExtended } from '../../libraries/TickExtended.sol';
 import { PriceMath } from '../../libraries/PriceMath.sol';
@@ -37,6 +40,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     using AddressHelper for IVToken;
     using FullMath for uint256;
     using FundingPayment for FundingPayment.Info;
+    using FundingRateOverride for FundingRateOverride.Info;
     using SignedMath for int256;
     using SignedFullMath for int256;
     using PriceMath for uint160;
@@ -64,8 +68,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     FundingPayment.Info public fpGlobal;
     uint256 public sumFeeGlobalX128;
 
-    int256 constant FUNDING_RATE_OVERRIDE_NULL_VALUE = type(int256).max;
-    int256 public fundingRateOverrideX128;
+    FundingRateOverride.Info internal fundingRateOverride;
 
     mapping(int24 => TickExtended.Info) public ticksExtended;
 
@@ -128,7 +131,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         liquidityFeePips = params.liquidityFeePips;
         protocolFeePips = params.protocolFeePips;
 
-        fundingRateOverrideX128 = type(int256).max;
+        fundingRateOverride.setNull();
 
         // initializes the funding payment state by zeroing the funding payment for time 0 to blockTimestamp
         fpGlobal.update({
@@ -152,15 +155,8 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     /// @notice Update the global funding state, from clearing house
     /// @dev Done when clearing house is paused or unpaused, to prevent funding payments from being received
     ///     or paid when clearing house is in paused mode.
-    function updateGlobalFundingState(bool useZeroFundingRate) public onlyClearingHouse {
-        (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
-        fpGlobal.update({
-            vTokenAmount: 0,
-            liquidity: 1,
-            blockTimestamp: _blockTimestamp(),
-            virtualPriceX128: virtualPriceX128,
-            fundingRateX128: useZeroFundingRate ? int256(0) : fundingRateX128
-        });
+    function updateGlobalFundingState(bool useZeroFundingRate) external onlyClearingHouse {
+        _updateGlobalFundingState(useZeroFundingRate);
     }
 
     /**
@@ -179,15 +175,25 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         emit ProtocolFeeUpdated(protocolFeePips_);
     }
 
-    function setFundingRateOverride(int256 fundingRateOverrideX128_) external onlyGovernanceOrTeamMultisig {
-        uint256 fundingRateOverrideX128Abs = fundingRateOverrideX128_.absUint();
-        // ensure that funding rate magnitude is < 100% APR
-        if (
-            fundingRateOverrideX128_ != FUNDING_RATE_OVERRIDE_NULL_VALUE &&
-            fundingRateOverrideX128Abs > FixedPoint128.Q128 / (365 days)
-        ) revert InvalidSetting(0x30);
-        fundingRateOverrideX128 = fundingRateOverrideX128_;
-        emit FundingRateOverrideUpdated(fundingRateOverrideX128_);
+    /// @notice Updates state to not use any funding rate override.
+    function unsetFundingRateOverride() external onlyGovernanceOrTeamMultisig {
+        _updateGlobalFundingState({ useZeroFundingRate: true });
+        fundingRateOverride.setNull();
+    }
+
+    /// @notice Updates state to use a chainlink oracle for funding rates
+    /// @dev The oracle must provide hourly funding rates in D8 format
+    /// @param chainlinkOracle The address of the chainlink oracle
+    function setFundingRateOverride(AggregatorV3Interface chainlinkOracle) external onlyGovernanceOrTeamMultisig {
+        _updateGlobalFundingState({ useZeroFundingRate: true });
+        fundingRateOverride.setOracle(chainlinkOracle);
+    }
+
+    /// @notice Sets a constant value for funding rate
+    /// @param fundingRateOverrideX128 The value of funding rate per sec in X128 format
+    function setFundingRateOverride(int256 fundingRateOverrideX128) external onlyGovernanceOrTeamMultisig {
+        _updateGlobalFundingState({ useZeroFundingRate: true });
+        fundingRateOverride.setValueX128(fundingRateOverrideX128);
     }
 
     /**
@@ -283,7 +289,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {
         // records the funding payment for last updated timestamp to blockTimestamp using current price difference
-        _updateGlobalFundingState();
+        _updateGlobalFundingState({ useZeroFundingRate: false });
 
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, liquidity.toInt128(), vPool.tickCurrent());
 
@@ -314,7 +320,7 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         )
     {
         // records the funding payment for last updated timestamp to blockTimestamp using current price difference
-        _updateGlobalFundingState();
+        _updateGlobalFundingState({ useZeroFundingRate: false });
 
         wrapperValuesInside = _updateTicks(tickLower, tickUpper, -liquidity.toInt128(), vPool.tickCurrent());
 
@@ -361,21 +367,21 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
         VIEW METHODS
      */
 
-    function getFundingRateAndVirtualPrice() public view returns (int256 fundingRateX128, uint256 virtualPriceX128) {
-        int256 _fundingRateOverrideX128 = fundingRateOverrideX128;
-        bool shouldUseActualPrices = _fundingRateOverrideX128 == FUNDING_RATE_OVERRIDE_NULL_VALUE;
-
+    function getFundingRateAndVirtualPrice() public view returns (int256, uint256) {
         uint32 poolId = vToken.truncate();
-        virtualPriceX128 = clearingHouse.getVirtualTwapPriceX128(poolId);
+        uint256 virtualPriceX128 = clearingHouse.getVirtualTwapPriceX128(poolId);
 
-        if (shouldUseActualPrices) {
+        (bool shouldUseOverrides, int256 fundingRateX128) = fundingRateOverride.getValueX128();
+        if (!shouldUseOverrides) {
             // uses actual price to calculate funding rate
             uint256 realPriceX128 = clearingHouse.getRealTwapPriceX128(poolId);
             fundingRateX128 = FundingPayment.getFundingRate(realPriceX128, virtualPriceX128);
-        } else {
-            // uses funding rate override
-            fundingRateX128 = _fundingRateOverrideX128;
         }
+
+        // ensure that abs(funding rate) < 100% APR
+        fundingRateX128 = fundingRateX128.bound(FixedPoint128.Q128 / (365 days));
+
+        return (fundingRateX128, virtualPriceX128);
     }
 
     function getSumAX128() external view returns (int256) {
@@ -433,6 +439,10 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
             wrapperValuesInside.sumFpInsideX128,
             wrapperValuesInside.sumFeeInsideX128
         ) = ticksExtended.getTickExtendedStateInside(tickLower, tickUpper, currentTick, _fpGlobal, sumFeeGlobalX128);
+    }
+
+    function getFundingRateOverride() public view returns (bytes32) {
+        return fundingRateOverride.data;
     }
 
     /**
@@ -529,14 +539,14 @@ contract VPoolWrapper is IVPoolWrapper, IUniswapV3MintCallback, IUniswapV3SwapCa
     }
 
     /// @notice Update global funding payment, by getting prices from Clearing House
-    function _updateGlobalFundingState() internal {
+    function _updateGlobalFundingState(bool useZeroFundingRate) internal {
         (int256 fundingRateX128, uint256 virtualPriceX128) = getFundingRateAndVirtualPrice();
         fpGlobal.update({
             vTokenAmount: 0,
             liquidity: 1,
             blockTimestamp: _blockTimestamp(),
             virtualPriceX128: virtualPriceX128,
-            fundingRateX128: fundingRateX128
+            fundingRateX128: useZeroFundingRate ? int256(0) : fundingRateX128
         });
     }
 
