@@ -100,6 +100,13 @@ contract ClearingHouse is
     }
 
     /**
+        WITHDRAWAL FUNCTION
+     */
+    function withdrawUSDCToTeamMultisig() external onlyGovernanceOrTeamMultisig {
+        protocol.settlementToken.safeTransfer(teamMultisig(), protocol.settlementToken.balanceOf(address(this)));
+    }
+
+    /**
         ADMIN FUNCTIONS
      */
 
