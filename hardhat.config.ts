@@ -143,7 +143,7 @@ export default {
           viaIR: true,
           optimizer: {
             enabled: true,
-            runs: 4999,
+            runs: 2000,
           },
           outputSelection: {
             '*': {
